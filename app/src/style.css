@@ -41,4 +41,30 @@
   .shadow-soft {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
   }
+
+  .grid-background {
+    background-image: 
+      linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  /* Custom slider styles */
+  .slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #22c55e;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  .slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: #22c55e;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+  }
 }

@@ -10,6 +10,7 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.ts,.tsx --fix"
   },
   "dependencies": {
+    "jspdf": "^3.0.2",
     "vue": "^3.4.0"
   },
   "devDependencies": {

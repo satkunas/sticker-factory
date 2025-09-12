@@ -318,3 +318,4 @@ make check           # Health check
 - CORS is configured to allow client-server communication
 - All build outputs include source maps for debugging
 - adjust PLAN.md and CLAUDE.md when changes are made
+- oonly add the requested features
