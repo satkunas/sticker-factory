@@ -1,0 +1,31 @@
+{
+  "name": "sticker-factory",
+  "version": "1.0.0",
+  "description": "Generate SVG Badges - Vue 3 SPA with Express backend",
+  "private": true,
+  "workspaces": [
+    "app"
+  ],
+  "scripts": {
+    "install:all": "npm install && npm run install:app",
+    "install:app": "cd app && npm install",
+    "dev": "cd app && npm run dev",
+    "dev:open": "concurrently \"npm run dev\" \"npm run open:browser\"",
+    "build": "cd app && npm run build",
+    "lint": "cd app && npm run lint",
+    "start": "node server.js",
+    "start:open": "concurrently \"npm run start\" \"npm run open:browser\"",
+    "open:browser": "sleep 3 && npm run open:app",
+    "open:app": "node -e \"const { exec } = require('child_process'); const open = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open'; exec(open + ' http://localhost:3000');\"",
+    "clean": "rm -rf node_modules app/node_modules app/dist"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
