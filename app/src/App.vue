@@ -47,26 +47,33 @@
     <main class="flex-1 flex flex-col lg:flex-row min-h-0">
       <!-- Form Pane -->
       <div class="w-full lg:w-1/2 p-6 bg-white border-r border-secondary-200 lg:min-h-0">
-        <div class="max-w-md mx-auto lg:mx-0">
-          <h2 class="text-xl font-semibold text-secondary-900 mb-6">Badge Settings</h2>
+        <div class="w-full">
+          <h2 class="text-xl font-semibold text-secondary-900 mb-6">Sticker Settings</h2>
           
           <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-secondary-700 mb-2">Badge Text</label>
-              <input
-                v-model="badgeText"
-                type="text"
-                class="input-field"
-                placeholder="Enter badge text..."
+            <!-- Background Color -->
+            <div class="max-w-md">
+              <FormLabel text="Background Color" />
+              <ColorPicker 
+                v-model="badgeColor"
               />
             </div>
             
-            <div>
-              <label class="block text-sm font-medium text-secondary-700 mb-2">Badge Color</label>
-              <input
-                v-model="badgeColor"
-                type="color"
-                class="w-full h-10 rounded-lg border border-secondary-300 cursor-pointer"
+            <!-- Text Input with Integrated Font & Color Selector -->
+            <div class="w-full">
+              <FormLabel text="Text" />
+              <TextInputWithFontSelector
+                v-model="badgeText"
+                placeholder="Enter text..."
+                :selected-font="selectedFont"
+                :text-color="textColor"
+                :font-size="fontSize"
+                :font-weight="fontWeight"
+                instance-id="main"
+                @update:selected-font="selectedFont = $event"
+                @update:text-color="textColor = $event"
+                @update:font-size="fontSize = $event"
+                @update:font-weight="fontWeight = $event"
               />
             </div>
           </div>
@@ -74,115 +81,17 @@
       </div>
 
       <!-- SVG Viewer Pane -->
-      <div class="w-full lg:w-1/2 bg-secondary-50 relative min-h-96 lg:min-h-0">
-        <!-- SVG Container -->
-        <div 
-          ref="svgContainer"
-          class="w-full h-full bg-white rounded-lg border-2 border-dashed border-secondary-300 overflow-hidden cursor-move relative"
-          @mousedown="startDrag"
-          @mousemove="drag"
-          @mouseup="endDrag"
-          @mouseleave="endDrag"
-          @wheel="handleWheel"
-        >
-          <div 
-            class="w-full h-full flex items-center justify-center grid-background"
-            :style="{ 
-              transform: `translate(${panX}px, ${panY}px) scale(${zoomLevel})`,
-              backgroundSize: `${20 * zoomLevel}px ${20 * zoomLevel}px`
-            }"
-          >
-            <BadgeSvg
-              ref="badgeSvgRef"
-              :text="badgeText"
-              :color="badgeColor"
-              :width="svgWidth"
-              :height="svgHeight"
-              :font-size="svgFontSize"
-            />
-          </div>
-
-          <!-- Combined Controls & Legend -->
-          <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-sm border border-secondary-200">
-            <!-- Mini Overview & Scale -->
-            <div class="flex items-center space-x-2 mb-2">
-              <!-- Mini SVG -->
-              <div 
-                class="w-32 h-10 bg-secondary-50 rounded border overflow-hidden relative flex-shrink-0"
-                :style="{ 
-                  backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px)`,
-                  backgroundSize: '5px 5px'
-                }"
-              >
-                <!-- Mini Badge -->
-                <div class="absolute inset-0 flex items-center justify-center">
-                  <div 
-                    class="rounded-full"
-                    :style="{ 
-                      backgroundColor: badgeColor,
-                      width: '24px',
-                      height: '8px'
-                    }"
-                  ></div>
-                </div>
-                
-                <!-- Viewport Rectangle -->
-                <div 
-                  class="absolute border-2 border-primary-500 bg-primary-100/40"
-                  :style="compactViewportStyle"
-                ></div>
-              </div>
-              
-              <!-- Scale indicator -->
-              <span class="text-xs text-secondary-600 font-mono">{{ Math.round(zoomLevel * 100) }}%</span>
-            </div>
-
-            <!-- Zoom Controls -->
-            <div class="flex items-center space-x-1">
-              <button 
-                @click="zoomOut"
-                class="p-1.5 rounded-md text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100"
-                title="Zoom out"
-              >
-                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
-                </svg>
-              </button>
-              
-              <input 
-                type="range" 
-                v-model="zoomLevel" 
-                min="0.1" 
-                max="5" 
-                step="0.1" 
-                class="w-16 h-1.5 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
-              />
-              
-              <button 
-                @click="zoomIn"
-                class="p-1.5 rounded-md text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100"
-                title="Zoom in"
-              >
-                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
-                </svg>
-              </button>
-              
-              <div class="h-4 w-px bg-secondary-300 mx-1"></div>
-              
-              <button 
-                @click="resetZoom"
-                class="p-1.5 rounded-md text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100"
-                title="Reset zoom and position"
-              >
-                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <SvgViewer 
+        ref="svgViewerRef"
+        :text="badgeText"
+        :background-color="badgeColor"
+        :text-color="textColor"
+        :width="svgWidth"
+        :height="svgHeight"
+        :font-size="fontSize"
+        :font-weight="fontWeight"
+        :font="selectedFont"
+      />
     </main>
 
     <!-- Modals -->
@@ -221,15 +130,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, provide } from 'vue'
 import { useStore } from './stores'
 import BadgeSvg from './components/BadgeSvg.vue'
 import ExportModal from './components/ExportModal.vue'
 import ImportModal from './components/ImportModal.vue'
 import DownloadModal from './components/DownloadModal.vue'
+import TextInput from './components/TextInput.vue'
+import ColorPicker from './components/ColorPicker.vue'
+import FormLabel from './components/FormLabel.vue'
+import SvgViewer from './components/SvgViewer.vue'
+import TextInputWithFontSelector from './components/TextInputWithFontSelector.vue'
+import { getFontFamily } from './config/fonts'
 
 // Store
 const store = useStore()
+
+// Global state for expandable font selectors
+const expandedFontSelectors = ref(new Set<string>())
+provide('expandedFontSelectors', expandedFontSelectors)
 
 // Mobile menu
 const showMobileMenu = ref(false)
@@ -237,22 +156,13 @@ const showMobileMenu = ref(false)
 // Form data - connected to store
 const badgeText = ref('')
 const badgeColor = ref('#22c55e')
+const textColor = ref('#ffffff')
+const selectedFont = ref(null)
+const fontSize = ref(16)
+const fontWeight = ref(400)
 
-// Zoom and pan
-const zoomLevel = ref(1)
-const panX = ref(0)
-const panY = ref(0)
-
-// Drag state
-const isDragging = ref(false)
-const dragStartX = ref(0)
-const dragStartY = ref(0)
-const initialPanX = ref(0)
-const initialPanY = ref(0)
-
-// SVG container ref
-const svgContainer = ref<HTMLElement | null>(null)
-const badgeSvgRef = ref(null)
+// SVG viewer ref
+const svgViewerRef = ref(null)
 
 // Modal states
 const showExportModal = ref(false)
@@ -262,8 +172,7 @@ const showDownloadModal = ref(false)
 // SVG dimensions - responsive to viewer width
 const svgWidth = computed(() => {
   // Make SVG fill most of the viewer width, accounting for padding and controls
-  const containerWidth = svgContainer.value?.clientWidth || 400
-  return Math.min(containerWidth * 0.8, 600) // 80% of container, max 600px
+  return Math.min(800, 600) // Default size since container is now in SvgViewer
 })
 
 const svgHeight = computed(() => {
@@ -271,58 +180,13 @@ const svgHeight = computed(() => {
   return Math.round(svgWidth.value * 0.3)
 })
 
-const svgFontSize = computed(() => {
-  // Scale font size with SVG width
-  return Math.max(12, Math.round(svgWidth.value * 0.08)) // Min 12px, scale with width
-})
 
-// Viewport calculation for compact legend
-const compactViewportStyle = computed(() => {
-  // Compact legend container is 128px wide, 40px high (w-32 h-10)
-  const legendWidth = 128
-  const legendHeight = 40
-  
-  // Calculate viewport size based on zoom level
-  // At zoom 1, viewport shows full image
-  // At higher zoom, viewport shows smaller portion
-  const viewportWidthPercent = Math.min(100, 100 / zoomLevel.value)
-  const viewportHeightPercent = Math.min(100, 100 / zoomLevel.value)
-  
-  const viewportWidth = (legendWidth * viewportWidthPercent) / 100
-  const viewportHeight = (legendHeight * viewportHeightPercent) / 100
-  
-  // Calculate position based on pan values
-  // Convert pan values to percentage of viewport
-  const containerRect = svgContainer.value?.getBoundingClientRect()
-  if (!containerRect) {
-    return {
-      width: `${viewportWidth}px`,
-      height: `${viewportHeight}px`,
-      left: `${(legendWidth - viewportWidth) / 2}px`,
-      top: `${(legendHeight - viewportHeight) / 2}px`
-    }
-  }
-  
-  // Calculate pan percentage relative to container size
-  const panXPercent = (-panX.value / (containerRect.width * zoomLevel.value)) * 100
-  const panYPercent = (-panY.value / (containerRect.height * zoomLevel.value)) * 100
-  
-  // Position viewport rectangle in legend
-  const leftPos = (legendWidth - viewportWidth) / 2 + (panXPercent * legendWidth) / 100
-  const topPos = (legendHeight - viewportHeight) / 2 + (panYPercent * legendHeight) / 100
-  
-  return {
-    width: `${viewportWidth}px`,
-    height: `${viewportHeight}px`,
-    left: `${Math.max(0, Math.min(legendWidth - viewportWidth, leftPos))}px`,
-    top: `${Math.max(0, Math.min(legendHeight - viewportHeight, topPos))}px`
-  }
-})
 
 // Initialize from store
 onMounted(async () => {
   badgeText.value = store.badgeText.value
   badgeColor.value = store.badgeColor.value
+  selectedFont.value = store.badgeFont.value
 })
 
 // Watch form changes and update store
@@ -332,6 +196,10 @@ watch(badgeText, (newText) => {
 
 watch(badgeColor, (newColor) => {
   store.setBadgeColor(newColor)
+})
+
+watch(selectedFont, (newFont) => {
+  store.setBadgeFont(newFont)
 })
 
 // Menu functions
@@ -353,51 +221,6 @@ const resetState = () => {
   badgeColor.value = '#22c55e'
 }
 
-// Zoom functions
-const zoomIn = () => {
-  zoomLevel.value = Math.min(zoomLevel.value * 1.2, 5)
-}
-
-const zoomOut = () => {
-  zoomLevel.value = Math.max(zoomLevel.value / 1.2, 0.1)
-}
-
-const resetZoom = () => {
-  zoomLevel.value = 1
-  panX.value = 0
-  panY.value = 0
-}
-
-// Drag functions
-const startDrag = (e) => {
-  isDragging.value = true
-  dragStartX.value = e.clientX
-  dragStartY.value = e.clientY
-  initialPanX.value = panX.value
-  initialPanY.value = panY.value
-  e.preventDefault()
-}
-
-const drag = (e) => {
-  if (!isDragging.value) return
-  
-  const deltaX = e.clientX - dragStartX.value
-  const deltaY = e.clientY - dragStartY.value
-  
-  panX.value = initialPanX.value + deltaX
-  panY.value = initialPanY.value + deltaY
-}
-
-const endDrag = () => {
-  isDragging.value = false
-}
-
-// Wheel zoom
-const handleWheel = (e) => {
-  e.preventDefault()
-  const delta = e.deltaY > 0 ? 0.9 : 1.1
-  zoomLevel.value = Math.min(Math.max(zoomLevel.value * delta, 0.1), 5)
-}
 
 // Download function
 const downloadSVG = () => {

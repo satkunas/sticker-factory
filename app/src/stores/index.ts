@@ -1,9 +1,11 @@
 import { ref, computed, readonly } from 'vue'
+import { DEFAULT_FONT, type FontConfig } from '../config/fonts'
 
 export interface AppState {
   badgeText: string
   badgeColor: string
   svgContent: string
+  badgeFont: FontConfig | null
   lastModified: number
 }
 
@@ -24,6 +26,7 @@ const _state = ref<AppState>({
   badgeText: '',
   badgeColor: '#4CAF50',
   svgContent: '',
+  badgeFont: DEFAULT_FONT,
   lastModified: 0
 })
 
@@ -84,6 +87,7 @@ const loadFromStorage = (): AppState => {
         badgeText: data.badgeText || '',
         badgeColor: data.badgeColor || '#4CAF50',
         svgContent: data.svgContent || '',
+        badgeFont: data.badgeFont || DEFAULT_FONT,
         lastModified: data.lastModified || data.timestamp || 0
       }
 
@@ -109,6 +113,7 @@ const getDefaultState = (): AppState => ({
   badgeText: '',
   badgeColor: '#4CAF50', 
   svgContent: '',
+  badgeFont: DEFAULT_FONT,
   lastModified: 0
 })
 
@@ -157,6 +162,11 @@ export const useStore = () => {
     return _state.value.svgContent
   })
 
+  const badgeFont = computed(() => {
+    loadFromStorage()
+    return _state.value.badgeFont
+  })
+
   const lastModified = computed(() => {
     loadFromStorage()
     return _state.value.lastModified
@@ -189,6 +199,13 @@ export const useStore = () => {
   const setSvgContent = async (svg: string) => {
     loadFromStorage()
     _state.value.svgContent = svg
+    _isDirty.value = true
+    await saveToStorage(_state.value)
+  }
+
+  const setBadgeFont = async (font: FontConfig | null) => {
+    loadFromStorage()
+    _state.value.badgeFont = font
     _isDirty.value = true
     await saveToStorage(_state.value)
   }
@@ -257,7 +274,8 @@ export const useStore = () => {
       const stateData: Partial<AppState> = {
         badgeText: importData.badgeText || '',
         badgeColor: importData.badgeColor || '#4CAF50',
-        svgContent: importData.svgContent || ''
+        svgContent: importData.svgContent || '',
+        badgeFont: importData.badgeFont || DEFAULT_FONT
       }
 
       await updateState(stateData)
@@ -327,6 +345,7 @@ export const useStore = () => {
     badgeText,
     badgeColor,
     svgContent,
+    badgeFont,
     lastModified,
     isLoaded,
     isDirty,
@@ -336,6 +355,7 @@ export const useStore = () => {
     setBadgeText,
     setBadgeColor,
     setSvgContent,
+    setBadgeFont,
     updateState,
     resetState,
 

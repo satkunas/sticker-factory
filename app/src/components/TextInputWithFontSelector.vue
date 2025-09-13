@@ -1,0 +1,100 @@
+<template>
+  <div class="w-full">
+    <!-- Text Input with Arrow Icon -->
+    <div class="relative">
+      <input
+        :value="modelValue"
+        @input="$emit('update:modelValue', $event.target.value)"
+        type="text"
+        class="input-field w-full pr-10"
+        :placeholder="placeholder"
+        :style="{ 
+          fontFamily: selectedFont ? getFontFamily(selectedFont) : 'inherit',
+          fontSize: fontSize + 'px',
+          fontWeight: fontWeight
+        }"
+      />
+      <button
+        @click="toggleExpanded"
+        class="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
+        type="button"
+      >
+        <svg 
+          class="w-5 h-5 transition-transform duration-200"
+          :class="{ 'rotate-180': isExpanded }"
+          fill="currentColor" 
+          viewBox="0 0 20 20"
+        >
+          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Expandable Font Selector -->
+    <ExpandableFontSelector
+      :selected-font="selectedFont"
+      :text-color="textColor"
+      :font-size="fontSize"
+      :font-weight="fontWeight"
+      :badge-text="modelValue"
+      :instance-id="instanceId"
+      @update:selected-font="$emit('update:selectedFont', $event)"
+      @update:text-color="$emit('update:textColor', $event)"
+      @update:font-size="$emit('update:fontSize', $event)"
+      @update:font-weight="$emit('update:fontWeight', $event)"
+    />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { inject, computed, ref } from 'vue'
+import ExpandableFontSelector from './ExpandableFontSelector.vue'
+import { getFontFamily, type FontConfig } from '../config/fonts'
+
+interface Props {
+  modelValue: string
+  placeholder?: string
+  selectedFont?: FontConfig | null
+  textColor?: string
+  fontSize?: number
+  fontWeight?: number
+  instanceId?: string
+}
+
+interface Emits {
+  'update:modelValue': [value: string]
+  'update:selectedFont': [value: FontConfig | null]
+  'update:textColor': [value: string]
+  'update:fontSize': [value: number]
+  'update:fontWeight': [value: number]
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  placeholder: '',
+  selectedFont: null,
+  textColor: '#ffffff',
+  fontSize: 16,
+  fontWeight: 400,
+  instanceId: 'default'
+})
+
+defineEmits<Emits>()
+
+// Global expanded state management
+const expandedInstances = inject('expandedFontSelectors', ref(new Set<string>()))
+
+// Computed expanded state
+const isExpanded = computed(() => expandedInstances.value.has(props.instanceId))
+
+// Toggle expansion
+const toggleExpanded = () => {
+  if (isExpanded.value) {
+    expandedInstances.value.delete(props.instanceId)
+  } else {
+    // Close all other instances
+    expandedInstances.value.clear()
+    // Open this instance
+    expandedInstances.value.add(props.instanceId)
+  }
+}
+</script>
