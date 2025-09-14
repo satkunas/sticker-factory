@@ -36,12 +36,18 @@
       :text-color="textColor"
       :font-size="fontSize"
       :font-weight="fontWeight"
+      :text-stroke-width="textStrokeWidth"
+      :text-stroke-color="textStrokeColor"
+      :text-stroke-linejoin="textStrokeLinejoin"
       :badge-text="modelValue"
       :instance-id="instanceId"
       @update:selected-font="$emit('update:selectedFont', $event)"
       @update:text-color="$emit('update:textColor', $event)"
       @update:font-size="$emit('update:fontSize', $event)"
       @update:font-weight="$emit('update:fontWeight', $event)"
+      @update:text-stroke-width="$emit('update:textStrokeWidth', $event)"
+      @update:text-stroke-color="$emit('update:textStrokeColor', $event)"
+      @update:text-stroke-linejoin="$emit('update:textStrokeLinejoin', $event)"
     />
   </div>
 </template>
@@ -58,6 +64,9 @@ interface Props {
   textColor?: string
   fontSize?: number
   fontWeight?: number
+  textStrokeWidth?: number
+  textStrokeColor?: string
+  textStrokeLinejoin?: string
   instanceId?: string
 }
 
@@ -67,6 +76,9 @@ interface Emits {
   'update:textColor': [value: string]
   'update:fontSize': [value: number]
   'update:fontWeight': [value: number]
+  'update:textStrokeWidth': [value: number]
+  'update:textStrokeColor': [value: string]
+  'update:textStrokeLinejoin': [value: string]
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -75,6 +87,9 @@ const props = withDefaults(defineProps<Props>(), {
   textColor: '#ffffff',
   fontSize: 16,
   fontWeight: 400,
+  textStrokeWidth: 0,
+  textStrokeColor: '#000000',
+  textStrokeLinejoin: 'round',
   instanceId: 'default'
 })
 

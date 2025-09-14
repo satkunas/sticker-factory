@@ -7,22 +7,24 @@ module.exports = {
   },
   extends: [
     'eslint:recommended',
-    '@typescript-eslint/recommended',
     'plugin:vue/vue3-recommended'
   ],
   parser: 'vue-eslint-parser',
   parserOptions: {
-    parser: '@typescript-eslint/parser',
+    parser: {
+      'ts': require.resolve('@typescript-eslint/parser'),
+      '<template>': 'espree'
+    },
     ecmaVersion: 2022,
-    sourceType: 'module'
+    sourceType: 'module',
+    extraFileExtensions: ['.vue']
   },
   plugins: [
-    '@typescript-eslint',
     'vue'
   ],
   rules: {
     'vue/multi-word-component-names': 'off',
-    '@typescript-eslint/no-unused-vars': 'error',
+    'no-unused-vars': 'error',
     'vue/attribute-hyphenation': 'error',
     'vue/component-definition-name-casing': 'error',
     'vue/first-attribute-linebreak': 'error',
@@ -38,6 +40,8 @@ module.exports = {
   ignorePatterns: [
     'dist/**',
     'node_modules/**',
-    '*.d.ts'
+    '*.d.ts',
+    '*.ts',
+    '*.tsx'
   ]
 }

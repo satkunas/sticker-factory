@@ -8,72 +8,68 @@
     >
       <!-- Text Styling Section -->
       <div class="p-4 border-b border-secondary-200 bg-secondary-25">
-        <h4 class="font-medium text-secondary-900 mb-4">Text Styling</h4>
+        <h4 class="font-medium text-secondary-900 mb-3">Text Styling</h4>
         
-        <!-- Preview Display -->
-        <div class="mb-4 text-center">
-          <div class="inline-block p-3 bg-white border border-secondary-200 rounded-lg shadow-sm">
-            <div 
-              class="w-20 h-20 rounded-lg border-2 border-secondary-200 flex items-center justify-center mb-2"
-              :style="{ backgroundColor: 'white' }"
-            >
-              <span 
-                class="font-bold"
-                :style="{ 
-                  fontFamily: selectedFont ? getFontFamily(selectedFont) : 'Arial, sans-serif',
-                  color: textColor,
-                  fontSize: Math.min(fontSize, 24) + 'px',
-                  fontWeight: fontWeight
-                }"
-              >
-                {{ badgeText ? badgeText.charAt(0).toUpperCase() : 'A' }}
-              </span>
+        <!-- Compact Horizontal Layout -->
+        <div class="space-y-4">
+          <!-- Text Controls -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+            <!-- Color Section -->
+            <div class="min-w-0">
+              <div class="text-sm font-medium text-secondary-700 mb-2">Color</div>
+              <div class="flex items-center space-x-1 mb-2">
+                <!-- Hidden color input -->
+                <input
+                  ref="textColorInputRef"
+                  :value="textColor"
+                  @input="$emit('update:textColor', $event.target.value)"
+                  type="color"
+                  class="sr-only"
+                />
+                <!-- Color picker button -->
+                <button
+                  @click="$refs.textColorInputRef?.click()"
+                  class="w-7 h-7 rounded border border-secondary-300 cursor-pointer hover:border-secondary-400 transition-colors"
+                  :style="{ backgroundColor: textColor }"
+                  :title="`Click to change text color (${textColor})`"
+                  type="button"
+                ></button>
+                <input
+                  :value="textColor"
+                  @input="$emit('update:textColor', $event.target.value)"
+                  type="text"
+                  class="flex-1 px-2 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  placeholder="#000000"
+                />
+              </div>
+              <div class="grid grid-cols-6 md:grid-cols-12 gap-1">
+                <button
+                  v-for="color in presetColors.slice(0, 12)"
+                  :key="color"
+                  @click="$emit('update:textColor', color)"
+                  class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
+                  :class="textColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
+                  :style="{ backgroundColor: color }"
+                  :title="color"
+                ></button>
+              </div>
+              <div class="grid grid-cols-6 md:grid-cols-12 gap-1 mt-1">
+                <button
+                  v-for="color in presetColors.slice(12, 24)"
+                  :key="color"
+                  @click="$emit('update:textColor', color)"
+                  class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
+                  :class="textColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
+                  :style="{ backgroundColor: color }"
+                  :title="color"
+                ></button>
+              </div>
             </div>
-            <div class="text-xs text-secondary-600">{{ fontSize }}px • {{ fontWeight }}</div>
-          </div>
-        </div>
-        
-        <!-- Controls Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <!-- Color Section -->
-          <div>
-            <div class="text-sm font-medium text-secondary-700 mb-2">Color</div>
-            <div class="flex items-center space-x-2 mb-2">
-              <input
-                :value="textColor"
-                @input="$emit('update:textColor', $event.target.value)"
-                type="color"
-                class="w-8 h-8 rounded border border-secondary-300 cursor-pointer"
-              />
-              <input
-                :value="textColor"
-                @input="$emit('update:textColor', $event.target.value)"
-                type="text"
-                class="flex-1 px-2 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
-                placeholder="#000000"
-              />
-            </div>
-            <div class="grid grid-cols-8 gap-1">
-              <button
-                v-for="color in presetColors"
-                :key="color"
-                @click="$emit('update:textColor', color)"
-                class="w-5 h-5 rounded border transition-all"
-                :class="textColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
-                :style="{ backgroundColor: color }"
-                :title="color"
-              ></button>
-            </div>
-          </div>
 
-          <!-- Size & Weight Section -->
-          <div>
-            <div class="text-sm font-medium text-secondary-700 mb-2">Size & Weight</div>
-            
-            <!-- Font Size -->
-            <div class="mb-3">
-              <div class="flex items-center space-x-2 mb-1">
-                <span class="text-xs text-secondary-600 w-8">Size</span>
+            <!-- Font Size Section -->
+            <div class="min-w-0">
+              <div class="text-sm font-medium text-secondary-700 mb-2">Size</div>
+              <div class="flex items-center space-x-2 mb-2">
                 <input
                   :value="fontSize"
                   @input="$emit('update:fontSize', parseInt($event.target.value) || 16)"
@@ -88,17 +84,28 @@
                   type="number"
                   min="8"
                   max="500"
-                  class="w-14 px-1 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  class="w-12 px-1 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
                 />
+              </div>
+              <div class="grid grid-cols-3 md:grid-cols-6 gap-1">
+                <button
+                  v-for="size in commonSizes"
+                  :key="size"
+                  @click="$emit('update:fontSize', size)"
+                  class="px-1 py-1 text-xs rounded border transition-all"
+                  :class="fontSize === size ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white border-secondary-200 text-secondary-600 hover:border-secondary-300'"
+                >
+                  {{ size }}
+                </button>
               </div>
             </div>
 
-            <!-- Font Weight -->
-            <div>
-              <div class="text-xs text-secondary-600 mb-1">Weight</div>
-              <div class="grid grid-cols-4 gap-1">
+            <!-- Font Weight Section -->
+            <div class="min-w-0">
+              <div class="text-sm font-medium text-secondary-700 mb-2">Weight</div>
+              <div class="grid grid-cols-2 gap-1 mb-2">
                 <button
-                  v-for="weight in fontWeights"
+                  v-for="weight in fontWeights.slice(0, 4)"
                   :key="weight.value"
                   @click="$emit('update:fontWeight', weight.value)"
                   class="px-2 py-1 text-xs rounded border transition-all"
@@ -106,6 +113,117 @@
                 >
                   {{ weight.label }}
                 </button>
+              </div>
+              <div class="grid grid-cols-2 gap-1" v-if="fontWeights.length > 4">
+                <button
+                  v-for="weight in fontWeights.slice(4)"
+                  :key="weight.value"
+                  @click="$emit('update:fontWeight', weight.value)"
+                  class="px-2 py-1 text-xs rounded border transition-all"
+                  :class="fontWeight === weight.value ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white border-secondary-200 text-secondary-600 hover:border-secondary-300'"
+                >
+                  {{ weight.label }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Row: Stroke Controls -->
+          <div class="border-t border-secondary-100 pt-4">
+            <h5 class="text-sm font-medium text-secondary-700 mb-3">Text Stroke</h5>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+              <!-- Stroke Color -->
+              <div class="min-w-0">
+                <div class="text-xs font-medium text-secondary-600 mb-2">Color</div>
+                <div class="flex items-center space-x-1 mb-2">
+                  <!-- Hidden color input -->
+                  <input
+                    ref="strokeColorInputRef"
+                    :value="textStrokeColor"
+                    @input="$emit('update:textStrokeColor', $event.target.value)"
+                    type="color"
+                    class="sr-only"
+                  />
+                  <!-- Color picker button -->
+                  <button
+                    @click="$refs.strokeColorInputRef?.click()"
+                    class="w-7 h-7 rounded border border-secondary-300 cursor-pointer hover:border-secondary-400 transition-colors flex-shrink-0"
+                    :style="{ backgroundColor: textStrokeColor }"
+                    :title="`Click to change stroke color (${textStrokeColor})`"
+                    type="button"
+                  ></button>
+                  <input
+                    :value="textStrokeColor"
+                    @input="$emit('update:textStrokeColor', $event.target.value)"
+                    type="text"
+                    class="flex-1 px-2 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    placeholder="#000000"
+                  />
+                </div>
+                <div class="grid grid-cols-6 md:grid-cols-12 gap-1">
+                  <button
+                    v-for="color in presetColors.slice(0, 12)"
+                    :key="color"
+                    @click="$emit('update:textStrokeColor', color)"
+                    class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
+                    :class="textStrokeColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
+                    :style="{ backgroundColor: color }"
+                    :title="color"
+                  ></button>
+                </div>
+                <div class="grid grid-cols-6 md:grid-cols-12 gap-1 mt-1">
+                  <button
+                    v-for="color in presetColors.slice(12, 24)"
+                    :key="color"
+                    @click="$emit('update:textStrokeColor', color)"
+                    class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
+                    :class="textStrokeColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
+                    :style="{ backgroundColor: color }"
+                    :title="color"
+                  ></button>
+                </div>
+              </div>
+
+              <!-- Stroke Width -->
+              <div class="min-w-0">
+                <div class="text-xs font-medium text-secondary-600 mb-2">Width</div>
+                <div class="flex items-center space-x-2">
+                  <input
+                    :value="textStrokeWidth"
+                    @input="$emit('update:textStrokeWidth', parseFloat($event.target.value) || 0)"
+                    type="range"
+                    min="0"
+                    max="10"
+                    step="0.5"
+                    class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
+                  />
+                  <input
+                    :value="textStrokeWidth"
+                    @input="$emit('update:textStrokeWidth', parseFloat($event.target.value) || 0)"
+                    type="number"
+                    min="0"
+                    max="20"
+                    step="0.5"
+                    class="w-14 px-1 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  />
+                </div>
+              </div>
+
+              <!-- Stroke Linejoin -->
+              <div class="min-w-0">
+                <div class="text-xs font-medium text-secondary-600 mb-2">Linejoin</div>
+                <div class="grid grid-cols-2 gap-1">
+                  <button
+                    v-for="linejoin in strokeLinejoinOptions"
+                    :key="linejoin.value"
+                    @click="$emit('update:textStrokeLinejoin', linejoin.value)"
+                    class="px-2 py-1 text-xs rounded border transition-all text-center"
+                    :class="textStrokeLinejoin === linejoin.value ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white border-secondary-200 text-secondary-600 hover:border-secondary-300'"
+                    :title="linejoin.description"
+                  >
+                    {{ linejoin.label }}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -117,13 +235,24 @@
         <h4 class="font-medium text-secondary-900 mb-3">Font Family</h4>
         
         <!-- Search -->
-        <div class="mb-3">
+        <div class="mb-3 relative">
           <input
             v-model="searchQuery"
             type="text"
             placeholder="Search fonts..."
-            class="w-full px-3 py-2 border border-secondary-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            class="w-full px-3 py-2 pr-8 border border-secondary-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           />
+          <button
+            v-if="searchQuery.length > 0"
+            @click="searchQuery = ''"
+            class="absolute right-2 top-1/2 transform -translate-y-1/2 text-secondary-400 hover:text-secondary-600 transition-colors"
+            type="button"
+            title="Clear search"
+          >
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+            </svg>
+          </button>
         </div>
         
         <!-- Categories and Preview Toggle -->
@@ -162,17 +291,23 @@
           </div>
         </div>
         
-        <!-- Font Grid -->
-        <div class="max-h-48 overflow-y-auto">
-          <div class="grid grid-cols-4 gap-2">
+        <!-- Font List -->
+        <div class="max-h-80 overflow-y-auto" ref="fontListContainer" @scroll="handleScroll">
+          <div class="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-6 gap-2">
             <FontTile
-              v-for="font in filteredFonts"
+              v-for="font in visibleFonts"
               :key="font.name"
+              :ref="el => { if (selectedFont?.name === font.name && el) selectedFontTile = el }"
               :font="font"
               :is-selected="selectedFont?.name === font.name"
               :badge-text="badgeText || ''"
               @select="selectFont"
             />
+          </div>
+          
+          <!-- Loading indicator -->
+          <div v-if="isLoadingMore && visibleFonts.length < filteredFonts.length" class="py-2 text-center text-secondary-500">
+            <div class="text-xs">Loading more fonts...</div>
           </div>
           
           <div v-if="filteredFonts.length === 0" class="py-4 text-center text-secondary-500">
@@ -185,7 +320,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, inject } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, inject, nextTick } from 'vue'
 import { AVAILABLE_FONTS, FONT_CATEGORIES, loadFont, getFontFamily, type FontConfig } from '../config/fonts'
 import FontTile from './FontTile.vue'
 
@@ -194,6 +329,9 @@ interface Props {
   textColor?: string
   fontSize?: number
   fontWeight?: number
+  textStrokeWidth?: number
+  textStrokeColor?: string
+  textStrokeLinejoin?: string
   badgeText?: string
   instanceId?: string
 }
@@ -203,6 +341,9 @@ interface Emits {
   'update:textColor': [value: string]
   'update:fontSize': [value: number]
   'update:fontWeight': [value: number]
+  'update:textStrokeWidth': [value: number]
+  'update:textStrokeColor': [value: string]
+  'update:textStrokeLinejoin': [value: string]
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -210,11 +351,18 @@ const props = withDefaults(defineProps<Props>(), {
   textColor: '#ffffff',
   fontSize: 16,
   fontWeight: 400,
+  textStrokeWidth: 0,
+  textStrokeColor: '#000000',
+  textStrokeLinejoin: 'round',
   badgeText: '',
   instanceId: 'default'
 })
 
 const emit = defineEmits<Emits>()
+
+// Color picker references
+const textColorInputRef = ref<HTMLInputElement>()
+const strokeColorInputRef = ref<HTMLInputElement>()
 
 // Global expanded state management
 const expandedInstances = inject('expandedFontSelectors', ref(new Set<string>()))
@@ -223,6 +371,12 @@ const expandedInstances = inject('expandedFontSelectors', ref(new Set<string>())
 const searchQuery = ref('')
 const selectedCategory = ref<string | null>(null)
 const loadedFonts = ref(new Set<string>())
+
+// Lazy loading state
+const fontListContainer = ref<HTMLElement>()
+const selectedFontTile = ref<HTMLElement>()
+const visibleFontCount = ref(20) // Start with 20 fonts
+const isLoadingMore = ref(false)
 
 // Computed expanded state
 const isExpanded = computed(() => expandedInstances.value.has(props.instanceId))
@@ -246,9 +400,24 @@ const handleClickOutside = () => {
 
 // Preset colors for quick selection
 const presetColors = [
-  '#000000', '#ffffff', '#ef4444', '#f97316', 
+  '#000000', '#ffffff', '#ef4444', '#f97316',
   '#eab308', '#22c55e', '#3b82f6', '#8b5cf6',
-  '#ec4899', '#6b7280', '#dc2626', '#059669'
+  '#ec4899', '#6b7280', '#dc2626', '#059669',
+  '#1f2937', '#f3f4f6', '#7f1d1d', '#7c2d12',
+  '#713f12', '#14532d', '#1e3a8a', '#581c87',
+  '#831843', '#374151', '#fbbf24', '#34d399'
+]
+
+// Common font sizes for quick selection
+const commonSizes = [12, 16, 20, 24, 32, 48]
+
+// Stroke linejoin options
+const strokeLinejoinOptions = [
+  { value: 'round', label: 'Round', description: 'Rounded corners at line joins' },
+  { value: 'miter', label: 'Miter', description: 'Sharp pointed corners at line joins' },
+  { value: 'bevel', label: 'Bevel', description: 'Flat corners at line joins' },
+  { value: 'arcs', label: 'Arcs', description: 'Arc corners at line joins' },
+  { value: 'miter-clip', label: 'Clip', description: 'Clipped miter corners at line joins' }
 ]
 
 // All possible font weight options
@@ -305,6 +474,118 @@ const filteredFonts = computed(() => {
   }
   
   return fonts
+})
+
+// Visible fonts for lazy loading
+const visibleFonts = computed(() => {
+  return filteredFonts.value.slice(0, visibleFontCount.value)
+})
+
+// Handle scroll for lazy loading
+const handleScroll = () => {
+  const container = fontListContainer.value
+  if (!container || isLoadingMore.value) return
+  
+  const scrollThreshold = 100 // Load more when 100px from bottom
+  const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < scrollThreshold
+  
+  if (isNearBottom && visibleFontCount.value < filteredFonts.value.length) {
+    isLoadingMore.value = true
+    
+    // Add more fonts after a short delay
+    setTimeout(() => {
+      visibleFontCount.value = Math.min(
+        visibleFontCount.value + 20,
+        filteredFonts.value.length
+      )
+      isLoadingMore.value = false
+    }, 100)
+  }
+}
+
+// Reset visible count when filters change
+watch([searchQuery, selectedCategory], () => {
+  visibleFontCount.value = 20
+  isLoadingMore.value = false
+})
+
+// Note: Font loading is now handled by individual FontTile components via lazy loading
+// This improves performance by only loading fonts that are actually visible
+
+// Auto-scroll to selected font
+const scrollToSelectedFont = async () => {
+  if (!props.selectedFont || !fontListContainer.value) return
+  
+  // Wait for DOM update
+  await nextTick()
+  
+  // Find the selected font index in visible fonts
+  const selectedIndex = visibleFonts.value.findIndex(font => font.name === props.selectedFont?.name)
+  
+  if (selectedIndex === -1) {
+    // Font not visible, check if it's in filtered fonts
+    const globalIndex = filteredFonts.value.findIndex(font => font.name === props.selectedFont?.name)
+    if (globalIndex >= 0) {
+      // Ensure the font is loaded by increasing visible count
+      visibleFontCount.value = Math.max(visibleFontCount.value, globalIndex + 10)
+      await nextTick()
+    }
+  }
+  
+  // Wait for the selected font tile ref to be updated
+  await nextTick()
+  
+  // Use the selectedFontTile ref for precise scrolling if available
+  if (selectedFontTile.value) {
+    const container = fontListContainer.value
+    const tile = selectedFontTile.value as HTMLElement
+    
+    // Get the position of the tile relative to the container
+    const containerRect = container.getBoundingClientRect()
+    const tileRect = tile.getBoundingClientRect()
+    
+    // Calculate how much to scroll to center the tile
+    const tileRelativeTop = tileRect.top - containerRect.top + container.scrollTop
+    const scrollTarget = tileRelativeTop - container.clientHeight / 2 + tile.clientHeight / 2
+    
+    // Smooth scroll to the target position
+    container.scrollTo({
+      top: Math.max(0, scrollTarget),
+      behavior: 'smooth'
+    })
+  } else {
+    // Fallback: calculate position based on index
+    const updatedIndex = visibleFonts.value.findIndex(font => font.name === props.selectedFont?.name)
+    if (updatedIndex >= 0) {
+      const container = fontListContainer.value
+      const containerWidth = container.clientWidth
+      const tileWidth = 80 // approximate tile width including gap
+      const columns = Math.floor(containerWidth / tileWidth)
+      const row = Math.floor(updatedIndex / columns)
+      const rowHeight = 80 // approximate tile height including gap
+      
+      // Scroll to the row containing the selected font
+      container.scrollTo({
+        top: Math.max(0, row * rowHeight - container.clientHeight / 2),
+        behavior: 'smooth'
+      })
+    }
+  }
+}
+
+// Watch for expansion state changes to trigger auto-scroll
+watch(isExpanded, async (newExpanded) => {
+  if (newExpanded && props.selectedFont) {
+    // Small delay to ensure the accordion is fully expanded
+    setTimeout(scrollToSelectedFont, 150)
+  }
+})
+
+// Also watch for selectedFont changes when already expanded
+watch(() => props.selectedFont, async () => {
+  if (isExpanded.value) {
+    setTimeout(scrollToSelectedFont, 150)
+  }
 })
 
 // Font selection

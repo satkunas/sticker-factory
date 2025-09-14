@@ -1,5 +1,6 @@
 <template>
   <button
+    ref="tileRef"
     @click="$emit('select', font)"
     :class="[
       'relative aspect-square rounded-lg border-2 transition-all duration-200 group',
@@ -14,7 +15,7 @@
       <span 
         class="font-bold leading-none select-none overflow-hidden text-ellipsis whitespace-nowrap max-w-full text-center"
         :style="{ 
-          fontFamily: getFontFamily(font),
+          fontFamily: fontLoaded ? getFontFamily(font) : font.fallback,
           color: isSelected ? '#059669' : '#374151',
           fontSize: getOptimalFontSize(font, badgeText, props.showPreview)
         }"
@@ -52,7 +53,8 @@
 </template>
 
 <script setup lang="ts">
-import { getFontFamily, FONT_CATEGORIES, type FontConfig } from '../config/fonts'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { getFontFamily, FONT_CATEGORIES, loadFont, type FontConfig } from '../config/fonts'
 
 interface Props {
   font: FontConfig
@@ -68,6 +70,13 @@ interface Emits {
 const props = defineProps<Props>()
 defineEmits<Emits>()
 
+// Font loading state
+const fontLoaded = ref(false)
+const tileRef = ref<HTMLElement>()
+
+// Intersection Observer for lazy loading
+let observer: IntersectionObserver | null = null
+
 // Get preview text - font name, full text, or alternating alphabet
 const getPreviewChar = (font: FontConfig, badgeText: string, showPreview?: boolean): string => {
   if (!showPreview) {
@@ -76,11 +85,8 @@ const getPreviewChar = (font: FontConfig, badgeText: string, showPreview?: boole
   }
   
   if (!badgeText || badgeText.trim() === '') {
-    // Generate alternating upper/lower case alphabet (AaBbCc...) when preview is on but no text
-    const alphabet = 'abcdefghijklmnopqrstuvwxyz'
-    return alphabet.split('').map((letter, index) => 
-      index % 2 === 0 ? letter.toUpperCase() : letter
-    ).join('')
+    // Show 'Aa' sample for empty badge text
+    return 'Aa'
   }
   return badgeText
 }
@@ -90,10 +96,10 @@ const getOptimalFontSize = (font: FontConfig, badgeText: string, showPreview?: b
   const text = getPreviewChar(font, badgeText, showPreview)
   const length = text.length
   
-  if (length <= 3) return '20px'       // Short text or single characters
-  if (length <= 10) return '14px'      // Medium text
+  if (length <= 3) return '16px'       // Short text like 'Aa'
+  if (length <= 10) return '12px'      // Medium text
   if (length <= 20) return '10px'      // Long text
-  return '8px'                         // Very long text (alphabet)
+  return '8px'                         // Very long text
 }
 
 // Get category color for the badge indicator
@@ -103,8 +109,61 @@ const getCategoryColor = (category: string): string => {
     'sans-serif': 'bg-green-400', 
     'monospace': 'bg-purple-400',
     'display': 'bg-orange-400',
-    'handwriting': 'bg-pink-400'
+    'handwriting': 'bg-pink-400',
+    'dingbats': 'bg-red-400'
   }
   return colorMap[category] || 'bg-gray-400'
 }
+
+// Load font when tile becomes visible
+const loadFontLazily = async () => {
+  if (fontLoaded.value) return
+  
+  try {
+    // System fonts are always available
+    if (props.font.source === 'system') {
+      fontLoaded.value = true
+      return
+    }
+    
+    // Load the font
+    await loadFont(props.font)
+    fontLoaded.value = true
+  } catch (error) {
+    console.warn(`Failed to load font ${props.font.name}:`, error)
+    // Still mark as loaded to prevent retry loops, will use fallback
+    fontLoaded.value = true
+  }
+}
+
+// Setup intersection observer
+onMounted(() => {
+  if (!tileRef.value) return
+  
+  observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          loadFontLazily()
+          // Stop observing once we've started loading
+          observer?.unobserve(entry.target)
+        }
+      })
+    },
+    {
+      rootMargin: '50px', // Start loading 50px before tile is visible
+      threshold: 0.1
+    }
+  )
+  
+  observer.observe(tileRef.value)
+})
+
+// Cleanup observer
+onUnmounted(() => {
+  if (observer && tileRef.value) {
+    observer.unobserve(tileRef.value)
+    observer.disconnect()
+  }
+})
 </script>

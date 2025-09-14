@@ -26,6 +26,9 @@
           :height="height"
           :font-size="fontSize"
           :font-weight="fontWeight"
+          :text-stroke-width="textStrokeWidth"
+          :text-stroke-color="textStrokeColor"
+          :text-stroke-linejoin="textStrokeLinejoin"
           :font="font"
         />
       </div>
@@ -126,6 +129,9 @@ interface Props {
   height: number
   fontSize: number
   fontWeight: number
+  textStrokeWidth: number
+  textStrokeColor: string
+  textStrokeLinejoin: string
   font: FontConfig | null
 }
 

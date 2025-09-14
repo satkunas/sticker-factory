@@ -17,6 +17,15 @@
 
         <!-- Desktop menu -->
         <nav class="hidden lg:flex space-x-4">
+          <button 
+            @click="downloadSVG"
+            class="flex items-center space-x-1 px-3 py-1.5 bg-primary-600 text-white text-sm rounded-md hover:bg-primary-700 transition-colors"
+          >
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 011 1v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+            </svg>
+            <span>Download</span>
+          </button>
           <button @click="exportToFile" class="text-sm text-secondary-600 hover:text-secondary-900">Export</button>
           <button @click="importFromFile" class="text-sm text-secondary-600 hover:text-secondary-900">Import</button>
           <button @click="resetState" class="text-sm text-secondary-600 hover:text-secondary-900">Reset</button>
@@ -35,6 +44,15 @@
             </button>
           </div>
           <nav class="p-4 space-y-4">
+            <button 
+              @click="downloadSVG; showMobileMenu = false" 
+              class="flex items-center space-x-2 w-full px-3 py-2 bg-primary-600 text-white text-sm rounded-md hover:bg-primary-700 transition-colors"
+            >
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 011 1v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+              </svg>
+              <span>Download SVG</span>
+            </button>
             <button @click="exportToFile; showMobileMenu = false" class="block w-full text-left py-2 text-secondary-700 hover:text-secondary-900">Export</button>
             <button @click="importFromFile; showMobileMenu = false" class="block w-full text-left py-2 text-secondary-700 hover:text-secondary-900">Import</button>
             <button @click="resetState; showMobileMenu = false" class="block w-full text-left py-2 text-secondary-700 hover:text-secondary-900">Reset</button>
@@ -69,11 +87,17 @@
                 :text-color="textColor"
                 :font-size="fontSize"
                 :font-weight="fontWeight"
+                :text-stroke-width="textStrokeWidth"
+                :text-stroke-color="textStrokeColor"
+                :text-stroke-linejoin="textStrokeLinejoin"
                 instance-id="main"
                 @update:selected-font="selectedFont = $event"
                 @update:text-color="textColor = $event"
                 @update:font-size="fontSize = $event"
                 @update:font-weight="fontWeight = $event"
+                @update:text-stroke-width="textStrokeWidth = $event"
+                @update:text-stroke-color="textStrokeColor = $event"
+                @update:text-stroke-linejoin="textStrokeLinejoin = $event"
               />
             </div>
           </div>
@@ -81,7 +105,7 @@
       </div>
 
       <!-- SVG Viewer Pane -->
-      <SvgViewer 
+      <SvgViewer
         ref="svgViewerRef"
         :text="badgeText"
         :background-color="badgeColor"
@@ -90,6 +114,9 @@
         :height="svgHeight"
         :font-size="fontSize"
         :font-weight="fontWeight"
+        :text-stroke-width="textStrokeWidth"
+        :text-stroke-color="textStrokeColor"
+        :text-stroke-linejoin="textStrokeLinejoin"
         :font="selectedFont"
       />
     </main>
@@ -105,27 +132,19 @@
       @close="showImportModal = false" 
     />
     
-    <DownloadModal 
-      :show="showDownloadModal" 
+    <DownloadModal
+      :show="showDownloadModal"
       :badge-text="badgeText"
       :badge-color="badgeColor"
-      @close="showDownloadModal = false" 
+      :text-color="textColor"
+      :font-size="fontSize"
+      :font-weight="fontWeight"
+      :text-stroke-width="textStrokeWidth"
+      :text-stroke-color="textStrokeColor"
+      :font="selectedFont"
+      @close="showDownloadModal = false"
     />
 
-    <!-- Download Section -->
-    <footer class="bg-white border-t border-secondary-200 p-4 flex-shrink-0">
-      <div class="max-w-4xl mx-auto flex items-center justify-center">
-        <button
-          @click="downloadSVG"
-          class="btn-primary flex items-center space-x-2"
-        >
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 011 1v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
-          </svg>
-          <span>Download SVG</span>
-        </button>
-      </div>
-    </footer>
   </div>
 </template>
 
@@ -160,6 +179,9 @@ const textColor = ref('#ffffff')
 const selectedFont = ref(null)
 const fontSize = ref(16)
 const fontWeight = ref(400)
+const textStrokeWidth = ref(0)
+const textStrokeColor = ref('#000000')
+const textStrokeLinejoin = ref('round')
 
 // SVG viewer ref
 const svgViewerRef = ref(null)
@@ -187,6 +209,11 @@ onMounted(async () => {
   badgeText.value = store.badgeText.value
   badgeColor.value = store.badgeColor.value
   selectedFont.value = store.badgeFont.value
+  textColor.value = store.textColor.value
+  fontSize.value = store.fontSize.value
+  fontWeight.value = store.fontWeight.value
+  textStrokeWidth.value = store.strokeWidth.value
+  textStrokeColor.value = store.strokeColor.value
 })
 
 // Watch form changes and update store
@@ -200,6 +227,26 @@ watch(badgeColor, (newColor) => {
 
 watch(selectedFont, (newFont) => {
   store.setBadgeFont(newFont)
+})
+
+watch(textColor, (newColor) => {
+  store.setTextColor(newColor)
+})
+
+watch(fontSize, (newSize) => {
+  store.setFontSize(newSize)
+})
+
+watch(fontWeight, (newWeight) => {
+  store.setFontWeight(newWeight)
+})
+
+watch(textStrokeWidth, (newWidth) => {
+  store.setStrokeWidth(newWidth)
+})
+
+watch(textStrokeColor, (newColor) => {
+  store.setStrokeColor(newColor)
 })
 
 // Menu functions
@@ -218,7 +265,13 @@ const importFromFile = () => {
 const resetState = () => {
   store.resetState()
   badgeText.value = ''
-  badgeColor.value = '#22c55e'
+  badgeColor.value = '#4CAF50'
+  textColor.value = '#ffffff'
+  fontSize.value = 16
+  fontWeight.value = 400
+  textStrokeWidth.value = 0
+  textStrokeColor.value = '#000000'
+  selectedFont.value = null
 }
 
 

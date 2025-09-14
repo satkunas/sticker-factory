@@ -6,6 +6,13 @@ export interface AppState {
   badgeColor: string
   svgContent: string
   badgeFont: FontConfig | null
+  fontSize: number
+  fontWeight: number
+  textColor: string
+  textOpacity: number
+  strokeColor: string
+  strokeWidth: number
+  strokeOpacity: number
   lastModified: number
 }
 
@@ -27,6 +34,13 @@ const _state = ref<AppState>({
   badgeColor: '#4CAF50',
   svgContent: '',
   badgeFont: DEFAULT_FONT,
+  fontSize: 16,
+  fontWeight: 400,
+  textColor: '#ffffff',
+  textOpacity: 1.0,
+  strokeColor: '#000000',
+  strokeWidth: 0,
+  strokeOpacity: 1.0,
   lastModified: 0
 })
 
@@ -88,6 +102,13 @@ const loadFromStorage = (): AppState => {
         badgeColor: data.badgeColor || '#4CAF50',
         svgContent: data.svgContent || '',
         badgeFont: data.badgeFont || DEFAULT_FONT,
+        fontSize: data.fontSize || 16,
+        fontWeight: data.fontWeight || 400,
+        textColor: data.textColor || '#ffffff',
+        textOpacity: data.textOpacity ?? 1.0,
+        strokeColor: data.strokeColor || '#000000',
+        strokeWidth: data.strokeWidth ?? 0,
+        strokeOpacity: data.strokeOpacity ?? 1.0,
         lastModified: data.lastModified || data.timestamp || 0
       }
 
@@ -114,6 +135,13 @@ const getDefaultState = (): AppState => ({
   badgeColor: '#4CAF50', 
   svgContent: '',
   badgeFont: DEFAULT_FONT,
+  fontSize: 16,
+  fontWeight: 400,
+  textColor: '#ffffff',
+  textOpacity: 1.0,
+  strokeColor: '#000000',
+  strokeWidth: 0,
+  strokeOpacity: 1.0,
   lastModified: 0
 })
 
@@ -167,6 +195,41 @@ export const useStore = () => {
     return _state.value.badgeFont
   })
 
+  const fontSize = computed(() => {
+    loadFromStorage()
+    return _state.value.fontSize
+  })
+
+  const fontWeight = computed(() => {
+    loadFromStorage()
+    return _state.value.fontWeight
+  })
+
+  const textColor = computed(() => {
+    loadFromStorage()
+    return _state.value.textColor
+  })
+
+  const textOpacity = computed(() => {
+    loadFromStorage()
+    return _state.value.textOpacity
+  })
+
+  const strokeColor = computed(() => {
+    loadFromStorage()
+    return _state.value.strokeColor
+  })
+
+  const strokeWidth = computed(() => {
+    loadFromStorage()
+    return _state.value.strokeWidth
+  })
+
+  const strokeOpacity = computed(() => {
+    loadFromStorage()
+    return _state.value.strokeOpacity
+  })
+
   const lastModified = computed(() => {
     loadFromStorage()
     return _state.value.lastModified
@@ -206,6 +269,55 @@ export const useStore = () => {
   const setBadgeFont = async (font: FontConfig | null) => {
     loadFromStorage()
     _state.value.badgeFont = font
+    _isDirty.value = true
+    await saveToStorage(_state.value)
+  }
+
+  const setFontSize = async (size: number) => {
+    loadFromStorage()
+    _state.value.fontSize = size
+    _isDirty.value = true
+    await saveToStorage(_state.value)
+  }
+
+  const setFontWeight = async (weight: number) => {
+    loadFromStorage()
+    _state.value.fontWeight = weight
+    _isDirty.value = true
+    await saveToStorage(_state.value)
+  }
+
+  const setTextColor = async (color: string) => {
+    loadFromStorage()
+    _state.value.textColor = color
+    _isDirty.value = true
+    await saveToStorage(_state.value)
+  }
+
+  const setTextOpacity = async (opacity: number) => {
+    loadFromStorage()
+    _state.value.textOpacity = opacity
+    _isDirty.value = true
+    await saveToStorage(_state.value)
+  }
+
+  const setStrokeColor = async (color: string) => {
+    loadFromStorage()
+    _state.value.strokeColor = color
+    _isDirty.value = true
+    await saveToStorage(_state.value)
+  }
+
+  const setStrokeWidth = async (width: number) => {
+    loadFromStorage()
+    _state.value.strokeWidth = width
+    _isDirty.value = true
+    await saveToStorage(_state.value)
+  }
+
+  const setStrokeOpacity = async (opacity: number) => {
+    loadFromStorage()
+    _state.value.strokeOpacity = opacity
     _isDirty.value = true
     await saveToStorage(_state.value)
   }
@@ -275,7 +387,14 @@ export const useStore = () => {
         badgeText: importData.badgeText || '',
         badgeColor: importData.badgeColor || '#4CAF50',
         svgContent: importData.svgContent || '',
-        badgeFont: importData.badgeFont || DEFAULT_FONT
+        badgeFont: importData.badgeFont || DEFAULT_FONT,
+        fontSize: importData.fontSize || 16,
+        fontWeight: importData.fontWeight || 400,
+        textColor: importData.textColor || '#ffffff',
+        textOpacity: importData.textOpacity ?? 1.0,
+        strokeColor: importData.strokeColor || '#000000',
+        strokeWidth: importData.strokeWidth ?? 0,
+        strokeOpacity: importData.strokeOpacity ?? 1.0
       }
 
       await updateState(stateData)
@@ -346,6 +465,13 @@ export const useStore = () => {
     badgeColor,
     svgContent,
     badgeFont,
+    fontSize,
+    fontWeight,
+    textColor,
+    textOpacity,
+    strokeColor,
+    strokeWidth,
+    strokeOpacity,
     lastModified,
     isLoaded,
     isDirty,
@@ -356,6 +482,13 @@ export const useStore = () => {
     setBadgeColor,
     setSvgContent,
     setBadgeFont,
+    setFontSize,
+    setFontWeight,
+    setTextColor,
+    setTextOpacity,
+    setStrokeColor,
+    setStrokeWidth,
+    setStrokeOpacity,
     updateState,
     resetState,
 

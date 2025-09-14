@@ -1,8 +1,8 @@
 <template>
-  <Modal :show="show" title="Download Badge" @close="$emit('close')">
+  <Modal :show="show" title="Download Image" @close="$emit('close')">
     <div class="space-y-6">
       <p class="text-sm text-secondary-600">
-        Choose your preferred format and options for downloading the badge.
+        Choose your preferred format and options for downloading the image.
       </p>
       
       <!-- Format Selection -->
@@ -71,9 +71,14 @@
             ref="badgeSvgRef"
             :text="badgeText"
             :color="badgeColor"
+            :text-color="textColor"
             :width="200"
             :height="60"
-            :font-size="16"
+            :font-size="fontSize"
+            :font-weight="fontWeight"
+            :text-stroke-width="textStrokeWidth"
+            :text-stroke-color="textStrokeColor"
+            :font="font"
           />
         </div>
       </div>
@@ -134,9 +139,22 @@ interface Props {
   show: boolean
   badgeText: string
   badgeColor: string
+  textColor?: string
+  fontSize?: number
+  fontWeight?: number
+  textStrokeWidth?: number
+  textStrokeColor?: string
+  font?: any
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  textColor: '#ffffff',
+  fontSize: 16,
+  fontWeight: 400,
+  textStrokeWidth: 0,
+  textStrokeColor: '#000000',
+  font: null
+})
 defineEmits<{
   close: []
 }>()
@@ -162,7 +180,7 @@ const pngResolutions = [
 
 const getFileName = () => {
   const timestamp = Date.now()
-  const name = props.badgeText.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'badge'
+  const name = props.badgeText.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'image'
   return `${name}-${timestamp}`
 }
 
