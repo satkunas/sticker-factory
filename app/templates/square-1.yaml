@@ -2,9 +2,10 @@ name: "Square - Simple"
 id: "square-1"
 description: "Simple square with centered text"
 category: "square"
-shapes:
+layers:
   - id: "background"
-    type: "rect"
+    type: "shape"
+    subtype: "rect"
     position: { x: 50, y: 50 }
     width: 200
     height: 200
@@ -14,10 +15,11 @@ shapes:
     strokeWidth: 2
     fill: "#10b981"
     zIndex: 1
-textInputs:
   - id: "main"
+    type: "textInput"
     label: "Text"
     position: { x: 50, y: 50 }
     rotation: 0
     clipPath: "rect(20px, 180px, 180px, 20px)"
     maxLength: 18
+    zIndex: 10

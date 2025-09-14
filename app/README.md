@@ -1,20 +1,30 @@
 # 🏭 Sticker Factory
 
-A modern web application for creating custom SVG stickers with advanced typography controls and real-time preview.
+A modern web application for creating custom SVG stickers with template-based design, multi-text input support, and advanced typography controls.
 
 ## ✨ Features
 
-### 🎨 **Advanced Typography**
+### 🎯 **Template-Based Design System**
+- **Dynamic template selection** with automatic form generation
+- **Multiple text inputs** - templates support 1-3+ text elements with individual styling
+- **Template persistence** - selected templates and form data saved automatically
+- **zIndex-based rendering** - proper layering with text above shapes
+- **Backward compatibility** - supports both new multi-text and legacy single-text modes
+
+### 🎨 **Advanced Typography (Per Text Input)**
 - **661+ fonts** from multiple sources (Google Fonts, system fonts, web fonts, icon fonts)
-- **Dynamic font weight selection** - only shows weights available for each font
-- **Flexible font sizing** - 8px to 500px with slider and keyboard input
+- **Individual font selection** - each text input can use different fonts
+- **Independent sizing** - 8px to 500px per text input with slider and keyboard input
+- **Separate weight control** - only shows weights available for each font
+- **Individual colors** - text color and stroke properties per input
 - **Real-time preview** in both input field and SVG output
 - **Smart font preloading** and performance optimization
 
-### 🎯 **Sticker Customization**
-- **Text input** with live font styling preview
-- **Color picker** with hex input and preset color palette
-- **Background color** selection
+### 🎯 **Advanced Sticker Customization**
+- **Multi-text layouts** - header, middle, footer sections with independent styling
+- **Individual text properties** - each text element has its own font, size, weight, color, stroke
+- **Template-based shapes** - backgrounds, dividers, sections defined by templates
+- **Background color** selection for entire sticker
 - **Responsive design** - works on desktop and mobile
 
 ### 🖼️ **SVG Viewer**
@@ -25,22 +35,27 @@ A modern web application for creating custom SVG stickers with advanced typograp
 - **Export functionality** for downloading SVG files
 
 ### 🎛️ **User Interface**
-- **Expandable accordion design** for font selection with auto-scroll to selected font
-- **Compact controls** with efficient space usage and clear search button
+- **Dynamic form generation** - forms automatically adapt to selected template structure
+- **Per-input accordion design** - each text input has its own expandable font controls
+- **Template selector** with visual previews and categories
+- **Expandable font controls** with auto-scroll to selected font
+- **Compact design** with efficient space usage and clear search button
 - **Responsive grid layout** for font tiles with lazy loading
 - **Mobile-responsive** with hamburger menu
 - **Header download button** for easy access
-- **Persistent settings** - all preferences saved automatically and restored on reload
-- **Import/Export** functionality for saving designs
+- **Persistent settings** - templates, text inputs, and all styling saved automatically
+- **Import/Export** functionality for saving complete designs
 
 ## 🛠️ Technology Stack
 
-- **Vue 3** with Composition API
-- **TypeScript** for type safety
-- **Tailwind CSS** for styling
-- **Pinia** for state management
-- **Google Fonts API** for font loading
-- **SVG rendering** for scalable graphics
+- **Vue 3** with Composition API and `<script setup>`
+- **TypeScript** for type safety and discriminated unions
+- **Tailwind CSS** for utility-first styling
+- **Pinia-style store** for reactive state management
+- **YAML templates** for design structure definition
+- **Google Fonts API** for dynamic font loading
+- **SVG rendering** with zIndex-based layer ordering
+- **localStorage** for automatic data persistence
 
 ## 🚀 Getting Started
 
@@ -77,18 +92,25 @@ npm run type-check # Run TypeScript checks
 ```
 src/
 ├── components/          # Vue components
-│   ├── BadgeSvg.vue            # SVG sticker renderer
-│   ├── SvgViewer.vue           # Interactive SVG viewer
+│   ├── SimpleTemplateSelector.vue     # Template selection interface
+│   ├── TemplateAwareSvgViewer.vue     # Template-based SVG renderer
 │   ├── TextInputWithFontSelector.vue  # Text input with font controls
 │   ├── ExpandableFontSelector.vue     # Font selection accordion
 │   ├── FontTile.vue            # Individual font preview tiles
 │   ├── ColorPicker.vue         # Color selection component
 │   └── ...                     # Modal and utility components
 ├── config/
-│   └── fonts.ts         # Font definitions and utilities (603 fonts)
+│   ├── fonts.ts         # Font definitions and utilities (661+ fonts)
+│   └── template-loader.ts      # YAML template processing and caching
 ├── stores/
-│   └── index.ts         # Pinia store for state management
-├── App.vue              # Main application component
+│   └── index.ts         # Reactive store with multi-text input support
+├── types/
+│   └── template-types.ts       # TypeScript interfaces for templates
+├── templates/           # YAML template definitions
+│   ├── square-1.yaml    # Simple single-text template
+│   ├── square-3.yaml    # Complex multi-text template
+│   └── ...              # Additional template files
+├── App.vue              # Main application with dynamic form generation
 └── main.ts             # Application entry point
 ```
 
@@ -103,10 +125,23 @@ src/
 
 ## 🔧 Key Components
 
-### TextInputWithFontSelector
+### SimpleTemplateSelector
+- Template selection interface with visual previews
+- Category-based template organization
+- Automatic form generation on template selection
+
+### TextInputWithFontSelector (Multiple Instances)
 - Integrates text input with expandable font controls
-- Real-time font family, size, and weight preview
-- Arrow icon for expand/collapse functionality
+- Individual font, size, weight, color, and stroke properties
+- Real-time preview with selected styling
+- Unique instance ID for multiple text inputs
+
+### TemplateAwareSvgViewer
+- Template-based SVG rendering with proper zIndex ordering
+- Multi-text input support with individual styling
+- Interactive zoom and pan controls
+- Real-time rendering of all style changes
+- Export functionality for saving designs
 
 ### ExpandableFontSelector
 - Responsive grid layout with lazy loading for performance
@@ -115,20 +150,33 @@ src/
 - Clear search button and category filtering
 - Smart font preloading for better user experience
 
-### SvgViewer
-- Interactive zoom and pan controls
-- Real-time SVG rendering with all styling applied
-- Export functionality for saving designs
-- Responsive layout with mobile support
+### Template System
+- **YAML-based templates** define shapes and text input positions
+- **Flattened layers architecture** with unified shape + text arrays
+- **Dynamic form generation** based on template structure
+- **Backward compatibility** with legacy single-text templates
 
 ## 🎯 Usage
 
-1. **Enter your text** in the input field
-2. **Select a font** from 600+ options across 6 categories
-3. **Adjust styling** - color, size (8-500px), and weight
-4. **Customize background** color
+### Multi-Text Sticker Creation
+1. **Select a template** from available designs (simple single-text or complex multi-text)
+2. **Fill in text inputs** - each template shows relevant text fields (Header, Middle, Footer, etc.)
+3. **Customize each text individually**:
+   - Choose from 661+ fonts across 6 categories
+   - Adjust size (8-500px) with slider or keyboard input
+   - Set weight (100-900) based on font availability
+   - Pick colors for text and stroke
+   - Configure stroke width and opacity
+4. **Customize background** color for entire sticker
 5. **Preview in real-time** with interactive SVG viewer
 6. **Export your sticker** as SVG file
+
+### Template Examples
+- **Square - Simple**: Single centered text with background
+- **Square - Three Sections**: Header, middle, footer with individual styling
+- **Custom layouts**: Add more templates with different arrangements
+
+Your template selection and all text styling automatically save and restore on page reload.
 
 ## 📱 Responsive Design
 

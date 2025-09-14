@@ -1,7 +1,13 @@
 import { ref, computed, readonly } from 'vue'
 import { DEFAULT_FONT, type FontConfig } from '../config/fonts'
+import type { TextInputState } from '../types/template-types'
 
 export interface AppState {
+  // New multi-text input system
+  textInputs: TextInputState[]
+  selectedTemplateId: string | null
+
+  // Legacy single-text properties (for backward compatibility)
   badgeText: string
   badgeColor: string
   svgContent: string
@@ -22,7 +28,7 @@ interface StorageData extends AppState {
 }
 
 const STORAGE_KEY = 'sticker-factory-data'
-const STORAGE_VERSION = '1.0.0'
+const STORAGE_VERSION = '2.0.0'
 
 // Mutex for localStorage operations
 let isWriting = false
@@ -30,6 +36,11 @@ const writeQueue: (() => void)[] = []
 
 // Private state
 const _state = ref<AppState>({
+  // New multi-text input system
+  textInputs: [],
+  selectedTemplateId: null,
+
+  // Legacy single-text properties (for backward compatibility)
   badgeText: '',
   badgeColor: '#4CAF50',
   svgContent: '',
@@ -98,6 +109,11 @@ const loadFromStorage = (): AppState => {
       }
 
       const loadedState: AppState = {
+        // New multi-text input system
+        textInputs: data.textInputs || [],
+        selectedTemplateId: data.selectedTemplateId || null,
+
+        // Legacy single-text properties (for backward compatibility)
         badgeText: data.badgeText || '',
         badgeColor: data.badgeColor || '#4CAF50',
         svgContent: data.svgContent || '',
@@ -131,8 +147,13 @@ const loadFromStorage = (): AppState => {
 
 // Get default state
 const getDefaultState = (): AppState => ({
+  // New multi-text input system
+  textInputs: [],
+  selectedTemplateId: null,
+
+  // Legacy single-text properties (for backward compatibility)
   badgeText: '',
-  badgeColor: '#4CAF50', 
+  badgeColor: '#4CAF50',
   svgContent: '',
   badgeFont: DEFAULT_FONT,
   fontSize: 16,
@@ -173,8 +194,21 @@ const clearStorage = async (): Promise<void> => {
 
 // Store interface
 export const useStore = () => {
-  
+
   // Getters with cache-on-demand
+
+  // New multi-text input system
+  const textInputs = computed(() => {
+    loadFromStorage()
+    return _state.value.textInputs
+  })
+
+  const selectedTemplateId = computed(() => {
+    loadFromStorage()
+    return _state.value.selectedTemplateId
+  })
+
+  // Legacy single-text getters (for backward compatibility)
   const badgeText = computed(() => {
     loadFromStorage()
     return _state.value.badgeText
@@ -245,6 +279,55 @@ export const useStore = () => {
   })
 
   // Mutations
+
+  // New multi-text input mutations
+  const setTextInputs = async (inputs: TextInputState[]) => {
+    loadFromStorage()
+    _state.value.textInputs = inputs
+    _isDirty.value = true
+    await saveToStorage(_state.value)
+  }
+
+  const updateTextInput = async (index: number, updates: Partial<TextInputState>) => {
+    loadFromStorage()
+    if (index >= 0 && index < _state.value.textInputs.length) {
+      _state.value.textInputs[index] = { ..._state.value.textInputs[index], ...updates }
+      _isDirty.value = true
+      await saveToStorage(_state.value)
+    }
+  }
+
+  const initializeTextInputsFromTemplate = async (template: any) => {
+    loadFromStorage()
+    const { getTemplateTextInputs } = await import('../config/template-loader')
+    const templateTextInputs = getTemplateTextInputs(template)
+
+    // Initialize text inputs with default values
+    const newTextInputs: TextInputState[] = templateTextInputs.map((textInput) => ({
+      id: textInput.id,
+      text: '',
+      font: DEFAULT_FONT,
+      fontSize: 16,
+      fontWeight: 400,
+      textColor: '#ffffff',
+      strokeWidth: 0,
+      strokeColor: '#000000',
+      strokeOpacity: 1.0
+    }))
+
+    _state.value.textInputs = newTextInputs
+    _isDirty.value = true
+    await saveToStorage(_state.value)
+  }
+
+  const setSelectedTemplateId = async (templateId: string | null) => {
+    loadFromStorage()
+    _state.value.selectedTemplateId = templateId
+    _isDirty.value = true
+    await saveToStorage(_state.value)
+  }
+
+  // Legacy single-text mutations (for backward compatibility)
   const setBadgeText = async (text: string) => {
     loadFromStorage()
     _state.value.badgeText = text
@@ -461,6 +544,8 @@ export const useStore = () => {
 
   return {
     // Getters
+    textInputs,
+    selectedTemplateId,
     badgeText,
     badgeColor,
     svgContent,
@@ -478,6 +563,10 @@ export const useStore = () => {
     getState,
 
     // Mutations
+    setTextInputs,
+    updateTextInput,
+    initializeTextInputsFromTemplate,
+    setSelectedTemplateId,
     setBadgeText,
     setBadgeColor,
     setSvgContent,

@@ -1,5 +1,16 @@
 import yaml from 'js-yaml'
-import type { SimpleTemplate, TemplateElement, TemplateTextInput, YamlTemplate, TemplateShape } from '../types/template-types'
+import type {
+  SimpleTemplate,
+  TemplateElement,
+  TemplateTextInput,
+  YamlTemplate,
+  LegacyYamlTemplate,
+  TemplateShape,
+  TemplateLayer,
+  ProcessedTemplateLayer,
+  ProcessedShapeLayer,
+  ProcessedTextInputLayer
+} from '../types/template-types'
 
 // Template cache to avoid repeated loading
 const templateCache = new Map<string, SimpleTemplate>()
@@ -106,9 +117,9 @@ export const getDefaultTemplate = async (): Promise<SimpleTemplate | null> => {
 }
 
 /**
- * Validate YAML template structure
+ * Validate YAML template structure (supports both new and legacy formats)
  */
-const validateYamlTemplate = (template: any): template is YamlTemplate => {
+const validateYamlTemplate = (template: any): template is YamlTemplate | LegacyYamlTemplate => {
   if (!template || typeof template !== 'object') {
     console.error('Template must be an object')
     return false
@@ -122,60 +133,124 @@ const validateYamlTemplate = (template: any): template is YamlTemplate => {
     }
   }
 
-  if (!Array.isArray(template.shapes)) {
-    console.error('Template must have shapes array')
-    return false
+  // Check for new format (layers array)
+  if (Array.isArray(template.layers)) {
+    return true
   }
 
-  if (!Array.isArray(template.textInputs)) {
-    console.error('Template must have textInputs array')
-    return false
+  // Check for legacy format (shapes + textInputs arrays)
+  if (Array.isArray(template.shapes) && Array.isArray(template.textInputs)) {
+    return true
   }
 
-  return true
+  console.error('Template must have either layers array (new format) or shapes+textInputs arrays (legacy format)')
+  return false
 }
 
 /**
- * Convert YAML template to SimpleTemplate format
+ * Check if template uses the new layers format
  */
-const convertYamlToSimpleTemplate = (yamlTemplate: YamlTemplate): SimpleTemplate => {
-  // Calculate viewBox from shapes
-  const viewBox = calculateViewBox(yamlTemplate.shapes)
+const isNewFormat = (template: YamlTemplate | LegacyYamlTemplate): template is YamlTemplate => {
+  return 'layers' in template && Array.isArray(template.layers)
+}
 
-  // Convert shapes and text inputs to template elements
-  const elements: TemplateElement[] = []
+/**
+ * Convert legacy template to new format
+ */
+const convertLegacyToNew = (legacy: LegacyYamlTemplate): YamlTemplate => {
+  const layers: TemplateLayer[] = []
 
-  // Add shape elements
-  yamlTemplate.shapes.forEach((shape) => {
-    elements.push({
+  // Add shapes as shape layers
+  legacy.shapes.forEach((shape) => {
+    layers.push({
+      id: shape.id,
       type: 'shape',
-      zIndex: shape.zIndex,
-      shape: {
-        id: shape.id,
-        type: 'path',
-        path: convertShapeToPath(shape),
-        fill: shape.fill,
-        stroke: shape.stroke,
-        strokeWidth: shape.strokeWidth,
-        zIndex: shape.zIndex
-      }
+      subtype: shape.type, // Convert legacy type to subtype
+      position: shape.position,
+      width: shape.width,
+      height: shape.height,
+      rx: shape.rx,
+      ry: shape.ry,
+      points: shape.points,
+      stroke: shape.stroke,
+      strokeWidth: shape.strokeWidth,
+      fill: shape.fill,
+      opacity: shape.opacity,
+      zIndex: shape.zIndex
     })
   })
 
-  // Add text input elements
-  yamlTemplate.textInputs.forEach((textInput) => {
-    elements.push({
-      type: 'text',
-      zIndex: textInput.zIndex || 10,
-      textInput: {
-        id: textInput.id,
-        label: textInput.label,
-        placeholder: textInput.placeholder,
-        position: textInput.position,
-        maxLength: textInput.maxLength,
-        zIndex: textInput.zIndex || 10
-      }
+  // Add textInputs as textInput layers
+  legacy.textInputs.forEach((textInput) => {
+    layers.push({
+      id: textInput.id,
+      type: 'textInput',
+      label: textInput.label,
+      placeholder: textInput.placeholder,
+      position: textInput.position,
+      rotation: textInput.rotation,
+      clipPath: textInput.clipPath,
+      maxLength: textInput.maxLength,
+      zIndex: textInput.zIndex || 10
     })
+  })
+
+  return {
+    id: legacy.id,
+    name: legacy.name,
+    description: legacy.description,
+    category: legacy.category,
+    layers: layers.sort((a, b) => a.zIndex - b.zIndex)
+  }
+}
+
+/**
+ * Convert YAML template to SimpleTemplate format (supports both new and legacy formats)
+ */
+const convertYamlToSimpleTemplate = (rawTemplate: YamlTemplate | LegacyYamlTemplate): SimpleTemplate => {
+  // Convert legacy format to new format if needed
+  const yamlTemplate: YamlTemplate = isNewFormat(rawTemplate) ? rawTemplate : convertLegacyToNew(rawTemplate)
+
+  // Calculate viewBox from shape layers
+  const shapeLayers = yamlTemplate.layers.filter((layer): layer is TemplateShapeLayer => layer.type === 'shape')
+  const viewBox = calculateViewBoxFromLayers(shapeLayers)
+
+  // Convert layers to processed template layers
+  const layers: ProcessedTemplateLayer[] = []
+
+  yamlTemplate.layers.forEach((layer) => {
+    if (layer.type === 'shape') {
+      layers.push({
+        id: layer.id,
+        type: 'shape',
+        zIndex: layer.zIndex,
+        shape: {
+          id: layer.id,
+          type: 'path',
+          path: convertShapeLayerToPath(layer),
+          fill: layer.fill,
+          stroke: layer.stroke,
+          strokeWidth: layer.strokeWidth,
+          zIndex: layer.zIndex
+        }
+      })
+    } else if (layer.type === 'textInput') {
+      layers.push({
+        id: layer.id,
+        type: 'textInput',
+        zIndex: layer.zIndex,
+        textInput: {
+          id: layer.id,
+          label: layer.label,
+          placeholder: layer.placeholder,
+          position: layer.position,
+          rotation: layer.rotation,
+          clipPath: layer.clipPath,
+          maxLength: layer.maxLength,
+          zIndex: layer.zIndex
+        }
+      })
+    }
   })
 
   return {
@@ -184,12 +259,99 @@ const convertYamlToSimpleTemplate = (yamlTemplate: YamlTemplate): SimpleTemplate
     description: yamlTemplate.description,
     category: yamlTemplate.category,
     viewBox,
-    elements: elements.sort((a, b) => a.zIndex - b.zIndex)
+    layers: layers.sort((a, b) => a.zIndex - b.zIndex)
   }
 }
 
 /**
- * Calculate viewBox from shapes
+ * Calculate viewBox from shape layers
+ */
+const calculateViewBoxFromLayers = (shapeLayers: TemplateShapeLayer[]): { width: number; height: number } => {
+  let minX = Infinity
+  let minY = Infinity
+  let maxX = -Infinity
+  let maxY = -Infinity
+
+  shapeLayers.forEach((layer) => {
+    if (layer.subtype === 'line') {
+      const pos = layer.position as { x1: number; y1: number; x2: number; y2: number }
+      minX = Math.min(minX, pos.x1, pos.x2)
+      minY = Math.min(minY, pos.y1, pos.y2)
+      maxX = Math.max(maxX, pos.x1, pos.x2)
+      maxY = Math.max(maxY, pos.y1, pos.y2)
+    } else {
+      const pos = layer.position as { x: number; y: number }
+      const width = layer.width || 0
+      const height = layer.height || 0
+
+      minX = Math.min(minX, pos.x - width/2)
+      minY = Math.min(minY, pos.y - height/2)
+      maxX = Math.max(maxX, pos.x + width/2)
+      maxY = Math.max(maxY, pos.y + height/2)
+    }
+  })
+
+  // Add padding
+  const padding = 20
+  return {
+    width: Math.max(400, maxX - minX + padding * 2),
+    height: Math.max(400, maxY - minY + padding * 2)
+  }
+}
+
+/**
+ * Convert shape layer to SVG path
+ */
+const convertShapeLayerToPath = (layer: TemplateShapeLayer): string => {
+  const pos = layer.position as { x: number; y: number }
+
+  switch (layer.subtype) {
+    case 'rect':
+      const width = layer.width || 100
+      const height = layer.height || 100
+      const rx = layer.rx || 0
+      const ry = layer.ry || 0
+      const x = pos.x - width/2
+      const y = pos.y - height/2
+
+      if (rx > 0 || ry > 0) {
+        return `M${x + rx},${y} L${x + width - rx},${y} Q${x + width},${y} ${x + width},${y + ry} L${x + width},${y + height - ry} Q${x + width},${y + height} ${x + width - rx},${y + height} L${x + rx},${y + height} Q${x},${y + height} ${x},${y + height - ry} L${x},${y + ry} Q${x},${y} ${x + rx},${y} Z`
+      } else {
+        return `M${x},${y} L${x + width},${y} L${x + width},${y + height} L${x},${y + height} Z`
+      }
+
+    case 'circle':
+      const radius = (layer.width || 100) / 2
+      return `M${pos.x - radius},${pos.y} A${radius},${radius} 0 1,0 ${pos.x + radius},${pos.y} A${radius},${radius} 0 1,0 ${pos.x - radius},${pos.y} Z`
+
+    case 'ellipse':
+      const rWidth = (layer.width || 100) / 2
+      const rHeight = (layer.height || 50) / 2
+      return `M${pos.x - rWidth},${pos.y} A${rWidth},${rHeight} 0 1,0 ${pos.x + rWidth},${pos.y} A${rWidth},${rHeight} 0 1,0 ${pos.x - rWidth},${pos.y} Z`
+
+    case 'polygon':
+      if (layer.points) {
+        return `M${layer.points} Z`
+      }
+      // Default triangle if no points specified
+      return `M${pos.x},${pos.y - 50} L${pos.x + 50},${pos.y + 25} L${pos.x - 50},${pos.y + 25} Z`
+
+    case 'line':
+      const linePos = layer.position as { x1: number; y1: number; x2: number; y2: number }
+      return `M${linePos.x1},${linePos.y1} L${linePos.x2},${linePos.y2}`
+
+    default:
+      // Default to rectangle
+      const defWidth = layer.width || 100
+      const defHeight = layer.height || 100
+      const defX = pos.x - defWidth/2
+      const defY = pos.y - defHeight/2
+      return `M${defX},${defY} L${defX + defWidth},${defY} L${defX + defWidth},${defY + defHeight} L${defX},${defY + defHeight} Z`
+  }
+}
+
+/**
+ * Calculate viewBox from shapes (legacy)
  */
 const calculateViewBox = (shapes: TemplateShape[]): { width: number; height: number } => {
   let minX = Infinity
@@ -279,34 +441,57 @@ const convertShapeToPath = (shape: TemplateShape): string => {
  * Helper function to get ordered elements from any template (backward compatible)
  */
 export const getTemplateElements = (template: SimpleTemplate): TemplateElement[] => {
+  // New layers structure
+  if (template.layers) {
+    const elements: TemplateElement[] = []
+
+    template.layers.forEach((layer) => {
+      if (layer.type === 'shape') {
+        elements.push({
+          type: 'shape',
+          zIndex: layer.zIndex,
+          shape: layer.shape
+        })
+      } else if (layer.type === 'textInput') {
+        elements.push({
+          type: 'text',
+          zIndex: layer.zIndex,
+          textInput: layer.textInput
+        })
+      }
+    })
+
+    return elements.sort((a, b) => a.zIndex - b.zIndex)
+  }
+
+  // Legacy elements structure
   if (template.elements) {
-    // New structure - return sorted by zIndex
     return template.elements.sort((a, b) => a.zIndex - b.zIndex)
   }
 
-  // Legacy structure - convert to new format
+  // Very old legacy structure - convert to new format
   const elements: TemplateElement[] = []
 
   // Add shape element
-  if (template.path) {
+  if ((template as any).path) {
     elements.push({
       type: 'shape',
       zIndex: 1,
       shape: {
         id: 'legacy-shape',
         type: 'path',
-        path: template.path,
-        fill: template.fillColor,
-        stroke: template.strokeColor,
-        strokeWidth: template.strokeWidth,
+        path: (template as any).path,
+        fill: (template as any).fillColor,
+        stroke: (template as any).strokeColor,
+        strokeWidth: (template as any).strokeWidth,
         zIndex: 1
       }
     })
   }
 
   // Add text elements
-  if (template.textInputs) {
-    template.textInputs.forEach((textInput, index) => {
+  if ((template as any).textInputs) {
+    (template as any).textInputs.forEach((textInput: any, index: number) => {
       elements.push({
         type: 'text',
         zIndex: 2 + index,
@@ -322,12 +507,29 @@ export const getTemplateElements = (template: SimpleTemplate): TemplateElement[]
 }
 
 /**
+ * Helper function to get all text inputs from any template
+ */
+export const getTemplateTextInputs = (template: SimpleTemplate): TemplateTextInput[] => {
+  // New layers structure
+  if (template.layers) {
+    return template.layers
+      .filter((layer): layer is ProcessedTextInputLayer => layer.type === 'textInput')
+      .map(layer => layer.textInput)
+      .sort((a, b) => a.zIndex - b.zIndex)
+  }
+
+  // Legacy elements structure
+  const elements = getTemplateElements(template)
+  const textElements = elements.filter(el => el.type === 'text')
+  return textElements.map(el => el.textInput!).sort((a, b) => a.zIndex - b.zIndex)
+}
+
+/**
  * Helper function to get main text input from any template
  */
 export const getTemplateMainTextInput = (template: SimpleTemplate): TemplateTextInput | null => {
-  const elements = getTemplateElements(template)
-  const textElements = elements.filter(el => el.type === 'text')
-  return textElements.length > 0 ? textElements[0].textInput! : null
+  const textInputs = getTemplateTextInputs(template)
+  return textInputs.length > 0 ? textInputs[0] : null
 }
 
 /**

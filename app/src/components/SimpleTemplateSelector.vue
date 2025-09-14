@@ -116,8 +116,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { loadAllTemplates, getTemplateElements } from '../config/template-loader'
-import type { SimpleTemplate } from '../../templates/types'
+import { loadAllTemplates, getTemplateElements, getDefaultTemplate } from '../config/template-loader'
+import type { SimpleTemplate } from '../types/template-types'
 
 interface Props {
   selectedTemplate?: SimpleTemplate | null
@@ -139,11 +139,6 @@ const isOpen = ref(false)
 // Available templates (loaded dynamically)
 const templates = ref<SimpleTemplate[]>([])
 
-// Load templates on mount
-onMounted(async () => {
-  templates.value = await loadAllTemplates()
-})
-
 // Template selection handler
 const selectTemplate = (template: SimpleTemplate) => {
   emit('update:selectedTemplate', template)
@@ -160,18 +155,23 @@ const handleClickOutside = (event: MouseEvent) => {
   }
 }
 
-onMounted(() => {
+// Load templates on mount and initialize with default template if none selected
+onMounted(async () => {
   document.addEventListener('click', handleClickOutside)
+
+  templates.value = await loadAllTemplates()
+
+  if (!props.selectedTemplate && templates.value.length > 0) {
+    const defaultTemplate = await getDefaultTemplate()
+    if (defaultTemplate) {
+      selectTemplate(defaultTemplate)
+    }
+  }
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
 })
-
-// Initialize with default template if none selected
-if (!props.selectedTemplate) {
-  selectTemplate(getDefaultTemplate())
-}
 </script>
 
 <style scoped>

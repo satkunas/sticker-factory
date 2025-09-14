@@ -2,6 +2,7 @@ import { ref, computed, readonly } from 'vue'
 import { DEFAULT_FONT, type FontConfig } from '../config/fonts'
 import type { SimpleTemplate, TemplateTextInput } from '../types/template-types'
 import { getDefaultTemplate } from '../config/template-loader'
+import { DEFAULT_TEMPLATE } from '../config/templates'
 
 export interface AppState {
   // Template system
@@ -45,14 +46,24 @@ const writeQueue: (() => void)[] = []
 
 // Helper function to create default arrays based on template
 const createDefaultTextArrays = (template: SimpleTemplate) => {
-  const length = template.textInputs.length
+  // Get text inputs from the new structure (elements) or legacy structure (textInputs)
+  const textElements = template.elements
+    ? template.elements.filter(el => el.type === 'text')
+    : []
+  const textInputs = template.textInputs || []
+
+  // Use the larger of the two counts for compatibility
+  const length = Math.max(textElements.length, textInputs.length, 1) // At least 1 for legacy
+
   return {
     texts: Array(length).fill(''),
     colors: Array(length).fill('#ffffff'),
     fonts: Array(length).fill(null),
     fontSizes: Array(length).fill(16),
     fontWeights: Array(length).fill(400),
-    rotations: template.elements.filter(el => el.type === 'text').map(el => el.textInput?.zIndex || 0),
+    rotations: textElements.length > 0
+      ? textElements.map(el => el.textInput?.zIndex || 0)
+      : Array(length).fill(0),
     strokeWidths: Array(length).fill(0),
     strokeColors: Array(length).fill('#000000'),
     strokeLinejoins: Array(length).fill('round')
@@ -362,7 +373,7 @@ export const useTemplateStore = () => {
   })
 
   // Template mutations
-  const setSelectedTemplate = async (template: Template) => {
+  const setSelectedTemplate = async (template: SimpleTemplate) => {
     loadFromStorage()
     _state.value.selectedTemplate = template
 

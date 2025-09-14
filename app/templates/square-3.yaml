@@ -2,9 +2,10 @@ name: "Square - Three Sections"
 id: "square-3"
 description: "Square with three horizontal sections"
 category: "square"
-shapes:
+layers:
   - id: "background"
-    type: "rect"
+    type: "shape"
+    subtype: "rect"
     position: { x: 50, y: 50 }
     width: 200
     height: 200
@@ -15,7 +16,8 @@ shapes:
     fill: "#f97316"
     zIndex: 1
   - id: "top-section"
-    type: "rect"
+    type: "shape"
+    subtype: "rect"
     position: { x: 50, y: 25 }
     width: 180
     height: 50
@@ -26,7 +28,8 @@ shapes:
     opacity: 0.2
     zIndex: 2
   - id: "bottom-section"
-    type: "rect"
+    type: "shape"
+    subtype: "rect"
     position: { x: 50, y: 75 }
     width: 180
     height: 50
@@ -37,33 +40,40 @@ shapes:
     opacity: 0.1
     zIndex: 2
   - id: "divider-1"
-    type: "line"
+    type: "shape"
+    subtype: "line"
     position: { x1: 20, y1: 50, x2: 180, y2: 50 }
     stroke: "#ffffff"
     strokeWidth: 1
     zIndex: 3
   - id: "divider-2"
-    type: "line"
+    type: "shape"
+    subtype: "line"
     position: { x1: 20, y1: 100, x2: 180, y2: 100 }
     stroke: "#ffffff"
     strokeWidth: 1
     zIndex: 3
-textInputs:
   - id: "header"
+    type: "textInput"
     label: "Header"
     position: { x: 50, y: 25 }
     rotation: 0
     clipPath: "rect(10px, 180px, 40px, 20px)"
     maxLength: 10
+    zIndex: 10
   - id: "middle"
+    type: "textInput"
     label: "Middle"
     position: { x: 50, y: 50 }
     rotation: 0
     clipPath: "rect(45px, 185px, 55px, 45px)"
     maxLength: 12
+    zIndex: 11
   - id: "footer"
+    type: "textInput"
     label: "Footer"
     position: { x: 50, y: 75 }
     rotation: 0
     clipPath: "rect(60px, 180px, 90px, 60px)"
     maxLength: 8
+    zIndex: 12

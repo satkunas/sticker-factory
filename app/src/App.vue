@@ -75,8 +75,33 @@
               @update:selectedTemplate="handleTemplateSelection"
             />
 
-            <!-- Text Input with Dynamic Label -->
-            <div v-if="selectedTemplate && getTemplateMainTextInput(selectedTemplate)">
+            <!-- Dynamic Text Inputs -->
+            <div v-for="(textInput, index) in textInputs" :key="textInput.id" class="space-y-2">
+              <FormLabel :text="`${getTextInputLabel(selectedTemplate, textInput.id)} ${textInputs.length > 1 ? '(' + (index + 1) + ')' : ''}`" />
+              <TextInputWithFontSelector
+                :model-value="textInput.text"
+                @update:model-value="(text) => handleTextInputUpdate(index, text)"
+                :selected-font="textInput.font"
+                :font-size="textInput.fontSize"
+                :font-weight="textInput.fontWeight"
+                :text-color="textInput.textColor"
+                :text-stroke-width="textInput.strokeWidth"
+                :text-stroke-color="textInput.strokeColor"
+                :text-stroke-linejoin="'round'"
+                @update:selected-font="(font) => handleTextInputFontUpdate(index, font)"
+                @update:font-size="(size) => handleTextInputFontSizeUpdate(index, size)"
+                @update:font-weight="(weight) => handleTextInputFontWeightUpdate(index, weight)"
+                @update:text-color="(color) => handleTextInputTextColorUpdate(index, color)"
+                @update:text-stroke-width="(width) => handleTextInputStrokeWidthUpdate(index, width)"
+                @update:text-stroke-color="(color) => handleTextInputStrokeColorUpdate(index, color)"
+                @update:text-stroke-linejoin="() => {}"
+                :placeholder="getTextInputPlaceholder(selectedTemplate, textInput.id)"
+                :instance-id="`textInput-${index}`"
+              />
+            </div>
+
+            <!-- Fallback single text input for backward compatibility -->
+            <div v-if="(!textInputs || textInputs.length === 0) && selectedTemplate && getTemplateMainTextInput(selectedTemplate)">
               <FormLabel :text="getTemplateMainTextInput(selectedTemplate)?.label || 'Text'" />
               <TextInputWithFontSelector
                 :model-value="badgeText"
@@ -85,10 +110,16 @@
                 :font-size="fontSize"
                 :font-weight="fontWeight"
                 :text-color="textColor"
+                :text-stroke-width="strokeWidth"
+                :text-stroke-color="strokeColor"
+                :text-stroke-linejoin="'round'"
                 @update:selected-font="handleFontUpdate"
                 @update:font-size="handleFontSizeUpdate"
                 @update:font-weight="handleFontWeightUpdate"
                 @update:text-color="handleTextColorUpdate"
+                @update:text-stroke-width="handleStrokeWidthUpdate"
+                @update:text-stroke-color="handleStrokeColorUpdate"
+                @update:text-stroke-linejoin="() => {}"
                 :placeholder="getTemplateMainTextInput(selectedTemplate)?.placeholder || 'Enter your text...'"
               />
             </div>
@@ -119,6 +150,7 @@
         :width="svgWidth"
         :height="svgHeight"
         :template="selectedTemplate"
+        :text-inputs="textInputs"
       />
     </main>
 
@@ -160,7 +192,7 @@ import FormLabel from './components/FormLabel.vue'
 import SvgViewer from './components/SvgViewer.vue'
 import SimpleTemplateSelector from './components/SimpleTemplateSelector.vue'
 import TemplateAwareSvgViewer from './components/TemplateAwareSvgViewer.vue'
-import { getDefaultTemplate, getTemplateMainTextInput } from './config/template-loader'
+import { getDefaultTemplate, getTemplateMainTextInput, getTemplateTextInputs, loadTemplate } from './config/template-loader'
 import type { SimpleTemplate } from './types/template-types'
 
 // Store
@@ -177,6 +209,8 @@ const showMobileMenu = ref(false)
 const selectedTemplate = ref<SimpleTemplate | null>(null)
 
 // Form data - connected to store
+const textInputs = computed(() => store.textInputs.value)
+const selectedTemplateId = computed(() => store.selectedTemplateId.value)
 const badgeText = computed(() => store.badgeText.value)
 const badgeColor = computed(() => store.badgeColor.value)
 const textColor = computed(() => store.textColor.value)
@@ -207,13 +241,34 @@ const svgHeight = computed(() => {
 // Initialize store and templates
 onMounted(async () => {
   // Store initialization happens automatically through computed properties
-  // Load default template
-  selectedTemplate.value = await getDefaultTemplate()
+
+  // Try to restore template from localStorage
+  if (selectedTemplateId.value) {
+    selectedTemplate.value = await loadTemplate(selectedTemplateId.value)
+  }
+
+  // If no template or template failed to load, use default
+  if (!selectedTemplate.value) {
+    selectedTemplate.value = await getDefaultTemplate()
+    // Save the default template ID to store
+    if (selectedTemplate.value) {
+      await store.setSelectedTemplateId(selectedTemplate.value.id)
+    }
+  }
+
+  // Initialize textInputs array from template if they don't exist
+  if (selectedTemplate.value && (!textInputs.value || textInputs.value.length === 0)) {
+    await store.initializeTextInputsFromTemplate(selectedTemplate.value)
+  }
 })
 
 // Template handlers
-const handleTemplateSelection = (template: SimpleTemplate) => {
+const handleTemplateSelection = async (template: SimpleTemplate) => {
   selectedTemplate.value = template
+  // Save template ID to localStorage
+  await store.setSelectedTemplateId(template.id)
+  // Initialize textInputs array from template
+  await store.initializeTextInputsFromTemplate(template)
 }
 
 // Text input handlers
@@ -237,6 +292,57 @@ const handleTextColorUpdate = async (color: string) => {
   await store.updateState({ textColor: color })
 }
 
+const handleStrokeWidthUpdate = async (width: number) => {
+  await store.updateState({ strokeWidth: width })
+}
+
+const handleStrokeColorUpdate = async (color: string) => {
+  await store.updateState({ strokeColor: color })
+}
+
+// Multi-text input handlers
+const handleTextInputUpdate = async (index: number, text: string) => {
+  await store.updateTextInput(index, { text })
+}
+
+const handleTextInputFontUpdate = async (index: number, font: any) => {
+  await store.updateTextInput(index, { font })
+}
+
+const handleTextInputFontSizeUpdate = async (index: number, fontSize: number) => {
+  await store.updateTextInput(index, { fontSize })
+}
+
+const handleTextInputFontWeightUpdate = async (index: number, fontWeight: number) => {
+  await store.updateTextInput(index, { fontWeight })
+}
+
+const handleTextInputTextColorUpdate = async (index: number, textColor: string) => {
+  await store.updateTextInput(index, { textColor })
+}
+
+const handleTextInputStrokeWidthUpdate = async (index: number, strokeWidth: number) => {
+  await store.updateTextInput(index, { strokeWidth })
+}
+
+const handleTextInputStrokeColorUpdate = async (index: number, strokeColor: string) => {
+  await store.updateTextInput(index, { strokeColor })
+}
+
+// Helper functions for template text inputs
+const getTextInputLabel = (template: SimpleTemplate | null, textInputId: string): string => {
+  if (!template) return 'Text'
+  const textInputs = getTemplateTextInputs(template)
+  const textInput = textInputs.find(input => input.id === textInputId)
+  return textInput?.label || 'Text'
+}
+
+const getTextInputPlaceholder = (template: SimpleTemplate | null, textInputId: string): string => {
+  if (!template) return 'Enter your text...'
+  const textInputs = getTemplateTextInputs(template)
+  const textInput = textInputs.find(input => input.id === textInputId)
+  return textInput?.placeholder || 'Enter your text...'
+}
 
 // Menu functions
 const toggleMobileMenu = () => {

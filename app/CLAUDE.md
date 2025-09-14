@@ -30,11 +30,11 @@ npm run lint
 ### Component Hierarchy
 ```
 App.vue
-├── TextInputWithFontSelector.vue
+├── SimpleTemplateSelector.vue
+├── TextInputWithFontSelector.vue (multiple instances)
 │   └── ExpandableFontSelector.vue
 │       └── FontTile.vue
-├── SvgViewer.vue
-│   └── BadgeSvg.vue
+├── TemplateAwareSvgViewer.vue
 ├── ColorPicker.vue
 ├── ExportModal.vue
 ├── ImportModal.vue
@@ -42,54 +42,183 @@ App.vue
 ```
 
 ### State Management
-- **Pinia store** (`src/stores/index.ts`) for global state with localStorage persistence
+- **Pinia-style store** (`src/stores/index.ts`) for global state with localStorage persistence
+- **Multi-text input system** with individual styling per text input
+- **Template persistence** with automatic restoration on page load
 - **Provide/Inject** for expandable font selector states
 - **Props/Emit** pattern for component communication
-- **localStorage persistence** for all form values including font size, weight, and color
+- **localStorage persistence** for all form values, templates, and text input arrays
 
 ### Key Data Flow
-1. User interacts with `TextInputWithFontSelector`
-2. Props flow: App → TextInput → ExpandableFontSelector → FontTile
-3. Events bubble up: FontTile → ExpandableFontSelector → TextInput → App
-4. App updates `SvgViewer` with new styling props
-5. `SvgViewer` passes props to `BadgeSvg` for rendering
+1. User selects template → `SimpleTemplateSelector` → App updates `selectedTemplate`
+2. Template selection triggers `store.initializeTextInputsFromTemplate()` → creates `textInputs[]` array
+3. Dynamic form generation: App renders multiple `TextInputWithFontSelector` instances
+4. Each text input manages its own: font, size, weight, color, stroke properties
+5. User interactions update specific `textInputs[index]` via `store.updateTextInput()`
+6. `TemplateAwareSvgViewer` receives `textInputs` array and renders each with individual styling
+7. Template and form data automatically persist to localStorage
 
 ## 📝 Recent Development History
 
 ### Major Features Implemented
-1. **Inline Accordion Design** - Replaced modal with expandable font selector
-2. **Font Collection Expansion** - Grew from 48 to 661+ fonts across 6 categories with multiple sources
-3. **Advanced Typography Controls** - Font size (8-500px), dynamic weight selection, color picker
-4. **Real-time Preview** - Text input shows selected font styling
-5. **Responsive Layout** - Full-width font selection with mobile support
-6. **SVG Integration** - User-controlled font size and weight in SVG output
-7. **Persistent Settings** - All form values saved to localStorage and restored on reload
-8. **Auto-scroll Font Selection** - Automatically scrolls to selected font when expanded
-9. **Enhanced UX** - Clear search button, improved loading performance, header download button
+1. **Flattened Template System** - Unified `layers` array replacing separate `shapes` + `textInputs`
+2. **Multi-Text Input Support** - Dynamic form generation for templates with multiple text inputs
+3. **Individual Text Styling** - Each text input has independent font, size, weight, color, stroke properties
+4. **Template Persistence** - Selected templates and form data saved/restored from localStorage
+5. **zIndex-Based Rendering** - Proper layering with text above shapes based on template configuration
+6. **Dynamic Form Generation** - Forms automatically adapt to template structure
+7. **Backward Compatibility** - Legacy single-text mode still supported
+8. **Inline Accordion Design** - Expandable font selector for each text input
+9. **Font Collection Expansion** - 661+ fonts across 6 categories with multiple sources
+10. **Advanced Typography Controls** - Font size (8-500px), dynamic weight selection, color picker
+11. **Real-time Preview** - Text input shows selected font styling
+12. **Responsive Layout** - Full-width font selection with mobile support
+13. **Auto-scroll Font Selection** - Automatically scrolls to selected font when expanded
+14. **Enhanced UX** - Clear search button, improved loading performance, header download button
 
-### Component Refactoring
-- **Consolidated font controls** into single accordion interface
-- **Removed verbose labeling** and unnecessary preview toggles
-- **Optimized color selection** with compact picker and preset swatches
-- **Dynamic font weight filtering** based on Google Fonts availability
+### Recent Architecture Changes (Latest)
+- **Template System Overhaul** - Flattened architecture with unified layers
+- **Multi-Text Input Store** - Array-based state management for multiple text inputs
+- **Dynamic Component Rendering** - Form components generated based on template structure
+- **Enhanced Persistence** - Template selection and multi-text state persistence
+- **zIndex Ordering Fixes** - Proper text-above-shapes rendering
+
+## 🎯 Template System Architecture
+
+### Flattened Layers Structure
+```yaml
+# New unified template format (app/templates/*.yaml)
+name: "Square - Three Sections"
+id: "square-3"
+description: "Square with three horizontal sections"
+category: "square"
+layers:
+  - id: "background"
+    type: "shape"
+    subtype: "rect"
+    position: { x: 50, y: 50 }
+    width: 200
+    height: 200
+    stroke: "#ea580c"
+    strokeWidth: 2
+    fill: "#f97316"
+    zIndex: 1
+  - id: "header"
+    type: "textInput"
+    label: "Header"
+    position: { x: 50, y: 25 }
+    maxLength: 10
+    zIndex: 10
+```
+
+### Template Processing Pipeline
+```typescript
+// 1. YAML Template → SimpleTemplate (processed for rendering)
+const template = await loadTemplate('square-3')
+
+// 2. Extract text inputs from template
+const textInputs = getTemplateTextInputs(template)
+
+// 3. Initialize state for each text input
+await store.initializeTextInputsFromTemplate(template)
+
+// 4. Render ordered elements (shapes + text with proper zIndex)
+const elements = getTemplateElements(template)
+elements.sort((a, b) => a.zIndex - b.zIndex)
+```
+
+### Multi-Text Input State Management
+```typescript
+interface TextInputState {
+  id: string           // Matches textInput layer ID
+  text: string         // User's input text
+  font: FontConfig     // Selected font
+  fontSize: number     // Individual font size
+  fontWeight: number   // Individual font weight
+  textColor: string    // Individual text color
+  strokeWidth: number  // Individual stroke width
+  strokeColor: string  // Individual stroke color
+  strokeOpacity: number
+}
+
+// Store manages array of text inputs
+textInputs: TextInputState[] = [
+  { id: 'header', text: 'Hello', font: roboto, fontSize: 18, ... },
+  { id: 'middle', text: 'World', font: arial, fontSize: 16, ... },
+  { id: 'footer', text: '2024', font: mono, fontSize: 12, ... }
+]
+```
+
+### Dynamic Form Generation
+```vue
+<!-- App.vue generates forms dynamically -->
+<div v-for="(textInput, index) in textInputs" :key="textInput.id">
+  <FormLabel :text="`${getTextInputLabel(template, textInput.id)} (${index + 1})`" />
+  <TextInputWithFontSelector
+    :model-value="textInput.text"
+    @update:model-value="(text) => handleTextInputUpdate(index, text)"
+    :selected-font="textInput.font"
+    :font-size="textInput.fontSize"
+    :font-weight="textInput.fontWeight"
+    :text-color="textInput.textColor"
+    :text-stroke-width="textInput.strokeWidth"
+    :text-stroke-color="textInput.strokeColor"
+    @update:selected-font="(font) => handleTextInputFontUpdate(index, font)"
+    @update:font-size="(size) => handleTextInputFontSizeUpdate(index, size)"
+    <!-- ... other individual property handlers ... -->
+  />
+</div>
+```
+
+### SVG Rendering with Individual Styling
+```vue
+<!-- TemplateAwareSvgViewer.vue renders each text with its own properties -->
+<text v-for="element in templateElements"
+      v-if="element.type === 'text' && element.textInput"
+      :x="element.textInput.position.x"
+      :y="element.textInput.position.y"
+      :font-family="getTextInputData(element.textInput.id)?.font"
+      :font-size="getTextInputData(element.textInput.id)?.fontSize"
+      :font-weight="getTextInputData(element.textInput.id)?.fontWeight"
+      :fill="getTextInputData(element.textInput.id)?.textColor"
+      :stroke="getTextInputData(element.textInput.id)?.strokeColor">
+  {{ getTextInputData(element.textInput.id)?.text }}
+</text>
+```
 
 ## 🎨 Design Patterns
 
-### Accordion Interface
+### Multi-Text Form Pattern
 ```vue
-<!-- Text input with arrow icon -->
-<input class="input-field w-full pr-10" />
-<button @click="toggleExpanded">
-  <svg :class="{ 'rotate-180': isExpanded }">
-    <!-- Arrow icon -->
-  </svg>
-</button>
+<!-- Dynamic form generation based on template -->
+<div v-for="(textInput, index) in textInputs" :key="textInput.id" class="space-y-2">
+  <FormLabel :text="`${getTextInputLabel(template, textInput.id)} ${textInputs.length > 1 ? '(' + (index + 1) + ')' : ''}`" />
+  <TextInputWithFontSelector
+    :model-value="textInput.text"
+    :selected-font="textInput.font"
+    :font-size="textInput.fontSize"
+    :font-weight="textInput.fontWeight"
+    :text-color="textInput.textColor"
+    :text-stroke-width="textInput.strokeWidth"
+    :text-stroke-color="textInput.strokeColor"
+    :instance-id="`textInput-${index}`"
+    @update:model-value="(text) => handleTextInputUpdate(index, text)"
+    @update:selected-font="(font) => handleTextInputFontUpdate(index, font)"
+    @update:font-size="(size) => handleTextInputFontSizeUpdate(index, size)"
+    @update:font-weight="(weight) => handleTextInputFontWeightUpdate(index, weight)"
+    @update:text-color="(color) => handleTextInputTextColorUpdate(index, color)"
+    @update:text-stroke-width="(width) => handleTextInputStrokeWidthUpdate(index, width)"
+    @update:text-stroke-color="(color) => handleTextInputStrokeColorUpdate(index, color)"
+  />
+</div>
 
-<!-- Expandable content -->
-<div v-if="isExpanded" class="accordion-content">
-  <!-- Font selection interface -->
+<!-- Fallback for backward compatibility -->
+<div v-if="(!textInputs || textInputs.length === 0) && selectedTemplate">
+  <!-- Legacy single text input -->
 </div>
 ```
+
+### Accordion Interface
 
 ### Font Weight Validation
 ```typescript
@@ -156,14 +285,31 @@ export const loadFont = async (font: FontConfig): Promise<void> => {
 ### Persisted Values
 ```typescript
 interface AppState {
-  badgeText: string        // User's text input
-  badgeColor: string       // Background color
-  badgeFont: FontConfig    // Selected font family
-  fontSize: number         // Font size (8-500px)
-  fontWeight: number       // Font weight (100-900)
-  textColor: string        // Text color
-  svgContent: string       // Generated SVG content
-  lastModified: number     // Timestamp for sync
+  // New multi-text input system
+  textInputs: TextInputState[]    // Array of text inputs with individual styling
+  selectedTemplateId: string | null  // Selected template for restoration
+
+  // Legacy single-text properties (for backward compatibility)
+  badgeText: string               // User's text input
+  badgeColor: string              // Background color
+  badgeFont: FontConfig           // Selected font family
+  fontSize: number                // Font size (8-500px)
+  fontWeight: number              // Font weight (100-900)
+  textColor: string               // Text color
+  svgContent: string              // Generated SVG content
+  lastModified: number            // Timestamp for sync
+}
+
+interface TextInputState {
+  id: string                      // Matches template textInput layer ID
+  text: string                    // User's input text
+  font: FontConfig | null         // Individual font selection
+  fontSize: number                // Individual font size
+  fontWeight: number              // Individual font weight
+  textColor: string               // Individual text color
+  strokeWidth: number             // Individual stroke width
+  strokeColor: string             // Individual stroke color
+  strokeOpacity: number           // Individual stroke opacity
 }
 ```
 
@@ -249,13 +395,33 @@ interface Props {
 ## 📋 Testing Strategy
 
 ### Manual Testing Checklist
-- [ ] Font selection updates text input styling
-- [ ] Font size slider works (8-500px range)
-- [ ] Font weight buttons show only available weights
-- [ ] Color picker updates both preview and SVG
-- [ ] SVG viewer reflects all styling changes
-- [ ] Mobile responsive design works
-- [ ] Export/import functionality
+
+#### Template System
+- [ ] Template selection saves to localStorage and restores on reload
+- [ ] Dynamic form generation works for templates with multiple text inputs
+- [ ] Template switching properly initializes new textInputs array
+- [ ] zIndex ordering renders text above shapes
+
+#### Multi-Text Input System
+- [ ] Each text input has independent font selection
+- [ ] Each text input has independent size control (8-500px)
+- [ ] Each text input has independent weight selection
+- [ ] Each text input has independent color picker
+- [ ] Each text input has independent stroke width/color
+- [ ] Form data persists across page reloads
+- [ ] Multiple text inputs render correctly in SVG with individual styling
+
+#### Legacy Compatibility
+- [ ] Single-text templates still work (backward compatibility)
+- [ ] Legacy localStorage data migrates properly
+- [ ] Fallback rendering works when no textInputs exist
+
+#### Core Functionality
+- [ ] Font selection updates text input styling preview
+- [ ] Font weight buttons show only available weights for selected font
+- [ ] SVG viewer reflects all styling changes in real-time
+- [ ] Mobile responsive design works with dynamic forms
+- [ ] Export/import functionality works with new data structure
 
 ### Automated Testing (Future)
 - Component unit tests with Vitest
