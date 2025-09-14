@@ -39,7 +39,7 @@
       :text-stroke-width="textStrokeWidth"
       :text-stroke-color="textStrokeColor"
       :text-stroke-linejoin="textStrokeLinejoin"
-      :badge-text="modelValue"
+      :sticker-text="modelValue"
       :instance-id="instanceId"
       @update:selected-font="$emit('update:selectedFont', $event)"
       @update:text-color="$emit('update:textColor', $event)"

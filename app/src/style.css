@@ -27,7 +27,7 @@
     @apply bg-white rounded-xl shadow-lg border border-secondary-100;
   }
   
-  .badge-preview {
+  .sticker-preview {
     @apply flex items-center justify-center p-8 bg-gradient-to-br from-secondary-50 to-secondary-100 rounded-lg border-2 border-dashed border-secondary-300;
   }
 }

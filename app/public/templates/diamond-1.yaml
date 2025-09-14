@@ -1,0 +1,20 @@
+name: "Diamond - Simple"
+id: "diamond-1"
+description: "Simple diamond with centered text"
+category: "diamond"
+shapes:
+  - id: "background"
+    type: "polygon"
+    position: { x: 50, y: 50 }
+    points: "0,-80 80,0 0,80 -80,0"
+    stroke: "#7c2d12"
+    strokeWidth: 3
+    fill: "#ea580c"
+    zIndex: 1
+textInputs:
+  - id: "main"
+    label: "Text"
+    position: { x: 50, y: 50 }
+    rotation: 0
+    clipPath: "polygon(50px 10px, 90px 50px, 50px 90px, 10px 50px)"
+    maxLength: 12

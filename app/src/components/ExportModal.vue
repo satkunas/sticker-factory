@@ -2,7 +2,7 @@
   <Modal :show="show" title="Export Data" @close="$emit('close')">
     <div class="space-y-4">
       <p class="text-sm text-secondary-600">
-        Export your badge data as JSON. You can copy the text or download as a file.
+        Export your sticker data as JSON. You can copy the text or download as a file.
       </p>
       
       <!-- JSON Display -->

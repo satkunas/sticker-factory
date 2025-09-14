@@ -4,9 +4,9 @@
     <header class="bg-white shadow-sm border-b border-secondary-200 flex-shrink-0">
       <div class="flex items-center justify-between px-4 h-14">
         <h1 class="text-lg font-semibold text-secondary-900">Sticker Factory</h1>
-        
+
         <!-- Mobile menu button -->
-        <button 
+        <button
           @click="toggleMobileMenu"
           class="lg:hidden p-2 rounded-md text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100"
         >
@@ -17,7 +17,7 @@
 
         <!-- Desktop menu -->
         <nav class="hidden lg:flex space-x-4">
-          <button 
+          <button
             @click="downloadSVG"
             class="flex items-center space-x-1 px-3 py-1.5 bg-primary-600 text-white text-sm rounded-md hover:bg-primary-700 transition-colors"
           >
@@ -44,8 +44,8 @@
             </button>
           </div>
           <nav class="p-4 space-y-4">
-            <button 
-              @click="downloadSVG; showMobileMenu = false" 
+            <button
+              @click="downloadSVG; showMobileMenu = false"
               class="flex items-center space-x-2 w-full px-3 py-2 bg-primary-600 text-white text-sm rounded-md hover:bg-primary-700 transition-colors"
             >
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -66,38 +66,38 @@
       <!-- Form Pane -->
       <div class="w-full lg:w-1/2 p-6 bg-white border-r border-secondary-200 lg:min-h-0">
         <div class="w-full">
-          <h2 class="text-xl font-semibold text-secondary-900 mb-6">Sticker Settings</h2>
-          
-          <div class="space-y-4">
+          <h2 class="text-xl font-semibold text-secondary-900 mb-6">Sticker Design</h2>
+
+          <div class="space-y-6">
+            <!-- Template Selector -->
+            <SimpleTemplateSelector
+              :selected-template="selectedTemplate"
+              @update:selectedTemplate="handleTemplateSelection"
+            />
+
+            <!-- Text Input with Dynamic Label -->
+            <div v-if="selectedTemplate && getTemplateMainTextInput(selectedTemplate)">
+              <FormLabel :text="getTemplateMainTextInput(selectedTemplate)?.label || 'Text'" />
+              <TextInputWithFontSelector
+                :model-value="badgeText"
+                @update:model-value="handleTextUpdate"
+                :selected-font="selectedFont"
+                :font-size="fontSize"
+                :font-weight="fontWeight"
+                :text-color="textColor"
+                @update:selected-font="handleFontUpdate"
+                @update:font-size="handleFontSizeUpdate"
+                @update:font-weight="handleFontWeightUpdate"
+                @update:text-color="handleTextColorUpdate"
+                :placeholder="getTemplateMainTextInput(selectedTemplate)?.placeholder || 'Enter your text...'"
+              />
+            </div>
+
             <!-- Background Color -->
             <div class="max-w-md">
               <FormLabel text="Background Color" />
-              <ColorPicker 
+              <ColorPicker
                 v-model="badgeColor"
-              />
-            </div>
-            
-            <!-- Text Input with Integrated Font & Color Selector -->
-            <div class="w-full">
-              <FormLabel text="Text" />
-              <TextInputWithFontSelector
-                v-model="badgeText"
-                placeholder="Enter text..."
-                :selected-font="selectedFont"
-                :text-color="textColor"
-                :font-size="fontSize"
-                :font-weight="fontWeight"
-                :text-stroke-width="textStrokeWidth"
-                :text-stroke-color="textStrokeColor"
-                :text-stroke-linejoin="textStrokeLinejoin"
-                instance-id="main"
-                @update:selected-font="selectedFont = $event"
-                @update:text-color="textColor = $event"
-                @update:font-size="fontSize = $event"
-                @update:font-weight="fontWeight = $event"
-                @update:text-stroke-width="textStrokeWidth = $event"
-                @update:text-stroke-color="textStrokeColor = $event"
-                @update:text-stroke-linejoin="textStrokeLinejoin = $event"
               />
             </div>
           </div>
@@ -105,33 +105,34 @@
       </div>
 
       <!-- SVG Viewer Pane -->
-      <SvgViewer
+      <TemplateAwareSvgViewer
         ref="svgViewerRef"
-        :text="badgeText"
-        :background-color="badgeColor"
+        :sticker-text="badgeText"
+        :sticker-color="badgeColor"
         :text-color="textColor"
-        :width="svgWidth"
-        :height="svgHeight"
+        :font="selectedFont"
         :font-size="fontSize"
         :font-weight="fontWeight"
-        :text-stroke-width="textStrokeWidth"
-        :text-stroke-color="textStrokeColor"
-        :text-stroke-linejoin="textStrokeLinejoin"
-        :font="selectedFont"
+        :stroke-color="strokeColor"
+        :stroke-width="strokeWidth"
+        :stroke-opacity="strokeOpacity"
+        :width="svgWidth"
+        :height="svgHeight"
+        :template="selectedTemplate"
       />
     </main>
 
     <!-- Modals -->
-    <ExportModal 
-      :show="showExportModal" 
-      @close="showExportModal = false" 
+    <ExportModal
+      :show="showExportModal"
+      @close="showExportModal = false"
     />
-    
-    <ImportModal 
-      :show="showImportModal" 
-      @close="showImportModal = false" 
+
+    <ImportModal
+      :show="showImportModal"
+      @close="showImportModal = false"
     />
-    
+
     <DownloadModal
       :show="showDownloadModal"
       :badge-text="badgeText"
@@ -139,28 +140,28 @@
       :text-color="textColor"
       :font-size="fontSize"
       :font-weight="fontWeight"
-      :text-stroke-width="textStrokeWidth"
-      :text-stroke-color="textStrokeColor"
+      :text-stroke-width="strokeWidth"
+      :text-stroke-color="strokeColor"
       :font="selectedFont"
       @close="showDownloadModal = false"
     />
-
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, provide } from 'vue'
 import { useStore } from './stores'
-import BadgeSvg from './components/BadgeSvg.vue'
 import ExportModal from './components/ExportModal.vue'
 import ImportModal from './components/ImportModal.vue'
 import DownloadModal from './components/DownloadModal.vue'
-import TextInput from './components/TextInput.vue'
+import TextInputWithFontSelector from './components/TextInputWithFontSelector.vue'
 import ColorPicker from './components/ColorPicker.vue'
 import FormLabel from './components/FormLabel.vue'
 import SvgViewer from './components/SvgViewer.vue'
-import TextInputWithFontSelector from './components/TextInputWithFontSelector.vue'
-import { getFontFamily } from './config/fonts'
+import SimpleTemplateSelector from './components/SimpleTemplateSelector.vue'
+import TemplateAwareSvgViewer from './components/TemplateAwareSvgViewer.vue'
+import { getDefaultTemplate, getTemplateMainTextInput } from './config/template-loader'
+import type { SimpleTemplate } from './types/template-types'
 
 // Store
 const store = useStore()
@@ -172,16 +173,19 @@ provide('expandedFontSelectors', expandedFontSelectors)
 // Mobile menu
 const showMobileMenu = ref(false)
 
+// Template system (always enabled)
+const selectedTemplate = ref<SimpleTemplate | null>(null)
+
 // Form data - connected to store
-const badgeText = ref('')
-const badgeColor = ref('#22c55e')
-const textColor = ref('#ffffff')
-const selectedFont = ref(null)
-const fontSize = ref(16)
-const fontWeight = ref(400)
-const textStrokeWidth = ref(0)
-const textStrokeColor = ref('#000000')
-const textStrokeLinejoin = ref('round')
+const badgeText = computed(() => store.badgeText.value)
+const badgeColor = computed(() => store.badgeColor.value)
+const textColor = computed(() => store.textColor.value)
+const selectedFont = computed(() => store.badgeFont.value)
+const fontSize = computed(() => store.fontSize.value)
+const fontWeight = computed(() => store.fontWeight.value)
+const strokeColor = computed(() => store.strokeColor.value)
+const strokeWidth = computed(() => store.strokeWidth.value)
+const strokeOpacity = computed(() => store.strokeOpacity.value)
 
 // SVG viewer ref
 const svgViewerRef = ref(null)
@@ -193,61 +197,46 @@ const showDownloadModal = ref(false)
 
 // SVG dimensions - responsive to viewer width
 const svgWidth = computed(() => {
-  // Make SVG fill most of the viewer width, accounting for padding and controls
-  return Math.min(800, 600) // Default size since container is now in SvgViewer
+  return Math.min(800, 600)
 })
 
 const svgHeight = computed(() => {
-  // Maintain aspect ratio (200:60 = 10:3)
   return Math.round(svgWidth.value * 0.3)
 })
 
-
-
-// Initialize from store
+// Initialize store and templates
 onMounted(async () => {
-  badgeText.value = store.badgeText.value
-  badgeColor.value = store.badgeColor.value
-  selectedFont.value = store.badgeFont.value
-  textColor.value = store.textColor.value
-  fontSize.value = store.fontSize.value
-  fontWeight.value = store.fontWeight.value
-  textStrokeWidth.value = store.strokeWidth.value
-  textStrokeColor.value = store.strokeColor.value
+  // Store initialization happens automatically through computed properties
+  // Load default template
+  selectedTemplate.value = await getDefaultTemplate()
 })
 
-// Watch form changes and update store
-watch(badgeText, (newText) => {
-  store.setBadgeText(newText)
-})
+// Template handlers
+const handleTemplateSelection = (template: SimpleTemplate) => {
+  selectedTemplate.value = template
+}
 
-watch(badgeColor, (newColor) => {
-  store.setBadgeColor(newColor)
-})
+// Text input handlers
+const handleTextUpdate = async (text: string) => {
+  await store.setBadgeText(text)
+}
 
-watch(selectedFont, (newFont) => {
-  store.setBadgeFont(newFont)
-})
+const handleFontUpdate = async (font: any) => {
+  await store.updateState({ badgeFont: font })
+}
 
-watch(textColor, (newColor) => {
-  store.setTextColor(newColor)
-})
+const handleFontSizeUpdate = async (size: number) => {
+  await store.updateState({ fontSize: size })
+}
 
-watch(fontSize, (newSize) => {
-  store.setFontSize(newSize)
-})
+const handleFontWeightUpdate = async (weight: number) => {
+  await store.updateState({ fontWeight: weight })
+}
 
-watch(fontWeight, (newWeight) => {
-  store.setFontWeight(newWeight)
-})
+const handleTextColorUpdate = async (color: string) => {
+  await store.updateState({ textColor: color })
+}
 
-watch(textStrokeWidth, (newWidth) => {
-  store.setStrokeWidth(newWidth)
-})
-
-watch(textStrokeColor, (newColor) => {
-  store.setStrokeColor(newColor)
-})
 
 // Menu functions
 const toggleMobileMenu = () => {
@@ -262,18 +251,10 @@ const importFromFile = () => {
   showImportModal.value = true
 }
 
-const resetState = () => {
-  store.resetState()
-  badgeText.value = ''
-  badgeColor.value = '#4CAF50'
-  textColor.value = '#ffffff'
-  fontSize.value = 16
-  fontWeight.value = 400
-  textStrokeWidth.value = 0
-  textStrokeColor.value = '#000000'
-  selectedFont.value = null
+const resetState = async () => {
+  await store.resetState()
+  // Store values will update automatically through computed properties
 }
-
 
 // Download function
 const downloadSVG = () => {

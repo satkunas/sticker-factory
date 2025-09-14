@@ -1,0 +1,23 @@
+name: "Square - Simple"
+id: "square-1"
+description: "Simple square with centered text"
+category: "square"
+shapes:
+  - id: "background"
+    type: "rect"
+    position: { x: 50, y: 50 }
+    width: 200
+    height: 200
+    rx: 20
+    ry: 20
+    stroke: "#059669"
+    strokeWidth: 2
+    fill: "#10b981"
+    zIndex: 1
+textInputs:
+  - id: "main"
+    label: "Text"
+    position: { x: 50, y: 50 }
+    rotation: 0
+    clipPath: "rect(20px, 180px, 180px, 20px)"
+    maxLength: 18

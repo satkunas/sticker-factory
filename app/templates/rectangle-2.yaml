@@ -1,0 +1,51 @@
+name: "Rectangle - Side Panels"
+id: "rectangle-2"
+description: "Rectangle with side panels for left/right text"
+category: "rectangle"
+shapes:
+  - id: "background"
+    type: "rect"
+    position: { x: 50, y: 50 }
+    width: 320
+    height: 120
+    rx: 20
+    ry: 20
+    stroke: "#be185d"
+    strokeWidth: 3
+    fill: "#ec4899"
+    zIndex: 1
+  - id: "left-panel"
+    type: "rect"
+    position: { x: 20, y: 50 }
+    width: 80
+    height: 100
+    rx: 12
+    ry: 12
+    stroke: "#ffffff"
+    strokeWidth: 1
+    fill: "#1f2937"
+    zIndex: 2
+  - id: "right-panel"
+    type: "rect"
+    position: { x: 80, y: 50 }
+    width: 80
+    height: 100
+    rx: 12
+    ry: 12
+    stroke: "#ffffff"
+    strokeWidth: 1
+    fill: "#1f2937"
+    zIndex: 2
+textInputs:
+  - id: "left"
+    label: "Left Text"
+    position: { x: 20, y: 50 }
+    rotation: -90
+    clipPath: "rect(10px, 70px, 90px, 10px)"
+    maxLength: 8
+  - id: "right"
+    label: "Right Text"
+    position: { x: 80, y: 50 }
+    rotation: 90
+    clipPath: "rect(30px, 130px, 90px, 30px)"
+    maxLength: 8

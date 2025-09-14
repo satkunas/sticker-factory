@@ -1,0 +1,21 @@
+name: "Circle - Single Text"
+id: "circle-1"
+description: "Simple circle with centered text"
+category: "circle"
+shapes:
+  - id: "background"
+    type: "circle"
+    position: { x: 50, y: 50 }
+    width: 200
+    height: 200
+    stroke: "#333333"
+    strokeWidth: 2
+    fill: "#22c55e"
+    zIndex: 1
+textInputs:
+  - id: "main"
+    label: "Text"
+    position: { x: 50, y: 50 }
+    rotation: 0
+    clipPath: "circle(90px at 100px 100px)"
+    maxLength: 20

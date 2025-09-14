@@ -300,7 +300,7 @@
               :ref="el => { if (selectedFont?.name === font.name && el) selectedFontTile = el }"
               :font="font"
               :is-selected="selectedFont?.name === font.name"
-              :badge-text="badgeText || ''"
+              :sticker-text="stickerText || ''"
               @select="selectFont"
             />
           </div>
@@ -332,7 +332,7 @@ interface Props {
   textStrokeWidth?: number
   textStrokeColor?: string
   textStrokeLinejoin?: string
-  badgeText?: string
+  stickerText?: string
   instanceId?: string
 }
 
@@ -354,7 +354,7 @@ const props = withDefaults(defineProps<Props>(), {
   textStrokeWidth: 0,
   textStrokeColor: '#000000',
   textStrokeLinejoin: 'round',
-  badgeText: '',
+  stickerText: '',
   instanceId: 'default'
 })
 

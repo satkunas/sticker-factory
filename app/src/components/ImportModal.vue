@@ -2,7 +2,7 @@
   <Modal :show="show" title="Import Data" @close="$emit('close')">
     <div class="space-y-6">
       <p class="text-sm text-secondary-600">
-        Import badge data from JSON text or by uploading a file.
+        Import sticker data from JSON text or by uploading a file.
       </p>
       
       <!-- Tab Selection -->

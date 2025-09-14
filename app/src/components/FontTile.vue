@@ -17,10 +17,10 @@
         :style="{ 
           fontFamily: fontLoaded ? getFontFamily(font) : font.fallback,
           color: isSelected ? '#059669' : '#374151',
-          fontSize: getOptimalFontSize(font, badgeText, props.showPreview)
+          fontSize: getOptimalFontSize(font, stickerText, props.showPreview)
         }"
       >
-        {{ getPreviewChar(font, badgeText, props.showPreview) }}
+        {{ getPreviewChar(font, stickerText, props.showPreview) }}
       </span>
     </div>
     
@@ -59,7 +59,7 @@ import { getFontFamily, FONT_CATEGORIES, loadFont, type FontConfig } from '../co
 interface Props {
   font: FontConfig
   isSelected: boolean
-  badgeText: string
+  stickerText: string
   showPreview?: boolean
 }
 
@@ -78,22 +78,22 @@ const tileRef = ref<HTMLElement>()
 let observer: IntersectionObserver | null = null
 
 // Get preview text - font name, full text, or alternating alphabet
-const getPreviewChar = (font: FontConfig, badgeText: string, showPreview?: boolean): string => {
+const getPreviewChar = (font: FontConfig, stickerText: string, showPreview?: boolean): string => {
   if (!showPreview) {
     // Show font name when preview is off
     return font.name
   }
   
-  if (!badgeText || badgeText.trim() === '') {
+  if (!stickerText || stickerText.trim() === '') {
     // Show 'Aa' sample for empty badge text
     return 'Aa'
   }
-  return badgeText
+  return stickerText
 }
 
 // Get optimal font size based on text length
-const getOptimalFontSize = (font: FontConfig, badgeText: string, showPreview?: boolean): string => {
-  const text = getPreviewChar(font, badgeText, showPreview)
+const getOptimalFontSize = (font: FontConfig, stickerText: string, showPreview?: boolean): string => {
+  const text = getPreviewChar(font, stickerText, showPreview)
   const length = text.length
   
   if (length <= 3) return '16px'       // Short text like 'Aa'
