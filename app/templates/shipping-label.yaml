@@ -1,0 +1,48 @@
+name: "Express Shipping Label"
+id: "shipping-label"
+description: "Priority shipping label with tracking info"
+category: "rectangle"
+layers:
+  - id: "background"
+    type: "shape"
+    subtype: "rect"
+    position: { x: 50, y: 50 }
+    width: 400
+    height: 250
+    stroke: "#1f2937"
+    strokeWidth: 2
+    fill: "#ffffff"
+
+  - id: "priority-banner"
+    type: "shape"
+    subtype: "rect"
+    position: { x: 50, y: 15 }
+    width: 360
+    height: 40
+    fill: "#dc2626"
+
+  - id: "priority-text"
+    type: "text"
+    label: "PRIORITY"
+    position: { x: 50, y: 15 }
+    maxLength: 10
+
+  - id: "from-address"
+    type: "text"
+    label: "From: Company Address"
+    position: { x: 25, y: 40 }
+    clipPath: "rect(30px, 180px, 200px, 20px)"
+    maxLength: 35
+
+  - id: "to-address"
+    type: "text"
+    label: "To: Customer Address"
+    position: { x: 75, y: 40 }
+    clipPath: "rect(30px, 380px, 200px, 200px)"
+    maxLength: 35
+
+  - id: "tracking-number"
+    type: "text"
+    label: "Tracking: 1Z999AA1234567890"
+    position: { x: 50, y: 85 }
+    maxLength: 25

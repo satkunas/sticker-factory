@@ -4,7 +4,6 @@
     <div class="relative">
       <input
         :value="modelValue"
-        @input="$emit('update:modelValue', $event.target.value)"
         type="text"
         class="input-field w-full pr-10"
         :placeholder="placeholder"
@@ -13,11 +12,12 @@
           fontSize: fontSize + 'px',
           fontWeight: fontWeight
         }"
-      />
+        @input="$emit('update:modelValue', $event.target.value)"
+      >
       <button
-        @click="toggleExpanded"
         class="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
         type="button"
+        @click="toggleExpanded"
       >
         <svg 
           class="w-5 h-5 transition-transform duration-200"
@@ -25,7 +25,7 @@
           fill="currentColor" 
           viewBox="0 0 20 20"
         >
-          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
         </svg>
       </button>
     </div>

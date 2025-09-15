@@ -3,9 +3,9 @@
     <!-- Compact Font Button -->
     <div class="relative">
       <button
-        @click="showDropdown = !showDropdown"
         class="w-10 h-10 border-2 border-secondary-300 rounded-lg cursor-pointer flex items-center justify-center transition-colors hover:border-secondary-400 bg-white"
         type="button"
+        @click="showDropdown = !showDropdown"
       >
         <span 
           class="text-lg font-bold"
@@ -25,13 +25,15 @@
       >
         <!-- Header with Close Button -->
         <div class="flex items-center justify-between p-4 border-b border-secondary-200">
-          <h3 class="text-lg font-semibold text-secondary-900">Select Font</h3>
+          <h3 class="text-lg font-semibold text-secondary-900">
+            Select Font
+          </h3>
           <button
-            @click="showDropdown = false"
             class="p-2 rounded-md text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100"
+            @click="showDropdown = false"
           >
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
             </svg>
           </button>
         </div>
@@ -43,33 +45,33 @@
             type="text"
             placeholder="Search fonts..."
             class="w-full px-3 py-2 border border-secondary-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          />
+          >
         </div>
         
         <!-- Categories Filter -->
         <div class="p-3 border-b border-secondary-200">
           <div class="flex flex-wrap gap-1">
             <button
-              @click="selectedCategory = null"
               :class="[
                 'px-2 py-1 text-xs rounded transition-colors',
                 selectedCategory === null
                   ? 'bg-primary-100 text-primary-700'
                   : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
               ]"
+              @click="selectedCategory = null"
             >
               All
             </button>
             <button
               v-for="(label, category) in FONT_CATEGORIES"
               :key="category"
-              @click="selectedCategory = category"
               :class="[
                 'px-2 py-1 text-xs rounded transition-colors',
                 selectedCategory === category
                   ? 'bg-primary-100 text-primary-700'
                   : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
               ]"
+              @click="selectedCategory = category"
             >
               {{ label }}
             </button>
@@ -90,7 +92,9 @@
           </div>
           
           <div v-if="filteredFonts.length === 0" class="py-8 text-center text-secondary-500">
-            <div class="text-4xl mb-2">🔍</div>
+            <div class="text-4xl mb-2">
+              🔍
+            </div>
             <p>No fonts found matching "{{ searchQuery }}"</p>
           </div>
         </div>
@@ -100,7 +104,7 @@
     <!-- Loading indicator -->
     <div v-if="loading" class="mt-2 flex items-center space-x-2 text-sm text-secondary-600">
       <svg class="w-4 h-4 animate-spin" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/>
+        <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
       </svg>
       <span>Loading font...</span>
     </div>
@@ -110,7 +114,7 @@
       v-if="showDropdown"
       class="fixed inset-0 z-0"
       @click="showDropdown = false"
-    ></div>
+    />
   </div>
 </template>
 

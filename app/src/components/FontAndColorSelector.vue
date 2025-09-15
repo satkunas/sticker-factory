@@ -3,9 +3,9 @@
     <!-- Compact Button -->
     <div class="relative">
       <button
-        @click="showModal = !showModal"
         class="w-10 h-10 border-2 border-secondary-300 rounded-lg cursor-pointer flex items-center justify-center transition-colors hover:border-secondary-400 bg-white"
         type="button"
+        @click="showModal = !showModal"
       >
         <span 
           class="text-lg font-bold"
@@ -26,13 +26,15 @@
     >
       <!-- Header with Close Button -->
       <div class="flex items-center justify-between p-4 border-b border-secondary-200 flex-shrink-0">
-        <h3 class="text-lg font-semibold text-secondary-900">Font & Color Selection</h3>
+        <h3 class="text-lg font-semibold text-secondary-900">
+          Font & Color Selection
+        </h3>
         <button
-          @click="showModal = false"
           class="p-2 rounded-md text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100"
+          @click="showModal = false"
         >
           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
           </svg>
         </button>
       </div>
@@ -41,7 +43,6 @@
       <div class="flex-1 flex flex-col lg:flex-row min-h-0">
         <!-- Color Selection Side -->
         <div class="w-full lg:w-80 flex flex-col bg-secondary-25 border-b lg:border-b-0 lg:border-r border-secondary-200">
-          
           <div class="flex-1 p-6">
             <!-- Current Color Display -->
             <div class="mb-6 text-center">
@@ -60,7 +61,9 @@
                     {{ badgeText ? badgeText.charAt(0).toUpperCase() : 'A' }}
                   </span>
                 </div>
-                <div class="text-sm text-secondary-600">{{ textColor }}</div>
+                <div class="text-sm text-secondary-600">
+                  {{ textColor }}
+                </div>
               </div>
             </div>
             
@@ -70,22 +73,24 @@
                 v-model="textColor"
                 type="color"
                 class="w-full h-12 rounded-lg border border-secondary-300 cursor-pointer"
-              />
+              >
             </div>
             
             <!-- Preset Colors -->
             <div>
-              <div class="text-sm font-medium text-secondary-700 mb-3">Quick Colors</div>
+              <div class="text-sm font-medium text-secondary-700 mb-3">
+                Quick Colors
+              </div>
               <div class="grid grid-cols-6 gap-2">
                 <button
                   v-for="color in presetColors"
                   :key="color"
-                  @click="textColor = color"
                   class="w-8 h-8 rounded border-2 transition-all"
                   :class="textColor === color ? 'border-secondary-400 scale-110' : 'border-secondary-200 hover:border-secondary-300'"
                   :style="{ backgroundColor: color }"
                   :title="color"
-                ></button>
+                  @click="textColor = color"
+                />
               </div>
             </div>
           </div>
@@ -99,40 +104,40 @@
               type="text"
               placeholder="Search fonts..."
               class="w-full px-3 py-2 border border-secondary-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            />
+            >
           </div>
           
           <!-- Categories Filter -->
           <div class="p-4 border-b border-secondary-200 bg-secondary-50">
             <div class="flex flex-wrap gap-1 mb-3">
               <button
-                @click="selectedCategory = null"
                 :class="[
                   'px-2 py-1 text-xs rounded transition-colors',
                   selectedCategory === null
                     ? 'bg-primary-100 text-primary-700'
                     : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
                 ]"
+                @click="selectedCategory = null"
               >
                 All
               </button>
               <button
                 v-for="(label, category) in FONT_CATEGORIES"
                 :key="category"
-                @click="selectedCategory = category"
                 :class="[
                   'px-2 py-1 text-xs rounded transition-colors flex items-center space-x-1',
                   selectedCategory === category
                     ? 'bg-primary-100 text-primary-700'
                     : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
                 ]"
+                @click="selectedCategory = category"
               >
                 <div 
                   :class="[
                     'w-2 h-2 rounded-full',
                     getCategoryColor(category)
                   ]"
-                ></div>
+                />
                 <span>{{ label }}</span>
               </button>
             </div>
@@ -143,8 +148,8 @@
                   v-model="showPreview"
                   type="checkbox"
                   class="sr-only peer"
-                />
-                <div class="w-11 h-6 bg-secondary-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-secondary-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                >
+                <div class="w-11 h-6 bg-secondary-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-secondary-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600" />
               </label>
             </div>
           </div>
@@ -164,7 +169,9 @@
             </div>
             
             <div v-if="filteredFonts.length === 0" class="py-8 text-center text-secondary-500">
-              <div class="text-4xl mb-2">🔍</div>
+              <div class="text-4xl mb-2">
+                🔍
+              </div>
               <p>No fonts found matching "{{ searchQuery }}"</p>
             </div>
           </div>
@@ -177,7 +184,7 @@
       v-if="showModal"
       class="fixed inset-0 z-40"
       @click="showModal = false"
-    ></div>
+    />
   </div>
 </template>
 

@@ -1,27 +1,29 @@
 <template>
   <div class="min-w-0">
-    <div class="text-xs font-medium text-secondary-600 mb-2">Rotation</div>
+    <div class="text-xs font-medium text-secondary-600 mb-2">
+      Rotation
+    </div>
 
     <!-- Rotation Slider and Input -->
     <div class="flex items-center space-x-2 mb-2">
       <input
         :value="rotation"
-        @input="updateRotation(parseFloat($event.target.value) || 0)"
         type="range"
         min="-180"
         max="180"
         step="15"
         class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
-      />
+        @input="updateRotation(parseFloat($event.target.value) || 0)"
+      >
       <input
         :value="rotation"
-        @input="updateRotation(parseFloat($event.target.value) || 0)"
         type="number"
         min="-180"
         max="180"
         step="15"
         class="w-14 px-1 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
-      />
+        @input="updateRotation(parseFloat($event.target.value) || 0)"
+      >
       <span class="text-xs text-secondary-500 font-mono w-8">°</span>
     </div>
 
@@ -30,10 +32,10 @@
       <button
         v-for="preset in rotationPresets"
         :key="preset.value"
-        @click="updateRotation(preset.value)"
         class="px-2 py-1 text-xs rounded border transition-all"
         :class="rotation === preset.value ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white border-secondary-200 text-secondary-600 hover:border-secondary-300'"
         :title="`Set rotation to ${preset.value}°`"
+        @click="updateRotation(preset.value)"
       >
         {{ preset.label }}
       </button>
@@ -47,10 +49,10 @@
           class="absolute inset-0 flex items-center justify-center"
           :style="{ transform: `rotate(${rotation}deg)` }"
         >
-          <div class="w-0.5 h-3 bg-primary-500 rounded-full"></div>
+          <div class="w-0.5 h-3 bg-primary-500 rounded-full" />
         </div>
         <!-- Center dot -->
-        <div class="absolute top-1/2 left-1/2 w-1 h-1 bg-secondary-400 rounded-full transform -translate-x-1/2 -translate-y-1/2"></div>
+        <div class="absolute top-1/2 left-1/2 w-1 h-1 bg-secondary-400 rounded-full transform -translate-x-1/2 -translate-y-1/2" />
       </div>
     </div>
   </div>

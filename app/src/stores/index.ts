@@ -302,18 +302,23 @@ export const useStore = () => {
     const { getTemplateTextInputs } = await import('../config/template-loader')
     const templateTextInputs = getTemplateTextInputs(template)
 
-    // Initialize text inputs with default values
-    const newTextInputs: TextInputState[] = templateTextInputs.map((textInput) => ({
-      id: textInput.id,
-      text: '',
-      font: DEFAULT_FONT,
-      fontSize: 16,
-      fontWeight: 400,
-      textColor: '#ffffff',
-      strokeWidth: 0,
-      strokeColor: '#000000',
-      strokeOpacity: 1.0
-    }))
+    // Check if we already have textInputs for this template (preserve existing data)
+    const existingTextInputs = _state.value.textInputs
+    const newTextInputs: TextInputState[] = templateTextInputs.map((textInput) => {
+      // Find existing text input with same ID to preserve user data
+      const existing = existingTextInputs.find(input => input.id === textInput.id)
+      return existing || {
+        id: textInput.id,
+        text: '',
+        font: DEFAULT_FONT,
+        fontSize: 16,
+        fontWeight: 400,
+        textColor: '#ffffff',
+        strokeWidth: 0,
+        strokeColor: '#000000',
+        strokeOpacity: 1.0
+      }
+    })
 
     _state.value.textInputs = newTextInputs
     _isDirty.value = true

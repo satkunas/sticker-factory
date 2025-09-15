@@ -1,0 +1,50 @@
+name: "Professional Business Card"
+id: "business-card"
+description: "Standard business card with company logo area and contact info"
+category: "rectangle"
+layers:
+  - id: "background"
+    type: "shape"
+    subtype: "rect"
+    position: { x: 50, y: 50 }
+    width: 350
+    height: 200
+    rx: 8
+    ry: 8
+    stroke: "#e5e7eb"
+    strokeWidth: 1
+    fill: "#ffffff"
+
+  - id: "logo-area"
+    type: "shape"
+    subtype: "rect"
+    position: { x: 20, y: 30 }
+    width: 80
+    height: 60
+    stroke: "#d1d5db"
+    strokeWidth: 1
+    fill: "#f3f4f6"
+
+  - id: "company-name"
+    type: "text"
+    label: "Company Name"
+    position: { x: 70, y: 25 }
+    maxLength: 25
+
+  - id: "contact-name"
+    type: "text"
+    label: "John Smith"
+    position: { x: 70, y: 45 }
+    maxLength: 20
+
+  - id: "phone-number"
+    type: "text"
+    label: "(555) 123-4567"
+    position: { x: 70, y: 65 }
+    maxLength: 15
+
+  - id: "email"
+    type: "text"
+    label: "john@company.com"
+    position: { x: 70, y: 85 }
+    maxLength: 30

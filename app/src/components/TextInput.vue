@@ -1,11 +1,11 @@
 <template>
   <input
     :value="modelValue"
-    @input="$emit('update:modelValue', $event.target.value)"
     type="text"
     class="input-field flex-1"
     :placeholder="placeholder"
-  />
+    @input="$emit('update:modelValue', $event.target.value)"
+  >
 </template>
 
 <script setup lang="ts">

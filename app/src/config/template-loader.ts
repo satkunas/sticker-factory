@@ -101,17 +101,7 @@ export const loadAllTemplates = async (): Promise<SimpleTemplate[]> => {
  * Get the default template (first available)
  */
 export const getDefaultTemplate = async (): Promise<SimpleTemplate | null> => {
-  // Try to load common template names first
-  const defaultNames = ['rectangle-1', 'circle-1', 'default-rectangle', 'default-circle']
-
-  for (const name of defaultNames) {
-    const template = await loadTemplate(name)
-    if (template) {
-      return template
-    }
-  }
-
-  // Fall back to the first available template
+  // Get the first available template
   const templates = await loadAllTemplates()
   return templates[0] || null
 }
@@ -260,7 +250,7 @@ const convertYamlToSimpleTemplate = (rawTemplate: YamlTemplate | LegacyYamlTempl
 /**
  * Calculate viewBox from shape layers
  */
-const calculateViewBoxFromLayers = (shapeLayers: TemplateShapeLayer[]): { width: number; height: number } => {
+const calculateViewBoxFromLayers = (shapeLayers: TemplateShapeLayer[]): { x: number; y: number; width: number; height: number } => {
   let minX = Infinity
   let minY = Infinity
   let maxX = -Infinity
@@ -278,19 +268,25 @@ const calculateViewBoxFromLayers = (shapeLayers: TemplateShapeLayer[]): { width:
       const width = layer.width || 0
       const height = layer.height || 0
 
-      minX = Math.min(minX, pos.x - width/2)
-      minY = Math.min(minY, pos.y - height/2)
-      maxX = Math.max(maxX, pos.x + width/2)
-      maxY = Math.max(maxY, pos.y + height/2)
+      // Account for stroke width that extends beyond the shape
+      const strokeWidth = layer.strokeWidth || 0
+      const halfStroke = strokeWidth / 2
+
+      minX = Math.min(minX, pos.x - width/2 - halfStroke)
+      minY = Math.min(minY, pos.y - height/2 - halfStroke)
+      maxX = Math.max(maxX, pos.x + width/2 + halfStroke)
+      maxY = Math.max(maxY, pos.y + height/2 + halfStroke)
     }
   })
 
   // Add padding
   const padding = 20
-  return {
-    width: Math.max(400, maxX - minX + padding * 2),
-    height: Math.max(400, maxY - minY + padding * 2)
-  }
+  const x = minX - padding
+  const y = minY - padding
+  const width = Math.max(400, maxX - minX + padding * 2)
+  const height = Math.max(400, maxY - minY + padding * 2)
+
+  return { x, y, width, height }
 }
 
 /**

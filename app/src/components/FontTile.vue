@@ -1,7 +1,6 @@
 <template>
   <button
     ref="tileRef"
-    @click="$emit('select', font)"
     :class="[
       'relative aspect-square rounded-lg border-2 transition-all duration-200 group',
       isSelected
@@ -9,6 +8,7 @@
         : 'border-secondary-200 hover:border-secondary-300 hover:bg-secondary-50'
     ]"
     :title="font.name"
+    @click="$emit('select', font)"
   >
     <!-- Font Preview Character -->
     <div class="absolute inset-1 flex items-center justify-center overflow-hidden">
@@ -30,7 +30,7 @@
       class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary-600 flex items-center justify-center"
     >
       <svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
       </svg>
     </div>
     

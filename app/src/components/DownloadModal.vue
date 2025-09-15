@@ -1,10 +1,35 @@
 <template>
   <Modal :show="show" title="Download Image" @close="$emit('close')">
     <div class="space-y-6">
+      <!-- Preview -->
+      <div>
+        <label class="block text-sm font-medium text-secondary-700 mb-3">
+          Preview
+        </label>
+        <div class="h-48 flex items-center justify-center">
+          <TemplateAwareSvgViewer
+            ref="templateSvgRef"
+            :template="template"
+            :text-inputs="textInputs"
+            :sticker-text="badgeText"
+            :sticker-color="badgeColor"
+            :text-color="textColor"
+            :font="font"
+            :font-size="fontSize"
+            :font-weight="fontWeight"
+            :stroke-color="textStrokeColor"
+            :stroke-width="textStrokeWidth"
+            :stroke-opacity="1"
+            :preview-mode="true"
+            class="w-full h-full"
+          />
+        </div>
+      </div>
+
       <p class="text-sm text-secondary-600">
         Choose your preferred format and options for downloading the image.
       </p>
-      
+
       <!-- Format Selection -->
       <div>
         <label class="block text-sm font-medium text-secondary-700 mb-3">
@@ -14,30 +39,36 @@
           <button
             v-for="format in formats"
             :key="format.type"
-            @click="selectedFormat = format.type"
             :class="[
               'p-4 border-2 rounded-lg text-left transition-colors',
               selectedFormat === format.type
                 ? 'border-primary-500 bg-primary-50'
                 : 'border-secondary-200 hover:border-secondary-300'
             ]"
+            @click="selectedFormat = format.type"
           >
             <div class="flex items-center space-x-3">
-              <div :class="[
-                'w-3 h-3 rounded-full border-2',
-                selectedFormat === format.type
-                  ? 'bg-primary-500 border-primary-500'
-                  : 'border-secondary-300'
-              ]"></div>
+              <div
+                :class="[
+                  'w-3 h-3 rounded-full border-2',
+                  selectedFormat === format.type
+                    ? 'bg-primary-500 border-primary-500'
+                    : 'border-secondary-300'
+                ]"
+              />
               <div>
-                <div class="font-medium text-secondary-900">{{ format.name }}</div>
-                <div class="text-sm text-secondary-500">{{ format.description }}</div>
+                <div class="font-medium text-secondary-900">
+                  {{ format.name }}
+                </div>
+                <div class="text-sm text-secondary-500">
+                  {{ format.description }}
+                </div>
               </div>
             </div>
           </button>
         </div>
       </div>
-      
+
       <!-- PNG Resolution Options -->
       <div v-if="selectedFormat === 'png'">
         <label class="block text-sm font-medium text-secondary-700 mb-3">
@@ -47,82 +78,60 @@
           <button
             v-for="resolution in pngResolutions"
             :key="resolution.value"
-            @click="selectedResolution = resolution.value"
             :class="[
               'p-3 border rounded-lg text-center transition-colors',
               selectedResolution === resolution.value
                 ? 'border-primary-500 bg-primary-50 text-primary-700'
                 : 'border-secondary-200 hover:border-secondary-300'
             ]"
+            @click="selectedResolution = resolution.value"
           >
-            <div class="font-medium">{{ resolution.label }}</div>
-            <div class="text-xs text-secondary-500">{{ resolution.size }}</div>
+            <div class="font-medium">
+              {{ resolution.label }}
+            </div>
+            <div class="text-xs text-secondary-500">
+              {{ resolution.size }}
+            </div>
           </button>
         </div>
-      </div>
-      
-      <!-- Preview -->
-      <div>
-        <label class="block text-sm font-medium text-secondary-700 mb-3">
-          Preview
-        </label>
-        <div class="border border-secondary-200 rounded-lg p-4 bg-secondary-50">
-          <BadgeSvg
-            ref="badgeSvgRef"
-            :text="badgeText"
-            :color="badgeColor"
-            :text-color="textColor"
-            :width="200"
-            :height="60"
-            :font-size="fontSize"
-            :font-weight="fontWeight"
-            :text-stroke-width="textStrokeWidth"
-            :text-stroke-color="textStrokeColor"
-            :font="font"
-          />
-        </div>
-      </div>
-      
-      <!-- Actions -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <button
-          @click="viewInNewTab"
-          class="btn-secondary flex items-center justify-center space-x-2"
-        >
-          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"/>
-            <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"/>
-          </svg>
-          <span>View</span>
-        </button>
-        
-        <button
-          @click="copyToClipboard"
-          class="btn-secondary flex items-center justify-center space-x-2"
-        >
-          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/>
-            <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/>
-          </svg>
-          <span>{{ copyButtonText }}</span>
-        </button>
-        
-        <button
-          @click="downloadFile"
-          class="btn-primary flex items-center justify-center space-x-2"
-        >
-          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 011 1v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
-          </svg>
-          <span>Download</span>
-        </button>
       </div>
     </div>
     
     <template #footer>
-      <div class="flex justify-end">
-        <button @click="$emit('close')" class="btn-secondary">
-          Close
+      <!-- Action buttons -->
+      <div class="grid gap-3" :class="selectedFormat === 'svg' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1'">
+        <button
+          v-if="selectedFormat === 'svg'"
+          class="btn-secondary flex items-center justify-center space-x-2"
+          @click="viewInNewTab"
+        >
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+            <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
+          </svg>
+          <span>View</span>
+        </button>
+
+        <button
+          v-if="selectedFormat === 'svg'"
+          class="btn-secondary flex items-center justify-center space-x-2"
+          @click="copyToClipboard"
+        >
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+            <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+          </svg>
+          <span>{{ copyButtonText }}</span>
+        </button>
+
+        <button
+          class="btn-primary flex items-center justify-center space-x-2"
+          @click="downloadFile"
+        >
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 011 1v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+          </svg>
+          <span>Download</span>
         </button>
       </div>
     </template>
@@ -132,8 +141,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import Modal from './Modal.vue'
-import BadgeSvg from './BadgeSvg.vue'
+import TemplateAwareSvgViewer from './TemplateAwareSvgViewer.vue'
 import { jsPDF } from 'jspdf'
+import type { SimpleTemplate } from '../types/template-types'
 
 interface Props {
   show: boolean
@@ -145,6 +155,18 @@ interface Props {
   textStrokeWidth?: number
   textStrokeColor?: string
   font?: any
+  template?: SimpleTemplate | null
+  textInputs?: Array<{
+    id: string
+    text: string
+    font: any | null
+    fontSize: number
+    fontWeight: number
+    textColor: string
+    strokeWidth: number
+    strokeColor: string
+    strokeOpacity: number
+  }>
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -153,13 +175,15 @@ const props = withDefaults(defineProps<Props>(), {
   fontWeight: 400,
   textStrokeWidth: 0,
   textStrokeColor: '#000000',
-  font: null
+  font: null,
+  template: null,
+  textInputs: () => []
 })
 defineEmits<{
   close: []
 }>()
 
-const badgeSvgRef = ref(null)
+const templateSvgRef = ref(null)
 const selectedFormat = ref('svg')
 const selectedResolution = ref(2)
 const copyButtonText = ref('Copy')
@@ -171,12 +195,17 @@ const formats = [
   { type: 'webp', name: 'WebP', description: 'Modern raster' }
 ]
 
-const pngResolutions = [
-  { value: 1, label: '1x', size: '200×60' },
-  { value: 2, label: '2x', size: '400×120' },
-  { value: 4, label: '4x', size: '800×240' },
-  { value: 8, label: '8x', size: '1600×480' }
-]
+const pngResolutions = computed(() => {
+  const baseWidth = props.template?.viewBox?.width || 200
+  const baseHeight = props.template?.viewBox?.height || 60
+
+  return [
+    { value: 1, label: '1x', size: `${baseWidth}×${baseHeight}` },
+    { value: 2, label: '2x', size: `${baseWidth * 2}×${baseHeight * 2}` },
+    { value: 4, label: '4x', size: `${baseWidth * 4}×${baseHeight * 4}` },
+    { value: 8, label: '8x', size: `${baseWidth * 8}×${baseHeight * 8}` }
+  ]
+})
 
 const getFileName = () => {
   const timestamp = Date.now()
@@ -185,11 +214,33 @@ const getFileName = () => {
 }
 
 const getSvgContent = () => {
-  return badgeSvgRef.value?.getSvgContent() || ''
+  // Get the SVG element from the template viewer and create clean SVG content
+  const svgElement = templateSvgRef.value?.svgElementRef
+  if (!svgElement) {
+    console.error('SVG element not found in template viewer')
+    return ''
+  }
+
+  try {
+    // Clone the SVG and create a clean version without transforms
+    const svgClone = svgElement.cloneNode(true) as SVGElement
+
+    // Create clean SVG string with proper XML declaration
+    const svgString = new XMLSerializer().serializeToString(svgClone)
+    return `<?xml version="1.0" encoding="UTF-8"?>\n${svgString}`
+  } catch (error) {
+    console.error('Error generating SVG content:', error)
+    return ''
+  }
 }
 
 const viewInNewTab = () => {
   const svgContent = getSvgContent()
+  if (!svgContent) {
+    console.error('No SVG content available for viewing')
+    return
+  }
+
   const blob = new Blob([svgContent], { type: 'image/svg+xml' })
   const url = URL.createObjectURL(blob)
   window.open(url, '_blank')
@@ -240,9 +291,14 @@ const svgToCanvas = (svgContent, width, height) => {
 
 const downloadSVG = () => {
   const svgContent = getSvgContent()
+  if (!svgContent) {
+    console.error('No SVG content available for download')
+    return
+  }
+
   const blob = new Blob([svgContent], { type: 'image/svg+xml' })
   const url = URL.createObjectURL(blob)
-  
+
   const link = document.createElement('a')
   link.href = url
   link.download = `${getFileName()}.svg`
@@ -254,10 +310,18 @@ const downloadSVG = () => {
 
 const downloadPNG = async () => {
   const svgContent = getSvgContent()
+  if (!svgContent) {
+    console.error('No SVG content available for PNG download')
+    return
+  }
+
   const scale = selectedResolution.value
-  const width = 200 * scale
-  const height = 60 * scale
-  
+  // Use actual template dimensions instead of hardcoded values
+  const baseWidth = props.template?.viewBox?.width || 200
+  const baseHeight = props.template?.viewBox?.height || 60
+  const width = baseWidth * scale
+  const height = baseHeight * scale
+
   const canvas = await svgToCanvas(svgContent, width, height)
   canvas.toBlob((blob) => {
     const url = URL.createObjectURL(blob)
@@ -273,10 +337,18 @@ const downloadPNG = async () => {
 
 const downloadWebP = async () => {
   const svgContent = getSvgContent()
+  if (!svgContent) {
+    console.error('No SVG content available for WebP download')
+    return
+  }
+
   const scale = selectedResolution.value
-  const width = 200 * scale
-  const height = 60 * scale
-  
+  // Use actual template dimensions instead of hardcoded values
+  const baseWidth = props.template?.viewBox?.width || 200
+  const baseHeight = props.template?.viewBox?.height || 60
+  const width = baseWidth * scale
+  const height = baseHeight * scale
+
   const canvas = await svgToCanvas(svgContent, width, height)
   canvas.toBlob((blob) => {
     const url = URL.createObjectURL(blob)
@@ -292,17 +364,28 @@ const downloadWebP = async () => {
 
 const downloadPDF = () => {
   const svgContent = getSvgContent()
+  if (!svgContent) {
+    console.error('No SVG content available for PDF download')
+    return
+  }
   
-  // Create PDF with badge dimensions
+  // Use actual template dimensions instead of hardcoded values
+  const baseWidth = props.template?.viewBox?.width || 200
+  const baseHeight = props.template?.viewBox?.height || 60
+
+  // Create PDF with actual badge dimensions (convert px to mm at 96 DPI)
+  const widthMm = (baseWidth * 25.4) / 96
+  const heightMm = (baseHeight * 25.4) / 96
+
   const pdf = new jsPDF({
     unit: 'mm',
-    format: [53, 16] // 200px = ~53mm, 60px = ~16mm at 96 DPI
+    format: [widthMm, heightMm]
   })
-  
+
   // Add SVG as image to PDF
   const canvas = document.createElement('canvas')
-  canvas.width = 200
-  canvas.height = 60
+  canvas.width = baseWidth
+  canvas.height = baseHeight
   const ctx = canvas.getContext('2d')
   
   const img = new Image()
@@ -312,7 +395,7 @@ const downloadPDF = () => {
   img.onload = () => {
     ctx.drawImage(img, 0, 0)
     const imgData = canvas.toDataURL('image/png')
-    pdf.addImage(imgData, 'PNG', 0, 0, 53, 16)
+    pdf.addImage(imgData, 'PNG', 0, 0, widthMm, heightMm)
     pdf.save(`${getFileName()}.pdf`)
     URL.revokeObjectURL(url)
   }
@@ -322,18 +405,18 @@ const downloadPDF = () => {
 
 const downloadFile = () => {
   switch (selectedFormat.value) {
-    case 'svg':
-      downloadSVG()
-      break
-    case 'png':
-      downloadPNG()
-      break
-    case 'webp':
-      downloadWebP()
-      break
-    case 'pdf':
-      downloadPDF()
-      break
+  case 'svg':
+    downloadSVG()
+    break
+  case 'png':
+    downloadPNG()
+    break
+  case 'webp':
+    downloadWebP()
+    break
+  case 'pdf':
+    downloadPDF()
+    break
   }
 }
 </script>

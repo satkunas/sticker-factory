@@ -10,8 +10,8 @@
     <defs>
       <clipPath
         v-for="textInput in template.textInputs"
-        :key="`clip-${textInput.id}`"
         :id="`clip-${textInput.id}-${instanceId}`"
+        :key="`clip-${textInput.id}`"
       >
         <path :d="getClipPathForText(textInput)" />
       </clipPath>
@@ -213,37 +213,37 @@ const getSvgContent = () => {
     const position = 'x1' in shape.position
       ? shape.position
       : {
-          x: (shape.position.x / 100) * props.width,
-          y: (shape.position.y / 100) * props.height
-        }
+        x: (shape.position.x / 100) * props.width,
+        y: (shape.position.y / 100) * props.height
+      }
 
     switch (shape.type) {
-      case 'circle':
-        svgContent += `  <circle cx="${position.x}" cy="${position.y}" r="${shape.width / 2}" stroke="${shape.stroke}" stroke-width="${shape.strokeWidth}" fill="${shape.fill}"${shape.opacity ? ` opacity="${shape.opacity}"` : ''}/>\n`
-        break
-      case 'rect':
-        svgContent += `  <rect x="${position.x - shape.width / 2}" y="${position.y - shape.height / 2}" width="${shape.width}" height="${shape.height}"${shape.rx ? ` rx="${shape.rx}"` : ''}${shape.ry ? ` ry="${shape.ry}"` : ''} stroke="${shape.stroke}" stroke-width="${shape.strokeWidth}" fill="${shape.fill}"${shape.opacity ? ` opacity="${shape.opacity}"` : ''}/>\n`
-        break
-      case 'ellipse':
-        svgContent += `  <ellipse cx="${position.x}" cy="${position.y}" rx="${shape.width / 2}" ry="${shape.height / 2}" stroke="${shape.stroke}" stroke-width="${shape.strokeWidth}" fill="${shape.fill}"${shape.opacity ? ` opacity="${shape.opacity}"` : ''}/>\n`
-        break
-      case 'polygon':
-        if (shape.points) {
-          const points = shape.points.split(/[\s,]+/).filter(p => p.trim()).map(p => parseFloat(p))
-          const transformedPoints = []
-          for (let i = 0; i < points.length; i += 2) {
-            if (i + 1 < points.length) {
-              transformedPoints.push(`${position.x + points[i]},${position.y + points[i + 1]}`)
-            }
+    case 'circle':
+      svgContent += `  <circle cx="${position.x}" cy="${position.y}" r="${shape.width / 2}" stroke="${shape.stroke}" stroke-width="${shape.strokeWidth}" fill="${shape.fill}"${shape.opacity ? ` opacity="${shape.opacity}"` : ''}/>\n`
+      break
+    case 'rect':
+      svgContent += `  <rect x="${position.x - shape.width / 2}" y="${position.y - shape.height / 2}" width="${shape.width}" height="${shape.height}"${shape.rx ? ` rx="${shape.rx}"` : ''}${shape.ry ? ` ry="${shape.ry}"` : ''} stroke="${shape.stroke}" stroke-width="${shape.strokeWidth}" fill="${shape.fill}"${shape.opacity ? ` opacity="${shape.opacity}"` : ''}/>\n`
+      break
+    case 'ellipse':
+      svgContent += `  <ellipse cx="${position.x}" cy="${position.y}" rx="${shape.width / 2}" ry="${shape.height / 2}" stroke="${shape.stroke}" stroke-width="${shape.strokeWidth}" fill="${shape.fill}"${shape.opacity ? ` opacity="${shape.opacity}"` : ''}/>\n`
+      break
+    case 'polygon':
+      if (shape.points) {
+        const points = shape.points.split(/[\s,]+/).filter(p => p.trim()).map(p => parseFloat(p))
+        const transformedPoints = []
+        for (let i = 0; i < points.length; i += 2) {
+          if (i + 1 < points.length) {
+            transformedPoints.push(`${position.x + points[i]},${position.y + points[i + 1]}`)
           }
-          svgContent += `  <polygon points="${transformedPoints.join(' ')}" stroke="${shape.stroke}" stroke-width="${shape.strokeWidth}" fill="${shape.fill}"${shape.opacity ? ` opacity="${shape.opacity}"` : ''}/>\n`
         }
-        break
-      case 'line':
-        if ('x1' in shape.position) {
-          svgContent += `  <line x1="${shape.position.x1}" y1="${shape.position.y1}" x2="${shape.position.x2}" y2="${shape.position.y2}" stroke="${shape.stroke}" stroke-width="${shape.strokeWidth}"/>\n`
-        }
-        break
+        svgContent += `  <polygon points="${transformedPoints.join(' ')}" stroke="${shape.stroke}" stroke-width="${shape.strokeWidth}" fill="${shape.fill}"${shape.opacity ? ` opacity="${shape.opacity}"` : ''}/>\n`
+      }
+      break
+    case 'line':
+      if ('x1' in shape.position) {
+        svgContent += `  <line x1="${shape.position.x1}" y1="${shape.position.y1}" x2="${shape.position.x2}" y2="${shape.position.y2}" stroke="${shape.stroke}" stroke-width="${shape.strokeWidth}"/>\n`
+      }
+      break
     }
   })
 

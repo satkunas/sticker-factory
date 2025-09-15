@@ -8,24 +8,24 @@
       <!-- Tab Selection -->
       <div class="flex rounded-lg border border-secondary-200 bg-secondary-50 p-1">
         <button
-          @click="activeTab = 'text'"
           :class="[
             'flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors',
             activeTab === 'text' 
               ? 'bg-white text-secondary-900 shadow-sm' 
               : 'text-secondary-600 hover:text-secondary-900'
           ]"
+          @click="activeTab = 'text'"
         >
           Paste JSON
         </button>
         <button
-          @click="activeTab = 'file'"
           :class="[
             'flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors',
             activeTab === 'file' 
               ? 'bg-white text-secondary-900 shadow-sm' 
               : 'text-secondary-600 hover:text-secondary-900'
           ]"
+          @click="activeTab = 'file'"
         >
           Upload File
         </button>
@@ -45,13 +45,13 @@
         </div>
         
         <button
-          @click="importFromText"
           :disabled="!jsonText.trim()"
           class="btn-primary w-full flex items-center justify-center space-x-2"
           :class="{ 'opacity-50 cursor-not-allowed': !jsonText.trim() }"
+          @click="importFromText"
         >
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 011 1v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 011 1v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
           </svg>
           <span>Import Data</span>
         </button>
@@ -61,19 +61,19 @@
       <div v-if="activeTab === 'file'" class="space-y-4">
         <!-- Drag and Drop Area -->
         <div
-          @drop="handleDrop"
-          @dragover="handleDragOver"
-          @dragenter="handleDragEnter"
-          @dragleave="handleDragLeave"
           :class="[
             'border-2 border-dashed rounded-lg p-8 text-center transition-colors',
             isDragOver 
               ? 'border-primary-400 bg-primary-50' 
               : 'border-secondary-300 hover:border-secondary-400'
           ]"
+          @drop="handleDrop"
+          @dragover="handleDragOver"
+          @dragenter="handleDragEnter"
+          @dragleave="handleDragLeave"
         >
           <svg class="w-12 h-12 mx-auto text-secondary-400 mb-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 011 1v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 011 1v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
           </svg>
           <p class="text-secondary-600 mb-2">
             <span class="font-medium">Drop a JSON file here</span> or click to select
@@ -86,13 +86,13 @@
             ref="fileInput"
             type="file"
             accept=".json"
-            @change="handleFileSelect"
             class="hidden"
-          />
+            @change="handleFileSelect"
+          >
           
           <button
-            @click="$refs.fileInput.click()"
             class="mt-4 btn-secondary"
+            @click="$refs.fileInput.click()"
           >
             Select File
           </button>
@@ -102,7 +102,7 @@
         <div v-if="selectedFile" class="p-4 bg-secondary-50 rounded-lg">
           <div class="flex items-center space-x-3">
             <svg class="w-5 h-5 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>
+              <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
             </svg>
             <div class="flex-1 min-w-0">
               <p class="text-sm font-medium text-secondary-900 truncate">
@@ -113,24 +113,24 @@
               </p>
             </div>
             <button
-              @click="clearFile"
               class="text-secondary-400 hover:text-secondary-600"
+              @click="clearFile"
             >
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
               </svg>
             </button>
           </div>
         </div>
         
         <button
-          @click="importFromFile"
           :disabled="!selectedFile"
           class="btn-primary w-full flex items-center justify-center space-x-2"
           :class="{ 'opacity-50 cursor-not-allowed': !selectedFile }"
+          @click="importFromFile"
         >
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 011 1v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 011 1v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
           </svg>
           <span>Import File</span>
         </button>
@@ -138,18 +138,22 @@
       
       <!-- Error Display -->
       <div v-if="errorMessage" class="p-3 bg-red-50 border border-red-200 rounded-lg">
-        <p class="text-sm text-red-700">{{ errorMessage }}</p>
+        <p class="text-sm text-red-700">
+          {{ errorMessage }}
+        </p>
       </div>
       
       <!-- Success Display -->
       <div v-if="successMessage" class="p-3 bg-green-50 border border-green-200 rounded-lg">
-        <p class="text-sm text-green-700">{{ successMessage }}</p>
+        <p class="text-sm text-green-700">
+          {{ successMessage }}
+        </p>
       </div>
     </div>
     
     <template #footer>
       <div class="flex justify-end">
-        <button @click="$emit('close')" class="btn-secondary">
+        <button class="btn-secondary" @click="$emit('close')">
           Close
         </button>
       </div>

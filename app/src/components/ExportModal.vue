@@ -21,22 +21,22 @@
       <!-- Actions -->
       <div class="flex flex-col sm:flex-row gap-3">
         <button
-          @click="copyToClipboard"
           class="btn-secondary flex-1 flex items-center justify-center space-x-2"
+          @click="copyToClipboard"
         >
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/>
-            <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/>
+            <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+            <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
           </svg>
           <span>{{ copyButtonText }}</span>
         </button>
         
         <button
-          @click="downloadFile"
           class="btn-primary flex-1 flex items-center justify-center space-x-2"
+          @click="downloadFile"
         >
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 011 1v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 011 1v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
           </svg>
           <span>Download File</span>
         </button>
@@ -45,7 +45,7 @@
     
     <template #footer>
       <div class="flex justify-end">
-        <button @click="$emit('close')" class="btn-secondary">
+        <button class="btn-secondary" @click="$emit('close')">
           Close
         </button>
       </div>

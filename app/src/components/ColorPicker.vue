@@ -2,10 +2,10 @@
   <div class="relative flex-shrink-0">
     <input
       :value="modelValue"
-      @input="$emit('update:modelValue', $event.target.value)"
       type="color"
       class="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
-    />
+      @input="$emit('update:modelValue', $event.target.value)"
+    >
     <div 
       class="w-10 h-10 rounded-lg border-2 border-secondary-300 cursor-pointer flex items-center justify-center transition-colors hover:border-secondary-400 bg-white"
     >
@@ -23,7 +23,7 @@
         v-else
         class="w-6 h-6 rounded"
         :style="{ backgroundColor: modelValue }"
-      ></div>
+      />
     </div>
   </div>
 </template>

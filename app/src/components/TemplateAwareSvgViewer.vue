@@ -1,18 +1,26 @@
 <template>
-  <div class="w-full lg:w-1/2 bg-secondary-50 relative min-h-96 lg:min-h-0">
+  <div :class="previewMode ? 'w-full h-full' : 'w-full lg:w-1/2 bg-secondary-50 relative min-h-96 lg:min-h-0'">
     <!-- SVG Container -->
     <div
       ref="svgContainer"
-      class="w-full h-full bg-white rounded-lg border-2 border-dashed border-secondary-300 overflow-hidden cursor-move relative"
-      @mousedown="startDrag"
-      @mousemove="drag"
-      @mouseup="endDrag"
-      @mouseleave="endDrag"
-      @wheel="handleWheel"
+      :class="[
+        'w-full h-full bg-white overflow-hidden relative',
+        previewMode
+          ? 'rounded border border-secondary-200'
+          : 'rounded-lg border-2 border-dashed border-secondary-300 cursor-move'
+      ]"
+      @mousedown="previewMode ? null : startDrag"
+      @mousemove="previewMode ? null : drag"
+      @mouseup="previewMode ? null : endDrag"
+      @mouseleave="previewMode ? null : endDrag"
+      @wheel="previewMode ? null : handleWheel"
     >
       <div
-        class="w-full h-full flex items-center justify-center grid-background"
-        :style="{
+        :class="[
+          'w-full h-full flex items-center justify-center',
+          previewMode ? '' : 'grid-background'
+        ]"
+        :style="previewMode ? {} : {
           transform: `translate(${panX}px, ${panY}px) scale(${zoomLevel})`,
           transformOrigin: 'center center',
           backgroundSize: `${20 * zoomLevel}px ${20 * zoomLevel}px`
@@ -22,9 +30,17 @@
           ref="svgElementRef"
           :width="svgWidth"
           :height="svgHeight"
-          :viewBox="`0 0 ${viewBoxWidth} ${viewBoxHeight}`"
+          :viewBox="template ? `${template.viewBox.x} ${template.viewBox.y} ${template.viewBox.width} ${template.viewBox.height}` : `0 0 ${viewBoxWidth} ${viewBoxHeight}`"
           xmlns="http://www.w3.org/2000/svg"
-          class="max-w-full max-h-full"
+          :class="previewMode ? 'block' : 'block max-w-full max-h-full'"
+          :style="previewMode ? {
+            maxWidth: '100%',
+            maxHeight: '100%',
+            width: 'auto',
+            height: 'auto',
+            margin: 'auto',
+            display: 'block'
+          } : {}"
         >
           <!-- Template-based rendering with ordered elements -->
           <g v-if="template">
@@ -39,25 +55,26 @@
               />
 
               <!-- Text rendering with dynamic textInputs -->
-              <text
-                v-if="element.type === 'text' && element.textInput"
-                v-for="(textInputData, textIndex) in [getTextInputById(element.textInput.id)]"
-                :key="element.textInput.id"
-                :x="element.textInput.position.x"
-                :y="element.textInput.position.y"
-                text-anchor="middle"
-                dominant-baseline="central"
-                :font-family="textInputData ? getFontFamilyForTextInput(textInputData) : fontFamily"
-                :font-size="textInputData ? textInputData.fontSize : fontSize"
-                :font-weight="textInputData ? textInputData.fontWeight : fontWeight"
-                :fill="textInputData ? textInputData.textColor : textColor"
-                :stroke="(textInputData ? textInputData.strokeWidth : strokeWidth) > 0 ? (textInputData ? textInputData.strokeColor : strokeColor) : 'none'"
-                :stroke-width="textInputData ? textInputData.strokeWidth : strokeWidth"
-                :stroke-opacity="textInputData ? textInputData.strokeOpacity : strokeOpacity"
-                class="select-none"
-              >
-                {{ textInputData ? textInputData.text : stickerText }}
-              </text>
+              <template v-if="element.type === 'text' && element.textInput">
+                <text
+                  v-for="textInputData in [getTextInputById(element.textInput.id)]"
+                  :key="element.textInput.id"
+                  :x="element.textInput.position.x"
+                  :y="element.textInput.position.y"
+                  text-anchor="middle"
+                  dominant-baseline="central"
+                  :font-family="textInputData ? getFontFamilyForTextInput(textInputData) : fontFamily"
+                  :font-size="textInputData?.fontSize || fontSize"
+                  :font-weight="textInputData?.fontWeight || fontWeight"
+                  :fill="textInputData?.textColor || textColor"
+                  :stroke="(textInputData?.strokeWidth || strokeWidth) > 0 ? (textInputData?.strokeColor || strokeColor) : 'none'"
+                  :stroke-width="textInputData?.strokeWidth || strokeWidth"
+                  :stroke-opacity="textInputData?.strokeOpacity || strokeOpacity"
+                  class="select-none"
+                >
+                  {{ textInputData?.text || stickerText || 'Sample Text' }}
+                </text>
+              </template>
             </template>
           </g>
 
@@ -97,7 +114,7 @@
       </div>
 
       <!-- Combined Controls & Legend -->
-      <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-sm border border-secondary-200">
+      <div v-if="!previewMode" class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-sm border border-secondary-200">
         <!-- Mini Overview & Scale -->
         <div class="flex items-center space-x-2 mb-2">
           <!-- Mini SVG -->
@@ -117,14 +134,14 @@
                   width: '24px',
                   height: '8px'
                 }"
-              ></div>
+              />
             </div>
 
             <!-- Viewport Rectangle -->
             <div
               class="absolute border-2 border-primary-500 bg-primary-100/40"
               :style="viewportStyle"
-            ></div>
+            />
           </div>
 
           <!-- Scale indicator -->
@@ -134,53 +151,53 @@
         <!-- Zoom Controls -->
         <div class="flex items-center space-x-1">
           <button
-            @click="zoomOut"
             class="p-1.5 rounded-md text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100"
             title="Zoom out"
+            @click="zoomOut"
           >
             <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
+              <path fill-rule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
             </svg>
           </button>
 
           <input
-            type="range"
             v-model="zoomLevel"
+            type="range"
             min="0.1"
             max="5"
             step="0.1"
             class="w-16 h-1.5 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
-          />
+          >
 
           <button
-            @click="zoomIn"
             class="p-1.5 rounded-md text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100"
             title="Zoom in"
+            @click="zoomIn"
           >
             <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+              <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
             </svg>
           </button>
 
-          <div class="h-4 w-px bg-secondary-300 mx-1"></div>
+          <div class="h-4 w-px bg-secondary-300 mx-1" />
 
           <button
-            @click="altAutoFit"
             class="p-1.5 rounded-md text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100"
             title="Fit to view"
+            @click="altAutoFit"
           >
             <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 11-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 111.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 111.414-1.414L15 13.586V12a1 1 0 011-1z" clip-rule="evenodd"/>
+              <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 11-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 111.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 111.414-1.414L15 13.586V12a1 1 0 011-1z" clip-rule="evenodd" />
             </svg>
           </button>
 
           <button
-            @click="resetZoom"
             class="p-1.5 rounded-md text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100"
             title="Reset zoom and position"
+            @click="resetZoom"
           >
             <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/>
+              <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
             </svg>
           </button>
         </div>
@@ -190,7 +207,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, nextTick } from 'vue'
+import { computed, ref, watch, nextTick, onMounted } from 'vue'
 import { getFontFamily, type FontConfig } from '../config/fonts'
 import type { SimpleTemplate } from '../types/template-types'
 import { getTemplateElements } from '../config/template-loader'
@@ -219,6 +236,7 @@ interface Props {
     strokeColor: string
     strokeOpacity: number
   }>
+  previewMode?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -234,7 +252,8 @@ const props = withDefaults(defineProps<Props>(), {
   width: 400,
   height: 120,
   template: null,
-  textInputs: () => []
+  textInputs: () => [],
+  previewMode: false
 })
 
 // SVG element reference
@@ -255,19 +274,19 @@ const initialPanY = ref(0)
 // SVG container ref
 const svgContainer = ref<HTMLElement | null>(null)
 
-// Computed properties - make SVG responsive to container and template size
+// Computed properties - make SVG dimensions match the viewBox to avoid clipping
 const svgWidth = computed(() => {
   if (props.template) {
-    // Use template viewBox width, but ensure reasonable size
-    return Math.max(300, Math.min(props.template.viewBox.width, 800))
+    // Use the exact template viewBox width to prevent clipping
+    return props.template.viewBox.width
   }
   return Math.min(props.width, 400)
 })
 
 const svgHeight = computed(() => {
   if (props.template) {
-    // Use template viewBox height, but ensure reasonable size
-    return Math.max(200, Math.min(props.template.viewBox.height, 600))
+    // Use the exact template viewBox height to prevent clipping
+    return props.template.viewBox.height
   }
   return Math.min(props.height, 120)
 })
@@ -296,7 +315,8 @@ const fontFamily = computed(() => {
 // Get ordered template elements
 const templateElements = computed(() => {
   if (props.template) {
-    return getTemplateElements(props.template)
+    const elements = getTemplateElements(props.template)
+    return elements
   }
   return []
 })
@@ -398,15 +418,12 @@ const altAutoFit = async () => {
   const scaleToFitHeight = containerHeight / templateHeight
   const bestScale = Math.min(scaleToFitWidth, scaleToFitHeight) * 0.8
 
-  // Apply the scale
+  // Apply the scale and center the SVG
   zoomLevel.value = Math.max(0.2, Math.min(3, bestScale))
 
-  console.log('Alt AutoFit:', {
-    container: { w: containerWidth, h: containerHeight },
-    template: { w: templateWidth, h: templateHeight },
-    scale: bestScale,
-    finalZoom: zoomLevel.value
-  })
+  // Center the SVG by resetting pan values
+  panX.value = 0
+  panY.value = 0
 }
 
 // Auto-fit function to scale template to fit the container
@@ -510,13 +527,27 @@ const downloadSvg = () => {
 // Watch for template changes and auto-fit
 watch(() => props.template, (newTemplate) => {
   if (newTemplate) {
-    altAutoFit()
+    if (props.previewMode) {
+      // In preview mode, always fit to view
+      nextTick(() => altAutoFit())
+    } else {
+      altAutoFit()
+    }
   }
 }, { immediate: true })
 
-// Expose download function for parent component
+// Auto-fit on mount in preview mode
+onMounted(() => {
+
+  if (props.previewMode && props.template) {
+    nextTick(() => altAutoFit())
+  }
+})
+
+// Expose download function and SVG ref for parent component
 defineExpose({
   downloadSvg,
-  autoFitTemplate
+  autoFitTemplate,
+  svgElementRef
 })
 </script>

@@ -2,10 +2,12 @@
   <div v-if="show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-lg max-w-md w-full p-6">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold text-gray-900">Download Image</h3>
-        <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600">
+        <h3 class="text-lg font-semibold text-gray-900">
+          Download Image
+        </h3>
+        <button class="text-gray-400 hover:text-gray-600" @click="$emit('close')">
           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
           </svg>
         </button>
       </div>
@@ -14,6 +16,7 @@
       <div class="mb-6 flex justify-center p-4 bg-gray-50 rounded-lg">
         <TemplateBadge
           v-if="template"
+          ref="templateBadgeRef"
           :template="template"
           :texts="texts"
           :text-colors="textColors"
@@ -27,7 +30,6 @@
           :background-color="backgroundColor"
           :width="previewWidth"
           :height="previewHeight"
-          ref="templateBadgeRef"
         />
       </div>
 
@@ -38,14 +40,16 @@
           <button
             v-for="size in sizeOptions"
             :key="size.label"
-            @click="selectedSize = size"
             class="px-3 py-2 text-sm rounded border transition-colors"
             :class="selectedSize.label === size.label
               ? 'bg-blue-100 border-blue-300 text-blue-700'
               : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'"
+            @click="selectedSize = size"
           >
             {{ size.label }}
-            <div class="text-xs opacity-60">{{ size.width }}×{{ size.height }}</div>
+            <div class="text-xs opacity-60">
+              {{ size.width }}×{{ size.height }}
+            </div>
           </button>
         </div>
       </div>
@@ -57,11 +61,11 @@
           <button
             v-for="format in formatOptions"
             :key="format"
-            @click="selectedFormat = format"
             class="px-3 py-2 text-sm rounded border transition-colors"
             :class="selectedFormat === format
               ? 'bg-blue-100 border-blue-300 text-blue-700'
               : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'"
+            @click="selectedFormat = format"
           >
             {{ format.toUpperCase() }}
           </button>
@@ -70,8 +74,8 @@
 
       <!-- Download Button -->
       <button
-        @click="downloadImage"
         class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+        @click="downloadImage"
       >
         Download {{ selectedFormat.toUpperCase() }}
       </button>
@@ -148,16 +152,16 @@ const previewHeight = computed(() => {
 // Helper function to get base size for template
 function getSizeForTemplate(template: Template) {
   switch (template.category) {
-    case 'rectangle':
-      return { width: 350, height: 120 }
-    case 'square':
-      return { width: 200, height: 200 }
-    case 'circle':
-      return { width: 200, height: 200 }
-    case 'diamond':
-      return { width: 200, height: 200 }
-    default:
-      return { width: 200, height: 100 }
+  case 'rectangle':
+    return { width: 350, height: 120 }
+  case 'square':
+    return { width: 200, height: 200 }
+  case 'circle':
+    return { width: 200, height: 200 }
+  case 'diamond':
+    return { width: 200, height: 200 }
+  default:
+    return { width: 200, height: 100 }
   }
 }
 

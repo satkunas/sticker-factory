@@ -8,7 +8,9 @@
     >
       <!-- Section Header -->
       <div class="flex items-center justify-between mb-4">
-        <h3 class="font-medium text-secondary-900">{{ textInput.label }}</h3>
+        <h3 class="font-medium text-secondary-900">
+          {{ textInput.label }}
+        </h3>
         <span class="text-xs text-secondary-500">{{ index + 1 }} of {{ template.textInputs.length }}</span>
       </div>
 
@@ -16,7 +18,6 @@
       <div class="mb-4">
         <input
           :value="texts[index] || ''"
-          @input="updateText(index, $event.target.value)"
           type="text"
           class="input-field w-full"
           :placeholder="`Enter ${textInput.label.toLowerCase()}...`"
@@ -27,7 +28,8 @@
             fontWeight: textFontWeights[index] || 400,
             color: textColors[index] || '#000000'
           }"
-        />
+          @input="updateText(index, $event.target.value)"
+        >
         <div class="text-xs text-secondary-500 mt-1">
           {{ (texts[index] || '').length }} / {{ textInput.maxLength }} characters
         </div>
@@ -36,8 +38,8 @@
       <!-- Expandable Controls -->
       <div class="border-t border-secondary-100 pt-4">
         <button
-          @click="toggleExpanded(index)"
           class="flex items-center justify-between w-full text-left p-2 rounded hover:bg-secondary-50 transition-colors"
+          @click="toggleExpanded(index)"
         >
           <span class="text-sm font-medium text-secondary-700">Text Styling & Effects</span>
           <svg
@@ -46,7 +48,7 @@
             fill="currentColor"
             viewBox="0 0 20 20"
           >
-            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
           </svg>
         </button>
 
@@ -59,80 +61,98 @@
           <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <!-- Text Color -->
             <div class="min-w-0">
-              <div class="text-sm font-medium text-secondary-700 mb-2">Color</div>
+              <div class="text-sm font-medium text-secondary-700 mb-2">
+                Color
+              </div>
               <div class="flex items-center space-x-1 mb-2">
                 <input
                   :ref="el => textColorRefs[index] = el"
                   :value="textColors[index] || '#ffffff'"
-                  @input="updateTextColor(index, $event.target.value)"
                   type="color"
                   class="sr-only"
-                />
+                  @input="updateTextColor(index, $event.target.value)"
+                >
                 <button
-                  @click="textColorRefs[index]?.click()"
                   class="w-7 h-7 rounded border border-secondary-300 cursor-pointer hover:border-secondary-400 transition-colors"
                   :style="{ backgroundColor: textColors[index] || '#ffffff' }"
                   :title="`Click to change color (${textColors[index] || '#ffffff'})`"
                   type="button"
-                ></button>
+                  @click="textColorRefs[index]?.click()"
+                />
                 <input
                   :value="textColors[index] || '#ffffff'"
-                  @input="updateTextColor(index, $event.target.value)"
                   type="text"
                   class="flex-1 px-2 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
                   placeholder="#ffffff"
-                />
+                  @input="updateTextColor(index, $event.target.value)"
+                >
               </div>
               <div class="grid grid-cols-6 gap-1">
                 <button
                   v-for="color in presetColors.slice(0, 6)"
                   :key="color"
-                  @click="updateTextColor(index, color)"
                   class="w-4 h-4 rounded border transition-all"
                   :class="(textColors[index] || '#ffffff') === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
                   :style="{ backgroundColor: color }"
                   :title="color"
-                ></button>
+                  @click="updateTextColor(index, color)"
+                />
               </div>
             </div>
 
             <!-- Font Size -->
             <div class="min-w-0">
-              <div class="text-sm font-medium text-secondary-700 mb-2">Size</div>
+              <div class="text-sm font-medium text-secondary-700 mb-2">
+                Size
+              </div>
               <div class="flex items-center space-x-2">
                 <input
                   :value="textFontSizes[index] || 16"
-                  @input="updateTextFontSize(index, parseInt($event.target.value) || 16)"
                   type="range"
                   min="8"
                   max="72"
                   class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
-                />
+                  @input="updateTextFontSize(index, parseInt($event.target.value) || 16)"
+                >
                 <input
                   :value="textFontSizes[index] || 16"
-                  @input="updateTextFontSize(index, parseInt($event.target.value) || 16)"
                   type="number"
                   min="8"
                   max="200"
                   class="w-12 px-1 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
-                />
+                  @input="updateTextFontSize(index, parseInt($event.target.value) || 16)"
+                >
               </div>
             </div>
 
             <!-- Font Weight -->
             <div class="min-w-0">
-              <div class="text-sm font-medium text-secondary-700 mb-2">Weight</div>
+              <div class="text-sm font-medium text-secondary-700 mb-2">
+                Weight
+              </div>
               <select
                 :value="textFontWeights[index] || 400"
-                @change="updateTextFontWeight(index, parseInt($event.target.value))"
                 class="w-full px-2 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+                @change="updateTextFontWeight(index, parseInt($event.target.value))"
               >
-                <option value="300">Light (300)</option>
-                <option value="400">Regular (400)</option>
-                <option value="500">Medium (500)</option>
-                <option value="600">Semi Bold (600)</option>
-                <option value="700">Bold (700)</option>
-                <option value="800">Extra Bold (800)</option>
+                <option value="300">
+                  Light (300)
+                </option>
+                <option value="400">
+                  Regular (400)
+                </option>
+                <option value="500">
+                  Medium (500)
+                </option>
+                <option value="600">
+                  Semi Bold (600)
+                </option>
+                <option value="700">
+                  Bold (700)
+                </option>
+                <option value="800">
+                  Extra Bold (800)
+                </option>
               </select>
             </div>
 
@@ -145,53 +165,67 @@
 
           <!-- Stroke Controls -->
           <div class="border-t border-secondary-200 pt-4">
-            <h5 class="text-sm font-medium text-secondary-700 mb-3">Text Stroke</h5>
+            <h5 class="text-sm font-medium text-secondary-700 mb-3">
+              Text Stroke
+            </h5>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <!-- Stroke Color -->
               <div class="min-w-0">
-                <div class="text-xs font-medium text-secondary-600 mb-2">Stroke Color</div>
+                <div class="text-xs font-medium text-secondary-600 mb-2">
+                  Stroke Color
+                </div>
                 <div class="flex items-center space-x-1">
                   <input
                     :ref="el => strokeColorRefs[index] = el"
                     :value="textStrokeColors[index] || '#000000'"
-                    @input="updateTextStrokeColor(index, $event.target.value)"
                     type="color"
                     class="sr-only"
-                  />
+                    @input="updateTextStrokeColor(index, $event.target.value)"
+                  >
                   <button
-                    @click="strokeColorRefs[index]?.click()"
                     class="w-6 h-6 rounded border border-secondary-300 cursor-pointer hover:border-secondary-400 transition-colors"
                     :style="{ backgroundColor: textStrokeColors[index] || '#000000' }"
                     type="button"
-                  ></button>
+                    @click="strokeColorRefs[index]?.click()"
+                  />
                 </div>
               </div>
 
               <!-- Stroke Width -->
               <div class="min-w-0">
-                <div class="text-xs font-medium text-secondary-600 mb-2">Stroke Width</div>
+                <div class="text-xs font-medium text-secondary-600 mb-2">
+                  Stroke Width
+                </div>
                 <input
                   :value="textStrokeWidths[index] || 0"
-                  @input="updateTextStrokeWidth(index, parseFloat($event.target.value) || 0)"
                   type="range"
                   min="0"
                   max="5"
                   step="0.5"
                   class="w-full h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
-                />
+                  @input="updateTextStrokeWidth(index, parseFloat($event.target.value) || 0)"
+                >
               </div>
 
               <!-- Stroke Linejoin -->
               <div class="min-w-0">
-                <div class="text-xs font-medium text-secondary-600 mb-2">Stroke Style</div>
+                <div class="text-xs font-medium text-secondary-600 mb-2">
+                  Stroke Style
+                </div>
                 <select
                   :value="textStrokeLinejoins[index] || 'round'"
-                  @change="updateTextStrokeLinejoin(index, $event.target.value)"
                   class="w-full px-2 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  @change="updateTextStrokeLinejoin(index, $event.target.value)"
                 >
-                  <option value="round">Round</option>
-                  <option value="miter">Miter</option>
-                  <option value="bevel">Bevel</option>
+                  <option value="round">
+                    Round
+                  </option>
+                  <option value="miter">
+                    Miter
+                  </option>
+                  <option value="bevel">
+                    Bevel
+                  </option>
                 </select>
               </div>
             </div>

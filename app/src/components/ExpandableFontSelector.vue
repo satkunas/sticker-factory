@@ -8,7 +8,9 @@
     >
       <!-- Text Styling Section -->
       <div class="p-4 border-b border-secondary-200 bg-secondary-25">
-        <h4 class="font-medium text-secondary-900 mb-3">Text Styling</h4>
+        <h4 class="font-medium text-secondary-900 mb-3">
+          Text Styling
+        </h4>
         
         <!-- Compact Horizontal Layout -->
         <div class="space-y-4">
@@ -16,84 +18,88 @@
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
             <!-- Color Section -->
             <div class="min-w-0">
-              <div class="text-sm font-medium text-secondary-700 mb-2">Color</div>
+              <div class="text-sm font-medium text-secondary-700 mb-2">
+                Color
+              </div>
               <div class="flex items-center space-x-1 mb-2">
                 <!-- Hidden color input -->
                 <input
                   ref="textColorInputRef"
                   :value="textColor"
-                  @input="$emit('update:textColor', $event.target.value)"
                   type="color"
                   class="sr-only"
-                />
+                  @input="$emit('update:textColor', $event.target.value)"
+                >
                 <!-- Color picker button -->
                 <button
-                  @click="$refs.textColorInputRef?.click()"
                   class="w-7 h-7 rounded border border-secondary-300 cursor-pointer hover:border-secondary-400 transition-colors"
                   :style="{ backgroundColor: textColor }"
                   :title="`Click to change text color (${textColor})`"
                   type="button"
-                ></button>
+                  @click="$refs.textColorInputRef?.click()"
+                />
                 <input
                   :value="textColor"
-                  @input="$emit('update:textColor', $event.target.value)"
                   type="text"
                   class="flex-1 px-2 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
                   placeholder="#000000"
-                />
+                  @input="$emit('update:textColor', $event.target.value)"
+                >
               </div>
               <div class="grid grid-cols-6 md:grid-cols-12 gap-1">
                 <button
                   v-for="color in presetColors.slice(0, 12)"
                   :key="color"
-                  @click="$emit('update:textColor', color)"
                   class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
                   :class="textColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
                   :style="{ backgroundColor: color }"
                   :title="color"
-                ></button>
+                  @click="$emit('update:textColor', color)"
+                />
               </div>
               <div class="grid grid-cols-6 md:grid-cols-12 gap-1 mt-1">
                 <button
                   v-for="color in presetColors.slice(12, 24)"
                   :key="color"
-                  @click="$emit('update:textColor', color)"
                   class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
                   :class="textColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
                   :style="{ backgroundColor: color }"
                   :title="color"
-                ></button>
+                  @click="$emit('update:textColor', color)"
+                />
               </div>
             </div>
 
             <!-- Font Size Section -->
             <div class="min-w-0">
-              <div class="text-sm font-medium text-secondary-700 mb-2">Size</div>
+              <div class="text-sm font-medium text-secondary-700 mb-2">
+                Size
+              </div>
               <div class="flex items-center space-x-2 mb-2">
                 <input
                   :value="fontSize"
-                  @input="$emit('update:fontSize', parseInt($event.target.value) || 16)"
                   type="range"
                   min="8"
                   max="200"
                   class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
-                />
+                  @input="$emit('update:fontSize', parseInt($event.target.value) || 16)"
+                >
                 <input
                   :value="fontSize"
-                  @input="$emit('update:fontSize', parseInt($event.target.value) || 16)"
                   type="number"
                   min="8"
                   max="500"
                   class="w-12 px-1 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
-                />
+                  @input="$emit('update:fontSize', parseInt($event.target.value) || 16)"
+                >
               </div>
               <div class="grid grid-cols-3 md:grid-cols-6 gap-1">
                 <button
                   v-for="size in commonSizes"
                   :key="size"
-                  @click="$emit('update:fontSize', size)"
                   class="px-1 py-1 text-xs rounded border transition-all"
                   :class="fontSize === size ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white border-secondary-200 text-secondary-600 hover:border-secondary-300'"
+                  @click="$emit('update:fontSize', size)"
                 >
                   {{ size }}
                 </button>
@@ -102,25 +108,27 @@
 
             <!-- Font Weight Section -->
             <div class="min-w-0">
-              <div class="text-sm font-medium text-secondary-700 mb-2">Weight</div>
+              <div class="text-sm font-medium text-secondary-700 mb-2">
+                Weight
+              </div>
               <div class="grid grid-cols-2 gap-1 mb-2">
                 <button
                   v-for="weight in fontWeights.slice(0, 4)"
                   :key="weight.value"
-                  @click="$emit('update:fontWeight', weight.value)"
                   class="px-2 py-1 text-xs rounded border transition-all"
                   :class="fontWeight === weight.value ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white border-secondary-200 text-secondary-600 hover:border-secondary-300'"
+                  @click="$emit('update:fontWeight', weight.value)"
                 >
                   {{ weight.label }}
                 </button>
               </div>
-              <div class="grid grid-cols-2 gap-1" v-if="fontWeights.length > 4">
+              <div v-if="fontWeights.length > 4" class="grid grid-cols-2 gap-1">
                 <button
                   v-for="weight in fontWeights.slice(4)"
                   :key="weight.value"
-                  @click="$emit('update:fontWeight', weight.value)"
                   class="px-2 py-1 text-xs rounded border transition-all"
                   :class="fontWeight === weight.value ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white border-secondary-200 text-secondary-600 hover:border-secondary-300'"
+                  @click="$emit('update:fontWeight', weight.value)"
                 >
                   {{ weight.label }}
                 </button>
@@ -130,96 +138,104 @@
 
           <!-- Bottom Row: Stroke Controls -->
           <div class="border-t border-secondary-100 pt-4">
-            <h5 class="text-sm font-medium text-secondary-700 mb-3">Text Stroke</h5>
+            <h5 class="text-sm font-medium text-secondary-700 mb-3">
+              Text Stroke
+            </h5>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
               <!-- Stroke Color -->
               <div class="min-w-0">
-                <div class="text-xs font-medium text-secondary-600 mb-2">Color</div>
+                <div class="text-xs font-medium text-secondary-600 mb-2">
+                  Color
+                </div>
                 <div class="flex items-center space-x-1 mb-2">
                   <!-- Hidden color input -->
                   <input
                     ref="strokeColorInputRef"
                     :value="textStrokeColor"
-                    @input="$emit('update:textStrokeColor', $event.target.value)"
                     type="color"
                     class="sr-only"
-                  />
+                    @input="$emit('update:textStrokeColor', $event.target.value)"
+                  >
                   <!-- Color picker button -->
                   <button
-                    @click="$refs.strokeColorInputRef?.click()"
                     class="w-7 h-7 rounded border border-secondary-300 cursor-pointer hover:border-secondary-400 transition-colors flex-shrink-0"
                     :style="{ backgroundColor: textStrokeColor }"
                     :title="`Click to change stroke color (${textStrokeColor})`"
                     type="button"
-                  ></button>
+                    @click="$refs.strokeColorInputRef?.click()"
+                  />
                   <input
                     :value="textStrokeColor"
-                    @input="$emit('update:textStrokeColor', $event.target.value)"
                     type="text"
                     class="flex-1 px-2 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
                     placeholder="#000000"
-                  />
+                    @input="$emit('update:textStrokeColor', $event.target.value)"
+                  >
                 </div>
                 <div class="grid grid-cols-6 md:grid-cols-12 gap-1">
                   <button
                     v-for="color in presetColors.slice(0, 12)"
                     :key="color"
-                    @click="$emit('update:textStrokeColor', color)"
                     class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
                     :class="textStrokeColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
                     :style="{ backgroundColor: color }"
                     :title="color"
-                  ></button>
+                    @click="$emit('update:textStrokeColor', color)"
+                  />
                 </div>
                 <div class="grid grid-cols-6 md:grid-cols-12 gap-1 mt-1">
                   <button
                     v-for="color in presetColors.slice(12, 24)"
                     :key="color"
-                    @click="$emit('update:textStrokeColor', color)"
                     class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
                     :class="textStrokeColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
                     :style="{ backgroundColor: color }"
                     :title="color"
-                  ></button>
+                    @click="$emit('update:textStrokeColor', color)"
+                  />
                 </div>
               </div>
 
               <!-- Stroke Width -->
               <div class="min-w-0">
-                <div class="text-xs font-medium text-secondary-600 mb-2">Width</div>
+                <div class="text-xs font-medium text-secondary-600 mb-2">
+                  Width
+                </div>
                 <div class="flex items-center space-x-2">
                   <input
                     :value="textStrokeWidth"
-                    @input="$emit('update:textStrokeWidth', parseFloat($event.target.value) || 0)"
                     type="range"
                     min="0"
                     max="10"
                     step="0.5"
                     class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
-                  />
+                    @input="$emit('update:textStrokeWidth', parseFloat($event.target.value) || 0)"
+                  >
                   <input
                     :value="textStrokeWidth"
-                    @input="$emit('update:textStrokeWidth', parseFloat($event.target.value) || 0)"
                     type="number"
                     min="0"
                     max="20"
                     step="0.5"
                     class="w-14 px-1 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
-                  />
+                    @input="$emit('update:textStrokeWidth', parseFloat($event.target.value) || 0)"
+                  >
                 </div>
               </div>
 
               <!-- Stroke Linejoin -->
               <div class="min-w-0">
-                <div class="text-xs font-medium text-secondary-600 mb-2">Linejoin</div>
+                <div class="text-xs font-medium text-secondary-600 mb-2">
+                  Linejoin
+                </div>
                 <div class="grid grid-cols-2 gap-1">
                   <button
                     v-for="linejoin in strokeLinejoinOptions"
                     :key="linejoin.value"
-                    @click="$emit('update:textStrokeLinejoin', linejoin.value)"
                     class="px-2 py-1 text-xs rounded border transition-all text-center"
                     :class="textStrokeLinejoin === linejoin.value ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white border-secondary-200 text-secondary-600 hover:border-secondary-300'"
                     :title="linejoin.description"
+                    @click="$emit('update:textStrokeLinejoin', linejoin.value)"
                   >
                     {{ linejoin.label }}
                   </button>
@@ -232,7 +248,9 @@
 
       <!-- Font Selection Section -->
       <div class="p-4">
-        <h4 class="font-medium text-secondary-900 mb-3">Font Family</h4>
+        <h4 class="font-medium text-secondary-900 mb-3">
+          Font Family
+        </h4>
         
         <!-- Search -->
         <div class="mb-3 relative">
@@ -241,16 +259,16 @@
             type="text"
             placeholder="Search fonts..."
             class="w-full px-3 py-2 pr-8 border border-secondary-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          />
+          >
           <button
             v-if="searchQuery.length > 0"
-            @click="searchQuery = ''"
             class="absolute right-2 top-1/2 transform -translate-y-1/2 text-secondary-400 hover:text-secondary-600 transition-colors"
             type="button"
             title="Clear search"
+            @click="searchQuery = ''"
           >
             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
             </svg>
           </button>
         </div>
@@ -259,40 +277,40 @@
         <div class="mb-3">
           <div class="flex flex-wrap gap-1 mb-2">
             <button
-              @click="selectedCategory = null"
               :class="[
                 'px-2 py-1 text-xs rounded transition-colors',
                 selectedCategory === null
                   ? 'bg-primary-100 text-primary-700'
                   : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
               ]"
+              @click="selectedCategory = null"
             >
               All
             </button>
             <button
               v-for="(label, category) in FONT_CATEGORIES"
               :key="category"
-              @click="selectedCategory = category"
               :class="[
                 'px-2 py-1 text-xs rounded transition-colors flex items-center space-x-1',
                 selectedCategory === category
                   ? 'bg-primary-100 text-primary-700'
                   : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
               ]"
+              @click="selectedCategory = category"
             >
               <div 
                 :class="[
                   'w-2 h-2 rounded-full',
                   getCategoryColor(category)
                 ]"
-              ></div>
+              />
               <span>{{ label }}</span>
             </button>
           </div>
         </div>
         
         <!-- Font List -->
-        <div class="max-h-80 overflow-y-auto" ref="fontListContainer" @scroll="handleScroll">
+        <div ref="fontListContainer" class="max-h-80 overflow-y-auto" @scroll="handleScroll">
           <div class="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-6 gap-2">
             <FontTile
               v-for="font in visibleFonts"
@@ -307,11 +325,15 @@
           
           <!-- Loading indicator -->
           <div v-if="isLoadingMore && visibleFonts.length < filteredFonts.length" class="py-2 text-center text-secondary-500">
-            <div class="text-xs">Loading more fonts...</div>
+            <div class="text-xs">
+              Loading more fonts...
+            </div>
           </div>
           
           <div v-if="filteredFonts.length === 0" class="py-4 text-center text-secondary-500">
-            <p class="text-sm">No fonts found matching "{{ searchQuery }}"</p>
+            <p class="text-sm">
+              No fonts found matching "{{ searchQuery }}"
+            </p>
           </div>
         </div>
       </div>

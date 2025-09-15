@@ -95,7 +95,7 @@ export interface SimpleTemplate {
   name: string
   description: string
   category: 'circle' | 'square' | 'rectangle' | 'diamond' | 'hexagon'
-  viewBox: { width: number; height: number }
+  viewBox: { x: number; y: number; width: number; height: number }
   layers: ProcessedTemplateLayer[]
 }
 

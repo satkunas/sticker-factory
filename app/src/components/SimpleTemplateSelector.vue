@@ -1,14 +1,16 @@
 <template>
   <div class="w-full mb-6">
     <!-- Template Selector Header -->
-    <div class="text-sm font-medium text-secondary-700 mb-2">Sticker Template</div>
+    <div class="text-sm font-medium text-secondary-700 mb-2">
+      Sticker Template
+    </div>
 
     <!-- Dropdown -->
     <div class="relative">
       <button
-        @click="isOpen = !isOpen"
         class="w-full px-4 py-3 bg-white border border-secondary-200 rounded-lg text-left focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 hover:border-secondary-300 transition-colors"
         :class="{ 'ring-2 ring-primary-500 border-primary-500': isOpen }"
+        @click="isOpen = !isOpen"
       >
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-3">
@@ -31,7 +33,7 @@
                   />
                 </template>
               </svg>
-              <div v-else class="w-4 h-4 bg-secondary-300 rounded"></div>
+              <div v-else class="w-4 h-4 bg-secondary-300 rounded" />
             </div>
 
             <!-- Template Info -->
@@ -52,7 +54,7 @@
             fill="currentColor"
             viewBox="0 0 20 20"
           >
-            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
           </svg>
         </div>
       </button>
@@ -66,9 +68,9 @@
           <button
             v-for="template in templates"
             :key="template.id"
-            @click="selectTemplate(template)"
             class="w-full px-4 py-3 text-left hover:bg-secondary-50 focus:outline-none focus:bg-secondary-50 transition-colors"
             :class="{ 'bg-primary-50': selectedTemplate?.id === template.id }"
+            @click="selectTemplate(template)"
           >
             <div class="flex items-center space-x-3">
               <!-- Template Preview -->
@@ -93,8 +95,12 @@
 
               <!-- Template Details -->
               <div class="flex-1 min-w-0">
-                <div class="font-medium text-secondary-900">{{ template.name }}</div>
-                <div class="text-sm text-secondary-500 truncate">{{ template.description }}</div>
+                <div class="font-medium text-secondary-900">
+                  {{ template.name }}
+                </div>
+                <div class="text-sm text-secondary-500 truncate">
+                  {{ template.description }}
+                </div>
                 <div class="text-xs text-secondary-400 mt-1">
                   {{ template.category }} shape
                 </div>
@@ -103,7 +109,7 @@
               <!-- Selection Indicator -->
               <div v-if="selectedTemplate?.id === template.id" class="flex-shrink-0">
                 <svg class="w-5 h-5 text-primary-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                 </svg>
               </div>
             </div>
