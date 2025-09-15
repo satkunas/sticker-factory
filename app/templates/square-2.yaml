@@ -2,9 +2,10 @@ name: "Square - Header Banner"
 id: "square-2"
 description: "Square with header banner and two text zones"
 category: "square"
-shapes:
+layers:
   - id: "background"
-    type: "rect"
+    type: "shape"
+    subtype: "rect"
     position: { x: 50, y: 50 }
     width: 200
     height: 200
@@ -13,9 +14,9 @@ shapes:
     stroke: "#7c3aed"
     strokeWidth: 2
     fill: "#8b5cf6"
-    zIndex: 1
   - id: "header-banner"
-    type: "rect"
+    type: "shape"
+    subtype: "rect"
     position: { x: 50, y: 25 }
     width: 180
     height: 40
@@ -24,15 +25,15 @@ shapes:
     stroke: "#ffffff"
     strokeWidth: 1
     fill: "#1e40af"
-    zIndex: 2
-textInputs:
   - id: "header"
+    type: "text"
     label: "Header"
     position: { x: 50, y: 25 }
     rotation: 0
     clipPath: "rect(15px, 175px, 45px, 25px)"
     maxLength: 12
   - id: "body"
+    type: "text"
     label: "Body Text"
     position: { x: 50, y: 65 }
     rotation: 0

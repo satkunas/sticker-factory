@@ -175,23 +175,21 @@ const convertLegacyToNew = (legacy: LegacyYamlTemplate): YamlTemplate => {
       stroke: shape.stroke,
       strokeWidth: shape.strokeWidth,
       fill: shape.fill,
-      opacity: shape.opacity,
-      zIndex: shape.zIndex
+      opacity: shape.opacity
     })
   })
 
-  // Add textInputs as textInput layers
+  // Add textInputs as text layers
   legacy.textInputs.forEach((textInput) => {
     layers.push({
       id: textInput.id,
-      type: 'textInput',
+      type: 'text',
       label: textInput.label,
       placeholder: textInput.placeholder,
       position: textInput.position,
       rotation: textInput.rotation,
       clipPath: textInput.clipPath,
-      maxLength: textInput.maxLength,
-      zIndex: textInput.zIndex || 10
+      maxLength: textInput.maxLength
     })
   })
 
@@ -200,7 +198,7 @@ const convertLegacyToNew = (legacy: LegacyYamlTemplate): YamlTemplate => {
     name: legacy.name,
     description: legacy.description,
     category: legacy.category,
-    layers: layers.sort((a, b) => a.zIndex - b.zIndex)
+    layers: layers
   }
 }
 
@@ -223,22 +221,19 @@ const convertYamlToSimpleTemplate = (rawTemplate: YamlTemplate | LegacyYamlTempl
       layers.push({
         id: layer.id,
         type: 'shape',
-        zIndex: layer.zIndex,
         shape: {
           id: layer.id,
           type: 'path',
           path: convertShapeLayerToPath(layer),
           fill: layer.fill,
           stroke: layer.stroke,
-          strokeWidth: layer.strokeWidth,
-          zIndex: layer.zIndex
+          strokeWidth: layer.strokeWidth
         }
       })
-    } else if (layer.type === 'textInput') {
+    } else if (layer.type === 'text') {
       layers.push({
         id: layer.id,
-        type: 'textInput',
-        zIndex: layer.zIndex,
+        type: 'text',
         textInput: {
           id: layer.id,
           label: layer.label,
@@ -246,8 +241,7 @@ const convertYamlToSimpleTemplate = (rawTemplate: YamlTemplate | LegacyYamlTempl
           position: layer.position,
           rotation: layer.rotation,
           clipPath: layer.clipPath,
-          maxLength: layer.maxLength,
-          zIndex: layer.zIndex
+          maxLength: layer.maxLength
         }
       })
     }
@@ -259,7 +253,7 @@ const convertYamlToSimpleTemplate = (rawTemplate: YamlTemplate | LegacyYamlTempl
     description: yamlTemplate.description,
     category: yamlTemplate.category,
     viewBox,
-    layers: layers.sort((a, b) => a.zIndex - b.zIndex)
+    layers: layers
   }
 }
 
@@ -449,24 +443,22 @@ export const getTemplateElements = (template: SimpleTemplate): TemplateElement[]
       if (layer.type === 'shape') {
         elements.push({
           type: 'shape',
-          zIndex: layer.zIndex,
           shape: layer.shape
         })
-      } else if (layer.type === 'textInput') {
+      } else if (layer.type === 'text') {
         elements.push({
           type: 'text',
-          zIndex: layer.zIndex,
           textInput: layer.textInput
         })
       }
     })
 
-    return elements.sort((a, b) => a.zIndex - b.zIndex)
+    return elements
   }
 
   // Legacy elements structure
   if (template.elements) {
-    return template.elements.sort((a, b) => a.zIndex - b.zIndex)
+    return template.elements
   }
 
   // Very old legacy structure - convert to new format
@@ -476,15 +468,13 @@ export const getTemplateElements = (template: SimpleTemplate): TemplateElement[]
   if ((template as any).path) {
     elements.push({
       type: 'shape',
-      zIndex: 1,
       shape: {
         id: 'legacy-shape',
         type: 'path',
         path: (template as any).path,
         fill: (template as any).fillColor,
         stroke: (template as any).strokeColor,
-        strokeWidth: (template as any).strokeWidth,
-        zIndex: 1
+        strokeWidth: (template as any).strokeWidth
       }
     })
   }
@@ -494,16 +484,14 @@ export const getTemplateElements = (template: SimpleTemplate): TemplateElement[]
     (template as any).textInputs.forEach((textInput: any, index: number) => {
       elements.push({
         type: 'text',
-        zIndex: 2 + index,
         textInput: {
-          ...textInput,
-          zIndex: 2 + index
+          ...textInput
         }
       })
     })
   }
 
-  return elements.sort((a, b) => a.zIndex - b.zIndex)
+  return elements
 }
 
 /**
@@ -513,15 +501,14 @@ export const getTemplateTextInputs = (template: SimpleTemplate): TemplateTextInp
   // New layers structure
   if (template.layers) {
     return template.layers
-      .filter((layer): layer is ProcessedTextInputLayer => layer.type === 'textInput')
+      .filter((layer): layer is ProcessedTextInputLayer => layer.type === 'text')
       .map(layer => layer.textInput)
-      .sort((a, b) => a.zIndex - b.zIndex)
   }
 
   // Legacy elements structure
   const elements = getTemplateElements(template)
   const textElements = elements.filter(el => el.type === 'text')
-  return textElements.map(el => el.textInput!).sort((a, b) => a.zIndex - b.zIndex)
+  return textElements.map(el => el.textInput!)
 }
 
 /**

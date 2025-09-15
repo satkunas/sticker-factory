@@ -2,18 +2,18 @@ name: "Circle - Single Text"
 id: "circle-1"
 description: "Simple circle with centered text"
 category: "circle"
-shapes:
+layers:
   - id: "background"
-    type: "circle"
+    type: "shape"
+    subtype: "circle"
     position: { x: 50, y: 50 }
     width: 200
     height: 200
     stroke: "#333333"
     strokeWidth: 2
     fill: "#22c55e"
-    zIndex: 1
-textInputs:
   - id: "main"
+    type: "text"
     label: "Text"
     position: { x: 50, y: 50 }
     rotation: 0

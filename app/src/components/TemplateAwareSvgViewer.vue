@@ -14,6 +14,7 @@
         class="w-full h-full flex items-center justify-center grid-background"
         :style="{
           transform: `translate(${panX}px, ${panY}px) scale(${zoomLevel})`,
+          transformOrigin: 'center center',
           backgroundSize: `${20 * zoomLevel}px ${20 * zoomLevel}px`
         }"
       >
@@ -27,7 +28,7 @@
         >
           <!-- Template-based rendering with ordered elements -->
           <g v-if="template">
-            <template v-for="element in templateElements" :key="element.zIndex">
+            <template v-for="(element, index) in templateElements" :key="`${element.type}-${index}`">
               <!-- Shape rendering -->
               <path
                 v-if="element.type === 'shape' && element.shape"
@@ -164,6 +165,16 @@
           <div class="h-4 w-px bg-secondary-300 mx-1"></div>
 
           <button
+            @click="altAutoFit"
+            class="p-1.5 rounded-md text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100"
+            title="Fit to view"
+          >
+            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 11-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 111.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 111.414-1.414L15 13.586V12a1 1 0 011-1z" clip-rule="evenodd"/>
+            </svg>
+          </button>
+
+          <button
             @click="resetZoom"
             class="p-1.5 rounded-md text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100"
             title="Reset zoom and position"
@@ -179,7 +190,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch, nextTick } from 'vue'
 import { getFontFamily, type FontConfig } from '../config/fonts'
 import type { SimpleTemplate } from '../types/template-types'
 import { getTemplateElements } from '../config/template-loader'
@@ -244,9 +255,22 @@ const initialPanY = ref(0)
 // SVG container ref
 const svgContainer = ref<HTMLElement | null>(null)
 
-// Computed properties
-const svgWidth = computed(() => Math.min(props.width, 400))
-const svgHeight = computed(() => Math.min(props.height, 120))
+// Computed properties - make SVG responsive to container and template size
+const svgWidth = computed(() => {
+  if (props.template) {
+    // Use template viewBox width, but ensure reasonable size
+    return Math.max(300, Math.min(props.template.viewBox.width, 800))
+  }
+  return Math.min(props.width, 400)
+})
+
+const svgHeight = computed(() => {
+  if (props.template) {
+    // Use template viewBox height, but ensure reasonable size
+    return Math.max(200, Math.min(props.template.viewBox.height, 600))
+  }
+  return Math.min(props.height, 120)
+})
 
 const viewBoxWidth = computed(() => {
   if (props.template) {
@@ -348,6 +372,82 @@ const resetZoom = () => {
   panY.value = 0
 }
 
+// Alternative auto-fit that uses a different approach
+const altAutoFit = async () => {
+  if (!svgContainer.value || !props.template) {
+    return
+  }
+
+  // Reset first
+  zoomLevel.value = 1
+  panX.value = 0
+  panY.value = 0
+
+  await nextTick()
+
+  const container = svgContainer.value
+  const containerWidth = container.offsetWidth - 120 // Account for padding and controls
+  const containerHeight = container.offsetHeight - 120
+
+  // Use template viewBox dimensions
+  const templateWidth = props.template.viewBox.width
+  const templateHeight = props.template.viewBox.height
+
+  // Calculate the scale needed to fit
+  const scaleToFitWidth = containerWidth / templateWidth
+  const scaleToFitHeight = containerHeight / templateHeight
+  const bestScale = Math.min(scaleToFitWidth, scaleToFitHeight) * 0.8
+
+  // Apply the scale
+  zoomLevel.value = Math.max(0.2, Math.min(3, bestScale))
+
+  console.log('Alt AutoFit:', {
+    container: { w: containerWidth, h: containerHeight },
+    template: { w: templateWidth, h: templateHeight },
+    scale: bestScale,
+    finalZoom: zoomLevel.value
+  })
+}
+
+// Auto-fit function to scale template to fit the container
+const autoFitTemplate = async () => {
+  if (!svgContainer.value || !props.template) {
+    console.log('AutoFit: Missing container or template')
+    return
+  }
+
+  await nextTick() // Wait for DOM updates
+
+  const containerRect = svgContainer.value.getBoundingClientRect()
+  const availableWidth = containerRect.width - 120 // Account for controls and padding
+  const availableHeight = containerRect.height - 120 // Account for controls and padding
+
+  // Get the template viewBox dimensions (this is the "natural" size of the content)
+  const templateWidth = props.template.viewBox.width
+  const templateHeight = props.template.viewBox.height
+
+  console.log('AutoFit Debug:', {
+    containerSize: { width: containerRect.width, height: containerRect.height },
+    availableSize: { width: availableWidth, height: availableHeight },
+    templateSize: { width: templateWidth, height: templateHeight }
+  })
+
+  // Calculate scale to fit both dimensions with some padding
+  const scaleX = availableWidth / templateWidth
+  const scaleY = availableHeight / templateHeight
+  const optimalScale = Math.min(scaleX, scaleY) * 0.8 // 80% to leave breathing room
+
+  console.log('AutoFit Scale:', { scaleX, scaleY, optimalScale })
+
+  // Apply the optimal zoom level and center
+  const finalZoom = Math.max(0.2, Math.min(5, optimalScale))
+  zoomLevel.value = finalZoom
+  panX.value = 0 // Center horizontally
+  panY.value = 0 // Center vertically
+
+  console.log('AutoFit Applied:', { zoom: finalZoom, panX: 0, panY: 0 })
+}
+
 // Drag functions
 const startDrag = (e: MouseEvent) => {
   isDragging.value = true
@@ -407,8 +507,16 @@ const downloadSvg = () => {
   }
 }
 
+// Watch for template changes and auto-fit
+watch(() => props.template, (newTemplate) => {
+  if (newTemplate) {
+    altAutoFit()
+  }
+}, { immediate: true })
+
 // Expose download function for parent component
 defineExpose({
-  downloadSvg
+  downloadSvg,
+  autoFitTemplate
 })
 </script>

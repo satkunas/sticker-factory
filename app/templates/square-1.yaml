@@ -14,12 +14,10 @@ layers:
     stroke: "#059669"
     strokeWidth: 2
     fill: "#10b981"
-    zIndex: 1
   - id: "main"
-    type: "textInput"
+    type: "text"
     label: "Text"
     position: { x: 50, y: 50 }
     rotation: 0
     clipPath: "rect(20px, 180px, 180px, 20px)"
     maxLength: 18
-    zIndex: 10

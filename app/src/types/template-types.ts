@@ -6,7 +6,6 @@ export interface TemplateTextInput {
   rotation?: number
   clipPath?: string
   maxLength?: number
-  zIndex: number
 }
 
 export interface TemplateShape {
@@ -22,13 +21,11 @@ export interface TemplateShape {
   strokeWidth: number
   fill: string
   opacity?: number
-  zIndex: number
 }
 
 // Base layer interface
 export interface TemplateLayerBase {
   id: string
-  zIndex: number
 }
 
 // Shape layer
@@ -49,7 +46,7 @@ export interface TemplateShapeLayer extends TemplateLayerBase {
 
 // Text input layer
 export interface TemplateTextInputLayer extends TemplateLayerBase {
-  type: 'textInput'
+  type: 'text'
   label: string
   placeholder?: string
   position: { x: number; y: number }
@@ -105,8 +102,7 @@ export interface SimpleTemplate {
 // Base processed layer
 export interface ProcessedLayerBase {
   id: string
-  type: 'shape' | 'textInput'
-  zIndex: number
+  type: 'shape' | 'text'
 }
 
 // Processed shape layer (converted to SVG path)
@@ -119,13 +115,12 @@ export interface ProcessedShapeLayer extends ProcessedLayerBase {
     fill?: string
     stroke?: string
     strokeWidth?: number
-    zIndex: number
   }
 }
 
 // Processed text input layer
 export interface ProcessedTextInputLayer extends ProcessedLayerBase {
-  type: 'textInput'
+  type: 'text'
   textInput: {
     id: string
     label: string
@@ -134,7 +129,6 @@ export interface ProcessedTextInputLayer extends ProcessedLayerBase {
     rotation?: number
     clipPath?: string
     maxLength?: number
-    zIndex: number
   }
 }
 
@@ -143,7 +137,6 @@ export type ProcessedTemplateLayer = ProcessedShapeLayer | ProcessedTextInputLay
 // Legacy interface for backward compatibility
 export interface TemplateElement {
   type: 'shape' | 'text'
-  zIndex: number
   shape?: {
     id: string
     type: 'path'
@@ -151,7 +144,6 @@ export interface TemplateElement {
     fill?: string
     stroke?: string
     strokeWidth?: number
-    zIndex: number
   }
   textInput?: {
     id: string
@@ -159,6 +151,5 @@ export interface TemplateElement {
     placeholder?: string
     position: { x: number; y: number }
     maxLength?: number
-    zIndex: number
   }
 }

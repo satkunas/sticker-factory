@@ -2,9 +2,10 @@ name: "Rectangle - Side Panels"
 id: "rectangle-2"
 description: "Rectangle with side panels for left/right text"
 category: "rectangle"
-shapes:
+layers:
   - id: "background"
-    type: "rect"
+    type: "shape"
+    subtype: "rect"
     position: { x: 50, y: 50 }
     width: 320
     height: 120
@@ -13,9 +14,9 @@ shapes:
     stroke: "#be185d"
     strokeWidth: 3
     fill: "#ec4899"
-    zIndex: 1
   - id: "left-panel"
-    type: "rect"
+    type: "shape"
+    subtype: "rect"
     position: { x: 20, y: 50 }
     width: 80
     height: 100
@@ -24,9 +25,9 @@ shapes:
     stroke: "#ffffff"
     strokeWidth: 1
     fill: "#1f2937"
-    zIndex: 2
   - id: "right-panel"
-    type: "rect"
+    type: "shape"
+    subtype: "rect"
     position: { x: 80, y: 50 }
     width: 80
     height: 100
@@ -35,15 +36,15 @@ shapes:
     stroke: "#ffffff"
     strokeWidth: 1
     fill: "#1f2937"
-    zIndex: 2
-textInputs:
   - id: "left"
+    type: "text"
     label: "Left Text"
     position: { x: 20, y: 50 }
     rotation: -90
     clipPath: "rect(10px, 70px, 90px, 10px)"
     maxLength: 8
   - id: "right"
+    type: "text"
     label: "Right Text"
     position: { x: 80, y: 50 }
     rotation: 90
