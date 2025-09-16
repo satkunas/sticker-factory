@@ -1,0 +1,79 @@
+name: "YouTube Thumbnail"
+id: "youtube-thumbnail"
+description: "Eye-catching YouTube video thumbnail design"
+category: "rectangle"
+layers:
+  - id: "thumbnail-background"
+    type: "shape"
+    subtype: "rect"
+    position: { x: 50, y: 50 }
+    width: 400
+    height: 225
+    stroke: "#dc2626"
+    strokeWidth: 3
+    fill: "linear-gradient(45deg, #f59e0b 0%, #dc2626 100%)"
+
+  - id: "title-box"
+    type: "shape"
+    subtype: "rect"
+    position: { x: 50, y: 30 }
+    width: 360
+    height: 60
+    rx: 8
+    ry: 8
+    fill: "rgba(0, 0, 0, 0.7)"
+
+  - id: "video-title"
+    type: "text"
+    label: "Video Title"
+    default: "AMAZING TUTORIAL!"
+    position: { x: 250, y: 45 }
+    maxLength: 25
+    fontFamily: "Bebas Neue"
+    fontSize: 24
+    fontWeight: 400
+    fontColor: "#ffffff"
+
+  - id: "episode-number"
+    type: "text"
+    label: "Episode/Part"
+    default: "Episode #15"
+    position: { x: 250, y: 70 }
+    maxLength: 15
+    fontFamily: "Oswald"
+    fontSize: 14
+    fontWeight: 600
+    fontColor: "#fbbf24"
+
+  - id: "channel-name"
+    type: "text"
+    label: "Channel Name"
+    default: "TechTutorials"
+    position: { x: 250, y: 110 }
+    maxLength: 20
+    fontFamily: "Montserrat"
+    fontSize: 18
+    fontWeight: 700
+    fontColor: "#ffffff"
+
+  - id: "view-count"
+    type: "text"
+    label: "View Count/Stats"
+    default: "1M+ Views"
+    position: { x: 250, y: 135 }
+    maxLength: 15
+    fontFamily: "Source Sans 3"
+    fontSize: 14
+    fontWeight: 600
+    fontColor: "#fed7aa"
+
+  - id: "call-out"
+    type: "text"
+    label: "Call Out Text"
+    default: "Must Watch!"
+    position: { x: 250, y: 160 }
+    maxLength: 15
+    fontFamily: "Oswald"
+    fontSize: 16
+    fontWeight: 700
+    fontColor: "#fef3c7"

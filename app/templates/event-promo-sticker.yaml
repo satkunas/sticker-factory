@@ -1,0 +1,61 @@
+name: "Event Promotion Sticker"
+id: "event-promo-sticker"
+description: "Bold promotional sticker for events and sales"
+category: "circle"
+layers:
+  - id: "starburst-background"
+    type: "shape"
+    subtype: "polygon"
+    position: { x: 100, y: 100 }
+    width: 200
+    height: 200
+    points: "0,-100 15,-30 85,-25 25,-5 65,80 0,35 -65,80 -25,-5 -85,-25 -15,-30"
+    stroke: "#dc2626"
+    strokeWidth: 3
+    fill: "#fef2f2"
+
+  - id: "inner-circle"
+    type: "shape"
+    subtype: "circle"
+    position: { x: 100, y: 100 }
+    width: 140
+    height: 140
+    stroke: "#b91c1c"
+    strokeWidth: 2
+    fill: "#dc2626"
+
+  - id: "main-text"
+    type: "text"
+    label: "Main Text"
+    default: "50% OFF"
+    position: { x: 100, y: 90 }
+    clipPath: "circle(65px at 100px 100px)"
+    maxLength: 10
+    fontFamily: "Bebas Neue"
+    fontSize: 28
+    fontWeight: 400
+    fontColor: "#ffffff"
+
+  - id: "sub-text"
+    type: "text"
+    label: "Sub Text"
+    default: "SALE!"
+    position: { x: 100, y: 110 }
+    clipPath: "circle(65px at 100px 100px)"
+    maxLength: 12
+    fontFamily: "Oswald"
+    fontSize: 16
+    fontWeight: 700
+    fontColor: "#fef2f2"
+
+  - id: "detail-text"
+    type: "text"
+    label: "Detail Text"
+    default: "Limited Time"
+    position: { x: 100, y: 125 }
+    clipPath: "circle(65px at 100px 100px)"
+    maxLength: 15
+    fontFamily: "Poppins"
+    fontSize: 10
+    fontWeight: 500
+    fontColor: "#fca5a5"

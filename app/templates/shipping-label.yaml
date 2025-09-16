@@ -25,10 +25,10 @@ layers:
     type: "text"
     label: "Priority Level"
     default: "PRIORITY"
-    position: { x: 50, y: 15 }
+    position: { x: 230, y: 35 }
     maxLength: 10
-    fontFamily: "Inter"
-    fontSize: 16
+    fontFamily: "Oswald"
+    fontSize: 18
     fontWeight: 700
     fontColor: "#ffffff"
 
@@ -36,33 +36,31 @@ layers:
     type: "text"
     label: "Sender Address"
     default: "From: Company Address"
-    position: { x: 25, y: 40 }
-    clipPath: "rect(30px, 180px, 200px, 20px)"
+    position: { x: 250, y: 100 }
     maxLength: 35
-    fontFamily: "Roboto"
+    fontFamily: "Lato"
     fontSize: 12
-    fontWeight: 500
+    fontWeight: 400
     fontColor: "#374151"
 
   - id: "to-address"
     type: "text"
     label: "Recipient Address"
     default: "To: Customer Address"
-    position: { x: 75, y: 40 }
-    clipPath: "rect(30px, 380px, 200px, 200px)"
+    position: { x: 250, y: 150 }
     maxLength: 35
-    fontFamily: "Roboto"
-    fontSize: 14
-    fontWeight: 600
+    fontFamily: "Lato"
+    fontSize: 15
+    fontWeight: 700
     fontColor: "#111827"
 
   - id: "tracking-number"
     type: "text"
     label: "Tracking Number"
     default: "Tracking: 1Z999AA1234567890"
-    position: { x: 50, y: 85 }
+    position: { x: 250, y: 200 }
     maxLength: 25
-    fontFamily: "Fira Code"
-    fontSize: 12
+    fontFamily: "JetBrains Mono"
+    fontSize: 11
     fontWeight: 500
     fontColor: "#4b5563"

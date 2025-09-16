@@ -1,6 +1,6 @@
 # Sticker Factory - SVG Badge Generator
 
-A Vue 3 single-page application with simple Express static server.
+A Vue 3 single-page application for creating custom SVG badges and stickers with multiple templates and font styling options.
 
 ## Project Structure
 
@@ -8,314 +8,297 @@ A Vue 3 single-page application with simple Express static server.
 sticker-factory/
 ├── app/                    # Vue 3 SPA
 │   ├── src/
-│   │   ├── stores/         # Vue store modules (main state management)
+│   │   ├── stores/         # Pinia store for state management
 │   │   │   └── index.ts    # Main store with localStorage integration
-│   │   ├── composables/    # Vue composition API utilities
-│   │   │   ├── useStorage.ts      # Legacy localStorage wrapper
-│   │   │   └── useBadgeStore.ts   # Badge-specific store logic
+│   │   ├── components/     # Vue components
+│   │   ├── config/         # Configuration files
+│   │   │   ├── fonts.ts    # Font definitions and loading
+│   │   │   └── template-loader.ts  # Template processing
+│   │   ├── types/          # TypeScript type definitions
 │   │   ├── main.ts         # App entry point
 │   │   ├── App.vue         # Root component
 │   │   └── style.css       # Global styles with Tailwind
+│   ├── templates/          # YAML template definitions
 │   ├── public/             # Static assets
 │   ├── dist/               # Built app files (generated)
 │   ├── index.html          # HTML template
 │   └── package.json        # App dependencies
-├── server.js               # Simple Express static server
+├── server.js               # Express static server
 ├── package.json            # Root workspace config
 ├── Makefile               # Build and development commands
 ├── vite.config.js         # Vite build configuration
-├── .eslintrc.js           # ESLint configuration
-└── PLAN.md                # Implementation plan
+└── .eslintrc.js           # ESLint configuration
 ```
 
 ## Technology Stack
 
-### Frontend (App)
-- **Vue 3** - Progressive JavaScript framework
-- **TypeScript** - Type-safe JavaScript
-- **Vite** - Fast build tool and dev server
-- **Composition API** - Vue 3's reactive system
-- **LocalStorage** - Client-side data persistence
-- **Tailwind CSS** - Utility-first CSS framework with custom design system
+### Frontend
+- **Vue 3** with Composition API
+- **TypeScript** for type safety
+- **Vite** for fast development and building
+- **Pinia** for state management
+- **LocalStorage** for data persistence
+- **Tailwind CSS** for styling
+- **Google Fonts** integration
 
-### Backend (Server)
-- **Express.js** - Simple static file server
-- **Node.js** - JavaScript runtime for server
+### Backend
+- **Express.js** static file server
+- **Node.js** runtime
 
 ### Development Tools
-- **ESLint** - Code linting for Vue 3 + TypeScript
-- **Concurrently** - Run multiple npm scripts
-- **PostCSS** - CSS processing with Autoprefixer
-- **Makefile** - Convenient command interface
+- **ESLint** for Vue 3 + TypeScript
+- **PostCSS** with Autoprefixer
+- **Makefile** for command management
 
 ## Quick Start
 
-### Prerequisites
-- Node.js 18+ 
-- npm
-
-### Installation
 ```bash
-# Install all dependencies
+# Install dependencies
 make install
 
-# Or install app dependencies only
-make install-app
-```
-
-### Development
-```bash
-# Start development server (Vite dev server on port 3000)
+# Start development server
 make dev
 
-# Start development server and open browser automatically
-make dev-open
-```
-
-### Building
-```bash
-# Build app for production
+# Build for production
 make build
-```
 
-### Production
-```bash
-# Start production server (Express static server on port 3000)
+# Start production server
 make start
-
-# Start production server and open browser automatically
-make start-open
 ```
+
+## Features
+
+### Template System
+- **13 Professional Templates** across 4 categories:
+  - **Circle**: Quality sticker, vinyl record label, event promo sticker
+  - **Rectangle**: Business card, conference badge, booklet cover, catalog page, shipping label, food packaging, concert ticket, YouTube thumbnail
+  - **Square**: Social media post
+  - **Diamond**: Safety warning diamond
+
+- **Multi-text Input Support**: Templates can contain multiple text fields with individual styling
+- **YAML-based Configuration**: Easy to create and modify templates
+
+### Typography & Styling
+- **600+ Google Fonts** organized by category
+- **Individual Text Styling**: Each text field supports:
+  - Font family selection
+  - Font size (8-500px)
+  - Font weight (100-900)
+  - Text color picker
+  - Stroke width and color
+- **Real-time Preview**: Text inputs show selected font styling
+
+### User Experience
+- **Accordion Interface**: Expandable font selectors for each text field
+- **Template Persistence**: Selected template and all text restored on page reload
+- **Export/Import**: Save and load badge configurations as JSON
+- **Download Options**: Export as SVG or PNG files
+- **Responsive Design**: Works on desktop and mobile devices
 
 ## Available Commands
 
 ### Development
-- `make dev` - Start development server (Vite)
+- `make dev` - Start Vite development server
 - `make dev-open` - Start development server and open browser
 
-### Building
-- `make build` - Build app for production
+### Production
+- `make build` - Build for production
+- `make start` - Start Express static server
+- `make start-open` - Start production server and open browser
 
 ### Code Quality
-- `make lint` - Run ESLint on app code
-- `make lint-fix` - Auto-fix linting issues
+- `make lint` - Run ESLint
+- `make lint-fix` - Auto-fix ESLint issues
 
 ### Maintenance
-- `make clean` - Clean build artifacts and dependencies
-- `make clean-deps` - Remove all node_modules
-- `make clean-build` - Remove build artifacts only
-- `make check` - Check project health
-
-### Browser
-- `make open` - Open app in browser (http://localhost:3000)
+- `make clean` - Clean all build artifacts and dependencies
+- `make install` - Install all dependencies
 
 ### Utilities
+- `make open` - Open app in browser (http://localhost:3000)
 - `make help` - Show all available commands
-- `make status` - Show git status
-- `make commit MESSAGE="message"` - Stage and commit changes
-- `make push` - Push to remote repository
 
-## Server Configuration
+## Template System & SVG Coordinate System
 
-### Development Server
-- **Vite Dev Server**: http://localhost:3000 (with hot reload)
-- **Development Mode**: `make dev` or `make dev-open`
+### Template Structure
 
-### Production Server  
-- **Express Static Server**: http://localhost:3000 (serves built files)
-- **Production Mode**: `make start` or `make start-open`
-- **Serves**: Built Vue 3 app from `app/dist/` directory
+Templates are YAML files in `app/templates/` with this structure:
 
-## Features
+```yaml
+name: "Template Display Name"
+id: "template-id"
+description: "Brief description"
+category: "circle|square|rectangle|diamond"
+layers:
+  - id: "shape-id"
+    type: "shape"
+    subtype: "circle|rect|polygon"
+    position: { x: 50, y: 50 }
+    width: 200
+    height: 200
+    fill: "#color"
+    stroke: "#color"
+    strokeWidth: 2
 
-### App Features
-- Vue 3 reactive single-page application
-- LocalStorage persistence with advanced store management
-- Export/Import functionality with version compatibility
-- Tailwind CSS with custom design system
-- Responsive design with mobile-first approach
-- TypeScript support with full type safety
-- Hot module replacement in development
+  - id: "text-id"
+    type: "text"
+    label: "Form Label"
+    default: "Default Text"
+    position: { x: 50, y: 50 }
+    maxLength: 20
+    fontFamily: "Font Name"
+    fontSize: 16
+    fontWeight: 400
+    fontColor: "#color"
+```
 
-### Server Features
-- Simple static file serving
-- Client-side routing support (SPA fallback)
-- Production-ready Express server
-- Minimal configuration required
+### SVG Coordinate System
 
-### Development Features
-- ESLint configuration for Vue 3 + TypeScript
-- Vite for fast builds and development
-- Concurrent development servers
-- TypeScript throughout the stack
-- Source maps for debugging
+**🚨 CRITICAL: Text positioning uses CENTER COORDINATES**
 
-## Configuration
+#### Shape Positioning
+- **Circles**: `position: {x: 50, y: 50}` → SVG `cx="50" cy="50"` (center at 50,50)
+- **Rectangles**: `position: {x: 50, y: 50}` → SVG `x="50" y="50"` (top-left at 50,50)
+- **Polygons**: `position: {x: 50, y: 50}` → Center point for calculations
 
-### Environment Variables
-- `PORT` - Server port (default: 3001)
-- `NODE_ENV` - Environment mode (development/production)
+#### Text Positioning
+All text uses `text-anchor="middle"` and `dominant-baseline="central"`:
+- `position: {x: 50, y: 50}` places text CENTER at coordinate (50,50)
 
-### Client Configuration
-- Development server: http://localhost:3000
-- Production build output: `client/dist/`
+#### Coordinate Calculations
 
-### Server Configuration  
-- Development server: http://localhost:3001
-- Production build output: `server/dist/`
+**Circle Example:**
+```yaml
+# Circle at {x: 50, y: 50} with width: 200
+# Text should also be at {x: 50, y: 50} for center alignment
+```
 
-## State Management & LocalStorage
+**Rectangle Example:**
+```yaml
+# Rectangle at {x: 50, y: 50} with width: 300, height: 200
+# Rectangle center: (50 + 300/2, 50 + 200/2) = (200, 150)
+# Text should be at {x: 200, y: 150} for center alignment
+```
 
-### Vue Store Architecture
+### Template Development Workflow
 
-The client uses a centralized Vue store (`src/stores/index.ts`) with the following features:
+1. **Design Layout**: Plan shape and text positions
+2. **Set Shape Positions**: Use appropriate coordinates for shape type
+3. **Calculate Text Centers**:
+   - Circles: Use same coordinates as shape position
+   - Rectangles: Calculate center = (x + width/2, y + height/2)
+   - Polygons: Use center point of polygon
+4. **Test in Browser**: Verify text appears centered within shapes
+5. **Fine-tune**: Adjust coordinates for visual balance
 
-- **Cache-on-demand**: Data is only loaded from localStorage when first accessed
-- **Mutex control**: Only one localStorage operation can happen at a time (prevents race conditions)
-- **Version compatibility**: Import/export includes version checking
-- **Reactive getters**: All state access is through Vue computed properties
-- **TypeScript interfaces**: Full type safety throughout
+## State Management
 
-### LocalStorage Schema
+### Store Architecture
+- **Pinia Store** (`src/stores/index.ts`) manages global state
+- **LocalStorage Integration** with automatic persistence
+- **Multi-text Input System** with individual styling per text field
+- **Template State** persists selected template and form data
 
-The client uses localStorage with the key `sticker-factory-data`:
+### Data Persistence
+```typescript
+interface AppState {
+  textInputs: TextInputState[]           // Array of text inputs
+  selectedTemplateId: string | null      // Current template
+  badgeColor: string                     // Background color
+  // Individual text input styling
+}
 
-```json
-{
-  "badgeText": "string",
-  "badgeColor": "string", 
-  "svgContent": "string",
-  "lastModified": "number",
-  "version": "string",
-  "timestamp": "number"
+interface TextInputState {
+  id: string                             // Template text layer ID
+  text: string                           // User input
+  font: FontConfig | null                // Selected font
+  fontSize: number                       // Font size
+  fontWeight: number                     // Font weight
+  textColor: string                      // Text color
+  strokeWidth: number                    // Stroke width
+  strokeColor: string                    // Stroke color
 }
 ```
 
-### Store Usage
+## Font System
 
-```typescript
-import { useStore } from './stores'
+### Font Configuration
+- **600+ Google Fonts** across 6 categories
+- **Dynamic Loading** with CSS links and font-display: swap
+- **Weight Validation** - only shows available weights per font
+- **Fallback Handling** for loading failures
 
-const store = useStore()
+### Font Categories
+- Sans-serif (Roboto, Open Sans, Nunito, etc.)
+- Serif (Playfair Display, Merriweather, etc.)
+- Monospace (JetBrains Mono, Source Code Pro, etc.)
+- Display (Bebas Neue, Oswald, etc.)
+- Handwriting (Dancing Script, Pacifico, etc.)
+- Dingbats (Material Symbols, etc.)
 
-// Reactive getters (cache-on-demand)
-const badgeText = store.badgeText
-const badgeColor = store.badgeColor
-const svgContent = store.svgContent
+## Component Architecture
 
-// Mutations (auto-save to localStorage)
-await store.setBadgeText('New Badge')
-await store.setBadgeColor('#FF0000')
-await store.updateState({ badgeText: 'text', badgeColor: '#00FF00' })
+### Key Components
+- **App.vue** - Root component with dynamic form generation
+- **SimpleTemplateSelector.vue** - Template selection dropdown
+- **TextInputWithFontSelector.vue** - Individual text input with styling
+- **ExpandableFontSelector.vue** - Font selection accordion
+- **TemplateAwareSvgViewer.vue** - SVG rendering engine
+- **ExportModal.vue** - Export/download functionality
 
-// Export/Import
-store.exportToFile('my-badges.json')
-await store.importFromFile()
-```
+### Component Communication
+- **Props/Emit** for parent-child communication
+- **Provide/Inject** for font selector state management
+- **Store** for global state and persistence
 
 ## Tailwind CSS Configuration
 
 ### Custom Design System
+- **Primary Colors**: Green-based palette (50-950)
+- **Secondary Colors**: Gray-based palette (50-950)
 
-The project includes a custom Tailwind design system with:
-
-**Custom Colors:**
-- `primary`: Green-based palette (50-950) - Main brand color
-- `secondary`: Gray-based palette (50-950) - UI elements and text
-
-**Custom Components (defined in `style.css`):**
+### Custom Components
 ```css
 .btn-primary     /* Primary action buttons */
 .btn-secondary   /* Secondary action buttons */
 .input-field     /* Form input fields */
 .card           /* Card containers */
-.badge-preview  /* Badge preview areas */
-```
-
-**Custom Utilities:**
-```css
-.text-gradient  /* Primary gradient text */
-.shadow-soft    /* Soft shadow effect */
-```
-
-**Custom Animations:**
-- `fade-in`: Smooth fade-in effect
-- `slide-up`: Slide up with fade
-- `bounce-subtle`: Subtle bounce animation
-
-### Usage Examples
-
-```vue
-<!-- Primary button with icon -->
-<button class="btn-primary">
-  <svg class="w-5 h-5 mr-2 inline">...</svg>
-  Action
-</button>
-
-<!-- Input field -->
-<input class="input-field" placeholder="Enter text..." />
-
-<!-- Card container -->
-<div class="card p-6">
-  <h3 class="text-lg font-semibold text-secondary-900">Title</h3>
-  <p class="text-secondary-600">Content</p>
-</div>
-
-<!-- Gradient text -->
-<h1 class="text-4xl font-bold text-gradient">
-  Sticker Factory
-</h1>
+.text-gradient  /* Gradient text effect */
 ```
 
 ### Responsive Design
+- Mobile-first approach with Tailwind breakpoints
+- `sm:` (640px+), `md:` (768px+), `lg:` (1024px+), `xl:` (1280px+)
 
-All components use Tailwind's responsive prefixes:
-- `sm:` - Small screens (640px+)
-- `md:` - Medium screens (768px+)
-- `lg:` - Large screens (1024px+)
-- `xl:` - Extra large screens (1280px+)
+## Development Notes
 
-### Configuration Files
+### Performance Optimizations
+- **Lazy Font Loading** - fonts loaded only when selected
+- **Component Optimization** with computed properties
+- **Minimal Re-renders** with reactive optimizations
 
-- `client/tailwind.config.js` - Main Tailwind configuration
-- `client/postcss.config.js` - PostCSS configuration
-- `client/src/style.css` - Custom components and utilities
+### Browser Compatibility
+- Modern browsers with ES6+ support
+- SVG support required for badge rendering
+- LocalStorage required for persistence
 
-## Project Commands Reference
+### Project Configuration
+- **TypeScript** strict mode enabled
+- **Vite** for fast development and building
+- **ESLint** with Vue 3 + TypeScript rules
+- **PostCSS** with Autoprefixer
 
-Always run commands through Make for consistency:
+## Server Configuration
 
-```bash
-# Setup
-make install          # Install all dependencies
-make clean           # Clean everything
+### Development
+- **Vite Dev Server**: http://localhost:3000 with HMR
+- **Hot Module Replacement** for instant updates
 
-# Development  
-make dev             # Start full development environment
-make dev-open        # Start development environment with browser
-make lint            # Check code quality
+### Production
+- **Express Static Server**: http://localhost:3000
+- **SPA Fallback** for client-side routing
+- **Static File Serving** from `app/dist/`
 
-# Production
-make build           # Build for production
-make start           # Run production server
-make start-open      # Run production server with browser
+---
 
-# Browser
-make open            # Open client in browser
-make open-api        # Open API documentation
-
-# Utilities
-make help            # Show all commands
-make check           # Health check
-```
-
-## Notes
-
-- The client runs on port 3000, server on port 3001
-- All TypeScript files are configured with strict type checking
-- ESLint is configured for Vue 3 + TypeScript best practices
-- The project uses ES modules throughout
-- CORS is configured to allow client-server communication
-- All build outputs include source maps for debugging
-- adjust PLAN.md and CLAUDE.md when changes are made
-- oonly add the requested features
+**Production Ready**: This application is fully functional with professional templates, comprehensive font support, and robust state management.

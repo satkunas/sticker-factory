@@ -1,0 +1,79 @@
+name: "Product Catalog Page"
+id: "catalog-page"
+description: "Single product showcase for catalogs and brochures"
+category: "rectangle"
+layers:
+  - id: "page-background"
+    type: "shape"
+    subtype: "rect"
+    position: { x: 50, y: 50 }
+    width: 400
+    height: 300
+    stroke: "#e5e7eb"
+    strokeWidth: 1
+    fill: "#ffffff"
+
+  - id: "product-frame"
+    type: "shape"
+    subtype: "rect"
+    position: { x: 50, y: 40 }
+    width: 180
+    height: 120
+    stroke: "#d1d5db"
+    strokeWidth: 2
+    fill: "#f9fafb"
+
+  - id: "product-name"
+    type: "text"
+    label: "Product Name"
+    default: "Premium Wireless Headphones"
+    position: { x: 250, y: 170 }
+    maxLength: 30
+    fontFamily: "Oswald"
+    fontSize: 20
+    fontWeight: 600
+    fontColor: "#111827"
+
+  - id: "product-code"
+    type: "text"
+    label: "Product Code"
+    default: "SKU: WH-2024-PRO"
+    position: { x: 250, y: 190 }
+    maxLength: 20
+    fontFamily: "JetBrains Mono"
+    fontSize: 11
+    fontWeight: 400
+    fontColor: "#6b7280"
+
+  - id: "price"
+    type: "text"
+    label: "Price"
+    default: "$199.99"
+    position: { x: 250, y: 215 }
+    maxLength: 15
+    fontFamily: "Bebas Neue"
+    fontSize: 24
+    fontWeight: 400
+    fontColor: "#dc2626"
+
+  - id: "features"
+    type: "text"
+    label: "Key Features"
+    default: "• Active Noise Cancellation • 30hr Battery"
+    position: { x: 250, y: 240 }
+    maxLength: 50
+    fontFamily: "Source Sans 3"
+    fontSize: 12
+    fontWeight: 400
+    fontColor: "#374151"
+
+  - id: "availability"
+    type: "text"
+    label: "Availability"
+    default: "In Stock - Ships Same Day"
+    position: { x: 250, y: 260 }
+    maxLength: 25
+    fontFamily: "Nunito"
+    fontSize: 10
+    fontWeight: 600
+    fontColor: "#059669"

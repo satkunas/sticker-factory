@@ -31,8 +31,8 @@ layers:
     default: "Company Name"
     position: { x: 70, y: 25 }
     maxLength: 25
-    fontFamily: "Inter"
-    fontSize: 18
+    fontFamily: "Playfair Display"
+    fontSize: 22
     fontWeight: 700
     fontColor: "#1f2937"
 
@@ -42,8 +42,8 @@ layers:
     default: "John Smith"
     position: { x: 70, y: 45 }
     maxLength: 20
-    fontFamily: "Inter"
-    fontSize: 16
+    fontFamily: "Montserrat"
+    fontSize: 18
     fontWeight: 600
     fontColor: "#374151"
 
@@ -53,8 +53,8 @@ layers:
     default: "(555) 123-4567"
     position: { x: 70, y: 65 }
     maxLength: 15
-    fontFamily: "Roboto"
-    fontSize: 14
+    fontFamily: "Source Sans 3"
+    fontSize: 13
     fontWeight: 400
     fontColor: "#6b7280"
 
@@ -64,7 +64,7 @@ layers:
     default: "john@company.com"
     position: { x: 70, y: 85 }
     maxLength: 30
-    fontFamily: "Roboto"
-    fontSize: 14
+    fontFamily: "Source Sans 3"
+    fontSize: 13
     fontWeight: 400
     fontColor: "#6b7280"

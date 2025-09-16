@@ -1,0 +1,79 @@
+name: "Social Media Post"
+id: "social-media-post"
+description: "Square social media post template for Instagram/Facebook"
+category: "square"
+layers:
+  - id: "post-background"
+    type: "shape"
+    subtype: "rect"
+    position: { x: 50, y: 50 }
+    width: 300
+    height: 300
+    stroke: "#e5e7eb"
+    strokeWidth: 1
+    fill: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+
+  - id: "content-overlay"
+    type: "shape"
+    subtype: "rect"
+    position: { x: 50, y: 50 }
+    width: 260
+    height: 180
+    rx: 12
+    ry: 12
+    fill: "rgba(255, 255, 255, 0.9)"
+
+  - id: "main-headline"
+    type: "text"
+    label: "Headline"
+    default: "Follow Your Dreams"
+    position: { x: 180, y: 120 }
+    maxLength: 20
+    fontFamily: "Playfair Display"
+    fontSize: 26
+    fontWeight: 700
+    fontColor: "#1f2937"
+
+  - id: "sub-message"
+    type: "text"
+    label: "Sub Message"
+    default: "Success starts with a single step"
+    position: { x: 180, y: 150 }
+    maxLength: 35
+    fontFamily: "Source Sans 3"
+    fontSize: 14
+    fontWeight: 400
+    fontColor: "#374151"
+
+  - id: "call-to-action"
+    type: "text"
+    label: "Call to Action"
+    default: "Get Started Today"
+    position: { x: 180, y: 180 }
+    maxLength: 20
+    fontFamily: "Oswald"
+    fontSize: 16
+    fontWeight: 600
+    fontColor: "#7c3aed"
+
+  - id: "hashtags"
+    type: "text"
+    label: "Hashtags"
+    default: "#motivation #success #goals"
+    position: { x: 200, y: 270 }
+    maxLength: 30
+    fontFamily: "Nunito"
+    fontSize: 12
+    fontWeight: 400
+    fontColor: "#6366f1"
+
+  - id: "brand-handle"
+    type: "text"
+    label: "Brand Handle"
+    default: "@YourBrand"
+    position: { x: 200, y: 290 }
+    maxLength: 15
+    fontFamily: "JetBrains Mono"
+    fontSize: 10
+    fontWeight: 500
+    fontColor: "#4b5563"

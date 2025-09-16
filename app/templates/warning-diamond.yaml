@@ -31,9 +31,9 @@ layers:
     default: "⚠"
     position: { x: 100, y: 75 }
     maxLength: 3
-    fontFamily: "Arial"
-    fontSize: 24
-    fontWeight: 700
+    fontFamily: "Bebas Neue"
+    fontSize: 28
+    fontWeight: 400
     fontColor: "#b91c1c"
 
   - id: "warning-text"
@@ -43,7 +43,7 @@ layers:
     position: { x: 100, y: 125 }
     clipPath: "polygon(50% 0%, 85% 35%, 50% 100%, 15% 35%)"
     maxLength: 10
-    fontFamily: "Inter"
-    fontSize: 14
+    fontFamily: "Oswald"
+    fontSize: 16
     fontWeight: 700
     fontColor: "#7f1d1d"

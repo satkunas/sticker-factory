@@ -1,0 +1,68 @@
+name: "Vinyl Record Label"
+id: "vinyl-record-label"
+description: "Classic vinyl record center label design"
+category: "circle"
+layers:
+  - id: "outer-label"
+    type: "shape"
+    subtype: "circle"
+    position: { x: 50, y: 50 }
+    width: 200
+    height: 200
+    stroke: "#1f2937"
+    strokeWidth: 2
+    fill: "#fbbf24"
+
+  - id: "inner-ring"
+    type: "shape"
+    subtype: "circle"
+    position: { x: 50, y: 50 }
+    width: 160
+    height: 160
+    stroke: "#92400e"
+    strokeWidth: 1
+    fill: "#f59e0b"
+
+  - id: "center-hole"
+    type: "shape"
+    subtype: "circle"
+    position: { x: 50, y: 50 }
+    width: 40
+    height: 40
+    fill: "#1f2937"
+
+  - id: "record-label"
+    type: "text"
+    label: "Record Label"
+    default: "GROOVE RECORDS"
+    position: { x: 50, y: 35 }
+    clipPath: "circle(95px at 50px 50px)"
+    maxLength: 15
+    fontFamily: "Bebas Neue"
+    fontSize: 14
+    fontWeight: 400
+    fontColor: "#7c2d12"
+
+  - id: "artist-name"
+    type: "text"
+    label: "Artist Name"
+    default: "The Vinyl Collective"
+    position: { x: 50, y: 50 }
+    clipPath: "circle(95px at 50px 50px)"
+    maxLength: 20
+    fontFamily: "Oswald"
+    fontSize: 18
+    fontWeight: 600
+    fontColor: "#1f2937"
+
+  - id: "song-title"
+    type: "text"
+    label: "Song Title"
+    default: "Golden Hour"
+    position: { x: 50, y: 65 }
+    clipPath: "circle(95px at 50px 50px)"
+    maxLength: 20
+    fontFamily: "Poppins"
+    fontSize: 14
+    fontWeight: 500
+    fontColor: "#92400e"

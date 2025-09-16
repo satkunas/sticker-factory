@@ -31,9 +31,9 @@ layers:
     default: "TechConf 2024"
     position: { x: 50, y: 20 }
     maxLength: 15
-    fontFamily: "Inter"
-    fontSize: 16
-    fontWeight: 700
+    fontFamily: "Bebas Neue"
+    fontSize: 18
+    fontWeight: 400
     fontColor: "#ffffff"
 
   - id: "attendee-name"
@@ -42,9 +42,9 @@ layers:
     default: "Jane Developer"
     position: { x: 50, y: 50 }
     maxLength: 20
-    fontFamily: "Inter"
-    fontSize: 20
-    fontWeight: 700
+    fontFamily: "Oswald"
+    fontSize: 24
+    fontWeight: 600
     fontColor: "#111827"
 
   - id: "company"
@@ -53,9 +53,9 @@ layers:
     default: "Tech Solutions Inc."
     position: { x: 50, y: 70 }
     maxLength: 25
-    fontFamily: "Open Sans"
+    fontFamily: "Poppins"
     fontSize: 16
-    fontWeight: 600
+    fontWeight: 500
     fontColor: "#374151"
 
   - id: "role"
@@ -64,7 +64,7 @@ layers:
     default: "Senior Engineer"
     position: { x: 50, y: 85 }
     maxLength: 20
-    fontFamily: "Open Sans"
+    fontFamily: "Nunito"
     fontSize: 14
     fontWeight: 400
     fontColor: "#6b7280"

@@ -65,6 +65,7 @@
                   :text-stroke-color="textInput.strokeColor"
                   :text-stroke-width="textInput.strokeWidth"
                   :stroke-opacity="textInput.strokeOpacity"
+                  :instance-id="textInput.id"
                   @update:model-value="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { text: value })"
                   @update:selectedFont="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { font: value })"
                   @update:font-size="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { fontSize: value })"
