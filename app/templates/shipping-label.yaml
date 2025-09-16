@@ -6,7 +6,7 @@ layers:
   - id: "background"
     type: "shape"
     subtype: "rect"
-    position: { x: 50, y: 50 }
+    position: { x: "50%", y: "50%" }
     width: 400
     height: 250
     stroke: "#1f2937"
@@ -16,7 +16,7 @@ layers:
   - id: "priority-banner"
     type: "shape"
     subtype: "rect"
-    position: { x: 50, y: 15 }
+    position: { x: "50%", y: "15%" }
     width: 360
     height: 40
     fill: "#dc2626"
@@ -25,7 +25,8 @@ layers:
     type: "text"
     label: "Priority Level"
     default: "PRIORITY"
-    position: { x: 230, y: 35 }
+    position: { x: "50%", y: "15%" }
+    clip: "priority-banner"
     maxLength: 10
     fontFamily: "Oswald"
     fontSize: 18
@@ -36,20 +37,22 @@ layers:
     type: "text"
     label: "Sender Address"
     default: "From: Company Address"
-    position: { x: 250, y: 100 }
+    position: { x: "50%", y: "38%" }
+    clip: "background"
     maxLength: 35
-    fontFamily: "Lato"
-    fontSize: 12
-    fontWeight: 400
+    fontFamily: "Inter"
+    fontSize: 13
+    fontWeight: 500
     fontColor: "#374151"
 
   - id: "to-address"
     type: "text"
     label: "Recipient Address"
     default: "To: Customer Address"
-    position: { x: 250, y: 150 }
+    position: { x: "50%", y: "55%" }
+    clip: "background"
     maxLength: 35
-    fontFamily: "Lato"
+    fontFamily: "Inter"
     fontSize: 15
     fontWeight: 700
     fontColor: "#111827"
@@ -58,9 +61,10 @@ layers:
     type: "text"
     label: "Tracking Number"
     default: "Tracking: 1Z999AA1234567890"
-    position: { x: 250, y: 200 }
+    position: { x: "50%", y: "72%" }
+    clip: "background"
     maxLength: 25
     fontFamily: "JetBrains Mono"
-    fontSize: 11
-    fontWeight: 500
-    fontColor: "#4b5563"
+    fontSize: 12
+    fontWeight: 600
+    fontColor: "#1f2937"

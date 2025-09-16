@@ -6,7 +6,7 @@ layers:
   - id: "background"
     type: "shape"
     subtype: "rect"
-    position: { x: 50, y: 50 }
+    position: { x: "50%", y: "50%" }
     width: 350
     height: 200
     rx: 8
@@ -18,7 +18,7 @@ layers:
   - id: "logo-area"
     type: "shape"
     subtype: "rect"
-    position: { x: 20, y: 30 }
+    position: { x: "20%", y: "30%" }
     width: 80
     height: 60
     stroke: "#d1d5db"
@@ -29,10 +29,11 @@ layers:
     type: "text"
     label: "Company Name"
     default: "Company Name"
-    position: { x: 70, y: 25 }
+    position: { x: "65%", y: "32%" }
+    clip: "background"
     maxLength: 25
-    fontFamily: "Playfair Display"
-    fontSize: 22
+    fontFamily: "Oswald"
+    fontSize: 20
     fontWeight: 700
     fontColor: "#1f2937"
 
@@ -40,10 +41,11 @@ layers:
     type: "text"
     label: "Full Name"
     default: "John Smith"
-    position: { x: 70, y: 45 }
+    position: { x: "65%", y: "50%" }
+    clip: "background"
     maxLength: 20
-    fontFamily: "Montserrat"
-    fontSize: 18
+    fontFamily: "Inter"
+    fontSize: 16
     fontWeight: 600
     fontColor: "#374151"
 
@@ -51,20 +53,22 @@ layers:
     type: "text"
     label: "Phone Number"
     default: "(555) 123-4567"
-    position: { x: 70, y: 65 }
+    position: { x: "65%", y: "68%" }
+    clip: "background"
     maxLength: 15
-    fontFamily: "Source Sans 3"
+    fontFamily: "Inter"
     fontSize: 13
-    fontWeight: 400
-    fontColor: "#6b7280"
+    fontWeight: 500
+    fontColor: "#4b5563"
 
   - id: "email"
     type: "text"
     label: "Email Address"
     default: "john@company.com"
-    position: { x: 70, y: 85 }
+    position: { x: "65%", y: "82%" }
+    clip: "background"
     maxLength: 30
-    fontFamily: "Source Sans 3"
+    fontFamily: "Inter"
     fontSize: 13
-    fontWeight: 400
-    fontColor: "#6b7280"
+    fontWeight: 500
+    fontColor: "#4b5563"

@@ -18,9 +18,9 @@
             <div class="w-8 h-6 bg-secondary-100 rounded border flex items-center justify-center overflow-hidden">
               <svg
                 v-if="selectedTemplate"
-                :width="Math.min(32, selectedTemplate.viewBox.width / selectedTemplate.viewBox.height * 24)"
+                :width="32"
                 :height="24"
-                :viewBox="`0 0 ${selectedTemplate.viewBox.width} ${selectedTemplate.viewBox.height}`"
+                :viewBox="getOptimalViewBox(selectedTemplate, 32, 24)"
                 class="drop-shadow-sm"
               >
                 <template v-for="element in getTemplateElements(selectedTemplate)" :key="element.zIndex">
@@ -31,6 +31,20 @@
                     :stroke="element.shape.stroke || '#16a34a'"
                     :stroke-width="element.shape.strokeWidth || 2"
                   />
+                  <text
+                    v-if="element.type === 'text' && element.textInput"
+                    :x="element.textInput.position.x"
+                    :y="element.textInput.position.y"
+                    text-anchor="middle"
+                    dominant-baseline="central"
+                    :font-family="element.textInput.fontFamily"
+                    :font-size="Math.max(8, element.textInput.fontSize * 0.6)"
+                    :font-weight="element.textInput.fontWeight"
+                    :fill="element.textInput.fontColor"
+                    class="select-none"
+                  >
+                    {{ element.textInput.default }}
+                  </text>
                 </template>
               </svg>
               <div v-else class="w-4 h-4 bg-secondary-300 rounded" />
@@ -76,9 +90,9 @@
               <!-- Template Preview -->
               <div class="w-12 h-8 bg-secondary-50 border border-secondary-200 rounded flex items-center justify-center overflow-hidden flex-shrink-0">
                 <svg
-                  :width="Math.min(48, template.viewBox.width / template.viewBox.height * 32)"
+                  :width="48"
                   :height="32"
-                  :viewBox="`0 0 ${template.viewBox.width} ${template.viewBox.height}`"
+                  :viewBox="getOptimalViewBox(template, 48, 32)"
                   class="drop-shadow-sm"
                 >
                   <template v-for="element in getTemplateElements(template)" :key="element.zIndex">
@@ -149,6 +163,77 @@ const templates = ref<SimpleTemplate[]>([])
 const selectTemplate = (template: SimpleTemplate) => {
   emit('update:selectedTemplate', template)
   isOpen.value = false
+}
+
+// Calculate optimal viewBox for content-aware fit
+const getOptimalViewBox = (template: SimpleTemplate, targetWidth: number, targetHeight: number): string => {
+  if (!template) return `0 0 ${targetWidth} ${targetHeight}`
+
+  // Get template elements to calculate content bounds
+  const elements = getTemplateElements(template)
+  const contentElements = elements.filter(el =>
+    (el.type === 'shape' && el.shape) || (el.type === 'text' && el.textInput)
+  )
+
+  if (contentElements.length === 0) {
+    return `0 0 ${template.viewBox.width} ${template.viewBox.height}`
+  }
+
+  // Calculate content bounding box
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+
+  contentElements.forEach(el => {
+    if (el.type === 'shape' && el.shape) {
+      // For shapes, use basic position/size estimation
+      const x = el.shape.position?.x || 0
+      const y = el.shape.position?.y || 0
+      const width = el.shape.width || 50
+      const height = el.shape.height || 50
+
+      minX = Math.min(minX, x - width/2)
+      minY = Math.min(minY, y - height/2)
+      maxX = Math.max(maxX, x + width/2)
+      maxY = Math.max(maxY, y + height/2)
+    } else if (el.type === 'text' && el.textInput) {
+      // For text, estimate bounds around position
+      const x = el.textInput.position.x
+      const y = el.textInput.position.y
+      const fontSize = el.textInput.fontSize || 16
+      const textWidth = (el.textInput.default?.length || 5) * fontSize * 0.6
+      const textHeight = fontSize
+
+      minX = Math.min(minX, x - textWidth/2)
+      minY = Math.min(minY, y - textHeight/2)
+      maxX = Math.max(maxX, x + textWidth/2)
+      maxY = Math.max(maxY, y + textHeight/2)
+    }
+  })
+
+  if (minX === Infinity) {
+    return `0 0 ${template.viewBox.width} ${template.viewBox.height}`
+  }
+
+  // Add some padding
+  const padding = 20
+  const contentWidth = maxX - minX + padding * 2
+  const contentHeight = maxY - minY + padding * 2
+  const contentX = minX - padding
+  const contentY = minY - padding
+
+  // Calculate scale to fit target dimensions while maintaining aspect ratio
+  const scaleX = targetWidth / contentWidth
+  const scaleY = targetHeight / contentHeight
+  const scale = Math.min(scaleX, scaleY) * 0.9 // 90% to leave some margin
+
+  // Calculate final viewBox dimensions
+  const viewBoxWidth = targetWidth / scale
+  const viewBoxHeight = targetHeight / scale
+
+  // Center the content in the viewBox
+  const viewBoxX = contentX + (contentWidth - viewBoxWidth) / 2
+  const viewBoxY = contentY + (contentHeight - viewBoxHeight) / 2
+
+  return `${viewBoxX} ${viewBoxY} ${viewBoxWidth} ${viewBoxHeight}`
 }
 
 // Close dropdown when clicking outside

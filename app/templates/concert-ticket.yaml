@@ -6,7 +6,7 @@ layers:
   - id: "ticket-background"
     type: "shape"
     subtype: "rect"
-    position: { x: 50, y: 50 }
+    position: { x: "50%", y: "50%" }
     width: 380
     height: 180
     rx: 8
@@ -18,7 +18,7 @@ layers:
   - id: "perforation-line"
     type: "shape"
     subtype: "line"
-    position: { x1: 280, y1: 30, x2: 280, y2: 150 }
+    position: { x1: "75%", y1: "20%", x2: "75%", y2: "80%" }
     stroke: "#7c2d12"
     strokeWidth: 1
     fill: "none"
@@ -27,18 +27,20 @@ layers:
     type: "text"
     label: "Artist/Band Name"
     default: "The Midnight Express"
-    position: { x: 40, y: 40 }
+    position: { x: "25%", y: "32%" }
+    clip: "ticket-background"
     maxLength: 25
     fontFamily: "Bebas Neue"
-    fontSize: 22
-    fontWeight: 400
+    fontSize: 24
+    fontWeight: 700
     fontColor: "#7c2d12"
 
   - id: "venue-name"
     type: "text"
     label: "Venue Name"
     default: "Madison Square Garden"
-    position: { x: 40, y: 65 }
+    position: { x: "25%", y: "50%" }
+    clip: "ticket-background"
     maxLength: 30
     fontFamily: "Oswald"
     fontSize: 16
@@ -49,31 +51,34 @@ layers:
     type: "text"
     label: "Date & Time"
     default: "Dec 15, 2024 • 8:00 PM"
-    position: { x: 40, y: 90 }
+    position: { x: "25%", y: "68%" }
+    clip: "ticket-background"
     maxLength: 25
-    fontFamily: "Lato"
+    fontFamily: "Inter"
     fontSize: 14
-    fontWeight: 400
+    fontWeight: 500
     fontColor: "#451a03"
 
   - id: "ticket-number"
     type: "text"
     label: "Ticket Number"
     default: "A-001234"
-    position: { x: 290, y: 60 }
+    position: { x: "85%", y: "45%" }
+    clip: "ticket-background"
     maxLength: 15
     fontFamily: "JetBrains Mono"
-    fontSize: 12
-    fontWeight: 500
+    fontSize: 13
+    fontWeight: 600
     fontColor: "#7c2d12"
 
   - id: "section-seat"
     type: "text"
     label: "Section & Seat"
     default: "SEC 101 ROW B"
-    position: { x: 290, y: 85 }
+    position: { x: "85%", y: "63%" }
+    clip: "ticket-background"
     maxLength: 15
     fontFamily: "JetBrains Mono"
-    fontSize: 11
-    fontWeight: 400
+    fontSize: 13
+    fontWeight: 500
     fontColor: "#92400e"

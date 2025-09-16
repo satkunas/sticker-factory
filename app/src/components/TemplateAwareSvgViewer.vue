@@ -44,6 +44,17 @@
         >
           <!-- Template-based rendering with ordered elements -->
           <g v-if="template">
+            <!-- Clip path definitions -->
+            <defs v-if="hasClipPaths">
+              <clipPath
+                v-for="clipShape in clipPathShapes"
+                :key="`clip-${clipShape.id}`"
+                :id="`clip-${clipShape.id}`"
+              >
+                <path :d="clipShape.path" />
+              </clipPath>
+            </defs>
+
             <template v-for="(element, index) in templateElements" :key="`${element.type}-${index}`">
               <!-- Shape rendering -->
               <path
@@ -70,6 +81,7 @@
                   :stroke="(textInputData?.strokeWidth || strokeWidth) > 0 ? (textInputData?.strokeColor || strokeColor) : 'none'"
                   :stroke-width="textInputData?.strokeWidth || strokeWidth"
                   :stroke-opacity="textInputData?.strokeOpacity || strokeOpacity"
+                  :clip-path="element.textInput.clip ? `url(#clip-${element.textInput.clip})` : (element.textInput.clipPath || undefined)"
                   class="select-none"
                 >
                   {{ textInputData?.text || stickerText || 'Sample Text' }}
@@ -127,7 +139,39 @@
           >
             <!-- Mini Badge -->
             <div class="absolute inset-0 flex items-center justify-center">
+              <svg
+                v-if="template"
+                :width="Math.min(120, template.viewBox.width / template.viewBox.height * 32)"
+                :height="32"
+                :viewBox="`0 0 ${template.viewBox.width} ${template.viewBox.height}`"
+                class="opacity-60"
+              >
+                <template v-for="element in getTemplateElements(template)" :key="element.zIndex">
+                  <path
+                    v-if="element.type === 'shape' && element.shape"
+                    :d="element.shape.path"
+                    :fill="element.shape.fill || stickerColor || '#22c55e'"
+                    :stroke="element.shape.stroke || '#16a34a'"
+                    :stroke-width="element.shape.strokeWidth || 1"
+                  />
+                  <text
+                    v-if="element.type === 'text' && element.textInput"
+                    :x="element.textInput.position.x"
+                    :y="element.textInput.position.y"
+                    text-anchor="middle"
+                    dominant-baseline="central"
+                    :font-family="element.textInput.fontFamily"
+                    :font-size="Math.max(6, element.textInput.fontSize * 0.4)"
+                    :font-weight="element.textInput.fontWeight"
+                    :fill="element.textInput.fontColor"
+                    class="select-none"
+                  >
+                    {{ element.textInput.default }}
+                  </text>
+                </template>
+              </svg>
               <div
+                v-else
                 class="rounded-full"
                 :style="{
                   backgroundColor: stickerColor,
@@ -207,7 +251,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, nextTick, onMounted } from 'vue'
+import { computed, ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { getFontFamily, type FontConfig } from '../config/fonts'
 import type { SimpleTemplate } from '../types/template-types'
 import { getTemplateElements } from '../config/template-loader'
@@ -274,6 +318,22 @@ const initialPanY = ref(0)
 // SVG container ref
 const svgContainer = ref<HTMLElement | null>(null)
 
+// Reactive container dimensions for viewport calculation
+const containerDimensions = ref({ width: 0, height: 0 })
+
+// Update container dimensions
+const updateContainerDimensions = () => {
+  if (svgContainer.value) {
+    const rect = svgContainer.value.getBoundingClientRect()
+    containerDimensions.value = {
+      width: rect.width,
+      height: rect.height
+    }
+  }
+  // Also update SVG dimensions when container changes
+  updateSvgDimensions()
+}
+
 // Computed properties - make SVG dimensions match the viewBox to avoid clipping
 const svgWidth = computed(() => {
   if (props.template) {
@@ -334,46 +394,114 @@ const getFontFamilyForTextInput = (textInput: any) => {
   return 'Arial, sans-serif'
 }
 
+// Check if template has any text elements with clipping
+const hasClipPaths = computed(() => {
+  if (!props.template) return false
+  return templateElements.value.some(element =>
+    element.type === 'text' && element.textInput?.clip
+  )
+})
+
+// Get shapes that are used as clip paths
+const clipPathShapes = computed(() => {
+  if (!props.template) return []
+
+  // Get all shape elements that are referenced as clip paths
+  const shapeElements = templateElements.value.filter(element => element.type === 'shape')
+  const clipIds = new Set<string>()
+
+  // Find all clip references
+  templateElements.value.forEach(element => {
+    if (element.type === 'text' && element.textInput?.clip) {
+      clipIds.add(element.textInput.clip)
+    }
+  })
+
+  // Return shapes that are referenced as clips
+  return shapeElements
+    .filter(element => element.shape && clipIds.has(element.shape.id))
+    .map(element => ({
+      id: element.shape!.id,
+      path: element.shape!.path
+    }))
+})
+
+// Reactive SVG dimensions that update with window resize
+const actualSvgDimensions = ref({ width: 0, height: 0 })
+
+// Function to update SVG dimensions
+const updateSvgDimensions = () => {
+  if (svgElementRef.value && props.template) {
+    const rect = svgElementRef.value.getBoundingClientRect()
+    actualSvgDimensions.value = {
+      width: rect.width,
+      height: rect.height
+    }
+  }
+}
+
 // Viewport calculation for compact legend
 const viewportStyle = computed(() => {
   // Compact legend container is 128px wide, 40px high (w-32 h-10)
   const legendWidth = 128
   const legendHeight = 40
 
-  // Calculate viewport size based on zoom level
-  // At zoom 1, viewport shows full image
-  // At higher zoom, viewport shows smaller portion
-  const viewportWidthPercent = Math.min(100, 100 / zoomLevel.value)
-  const viewportHeightPercent = Math.min(100, 100 / zoomLevel.value)
+  // Calculate the actual mini SVG dimensions (same logic as in template)
+  let miniSvgWidth = legendWidth
+  let miniSvgHeight = legendHeight
 
-  const viewportWidth = (legendWidth * viewportWidthPercent) / 100
-  const viewportHeight = (legendHeight * viewportHeightPercent) / 100
+  if (props.template) {
+    miniSvgWidth = Math.min(120, props.template.viewBox.width / props.template.viewBox.height * 32)
+    miniSvgHeight = 32
+  }
 
-  // Calculate position based on pan values
-  // Convert pan values to percentage of viewport
-  const containerRect = svgContainer.value?.getBoundingClientRect()
-  if (!containerRect) {
-    return {
-      width: `${viewportWidth}px`,
-      height: `${viewportHeight}px`,
-      left: `${(legendWidth - viewportWidth) / 2}px`,
-      top: `${(legendHeight - viewportHeight) / 2}px`
+  // The viewport rectangle should represent what portion of the SVG content is visible
+  // At zoom 1, the entire SVG content is visible (100%)
+  // At higher zoom levels, only a portion is visible
+
+  // Calculate how much of the content is visible based on zoom level
+  const visibleWidthRatio = Math.min(1, 1 / zoomLevel.value)
+  const visibleHeightRatio = Math.min(1, 1 / zoomLevel.value)
+
+  // The viewport rectangle size should be proportional to how much is visible
+  const viewportWidth = miniSvgWidth * visibleWidthRatio
+  const viewportHeight = miniSvgHeight * visibleHeightRatio
+
+  // Calculate viewport rectangle position based on pan values
+  // Center the mini SVG within the legend container
+  const miniSvgOffsetX = (legendWidth - miniSvgWidth) / 2
+  const miniSvgOffsetY = (legendHeight - miniSvgHeight) / 2
+
+  // When zoomed in, the viewport rectangle moves based on pan
+  let viewportX = miniSvgOffsetX
+  let viewportY = miniSvgOffsetY
+
+  if (containerDimensions.value.width > 0 && containerDimensions.value.height > 0 && zoomLevel.value > 1) {
+    // Calculate the maximum pan distance in each direction
+    const maxPanX = (containerDimensions.value.width * (zoomLevel.value - 1)) / 2
+    const maxPanY = (containerDimensions.value.height * (zoomLevel.value - 1)) / 2
+
+    if (maxPanX > 0) {
+      // Normalize pan position (-1 to 1) and map to viewport position
+      const panRatioX = Math.max(-1, Math.min(1, panX.value / maxPanX))
+      viewportX = miniSvgOffsetX + (miniSvgWidth - viewportWidth) * (panRatioX + 1) / 2
+    }
+
+    if (maxPanY > 0) {
+      const panRatioY = Math.max(-1, Math.min(1, panY.value / maxPanY))
+      viewportY = miniSvgOffsetY + (miniSvgHeight - viewportHeight) * (panRatioY + 1) / 2
     }
   }
 
-  // Calculate pan percentage relative to container size
-  const panXPercent = (-panX.value / (containerRect.width * zoomLevel.value)) * 100
-  const panYPercent = (-panY.value / (containerRect.height * zoomLevel.value)) * 100
-
-  // Position viewport rectangle in legend
-  const leftPos = (legendWidth - viewportWidth) / 2 + (panXPercent * legendWidth) / 100
-  const topPos = (legendHeight - viewportHeight) / 2 + (panYPercent * legendHeight) / 100
+  // Ensure the viewport rectangle stays within the mini SVG bounds
+  viewportX = Math.max(miniSvgOffsetX, Math.min(miniSvgOffsetX + miniSvgWidth - viewportWidth, viewportX))
+  viewportY = Math.max(miniSvgOffsetY, Math.min(miniSvgOffsetY + miniSvgHeight - viewportHeight, viewportY))
 
   return {
     width: `${viewportWidth}px`,
     height: `${viewportHeight}px`,
-    left: `${Math.max(0, Math.min(legendWidth - viewportWidth, leftPos))}px`,
-    top: `${Math.max(0, Math.min(legendHeight - viewportHeight, topPos))}px`
+    left: `${viewportX}px`,
+    top: `${viewportY}px`
   }
 })
 
@@ -394,7 +522,7 @@ const resetZoom = () => {
 
 // Alternative auto-fit that uses a different approach
 const altAutoFit = async () => {
-  if (!svgContainer.value || !props.template) {
+  if (!svgContainer.value || !svgElementRef.value || !props.template) {
     return
   }
 
@@ -409,17 +537,65 @@ const altAutoFit = async () => {
   const containerWidth = container.offsetWidth - 120 // Account for padding and controls
   const containerHeight = container.offsetHeight - 120
 
-  // Use template viewBox dimensions
-  const templateWidth = props.template.viewBox.width
-  const templateHeight = props.template.viewBox.height
+  // Get the actual content bounds within the SVG
+  const svgElement = svgElementRef.value
+  const contentElements = Array.from(svgElement.querySelectorAll('rect, text, circle, path, polygon'))
 
-  // Calculate the scale needed to fit
-  const scaleToFitWidth = containerWidth / templateWidth
-  const scaleToFitHeight = containerHeight / templateHeight
-  const bestScale = Math.min(scaleToFitWidth, scaleToFitHeight) * 0.8
+  if (contentElements.length === 0) {
+    // Fallback to SVG element if no content found
+    const svgRect = svgElement.getBoundingClientRect()
+    const scaleToFitWidth = containerWidth / svgRect.width
+    const scaleToFitHeight = containerHeight / svgRect.height
+    const bestScale = Math.min(scaleToFitWidth, scaleToFitHeight) * 0.9
+    zoomLevel.value = Math.max(0.2, Math.min(3, bestScale))
+    return
+  }
+
+  // Calculate bounding box of actual content in SVG coordinates
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+
+  contentElements.forEach(el => {
+    try {
+      const bbox = el.getBBox()
+      minX = Math.min(minX, bbox.x)
+      minY = Math.min(minY, bbox.y)
+      maxX = Math.max(maxX, bbox.x + bbox.width)
+      maxY = Math.max(maxY, bbox.y + bbox.height)
+    } catch (e) {
+      // getBBox might fail on some elements, skip them
+    }
+  })
+
+  if (minX === Infinity) {
+    // No valid bounding boxes found, fallback
+    const svgRect = svgElement.getBoundingClientRect()
+    const scaleToFitWidth = containerWidth / svgRect.width
+    const scaleToFitHeight = containerHeight / svgRect.height
+    const bestScale = Math.min(scaleToFitWidth, scaleToFitHeight) * 0.9
+    zoomLevel.value = Math.max(0.2, Math.min(3, bestScale))
+    return
+  }
+
+  // Content dimensions in SVG coordinates
+  const contentWidth = maxX - minX
+  const contentHeight = maxY - minY
+
+  // Get SVG viewBox to convert to screen coordinates
+  const viewBox = props.template.viewBox
+  const svgRect = svgElement.getBoundingClientRect()
+
+  // Calculate how much screen space the content actually takes
+  const contentScreenWidth = (contentWidth / viewBox.width) * svgRect.width
+  const contentScreenHeight = (contentHeight / viewBox.height) * svgRect.height
+
+  // Calculate the scale needed to fit the actual content
+  const scaleToFitWidth = containerWidth / contentScreenWidth
+  const scaleToFitHeight = containerHeight / contentScreenHeight
+  const bestScale = Math.min(scaleToFitWidth, scaleToFitHeight) * 0.85 // Leave some margin
 
   // Apply the scale and center the SVG
-  zoomLevel.value = Math.max(0.2, Math.min(3, bestScale))
+  const finalZoom = Math.max(0.2, Math.min(5, bestScale))
+  zoomLevel.value = finalZoom
 
   // Center the SVG by resetting pan values
   panX.value = 0
@@ -527,21 +703,42 @@ const downloadSvg = () => {
 // Watch for template changes and auto-fit
 watch(() => props.template, (newTemplate) => {
   if (newTemplate) {
-    if (props.previewMode) {
-      // In preview mode, always fit to view
-      nextTick(() => altAutoFit())
-    } else {
-      altAutoFit()
-    }
+    // Always auto-fit when template changes, regardless of mode
+    nextTick(() => altAutoFit())
   }
 }, { immediate: true })
 
-// Auto-fit on mount in preview mode
-onMounted(() => {
+// Watch for container ref changes and update dimensions
+watch(svgContainer, () => {
+  if (svgContainer.value) {
+    nextTick(() => updateContainerDimensions())
+  }
+})
 
-  if (props.previewMode && props.template) {
+// Watch for SVG element changes and update dimensions
+watch(svgElementRef, () => {
+  if (svgElementRef.value) {
+    nextTick(() => updateSvgDimensions())
+  }
+})
+
+// Auto-fit on mount for all modes
+onMounted(() => {
+  // Initialize container dimensions
+  updateContainerDimensions()
+
+  // Add window resize listener
+  window.addEventListener('resize', updateContainerDimensions)
+
+  // Always auto-fit on mount if we have a template
+  if (props.template) {
     nextTick(() => altAutoFit())
   }
+})
+
+// Clean up resize listener
+onUnmounted(() => {
+  window.removeEventListener('resize', updateContainerDimensions)
 })
 
 // Expose download function and SVG ref for parent component

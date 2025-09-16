@@ -6,7 +6,7 @@ layers:
   - id: "warning-diamond"
     type: "shape"
     subtype: "polygon"
-    position: { x: 100, y: 100 }
+    position: { x: "50%", y: "50%" }
     width: 200
     height: 200
     points: "0,-100 100,0 0,100 -100,0"
@@ -17,7 +17,7 @@ layers:
   - id: "inner-border"
     type: "shape"
     subtype: "polygon"
-    position: { x: 100, y: 100 }
+    position: { x: "50%", y: "50%" }
     width: 160
     height: 160
     points: "0,-80 80,0 0,80 -80,0"
@@ -29,21 +29,22 @@ layers:
     type: "text"
     label: "Warning Symbol"
     default: "⚠"
-    position: { x: 100, y: 75 }
+    position: { x: "50%", y: "38%" }
+    clip: "inner-border"
     maxLength: 3
     fontFamily: "Bebas Neue"
-    fontSize: 28
+    fontSize: 32
     fontWeight: 400
-    fontColor: "#b91c1c"
+    fontColor: "#dc2626"
 
   - id: "warning-text"
     type: "text"
     label: "Warning Text"
     default: "CAUTION"
-    position: { x: 100, y: 125 }
-    clipPath: "polygon(50% 0%, 85% 35%, 50% 100%, 15% 35%)"
+    position: { x: "50%", y: "62%" }
+    clip: "inner-border"
     maxLength: 10
     fontFamily: "Oswald"
-    fontSize: 16
+    fontSize: 18
     fontWeight: 700
-    fontColor: "#7f1d1d"
+    fontColor: "#991b1b"

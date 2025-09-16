@@ -6,7 +6,7 @@ layers:
   - id: "post-background"
     type: "shape"
     subtype: "rect"
-    position: { x: 50, y: 50 }
+    position: { x: "50%", y: "50%" }
     width: 300
     height: 300
     stroke: "#e5e7eb"
@@ -16,7 +16,7 @@ layers:
   - id: "content-overlay"
     type: "shape"
     subtype: "rect"
-    position: { x: 50, y: 50 }
+    position: { x: "50%", y: "50%" }
     width: 260
     height: 180
     rx: 12
@@ -27,10 +27,11 @@ layers:
     type: "text"
     label: "Headline"
     default: "Follow Your Dreams"
-    position: { x: 180, y: 120 }
+    position: { x: "50%", y: "42%" }
+    clip: "content-overlay"
     maxLength: 20
-    fontFamily: "Playfair Display"
-    fontSize: 26
+    fontFamily: "Oswald"
+    fontSize: 22
     fontWeight: 700
     fontColor: "#1f2937"
 
@@ -38,9 +39,10 @@ layers:
     type: "text"
     label: "Sub Message"
     default: "Success starts with a single step"
-    position: { x: 180, y: 150 }
+    position: { x: "50%", y: "50%" }
+    clip: "content-overlay"
     maxLength: 35
-    fontFamily: "Source Sans 3"
+    fontFamily: "Inter"
     fontSize: 14
     fontWeight: 400
     fontColor: "#374151"
@@ -49,21 +51,23 @@ layers:
     type: "text"
     label: "Call to Action"
     default: "Get Started Today"
-    position: { x: 180, y: 180 }
+    position: { x: "50%", y: "58%" }
+    clip: "content-overlay"
     maxLength: 20
-    fontFamily: "Oswald"
+    fontFamily: "Bebas Neue"
     fontSize: 16
-    fontWeight: 600
+    fontWeight: 400
     fontColor: "#7c3aed"
 
   - id: "hashtags"
     type: "text"
     label: "Hashtags"
     default: "#motivation #success #goals"
-    position: { x: 200, y: 270 }
+    position: { x: "50%", y: "78%" }
+    clip: "post-background"
     maxLength: 30
-    fontFamily: "Nunito"
-    fontSize: 12
+    fontFamily: "Inter"
+    fontSize: 13
     fontWeight: 400
     fontColor: "#6366f1"
 
@@ -71,9 +75,10 @@ layers:
     type: "text"
     label: "Brand Handle"
     default: "@YourBrand"
-    position: { x: 200, y: 290 }
+    position: { x: "50%", y: "88%" }
+    clip: "post-background"
     maxLength: 15
     fontFamily: "JetBrains Mono"
-    fontSize: 10
+    fontSize: 13
     fontWeight: 500
     fontColor: "#4b5563"

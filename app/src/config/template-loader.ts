@@ -11,6 +11,7 @@ import type {
   ProcessedShapeLayer,
   ProcessedTextInputLayer
 } from '../types/template-types'
+import { resolvePosition, resolveLinePosition, type ViewBox } from './coordinate-utils'
 
 // Template cache to avoid repeated loading
 const templateCache = new Map<string, SimpleTemplate>()
@@ -179,6 +180,7 @@ const convertLegacyToNew = (legacy: LegacyYamlTemplate): YamlTemplate => {
       default: textInput.default,
       position: textInput.position,
       rotation: textInput.rotation,
+      clip: textInput.clip,
       clipPath: textInput.clipPath,
       maxLength: textInput.maxLength,
       fontFamily: textInput.fontFamily,
@@ -219,13 +221,19 @@ const convertYamlToSimpleTemplate = (rawTemplate: YamlTemplate | LegacyYamlTempl
         shape: {
           id: layer.id,
           type: 'path',
-          path: convertShapeLayerToPath(layer),
+          path: convertShapeLayerToPath(layer, viewBox),
           fill: layer.fill,
           stroke: layer.stroke,
           strokeWidth: layer.strokeWidth
         }
       })
     } else if (layer.type === 'text') {
+      // Resolve percentage coordinates for text inputs
+      const resolvedPosition = resolvePosition(
+        layer.position as { x: number | string; y: number | string },
+        viewBox
+      )
+
       layers.push({
         id: layer.id,
         type: 'text',
@@ -234,8 +242,9 @@ const convertYamlToSimpleTemplate = (rawTemplate: YamlTemplate | LegacyYamlTempl
           label: layer.label,
           placeholder: layer.placeholder,
           default: layer.default,
-          position: layer.position,
+          position: resolvedPosition,
           rotation: layer.rotation,
+          clip: layer.clip,
           clipPath: layer.clipPath,
           maxLength: layer.maxLength,
           fontFamily: layer.fontFamily,
@@ -258,36 +267,49 @@ const convertYamlToSimpleTemplate = (rawTemplate: YamlTemplate | LegacyYamlTempl
 }
 
 /**
- * Calculate viewBox from shape layers
+ * Calculate viewBox from shape layers (with percentage coordinate support)
  */
 const calculateViewBoxFromLayers = (shapeLayers: TemplateShapeLayer[]): { x: number; y: number; width: number; height: number } => {
+  // First pass: find any absolute coordinates to establish base dimensions
+  let hasAbsoluteCoords = false
   let minX = Infinity
   let minY = Infinity
   let maxX = -Infinity
   let maxY = -Infinity
 
+  // Check for absolute coordinates first
   shapeLayers.forEach((layer) => {
     if (layer.subtype === 'line') {
-      const pos = layer.position as { x1: number; y1: number; x2: number; y2: number }
-      minX = Math.min(minX, pos.x1, pos.x2)
-      minY = Math.min(minY, pos.y1, pos.y2)
-      maxX = Math.max(maxX, pos.x1, pos.x2)
-      maxY = Math.max(maxY, pos.y1, pos.y2)
+      const pos = layer.position as { x1: number | string; y1: number | string; x2: number | string; y2: number | string }
+      if (typeof pos.x1 === 'number' && typeof pos.y1 === 'number' &&
+          typeof pos.x2 === 'number' && typeof pos.y2 === 'number') {
+        hasAbsoluteCoords = true
+        minX = Math.min(minX, pos.x1, pos.x2)
+        minY = Math.min(minY, pos.y1, pos.y2)
+        maxX = Math.max(maxX, pos.x1, pos.x2)
+        maxY = Math.max(maxY, pos.y1, pos.y2)
+      }
     } else {
-      const pos = layer.position as { x: number; y: number }
-      const width = layer.width || 0
-      const height = layer.height || 0
+      const pos = layer.position as { x: number | string; y: number | string }
+      if (typeof pos.x === 'number' && typeof pos.y === 'number') {
+        hasAbsoluteCoords = true
+        const width = layer.width || 0
+        const height = layer.height || 0
+        const strokeWidth = layer.strokeWidth || 0
+        const halfStroke = strokeWidth / 2
 
-      // Account for stroke width that extends beyond the shape
-      const strokeWidth = layer.strokeWidth || 0
-      const halfStroke = strokeWidth / 2
-
-      minX = Math.min(minX, pos.x - width/2 - halfStroke)
-      minY = Math.min(minY, pos.y - height/2 - halfStroke)
-      maxX = Math.max(maxX, pos.x + width/2 + halfStroke)
-      maxY = Math.max(maxY, pos.y + height/2 + halfStroke)
+        minX = Math.min(minX, pos.x - width/2 - halfStroke)
+        minY = Math.min(minY, pos.y - height/2 - halfStroke)
+        maxX = Math.max(maxX, pos.x + width/2 + halfStroke)
+        maxY = Math.max(maxY, pos.y + height/2 + halfStroke)
+      }
     }
   })
+
+  // If no absolute coordinates found, use default dimensions
+  if (!hasAbsoluteCoords || minX === Infinity) {
+    return { x: 0, y: 0, width: 500, height: 400 }
+  }
 
   // Add padding
   const padding = 20
@@ -300,10 +322,16 @@ const calculateViewBoxFromLayers = (shapeLayers: TemplateShapeLayer[]): { x: num
 }
 
 /**
- * Convert shape layer to SVG path
+ * Convert shape layer to SVG path (with percentage coordinate support)
  */
-const convertShapeLayerToPath = (layer: TemplateShapeLayer): string => {
-  const pos = layer.position as { x: number; y: number }
+const convertShapeLayerToPath = (layer: TemplateShapeLayer, viewBox: ViewBox): string => {
+  if (layer.subtype === 'line') {
+    const linePos = layer.position as { x1: number | string; y1: number | string; x2: number | string; y2: number | string }
+    const resolvedPos = resolveLinePosition(linePos, viewBox)
+    return `M${resolvedPos.x1},${resolvedPos.y1} L${resolvedPos.x2},${resolvedPos.y2}`
+  }
+
+  const pos = resolvePosition(layer.position as { x: number | string; y: number | string }, viewBox)
 
   switch (layer.subtype) {
     case 'rect':
@@ -342,9 +370,6 @@ const convertShapeLayerToPath = (layer: TemplateShapeLayer): string => {
       // Default triangle if no points specified
       return `M${pos.x},${pos.y - 50} L${pos.x + 50},${pos.y + 25} L${pos.x - 50},${pos.y + 25} Z`
 
-    case 'line':
-      const linePos = layer.position as { x1: number; y1: number; x2: number; y2: number }
-      return `M${linePos.x1},${linePos.y1} L${linePos.x2},${linePos.y2}`
 
     default:
       // Default to rectangle

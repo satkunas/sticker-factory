@@ -156,40 +156,128 @@ layers:
 
 **🚨 CRITICAL: Text positioning uses CENTER COORDINATES**
 
+The template system supports both **percentage-based** and **absolute** coordinate positioning for intuitive and responsive design.
+
+#### Percentage Coordinates (Recommended)
+
+Use percentage strings for intuitive positioning that adapts to any viewBox size:
+
+```yaml
+position: { x: "50%", y: "50%" }    # Exact center
+position: { x: "0%", y: "0%" }      # Top-left corner
+position: { x: "100%", y: "100%" }  # Bottom-right corner
+position: { x: "25%", y: "75%" }    # Quarter from left, three-quarters down
+position: { x: "-10%", y: "110%" }  # Outside viewBox boundaries
+```
+
+**Percentage Reference System:**
+- `"0%"` = Left edge / Top edge of viewBox
+- `"50%"` = Horizontal center / Vertical center
+- `"100%"` = Right edge / Bottom edge of viewBox
+- `"-25%"` = 25% outside left/top boundary
+- `"150%"` = 50% beyond right/bottom boundary
+
+#### Absolute Coordinates (Legacy)
+
+Traditional pixel-based positioning (fully backward compatible):
+
+```yaml
+position: { x: 200, y: 150 }        # Absolute pixel coordinates
+```
+
+#### Mixed Coordinate Systems
+
+Combine percentage and absolute coordinates as needed:
+
+```yaml
+position: { x: "50%", y: 30 }       # Centered horizontally, 30px from top
+position: { x: 100, y: "75%" }      # 100px from left, three-quarters down
+```
+
 #### Shape Positioning
-- **Circles**: `position: {x: 50, y: 50}` → SVG `cx="50" cy="50"` (center at 50,50)
-- **Rectangles**: `position: {x: 50, y: 50}` → SVG `x="50" y="50"` (top-left at 50,50)
-- **Polygons**: `position: {x: 50, y: 50}` → Center point for calculations
+- **Circles**: `position: {x: "50%", y: "50%"}` → Center of viewBox
+- **Rectangles**: `position: {x: "25%", y: "25%"}` → Shape center at quarter point
+- **Polygons**: `position: {x: "50%", y: "50%"}` → Polygon center reference
 
 #### Text Positioning
 All text uses `text-anchor="middle"` and `dominant-baseline="central"`:
-- `position: {x: 50, y: 50}` places text CENTER at coordinate (50,50)
+- `position: {x: "50%", y: "50%"}` → Text center at viewBox center
+- Percentage coordinates are automatically resolved to absolute pixels during rendering
 
-#### Coordinate Calculations
+#### Template Examples
 
-**Circle Example:**
+**Circle Template with Percentage Coordinates:**
 ```yaml
-# Circle at {x: 50, y: 50} with width: 200
-# Text should also be at {x: 50, y: 50} for center alignment
+layers:
+  - id: "background"
+    type: "shape"
+    subtype: "circle"
+    position: { x: "50%", y: "50%" }    # Center of viewBox
+    width: 200
+    height: 200
+    fill: "#3b82f6"
+
+  - id: "title"
+    type: "text"
+    position: { x: "50%", y: "50%" }    # Same center as circle
+    default: "My Badge"
+    fontFamily: "Roboto"
+    fontSize: 18
 ```
 
-**Rectangle Example:**
+**Rectangle Template with Percentage Layout:**
 ```yaml
-# Rectangle at {x: 50, y: 50} with width: 300, height: 200
-# Rectangle center: (50 + 300/2, 50 + 200/2) = (200, 150)
-# Text should be at {x: 200, y: 150} for center alignment
+layers:
+  - id: "background"
+    type: "shape"
+    subtype: "rect"
+    position: { x: "50%", y: "50%" }    # Centered rectangle
+    width: 400
+    height: 200
+    fill: "#f8fafc"
+
+  - id: "header"
+    type: "text"
+    position: { x: "50%", y: "25%" }    # Top quarter
+    default: "Header Text"
+
+  - id: "body"
+    type: "text"
+    position: { x: "50%", y: "50%" }    # Center
+    default: "Body Text"
+
+  - id: "footer"
+    type: "text"
+    position: { x: "50%", y: "75%" }    # Bottom quarter
+    default: "Footer Text"
 ```
 
 ### Template Development Workflow
 
-1. **Design Layout**: Plan shape and text positions
-2. **Set Shape Positions**: Use appropriate coordinates for shape type
-3. **Calculate Text Centers**:
-   - Circles: Use same coordinates as shape position
-   - Rectangles: Calculate center = (x + width/2, y + height/2)
-   - Polygons: Use center point of polygon
-4. **Test in Browser**: Verify text appears centered within shapes
-5. **Fine-tune**: Adjust coordinates for visual balance
+1. **Design Layout**: Plan shape and text positions using percentage coordinates for responsive design
+2. **Use Percentage Coordinates** (Recommended):
+   - `{ x: "50%", y: "50%" }` for center positioning
+   - `{ x: "25%", y: "25%" }` for quarter positions
+   - `{ x: "0%", y: "100%" }` for corners
+3. **Shape Positioning**: All shapes are positioned by their center point
+4. **Text Positioning**: Use same or calculated percentage coordinates for text
+5. **Test in Browser**: Verify text appears centered within shapes
+6. **Fine-tune**: Adjust percentages for visual balance (e.g., `"52%"` instead of `"50%"`)
+
+#### Percentage Coordinate Benefits
+- **Intuitive**: `"50%"` always means center regardless of viewBox size
+- **Responsive**: Templates automatically adapt to different dimensions
+- **Consistent**: No manual center calculations needed
+- **Maintainable**: Easy to understand and modify coordinates
+
+#### Migration from Absolute Coordinates
+```yaml
+# Old absolute coordinates
+position: { x: 250, y: 150 }  # Hard to understand without context
+
+# New percentage coordinates
+position: { x: "50%", y: "50%" }  # Immediately clear this is centered
+```
 
 ## State Management
 

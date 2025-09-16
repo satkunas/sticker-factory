@@ -35,6 +35,33 @@
           </button>
         </nav>
       </div>
+
+      <!-- Mobile Menu Dropdown -->
+      <div v-if="showMobileMenu" class="lg:hidden border-t border-secondary-200 bg-white">
+        <div class="px-4 py-3 space-y-2">
+          <button
+            class="w-full flex items-center space-x-2 px-3 py-2 bg-primary-600 text-white text-sm rounded-md hover:bg-primary-700 transition-colors"
+            @click="showDownloadModal = true; showMobileMenu = false"
+          >
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 011 1v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+            </svg>
+            <span>Download</span>
+          </button>
+          <button
+            class="w-full text-left px-3 py-2 text-sm text-secondary-600 hover:text-secondary-900 hover:bg-secondary-50 rounded-md transition-colors"
+            @click="showExportModal = true; showMobileMenu = false"
+          >
+            Export
+          </button>
+          <button
+            class="w-full text-left px-3 py-2 text-sm text-secondary-600 hover:text-secondary-900 hover:bg-secondary-50 rounded-md transition-colors"
+            @click="showImportModal = true; showMobileMenu = false"
+          >
+            Import
+          </button>
+        </div>
+      </div>
     </header>
     <!-- Main Content -->
     <main class="flex-1 flex flex-col lg:flex-row min-h-0">

@@ -6,11 +6,11 @@ layers:
   - id: "main-background"
     type: "shape"
     subtype: "rect"
-    position: { x: 50, y: 50 }
+    position: { x: "50%", y: "50%" }
     width: 350
     height: 200
-    rx: 15
-    ry: 15
+    rx: "15%"
+    ry: "15%"
     stroke: "#166534"
     strokeWidth: 3
     fill: "#f0fdf4"
@@ -18,32 +18,34 @@ layers:
   - id: "organic-banner"
     type: "shape"
     subtype: "rect"
-    position: { x: 50, y: 20 }
+    position: { x: "50%", y: "20%" }
     width: 120
     height: 30
-    rx: 15
-    ry: 15
+    rx: "15%"
+    ry: "15%"
     fill: "#16a34a"
 
   - id: "organic-text"
     type: "text"
     label: "Certification"
     default: "ORGANIC"
-    position: { x: 110, y: 35 }
+    position: { x: "50%", y: "20%" }
+    clip: "organic-banner"
     maxLength: 10
-    fontFamily: "Bebas Neue"
+    fontFamily: "Oswald"
     fontSize: 14
-    fontWeight: 400
+    fontWeight: 700
     fontColor: "#ffffff"
 
   - id: "product-name"
     type: "text"
     label: "Product Name"
     default: "Farm Fresh Tomatoes"
-    position: { x: 225, y: 80 }
+    position: { x: "50%", y: "45%" }
+    clip: "main-background"
     maxLength: 25
-    fontFamily: "Playfair Display"
-    fontSize: 24
+    fontFamily: "Oswald"
+    fontSize: 22
     fontWeight: 700
     fontColor: "#166534"
 
@@ -51,21 +53,23 @@ layers:
     type: "text"
     label: "Product Description"
     default: "Locally grown • Non-GMO"
-    position: { x: 225, y: 110 }
+    position: { x: "50%", y: "58%" }
+    clip: "main-background"
     maxLength: 30
-    fontFamily: "Source Sans 3"
+    fontFamily: "Inter"
     fontSize: 14
-    fontWeight: 400
+    fontWeight: 500
     fontColor: "#15803d"
 
   - id: "weight-info"
     type: "text"
     label: "Weight/Size"
     default: "Net Wt. 16 oz (454g)"
-    position: { x: 225, y: 140 }
+    position: { x: "50%", y: "71%" }
+    clip: "main-background"
     maxLength: 20
-    fontFamily: "Nunito"
-    fontSize: 12
+    fontFamily: "Inter"
+    fontSize: 13
     fontWeight: 600
     fontColor: "#374151"
 
@@ -73,9 +77,10 @@ layers:
     type: "text"
     label: "Best By Date"
     default: "Best By: 12/15/24"
-    position: { x: 225, y: 170 }
+    position: { x: "50%", y: "82%" }
+    clip: "main-background"
     maxLength: 20
     fontFamily: "JetBrains Mono"
-    fontSize: 10
-    fontWeight: 400
-    fontColor: "#6b7280"
+    fontSize: 11
+    fontWeight: 500
+    fontColor: "#4b5563"

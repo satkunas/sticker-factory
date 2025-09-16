@@ -15,12 +15,20 @@ Templates are automatically discovered using file globbing patterns. The system 
 
 ```
 app/templates/
-├── business-card.yaml       # Professional business card template
-├── quality-sticker.yaml     # Product quality assurance sticker
-├── shipping-label.yaml      # Express shipping and tracking label
-├── warning-diamond.yaml     # Safety warning diamond label
-├── conference-badge.yaml    # Professional conference attendee badge
-└── README.md               # This documentation file
+├── booklet-cover.yaml          # Booklet or magazine cover template
+├── business-card.yaml          # Professional business card template
+├── catalog-page.yaml           # Product catalog page layout
+├── concert-ticket.yaml         # Concert or event ticket template
+├── conference-badge.yaml       # Professional conference attendee badge
+├── event-promo-sticker.yaml    # Event promotion circular sticker
+├── food-packaging-label.yaml   # Food product packaging label
+├── quality-sticker.yaml        # Product quality assurance sticker
+├── shipping-label.yaml         # Express shipping and tracking label
+├── social-media-post.yaml      # Social media post template
+├── vinyl-record-label.yaml     # Vinyl record center label
+├── warning-diamond.yaml        # Safety warning diamond label
+├── youtube-thumbnail.yaml      # YouTube video thumbnail template
+└── README.md                   # This documentation file
 ```
 
 Template files use descriptive names that reflect their intended print media application. The application automatically loads all `.yaml` files in this directory and organizes them by the `category` field defined in each template (circle, rectangle, diamond, etc.).
@@ -105,38 +113,135 @@ Text layers define editable text areas within your design:
   placeholder: "Enter company name"  # Optional input hint
   position: { x: 50, y: 30 }        # Percentage positioning
   rotation: 0                       # Optional rotation in degrees
-  clipPath: "circle(85px at 100px 100px)"  # Optional text clipping
+  clip: "background"                # Optional text clipping (shape ID)
   maxLength: 20                     # Optional character limit
+```
+
+## Coordinate System
+
+The template system now supports **percentage-based coordinates** alongside absolute coordinates for intuitive, responsive positioning.
+
+### Percentage Coordinates (Recommended)
+
+Use percentage strings for positioning that automatically adapts to any viewBox size:
+
+```yaml
+position: { x: "50%", y: "50%" }    # Exact center
+position: { x: "0%", y: "0%" }      # Top-left corner
+position: { x: "100%", y: "100%" }  # Bottom-right corner
+position: { x: "25%", y: "75%" }    # Quarter from left, 3/4 down
+position: { x: "-10%", y: "110%" }  # Outside viewBox boundaries
+```
+
+**Reference Points:**
+- `"0%"` = Left/top edge of viewBox
+- `"50%"` = Center of viewBox
+- `"100%"` = Right/bottom edge
+- Negative values position outside viewBox
+- Values > 100% extend beyond viewBox
+
+### Legacy Absolute Coordinates
+
+Traditional pixel-based positioning (backward compatible):
+
+```yaml
+position: { x: 200, y: 150 }        # Absolute pixel coordinates
+```
+
+### Mixed Coordinate Systems
+
+Combine percentage and absolute as needed:
+
+```yaml
+position: { x: "50%", y: 30 }       # Centered horizontally, 30px from top
+position: { x: 100, y: "75%" }      # 100px from left, 3/4 down
 ```
 
 ### Text Positioning
 
-Text positioning uses percentage-based coordinates where:
-- `x: 0` = Left edge, `x: 100` = Right edge
-- `y: 0` = Top edge, `y: 100` = Bottom edge
-- `x: 50, y: 50` = Center of design
+**🚨 CRITICAL: All text positioning uses CENTER coordinates**
+
+- Text uses `text-anchor="middle"` and `dominant-baseline="central"`
+- `position: { x: "50%", y: "50%" }` centers text in viewBox
+- Percentage coordinates are resolved automatically during rendering
+
+### Common Coordinate Patterns
+
+#### Centered Layout
+```yaml
+# Perfect center
+position: { x: "50%", y: "50%" }
+
+# Slightly off-center for visual balance
+position: { x: "50%", y: "48%" }
+```
+
+#### Quarter Grid Layout
+```yaml
+# Four corner positions
+top-left:     { x: "25%", y: "25%" }
+top-right:    { x: "75%", y: "25%" }
+bottom-left:  { x: "25%", y: "75%" }
+bottom-right: { x: "75%", y: "75%" }
+```
+
+#### Header/Body/Footer Layout
+```yaml
+header: { x: "50%", y: "20%" }
+body:   { x: "50%", y: "50%" }
+footer: { x: "50%", y: "80%" }
+```
+
+#### Side-by-Side Layout
+```yaml
+left-content:  { x: "25%", y: "50%" }
+right-content: { x: "75%", y: "50%" }
+```
 
 ### Text Clipping
 
-Text can be clipped to specific shapes using CSS clip-path syntax:
+Text can be clipped to specific shapes using the `clip` property that references shape layer IDs. This ensures text overflow is hidden within container shapes for professional appearance.
 
-#### Circle Clipping
+#### Shape-Based Clipping (Recommended)
 ```yaml
-clipPath: "circle(90px at 100px 100px)"
-# circle(radius at center-x center-y)
+- id: "main-text"
+  type: "text"
+  label: "Product Name"
+  position: { x: "50%", y: "50%" }
+  clip: "background"           # References shape layer ID
+  maxLength: 20
+
+- id: "background"             # Container shape
+  type: "shape"
+  subtype: "circle"
+  position: { x: "50%", y: "50%" }
+  width: 180
+  height: 180
+  fill: "#ffffff"
 ```
 
-#### Rectangle Clipping
+#### Multiple Text Elements with Same Clipping
 ```yaml
-clipPath: "rect(20px, 180px, 180px, 20px)"
-# rect(top, right, bottom, left)
+- id: "header-text"
+  type: "text"
+  clip: "header-section"       # Clip to header area
+
+- id: "body-text"
+  type: "text"
+  clip: "main-container"       # Clip to main content area
+
+- id: "footer-text"
+  type: "text"
+  clip: "main-container"       # Multiple texts can use same clip shape
 ```
 
-#### Polygon Clipping
+#### Legacy CSS ClipPath Support
 ```yaml
+clipPath: "circle(90px at 100px 100px)"     # Deprecated, use 'clip' instead
 clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)"
-# polygon(x1 y1, x2 y2, x3 y3, ...)
 ```
+
+**Note:** The legacy `clipPath` property is still supported for backward compatibility, but new templates should use the `clip` property for better maintainability and automatic shape conversion.
 
 ## Print Media Examples
 
@@ -173,24 +278,28 @@ layers:
     type: "text"
     label: "Company Name"
     position: { x: 70, y: 25 }
+    clip: "background"
     maxLength: 25
 
   - id: "contact-name"
     type: "text"
     label: "John Smith"
     position: { x: 70, y: 45 }
+    clip: "background"
     maxLength: 20
 
   - id: "phone-number"
     type: "text"
     label: "(555) 123-4567"
     position: { x: 70, y: 65 }
+    clip: "background"
     maxLength: 15
 
   - id: "email"
     type: "text"
     label: "john@company.com"
     position: { x: 70, y: 85 }
+    clip: "background"
     maxLength: 30
 ```
 
@@ -225,14 +334,14 @@ layers:
     type: "text"
     label: "QUALITY"
     position: { x: 50, y: 40 }
-    clipPath: "circle(85px at 100px 100px)"
+    clip: "inner-circle"
     maxLength: 12
 
   - id: "assurance-text"
     type: "text"
     label: "ASSURED"
     position: { x: 50, y: 60 }
-    clipPath: "circle(85px at 100px 100px)"
+    clip: "inner-circle"
     maxLength: 12
 ```
 
@@ -265,26 +374,28 @@ layers:
     type: "text"
     label: "PRIORITY"
     position: { x: 50, y: 15 }
+    clip: "priority-banner"
     maxLength: 10
 
   - id: "from-address"
     type: "text"
     label: "From: Company Address"
     position: { x: 25, y: 40 }
-    clipPath: "rect(30px, 180px, 200px, 20px)"
+    clip: "background"
     maxLength: 35
 
   - id: "to-address"
     type: "text"
     label: "To: Customer Address"
     position: { x: 75, y: 40 }
-    clipPath: "rect(30px, 380px, 200px, 200px)"
+    clip: "background"
     maxLength: 35
 
   - id: "tracking-number"
     type: "text"
     label: "Tracking: 1Z999AA1234567890"
     position: { x: 50, y: 85 }
+    clip: "background"
     maxLength: 25
 ```
 
@@ -317,13 +428,14 @@ layers:
     type: "text"
     label: "⚠"
     position: { x: 50, y: 35 }
+    clip: "inner-border"
     maxLength: 3
 
   - id: "warning-text"
     type: "text"
     label: "CAUTION"
     position: { x: 50, y: 65 }
-    clipPath: "polygon(50% 0%, 85% 35%, 50% 100%, 15% 35%)"
+    clip: "inner-border"
     maxLength: 10
 ```
 
@@ -360,24 +472,28 @@ layers:
     type: "text"
     label: "TechConf 2024"
     position: { x: 50, y: 20 }
+    clip: "header-bar"
     maxLength: 15
 
   - id: "attendee-name"
     type: "text"
     label: "Jane Developer"
     position: { x: 50, y: 50 }
+    clip: "badge-background"
     maxLength: 20
 
   - id: "company"
     type: "text"
     label: "Tech Solutions Inc."
     position: { x: 50, y: 70 }
+    clip: "badge-background"
     maxLength: 25
 
   - id: "role"
     type: "text"
     label: "Senior Engineer"
     position: { x: 50, y: 85 }
+    clip: "badge-background"
     maxLength: 20
 ```
 

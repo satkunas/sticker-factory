@@ -6,7 +6,7 @@ layers:
   - id: "starburst-background"
     type: "shape"
     subtype: "polygon"
-    position: { x: 100, y: 100 }
+    position: { x: "50%", y: "50%" }
     width: 200
     height: 200
     points: "0,-100 15,-30 85,-25 25,-5 65,80 0,35 -65,80 -25,-5 -85,-25 -15,-30"
@@ -17,7 +17,7 @@ layers:
   - id: "inner-circle"
     type: "shape"
     subtype: "circle"
-    position: { x: 100, y: 100 }
+    position: { x: "50%", y: "50%" }
     width: 140
     height: 140
     stroke: "#b91c1c"
@@ -28,11 +28,11 @@ layers:
     type: "text"
     label: "Main Text"
     default: "50% OFF"
-    position: { x: 100, y: 90 }
-    clipPath: "circle(65px at 100px 100px)"
+    position: { x: "50%", y: "45%" }
+    clip: "inner-circle"
     maxLength: 10
     fontFamily: "Bebas Neue"
-    fontSize: 28
+    fontSize: 24
     fontWeight: 400
     fontColor: "#ffffff"
 
@@ -40,22 +40,22 @@ layers:
     type: "text"
     label: "Sub Text"
     default: "SALE!"
-    position: { x: 100, y: 110 }
-    clipPath: "circle(65px at 100px 100px)"
+    position: { x: "50%", y: "52%" }
+    clip: "inner-circle"
     maxLength: 12
-    fontFamily: "Oswald"
-    fontSize: 16
-    fontWeight: 700
+    fontFamily: "Bebas Neue"
+    fontSize: 18
+    fontWeight: 400
     fontColor: "#fef2f2"
 
   - id: "detail-text"
     type: "text"
     label: "Detail Text"
     default: "Limited Time"
-    position: { x: 100, y: 125 }
-    clipPath: "circle(65px at 100px 100px)"
+    position: { x: "50%", y: "59%" }
+    clip: "inner-circle"
     maxLength: 15
-    fontFamily: "Poppins"
-    fontSize: 10
-    fontWeight: 500
-    fontColor: "#fca5a5"
+    fontFamily: "Oswald"
+    fontSize: 11
+    fontWeight: 600
+    fontColor: "#fef2f2"

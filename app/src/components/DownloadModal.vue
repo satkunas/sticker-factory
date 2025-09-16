@@ -144,6 +144,7 @@ import Modal from './Modal.vue'
 import TemplateAwareSvgViewer from './TemplateAwareSvgViewer.vue'
 import { jsPDF } from 'jspdf'
 import type { SimpleTemplate } from '../types/template-types'
+import { AVAILABLE_FONTS } from '../config/fonts'
 
 interface Props {
   show: boolean
@@ -224,6 +225,68 @@ const getSvgContent = () => {
   try {
     // Clone the SVG and create a clean version without transforms
     const svgClone = svgElement.cloneNode(true) as SVGElement
+
+    // Collect unique fonts used in the SVG
+    const usedFonts = new Set<string>()
+    const textElements = svgClone.querySelectorAll('text')
+    textElements.forEach(textEl => {
+      const fontFamily = textEl.getAttribute('font-family')
+      if (fontFamily) {
+        // Clean up font family name (remove quotes and fallbacks)
+        const cleanFontName = fontFamily.split(',')[0].replace(/['"]/g, '').trim()
+        usedFonts.add(cleanFontName)
+      }
+    })
+
+    // Generate CSS for the fonts
+    let fontCSS = ''
+    usedFonts.forEach(fontName => {
+      // Find the font config from available fonts
+      const fontConfig = AVAILABLE_FONTS.find(font =>
+        font.family === fontName || font.name === fontName
+      )
+
+      if (fontConfig) {
+        // For web fonts (Google Fonts, etc.), include the font definition
+        const fontUrl = fontConfig.googleFontUrl || fontConfig.fontUrl
+        if (fontUrl && (fontConfig.source === 'google' || fontConfig.source === 'web' || fontConfig.googleFontUrl)) {
+          fontCSS += `@import url('${fontUrl}');\n`
+        }
+
+        // Keep the original font name and add fallbacks
+        textElements.forEach(textEl => {
+          const currentFont = textEl.getAttribute('font-family')
+          if (currentFont && currentFont.includes(fontName)) {
+            // Preserve the original font but ensure fallback is included
+            const fallback = fontConfig.fallback || 'sans-serif'
+            const fontWithFallback = `${fontName}, ${fallback}`
+            textEl.setAttribute('font-family', fontWithFallback)
+          }
+        })
+      } else {
+        // For unknown fonts, provide basic fallbacks
+        const fallback = fontName === 'Arial' ? 'Arial, sans-serif' :
+                        fontName === 'Times' ? 'Times, serif' :
+                        fontName === 'Courier' ? 'Courier, monospace' :
+                        fontName.includes('serif') ? `${fontName}, serif` :
+                        fontName.includes('mono') ? `${fontName}, monospace` :
+                        `${fontName}, sans-serif`
+
+        textElements.forEach(textEl => {
+          const currentFont = textEl.getAttribute('font-family')
+          if (currentFont && currentFont.includes(fontName)) {
+            textEl.setAttribute('font-family', fallback)
+          }
+        })
+      }
+    })
+
+    // Add CSS styles to SVG if we have font imports
+    if (fontCSS) {
+      const styleElement = document.createElementNS('http://www.w3.org/2000/svg', 'style')
+      styleElement.textContent = fontCSS
+      svgClone.insertBefore(styleElement, svgClone.firstChild)
+    }
 
     // Create clean SVG string with proper XML declaration
     const svgString = new XMLSerializer().serializeToString(svgClone)

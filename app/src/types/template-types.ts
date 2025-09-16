@@ -3,8 +3,9 @@ export interface TemplateTextInput {
   label: string
   placeholder?: string
   default?: string
-  position: { x: number; y: number }
+  position: { x: number | string; y: number | string }
   rotation?: number
+  clip?: string
   clipPath?: string
   maxLength?: number
   fontFamily?: string
@@ -16,7 +17,7 @@ export interface TemplateTextInput {
 export interface TemplateShape {
   id: string
   type: 'rect' | 'circle' | 'polygon' | 'ellipse' | 'line'
-  position: { x: number; y: number } | { x1: number; y1: number; x2: number; y2: number }
+  position: { x: number | string; y: number | string } | { x1: number | string; y1: number | string; x2: number | string; y2: number | string }
   width?: number
   height?: number
   rx?: number
@@ -37,7 +38,7 @@ export interface TemplateLayerBase {
 export interface TemplateShapeLayer extends TemplateLayerBase {
   type: 'shape'
   subtype: 'rect' | 'circle' | 'polygon' | 'ellipse' | 'line'
-  position: { x: number; y: number } | { x1: number; y1: number; x2: number; y2: number }
+  position: { x: number | string; y: number | string } | { x1: number | string; y1: number | string; x2: number | string; y2: number | string }
   width?: number
   height?: number
   rx?: number
@@ -55,8 +56,9 @@ export interface TemplateTextInputLayer extends TemplateLayerBase {
   label: string
   placeholder?: string
   default?: string
-  position: { x: number; y: number }
+  position: { x: number | string; y: number | string }
   rotation?: number
+  clip?: string
   clipPath?: string
   maxLength?: number
   fontFamily?: string
@@ -137,6 +139,7 @@ export interface ProcessedTextInputLayer extends ProcessedLayerBase {
     placeholder?: string
     position: { x: number; y: number }
     rotation?: number
+    clip?: string
     clipPath?: string
     maxLength?: number
     fontFamily?: string
