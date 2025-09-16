@@ -27,24 +27,44 @@ layers:
 
   - id: "event-name"
     type: "text"
-    label: "TechConf 2024"
+    label: "Event Name"
+    default: "TechConf 2024"
     position: { x: 50, y: 20 }
     maxLength: 15
+    fontFamily: "Inter"
+    fontSize: 16
+    fontWeight: 700
+    fontColor: "#ffffff"
 
   - id: "attendee-name"
     type: "text"
-    label: "Jane Developer"
+    label: "Attendee Name"
+    default: "Jane Developer"
     position: { x: 50, y: 50 }
     maxLength: 20
+    fontFamily: "Inter"
+    fontSize: 20
+    fontWeight: 700
+    fontColor: "#111827"
 
   - id: "company"
     type: "text"
-    label: "Tech Solutions Inc."
+    label: "Company Name"
+    default: "Tech Solutions Inc."
     position: { x: 50, y: 70 }
     maxLength: 25
+    fontFamily: "Open Sans"
+    fontSize: 16
+    fontWeight: 600
+    fontColor: "#374151"
 
   - id: "role"
     type: "text"
-    label: "Senior Engineer"
+    label: "Job Title"
+    default: "Senior Engineer"
     position: { x: 50, y: 85 }
     maxLength: 20
+    fontFamily: "Open Sans"
+    fontSize: 14
+    fontWeight: 400
+    fontColor: "#6b7280"

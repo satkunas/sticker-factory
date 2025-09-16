@@ -28,23 +28,43 @@ layers:
   - id: "company-name"
     type: "text"
     label: "Company Name"
+    default: "Company Name"
     position: { x: 70, y: 25 }
     maxLength: 25
+    fontFamily: "Inter"
+    fontSize: 18
+    fontWeight: 700
+    fontColor: "#1f2937"
 
   - id: "contact-name"
     type: "text"
-    label: "John Smith"
+    label: "Full Name"
+    default: "John Smith"
     position: { x: 70, y: 45 }
     maxLength: 20
+    fontFamily: "Inter"
+    fontSize: 16
+    fontWeight: 600
+    fontColor: "#374151"
 
   - id: "phone-number"
     type: "text"
-    label: "(555) 123-4567"
+    label: "Phone Number"
+    default: "(555) 123-4567"
     position: { x: 70, y: 65 }
     maxLength: 15
+    fontFamily: "Roboto"
+    fontSize: 14
+    fontWeight: 400
+    fontColor: "#6b7280"
 
   - id: "email"
     type: "text"
-    label: "john@company.com"
+    label: "Email Address"
+    default: "john@company.com"
     position: { x: 70, y: 85 }
     maxLength: 30
+    fontFamily: "Roboto"
+    fontSize: 14
+    fontWeight: 400
+    fontColor: "#6b7280"

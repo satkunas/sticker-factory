@@ -176,10 +176,15 @@ const convertLegacyToNew = (legacy: LegacyYamlTemplate): YamlTemplate => {
       type: 'text',
       label: textInput.label,
       placeholder: textInput.placeholder,
+      default: textInput.default,
       position: textInput.position,
       rotation: textInput.rotation,
       clipPath: textInput.clipPath,
-      maxLength: textInput.maxLength
+      maxLength: textInput.maxLength,
+      fontFamily: textInput.fontFamily,
+      fontColor: textInput.fontColor,
+      fontSize: textInput.fontSize,
+      fontWeight: textInput.fontWeight
     })
   })
 
@@ -228,10 +233,15 @@ const convertYamlToSimpleTemplate = (rawTemplate: YamlTemplate | LegacyYamlTempl
           id: layer.id,
           label: layer.label,
           placeholder: layer.placeholder,
+          default: layer.default,
           position: layer.position,
           rotation: layer.rotation,
           clipPath: layer.clipPath,
-          maxLength: layer.maxLength
+          maxLength: layer.maxLength,
+          fontFamily: layer.fontFamily,
+          fontColor: layer.fontColor,
+          fontSize: layer.fontSize,
+          fontWeight: layer.fontWeight
         }
       })
     }
@@ -321,7 +331,13 @@ const convertShapeLayerToPath = (layer: TemplateShapeLayer): string => {
 
     case 'polygon':
       if (layer.points) {
-        return `M${layer.points} Z`
+        // Convert relative points to absolute coordinates
+        const pointPairs = layer.points.split(' ')
+        const absolutePoints = pointPairs.map(pair => {
+          const [x, y] = pair.split(',').map(Number)
+          return `${pos.x + x},${pos.y + y}`
+        })
+        return `M${absolutePoints.join(' L')} Z`
       }
       // Default triangle if no points specified
       return `M${pos.x},${pos.y - 50} L${pos.x + 50},${pos.y + 25} L${pos.x - 50},${pos.y + 25} Z`
@@ -408,7 +424,13 @@ const convertShapeToPath = (shape: TemplateShape): string => {
 
     case 'polygon':
       if (shape.points) {
-        return `M${shape.points} Z`
+        // Convert relative points to absolute coordinates
+        const pointPairs = shape.points.split(' ')
+        const absolutePoints = pointPairs.map(pair => {
+          const [x, y] = pair.split(',').map(Number)
+          return `${pos.x + x},${pos.y + y}`
+        })
+        return `M${absolutePoints.join(' L')} Z`
       }
       // Default triangle if no points specified
       return `M${pos.x},${pos.y - 50} L${pos.x + 50},${pos.y + 25} L${pos.x - 50},${pos.y + 25} Z`

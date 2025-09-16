@@ -2,10 +2,15 @@ export interface TemplateTextInput {
   id: string
   label: string
   placeholder?: string
+  default?: string
   position: { x: number; y: number }
   rotation?: number
   clipPath?: string
   maxLength?: number
+  fontFamily?: string
+  fontColor?: string
+  fontSize?: number
+  fontWeight?: number
 }
 
 export interface TemplateShape {
@@ -49,10 +54,15 @@ export interface TemplateTextInputLayer extends TemplateLayerBase {
   type: 'text'
   label: string
   placeholder?: string
+  default?: string
   position: { x: number; y: number }
   rotation?: number
   clipPath?: string
   maxLength?: number
+  fontFamily?: string
+  fontColor?: string
+  fontSize?: number
+  fontWeight?: number
 }
 
 // Union type for all layer types
@@ -129,6 +139,10 @@ export interface ProcessedTextInputLayer extends ProcessedLayerBase {
     rotation?: number
     clipPath?: string
     maxLength?: number
+    fontFamily?: string
+    fontColor?: string
+    fontSize?: number
+    fontWeight?: number
   }
 }
 
@@ -151,5 +165,9 @@ export interface TemplateElement {
     placeholder?: string
     position: { x: number; y: number }
     maxLength?: number
+    fontFamily?: string
+    fontColor?: string
+    fontSize?: number
+    fontWeight?: number
   }
 }

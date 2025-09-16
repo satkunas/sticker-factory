@@ -25,14 +25,24 @@ layers:
 
   - id: "quality-text"
     type: "text"
-    label: "QUALITY"
+    label: "Top Text"
+    default: "QUALITY"
     position: { x: 50, y: 40 }
     clipPath: "circle(85px at 100px 100px)"
     maxLength: 12
+    fontFamily: "Inter"
+    fontSize: 18
+    fontWeight: 700
+    fontColor: "#7f1d1d"
 
   - id: "assurance-text"
     type: "text"
-    label: "ASSURED"
+    label: "Bottom Text"
+    default: "ASSURED"
     position: { x: 50, y: 60 }
     clipPath: "circle(85px at 100px 100px)"
     maxLength: 12
+    fontFamily: "Inter"
+    fontSize: 16
+    fontWeight: 600
+    fontColor: "#991b1b"

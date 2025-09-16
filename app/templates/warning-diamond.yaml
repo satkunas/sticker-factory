@@ -6,8 +6,10 @@ layers:
   - id: "warning-diamond"
     type: "shape"
     subtype: "polygon"
-    position: { x: 50, y: 50 }
-    points: "0,-80 80,0 0,80 -80,0"
+    position: { x: 100, y: 100 }
+    width: 200
+    height: 200
+    points: "0,-100 100,0 0,100 -100,0"
     stroke: "#dc2626"
     strokeWidth: 4
     fill: "#fef3c7"
@@ -15,21 +17,33 @@ layers:
   - id: "inner-border"
     type: "shape"
     subtype: "polygon"
-    position: { x: 50, y: 50 }
-    points: "0,-65 65,0 0,65 -65,0"
+    position: { x: 100, y: 100 }
+    width: 160
+    height: 160
+    points: "0,-80 80,0 0,80 -80,0"
     stroke: "#991b1b"
     strokeWidth: 2
     fill: "#fbbf24"
 
   - id: "warning-symbol"
     type: "text"
-    label: "⚠"
-    position: { x: 50, y: 35 }
+    label: "Warning Symbol"
+    default: "⚠"
+    position: { x: 100, y: 75 }
     maxLength: 3
+    fontFamily: "Arial"
+    fontSize: 24
+    fontWeight: 700
+    fontColor: "#b91c1c"
 
   - id: "warning-text"
     type: "text"
-    label: "CAUTION"
-    position: { x: 50, y: 65 }
+    label: "Warning Text"
+    default: "CAUTION"
+    position: { x: 100, y: 125 }
     clipPath: "polygon(50% 0%, 85% 35%, 50% 100%, 15% 35%)"
     maxLength: 10
+    fontFamily: "Inter"
+    fontSize: 14
+    fontWeight: 700
+    fontColor: "#7f1d1d"

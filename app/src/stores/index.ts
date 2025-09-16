@@ -300,6 +300,7 @@ export const useStore = () => {
   const initializeTextInputsFromTemplate = async (template: any) => {
     loadFromStorage()
     const { getTemplateTextInputs } = await import('../config/template-loader')
+    const { AVAILABLE_FONTS } = await import('../config/fonts')
     const templateTextInputs = getTemplateTextInputs(template)
 
     // Check if we already have textInputs for this template (preserve existing data)
@@ -307,13 +308,27 @@ export const useStore = () => {
     const newTextInputs: TextInputState[] = templateTextInputs.map((textInput) => {
       // Find existing text input with same ID to preserve user data
       const existing = existingTextInputs.find(input => input.id === textInput.id)
-      return existing || {
+
+      if (existing) {
+        return existing
+      }
+
+      // Find font by name from template, fallback to DEFAULT_FONT
+      let templateFont = DEFAULT_FONT
+      if (textInput.fontFamily) {
+        const foundFont = AVAILABLE_FONTS.find(font => font.name === textInput.fontFamily || font.family === textInput.fontFamily)
+        if (foundFont) {
+          templateFont = foundFont
+        }
+      }
+
+      return {
         id: textInput.id,
-        text: '',
-        font: DEFAULT_FONT,
-        fontSize: 16,
-        fontWeight: 400,
-        textColor: '#ffffff',
+        text: textInput.default || '',
+        font: templateFont,
+        fontSize: textInput.fontSize || 16,
+        fontWeight: textInput.fontWeight || 400,
+        textColor: textInput.fontColor || '#ffffff',
         strokeWidth: 0,
         strokeColor: '#000000',
         strokeOpacity: 1.0
