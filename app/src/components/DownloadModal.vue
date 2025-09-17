@@ -145,6 +145,7 @@ import TemplateAwareSvgViewer from './TemplateAwareSvgViewer.vue'
 import { jsPDF } from 'jspdf'
 import type { SimpleTemplate } from '../types/template-types'
 import { AVAILABLE_FONTS } from '../config/fonts'
+import { embedGoogleFonts } from '../utils/fontEmbedding'
 
 interface Props {
   show: boolean
@@ -214,7 +215,7 @@ const getFileName = () => {
   return `${name}-${timestamp}`
 }
 
-const getSvgContent = () => {
+const getSvgContent = async (embedFonts = false) => {
   // Get the SVG element from the template viewer and create clean SVG content
   const svgElement = templateSvgRef.value?.svgElementRef
   if (!svgElement) {
@@ -283,8 +284,19 @@ const getSvgContent = () => {
 
     // Add CSS styles to SVG if we have font imports
     if (fontCSS) {
+      // If font embedding is requested, convert @import to embedded @font-face
+      let finalCSS = fontCSS
+      if (embedFonts) {
+        try {
+          finalCSS = await embedGoogleFonts(fontCSS)
+        } catch (error) {
+          console.error('Error embedding fonts, falling back to @import:', error)
+          // Keep original CSS as fallback
+        }
+      }
+
       const styleElement = document.createElementNS('http://www.w3.org/2000/svg', 'style')
-      styleElement.textContent = fontCSS
+      styleElement.textContent = finalCSS
       svgClone.insertBefore(styleElement, svgClone.firstChild)
     }
 
@@ -297,8 +309,8 @@ const getSvgContent = () => {
   }
 }
 
-const viewInNewTab = () => {
-  const svgContent = getSvgContent()
+const viewInNewTab = async () => {
+  const svgContent = await getSvgContent() // Don't embed fonts for view (faster loading)
   if (!svgContent) {
     console.error('No SVG content available for viewing')
     return
@@ -312,8 +324,8 @@ const viewInNewTab = () => {
 
 const copyToClipboard = async () => {
   try {
-    const content = selectedFormat.value === 'svg' 
-      ? getSvgContent()
+    const content = selectedFormat.value === 'svg'
+      ? await getSvgContent() // Don't embed fonts for copy (faster)
       : 'Copy not available for this format'
       
     await navigator.clipboard.writeText(content)
@@ -352,8 +364,8 @@ const svgToCanvas = (svgContent, width, height) => {
   })
 }
 
-const downloadSVG = () => {
-  const svgContent = getSvgContent()
+const downloadSVG = async () => {
+  const svgContent = await getSvgContent() // Don't embed fonts for SVG (smaller file size)
   if (!svgContent) {
     console.error('No SVG content available for download')
     return
@@ -372,7 +384,7 @@ const downloadSVG = () => {
 }
 
 const downloadPNG = async () => {
-  const svgContent = getSvgContent()
+  const svgContent = await getSvgContent(true) // Enable font embedding for PNG
   if (!svgContent) {
     console.error('No SVG content available for PNG download')
     return
@@ -399,7 +411,7 @@ const downloadPNG = async () => {
 }
 
 const downloadWebP = async () => {
-  const svgContent = getSvgContent()
+  const svgContent = await getSvgContent(true) // Enable font embedding for WebP
   if (!svgContent) {
     console.error('No SVG content available for WebP download')
     return
@@ -425,8 +437,8 @@ const downloadWebP = async () => {
   }, 'image/webp')
 }
 
-const downloadPDF = () => {
-  const svgContent = getSvgContent()
+const downloadPDF = async () => {
+  const svgContent = await getSvgContent(true) // Enable font embedding for PDF
   if (!svgContent) {
     console.error('No SVG content available for PDF download')
     return
