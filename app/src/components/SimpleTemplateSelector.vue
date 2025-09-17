@@ -103,6 +103,20 @@
                       :stroke="element.shape.stroke || '#16a34a'"
                       :stroke-width="element.shape.strokeWidth || 2"
                     />
+                    <text
+                      v-if="element.type === 'text' && element.textInput"
+                      :x="element.textInput.position.x"
+                      :y="element.textInput.position.y"
+                      text-anchor="middle"
+                      dominant-baseline="central"
+                      :font-family="element.textInput.fontFamily"
+                      :font-size="Math.max(6, element.textInput.fontSize * 0.4)"
+                      :font-weight="element.textInput.fontWeight"
+                      :fill="element.textInput.fontColor"
+                      class="select-none"
+                    >
+                      {{ element.textInput.default }}
+                    </text>
                   </template>
                 </svg>
               </div>
@@ -167,71 +181,25 @@ const selectTemplate = (template: SimpleTemplate) => {
 
 // Calculate optimal viewBox for content-aware fit
 const getOptimalViewBox = (template: SimpleTemplate, targetWidth: number, targetHeight: number): string => {
-  if (!template) return `0 0 ${targetWidth} ${targetHeight}`
+  if (!template?.viewBox) return `0 0 ${targetWidth} ${targetHeight}`
 
-  // Get template elements to calculate content bounds
-  const elements = getTemplateElements(template)
-  const contentElements = elements.filter(el =>
-    (el.type === 'shape' && el.shape) || (el.type === 'text' && el.textInput)
-  )
-
-  if (contentElements.length === 0) {
-    return `0 0 ${template.viewBox.width} ${template.viewBox.height}`
-  }
-
-  // Calculate content bounding box
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
-
-  contentElements.forEach(el => {
-    if (el.type === 'shape' && el.shape) {
-      // For shapes, use basic position/size estimation
-      const x = el.shape.position?.x || 0
-      const y = el.shape.position?.y || 0
-      const width = el.shape.width || 50
-      const height = el.shape.height || 50
-
-      minX = Math.min(minX, x - width/2)
-      minY = Math.min(minY, y - height/2)
-      maxX = Math.max(maxX, x + width/2)
-      maxY = Math.max(maxY, y + height/2)
-    } else if (el.type === 'text' && el.textInput) {
-      // For text, estimate bounds around position
-      const x = el.textInput.position.x
-      const y = el.textInput.position.y
-      const fontSize = el.textInput.fontSize || 16
-      const textWidth = (el.textInput.default?.length || 5) * fontSize * 0.6
-      const textHeight = fontSize
-
-      minX = Math.min(minX, x - textWidth/2)
-      minY = Math.min(minY, y - textHeight/2)
-      maxX = Math.max(maxX, x + textWidth/2)
-      maxY = Math.max(maxY, y + textHeight/2)
-    }
-  })
-
-  if (minX === Infinity) {
-    return `0 0 ${template.viewBox.width} ${template.viewBox.height}`
-  }
-
-  // Add some padding
-  const padding = 20
-  const contentWidth = maxX - minX + padding * 2
-  const contentHeight = maxY - minY + padding * 2
-  const contentX = minX - padding
-  const contentY = minY - padding
+  // Use the template's actual viewBox but scale to fit the target dimensions
+  const { x, y, width, height } = template.viewBox
 
   // Calculate scale to fit target dimensions while maintaining aspect ratio
-  const scaleX = targetWidth / contentWidth
-  const scaleY = targetHeight / contentHeight
+  const scaleX = targetWidth / width
+  const scaleY = targetHeight / height
   const scale = Math.min(scaleX, scaleY) * 0.9 // 90% to leave some margin
 
-  // Calculate final viewBox dimensions
+  // Calculate the viewBox dimensions that will fit in the target size
   const viewBoxWidth = targetWidth / scale
   const viewBoxHeight = targetHeight / scale
 
   // Center the content in the viewBox
-  const viewBoxX = contentX + (contentWidth - viewBoxWidth) / 2
-  const viewBoxY = contentY + (contentHeight - viewBoxHeight) / 2
+  const centerX = x + width / 2
+  const centerY = y + height / 2
+  const viewBoxX = centerX - viewBoxWidth / 2
+  const viewBoxY = centerY - viewBoxHeight / 2
 
   return `${viewBoxX} ${viewBoxY} ${viewBoxWidth} ${viewBoxHeight}`
 }
