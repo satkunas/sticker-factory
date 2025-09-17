@@ -13,7 +13,13 @@
       @mousemove="previewMode ? null : drag"
       @mouseup="previewMode ? null : endDrag"
       @mouseleave="previewMode ? null : endDrag"
-      @wheel="previewMode ? null : handleWheel"
+      @wheel="handleWheel"
+      @touchstart="handleTouchStart"
+      @touchmove="handleTouchMove"
+      @touchend="handleTouchEnd"
+      @gesturestart="handleGestureStart"
+      @gesturechange="handleGestureChange"
+      @gestureend="handleGestureEnd"
     >
       <div
         :class="[
@@ -678,11 +684,120 @@ const endDrag = () => {
   isDragging.value = false
 }
 
-// Wheel zoom
+// Enhanced wheel zoom with trackpad support
 const handleWheel = (e: WheelEvent) => {
+  // Skip if in preview mode
+  if (props.previewMode) return
+
   e.preventDefault()
-  const delta = e.deltaY > 0 ? 0.9 : 1.1
+  e.stopPropagation()
+
+  // Detect if this is likely a trackpad by checking for ctrl key (pinch gesture)
+  // or fine-grained deltaY values typical of trackpads
+  const isTrackpad = e.ctrlKey || (Math.abs(e.deltaY) < 50 && e.deltaY % 1 !== 0)
+
+  let delta: number
+  if (isTrackpad) {
+    // More sensitive scaling for trackpad gestures
+    const scaleFactor = 1 + (e.deltaY * -0.01) // Invert and scale
+    delta = Math.max(0.5, Math.min(2.0, scaleFactor)) // Clamp for smooth zooming
+  } else {
+    // Traditional mouse wheel
+    delta = e.deltaY > 0 ? 0.9 : 1.1
+  }
+
   zoomLevel.value = Math.min(Math.max(zoomLevel.value * delta, 0.1), 5)
+}
+
+// Touch and gesture state for trackpad/touch zoom
+const touchState = ref({
+  initialDistance: 0,
+  initialZoom: 1,
+  touches: [] as Touch[]
+})
+
+// Touch event handlers for pinch-to-zoom
+const handleTouchStart = (e: TouchEvent) => {
+  // Skip if in preview mode
+  if (props.previewMode) return
+
+  if (e.touches.length === 2) {
+    e.preventDefault()
+    e.stopPropagation()
+    const touch1 = e.touches[0]
+    const touch2 = e.touches[1]
+    const distance = Math.sqrt(
+      Math.pow(touch2.clientX - touch1.clientX, 2) +
+      Math.pow(touch2.clientY - touch1.clientY, 2)
+    )
+    touchState.value.initialDistance = distance
+    touchState.value.initialZoom = zoomLevel.value
+    touchState.value.touches = Array.from(e.touches)
+  }
+}
+
+const handleTouchMove = (e: TouchEvent) => {
+  // Skip if in preview mode
+  if (props.previewMode) return
+
+  if (e.touches.length === 2 && touchState.value.initialDistance > 0) {
+    e.preventDefault()
+    e.stopPropagation()
+    const touch1 = e.touches[0]
+    const touch2 = e.touches[1]
+    const distance = Math.sqrt(
+      Math.pow(touch2.clientX - touch1.clientX, 2) +
+      Math.pow(touch2.clientY - touch1.clientY, 2)
+    )
+
+    const scale = distance / touchState.value.initialDistance
+    const newZoom = touchState.value.initialZoom * scale
+    zoomLevel.value = Math.min(Math.max(newZoom, 0.1), 5)
+  }
+}
+
+const handleTouchEnd = (e: TouchEvent) => {
+  // Skip if in preview mode
+  if (props.previewMode) return
+
+  if (e.touches.length < 2) {
+    touchState.value.initialDistance = 0
+    touchState.value.touches = []
+  }
+}
+
+// Gesture event handlers for trackpad zoom (Safari/WebKit)
+const gestureState = ref({
+  initialZoom: 1
+})
+
+const handleGestureStart = (e: any) => {
+  // Skip if in preview mode
+  if (props.previewMode) return
+
+  e.preventDefault()
+  e.stopPropagation()
+  gestureState.value.initialZoom = zoomLevel.value
+}
+
+const handleGestureChange = (e: any) => {
+  // Skip if in preview mode
+  if (props.previewMode) return
+
+  e.preventDefault()
+  e.stopPropagation()
+  // e.scale represents the scaling factor from the gesture
+  const newZoom = gestureState.value.initialZoom * e.scale
+  zoomLevel.value = Math.min(Math.max(newZoom, 0.1), 5)
+}
+
+const handleGestureEnd = (e: any) => {
+  // Skip if in preview mode
+  if (props.previewMode) return
+
+  e.preventDefault()
+  e.stopPropagation()
+  // Keep the final zoom level
 }
 
 // Download function

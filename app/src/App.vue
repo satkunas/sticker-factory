@@ -110,6 +110,8 @@
                 <TemplateObjectStyler
                   :shape-label="getShapeLabel(selectedTemplate, shapeStyle.id)"
                   :shape-dimensions="getShapeDimensions(selectedTemplate, shapeStyle.id)"
+                  :shape-data="getShapeData(selectedTemplate, shapeStyle.id)"
+                  :shape-path="getShapePath(selectedTemplate, shapeStyle.id)"
                   :fill-color="shapeStyle.fillColor"
                   :stroke-color="shapeStyle.strokeColor"
                   :stroke-width="shapeStyle.strokeWidth"
@@ -383,6 +385,34 @@ const getShapeDimensions = (template: SimpleTemplate | null, shapeStyleId: strin
 
   if (width && height) {
     return `${width}×${height}`
+  }
+
+  return ''
+}
+
+// Get complete shape data for SVG preview
+const getShapeData = (template: SimpleTemplate | null, shapeStyleId: string) => {
+  if (!template || !template.layers) return null
+
+  // Find the original layer data from the template
+  const originalLayer = template.layers.find(layer =>
+    layer.id === shapeStyleId && layer.type === 'shape'
+  )
+
+  return originalLayer || null
+}
+
+// Get the processed SVG path for the shape
+const getShapePath = (template: SimpleTemplate | null, shapeStyleId: string): string => {
+  if (!template || !template.layers) return ''
+
+  // Find the processed layer data from the template
+  const processedLayer = template.layers.find(layer =>
+    layer.id === shapeStyleId && layer.type === 'shape'
+  )
+
+  if (processedLayer && 'shape' in processedLayer && processedLayer.shape) {
+    return processedLayer.shape.path || ''
   }
 
   return ''

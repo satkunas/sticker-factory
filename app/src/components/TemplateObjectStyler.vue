@@ -16,7 +16,89 @@
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-2">
             <!-- Shape Preview -->
+            <svg
+              v-if="shapeData"
+              class="w-6 h-6 flex-shrink-0"
+              :viewBox="calculatedViewBox"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <!-- Rectangle with rounded corners support -->
+              <rect
+                v-if="shapeData.subtype === 'rect' && rectCoords"
+                :x="rectCoords.x"
+                :y="rectCoords.y"
+                :width="rectCoords.width"
+                :height="rectCoords.height"
+                :rx="rectCoords.rx"
+                :ry="rectCoords.ry"
+                :fill="fillColor"
+                :stroke="strokeColor"
+                :stroke-width="adjustedStrokeWidth"
+                :stroke-linejoin="strokeLinejoin"
+              />
+
+              <!-- Perfect circles -->
+              <circle
+                v-else-if="shapeData.subtype === 'circle' && circleCoords"
+                :cx="circleCoords.cx"
+                :cy="circleCoords.cy"
+                :r="circleCoords.r"
+                :fill="fillColor"
+                :stroke="strokeColor"
+                :stroke-width="adjustedStrokeWidth"
+                :stroke-linejoin="strokeLinejoin"
+              />
+
+              <!-- Ellipses -->
+              <ellipse
+                v-else-if="shapeData.subtype === 'ellipse' && ellipseCoords"
+                :cx="ellipseCoords.cx"
+                :cy="ellipseCoords.cy"
+                :rx="ellipseCoords.rx"
+                :ry="ellipseCoords.ry"
+                :fill="fillColor"
+                :stroke="strokeColor"
+                :stroke-width="adjustedStrokeWidth"
+                :stroke-linejoin="strokeLinejoin"
+              />
+
+              <!-- Lines -->
+              <line
+                v-else-if="shapeData.subtype === 'line' && lineCoords"
+                :x1="lineCoords.x1"
+                :y1="lineCoords.y1"
+                :x2="lineCoords.x2"
+                :y2="lineCoords.y2"
+                :stroke="strokeColor"
+                :stroke-width="adjustedStrokeWidth"
+                :stroke-linecap="strokeLinejoin"
+                fill="none"
+              />
+
+              <!-- Complex shapes (polygons, paths) -->
+              <path
+                v-else-if="shapePath"
+                :d="shapePath"
+                :fill="fillColor"
+                :stroke="strokeColor"
+                :stroke-width="adjustedStrokeWidth"
+                :stroke-linejoin="strokeLinejoin"
+              />
+
+              <!-- Fallback for unknown shapes -->
+              <rect
+                v-else
+                x="-50" y="-50" width="100" height="100"
+                :fill="fillColor"
+                :stroke="strokeColor"
+                :stroke-width="adjustedStrokeWidth"
+                :stroke-linejoin="strokeLinejoin"
+              />
+            </svg>
+
+            <!-- Fallback square for missing shape data -->
             <div
+              v-else
               class="w-6 h-6 rounded border flex-shrink-0"
               :style="{
                 backgroundColor: fillColor,
@@ -230,6 +312,8 @@ import { inject, computed, ref } from 'vue'
 interface Props {
   shapeLabel?: string
   shapeDimensions?: string
+  shapeData?: any // Original template shape layer data
+  shapePath?: string // Processed SVG path
   fillColor?: string
   strokeColor?: string
   strokeWidth?: number
@@ -247,6 +331,8 @@ interface Emits {
 const props = withDefaults(defineProps<Props>(), {
   shapeLabel: 'Shape',
   shapeDimensions: '',
+  shapeData: null,
+  shapePath: '',
   fillColor: '#22c55e',
   strokeColor: '#000000',
   strokeWidth: 2,
@@ -304,4 +390,155 @@ const strokeLinejoinOptions = [
   { value: 'arcs', label: 'Arcs', description: 'Arc corners at line joins' },
   { value: 'miter-clip', label: 'Clip', description: 'Clipped miter corners at line joins' }
 ]
+
+// SVG Preview calculations
+const svgPreviewSize = 24 // 24x24px (w-6 h-6)
+const padding = 2
+
+// Calculate optimal viewBox for different shape types
+const calculatedViewBox = computed(() => {
+  if (!props.shapeData) {
+    return '0 0 100 100' // Default fallback
+  }
+
+  const shape = props.shapeData
+  const strokePadding = Math.max(1, props.strokeWidth) + padding
+
+  switch (shape.subtype) {
+    case 'rect': {
+      const width = shape.width || 100
+      const height = shape.height || 100
+      const totalWidth = width + strokePadding * 2
+      const totalHeight = height + strokePadding * 2
+      return `${-strokePadding} ${-strokePadding} ${totalWidth} ${totalHeight}`
+    }
+
+    case 'circle': {
+      const radius = (shape.width || 100) / 2
+      const totalSize = (radius + strokePadding) * 2
+      return `${-(radius + strokePadding)} ${-(radius + strokePadding)} ${totalSize} ${totalSize}`
+    }
+
+    case 'ellipse': {
+      const rWidth = (shape.width || 100) / 2
+      const rHeight = (shape.height || 50) / 2
+      const totalWidth = (rWidth + strokePadding) * 2
+      const totalHeight = (rHeight + strokePadding) * 2
+      return `${-(rWidth + strokePadding)} ${-(rHeight + strokePadding)} ${totalWidth} ${totalHeight}`
+    }
+
+    case 'line': {
+      const pos = shape.position as { x1: number; y1: number; x2: number; y2: number }
+      const minX = Math.min(pos.x1, pos.x2)
+      const minY = Math.min(pos.y1, pos.y2)
+      const maxX = Math.max(pos.x1, pos.x2)
+      const maxY = Math.max(pos.y1, pos.y2)
+      const width = maxX - minX + strokePadding * 2
+      const height = maxY - minY + strokePadding * 2
+      return `${minX - strokePadding} ${minY - strokePadding} ${width} ${height}`
+    }
+
+    case 'polygon':
+    default: {
+      // For polygons and complex shapes, try to calculate bounds from path
+      if (props.shapePath) {
+        const bounds = calculatePathBounds(props.shapePath)
+        if (bounds) {
+          const width = bounds.maxX - bounds.minX + strokePadding * 2
+          const height = bounds.maxY - bounds.minY + strokePadding * 2
+          return `${bounds.minX - strokePadding} ${bounds.minY - strokePadding} ${width} ${height}`
+        }
+      }
+      // Fallback for complex shapes
+      const size = Math.max(shape.width || 100, shape.height || 100)
+      const totalSize = size + strokePadding * 2
+      return `${-totalSize/2} ${-totalSize/2} ${totalSize} ${totalSize}`
+    }
+  }
+})
+
+// Adjusted stroke width for preview - make strokes more visible in small preview
+const adjustedStrokeWidth = computed(() => {
+  if (props.strokeWidth === 0) return 0 // No stroke if width is 0
+
+  // Use a more generous scaling that ensures strokes are clearly visible
+  // For small previews, we want strokes to be proportionally larger so they're visible
+  const minVisibleStroke = 1 // Minimum visible stroke in preview
+  const scaledStroke = props.strokeWidth * 0.5 // More generous scaling than 0.24
+
+  return Math.max(minVisibleStroke, scaledStroke)
+})
+
+// Shape-specific coordinate calculations
+const rectCoords = computed(() => {
+  if (!props.shapeData || props.shapeData.subtype !== 'rect') return null
+  const width = props.shapeData.width || 100
+  const height = props.shapeData.height || 100
+  return {
+    x: -width / 2,
+    y: -height / 2,
+    width,
+    height,
+    rx: props.shapeData.rx || 0,
+    ry: props.shapeData.ry || 0
+  }
+})
+
+const circleCoords = computed(() => {
+  if (!props.shapeData || props.shapeData.subtype !== 'circle') return null
+  const radius = (props.shapeData.width || 100) / 2
+  return {
+    cx: 0,
+    cy: 0,
+    r: radius
+  }
+})
+
+const ellipseCoords = computed(() => {
+  if (!props.shapeData || props.shapeData.subtype !== 'ellipse') return null
+  return {
+    cx: 0,
+    cy: 0,
+    rx: (props.shapeData.width || 100) / 2,
+    ry: (props.shapeData.height || 50) / 2
+  }
+})
+
+const lineCoords = computed(() => {
+  if (!props.shapeData || props.shapeData.subtype !== 'line') return null
+  const pos = props.shapeData.position as { x1: number; y1: number; x2: number; y2: number }
+  return {
+    x1: pos.x1,
+    y1: pos.y1,
+    x2: pos.x2,
+    y2: pos.y2
+  }
+})
+
+// Helper function to calculate bounds from SVG path
+function calculatePathBounds(path: string): { minX: number; minY: number; maxX: number; maxY: number } | null {
+  try {
+    // Simple regex to extract coordinate pairs from path
+    const coords = path.match(/[0-9.-]+/g)
+    if (!coords || coords.length < 2) return null
+
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+
+    for (let i = 0; i < coords.length - 1; i += 2) {
+      const x = parseFloat(coords[i])
+      const y = parseFloat(coords[i + 1])
+
+      if (!isNaN(x) && !isNaN(y)) {
+        minX = Math.min(minX, x)
+        minY = Math.min(minY, y)
+        maxX = Math.max(maxX, x)
+        maxY = Math.max(maxY, y)
+      }
+    }
+
+    return minX !== Infinity ? { minX, minY, maxX, maxY } : null
+  } catch (error) {
+    return null
+  }
+}
 </script>
