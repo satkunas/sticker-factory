@@ -104,14 +104,25 @@
               </div>
             </div>
 
-            <!-- Background Color -->
-            <div class="space-y-2">
-              <FormLabel text="Background Color" />
-              <ColorPicker
-                :model-value="badgeColor"
-                @update:model-value="store.setBadgeColor"
-              />
+            <!-- Template Object Styling -->
+            <div v-if="selectedTemplate && shapeStyles && shapeStyles.length > 0" class="space-y-4">
+              <div v-for="(shapeStyle, index) in shapeStyles" :key="shapeStyle.id" class="space-y-2">
+                <TemplateObjectStyler
+                  :shape-label="getShapeLabel(selectedTemplate, shapeStyle.id)"
+                  :shape-dimensions="getShapeDimensions(selectedTemplate, shapeStyle.id)"
+                  :fill-color="shapeStyle.fillColor"
+                  :stroke-color="shapeStyle.strokeColor"
+                  :stroke-width="shapeStyle.strokeWidth"
+                  :stroke-linejoin="shapeStyle.strokeLinejoin"
+                  :instance-id="`shape-${index}`"
+                  @update:fillColor="(value) => updateShapeStyleByIndex(index, { fillColor: value })"
+                  @update:strokeColor="(value) => updateShapeStyleByIndex(index, { strokeColor: value })"
+                  @update:strokeWidth="(value) => updateShapeStyleByIndex(index, { strokeWidth: value })"
+                  @update:strokeLinejoin="(value) => updateShapeStyleByIndex(index, { strokeLinejoin: value })"
+                />
+              </div>
             </div>
+
           </div>
         </div>
       </div>
@@ -120,7 +131,6 @@
       <TemplateAwareSvgViewer
         ref="svgViewerRef"
         :sticker-text="badgeText"
-        :sticker-color="badgeColor"
         :text-color="textColor"
         :font="selectedFont"
         :font-size="fontSize"
@@ -132,6 +142,7 @@
         :height="svgHeight"
         :template="selectedTemplate"
         :text-inputs="textInputs"
+        :shape-styles="shapeStyles"
       />
     </main>
 
@@ -149,7 +160,6 @@
     <DownloadModal
       :show="showDownloadModal"
       :badge-text="badgeText"
-      :badge-color="badgeColor"
       :text-color="textColor"
       :font-size="fontSize"
       :font-weight="fontWeight"
@@ -158,13 +168,14 @@
       :font="selectedFont"
       :template="selectedTemplate"
       :text-inputs="textInputs"
+      :shape-styles="shapeStyles"
       @close="showDownloadModal = false"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, provide } from 'vue'
+import { ref, computed, onMounted, provide, nextTick } from 'vue'
 import { useStore } from './stores'
 import ExportModal from './components/ExportModal.vue'
 import ImportModal from './components/ImportModal.vue'
@@ -172,18 +183,61 @@ import DownloadModal from './components/DownloadModal.vue'
 import SimpleTemplateSelector from './components/SimpleTemplateSelector.vue'
 import TemplateAwareSvgViewer from './components/TemplateAwareSvgViewer.vue'
 import TextInputWithFontSelector from './components/TextInputWithFontSelector.vue'
+import TemplateObjectStyler from './components/TemplateObjectStyler.vue'
 import ColorPicker from './components/ColorPicker.vue'
 import FormLabel from './components/FormLabel.vue'
-import { getDefaultTemplate, loadTemplate, getTemplateTextInputs } from './config/template-loader'
+import { getDefaultTemplate, loadTemplate, getTemplateTextInputs, getTemplateElements } from './config/template-loader'
 import type { SimpleTemplate } from './types/template-types'
 
 
 // Store
 const store = useStore()
 
-// Global state for expandable font selectors
+// Unified dropdown management system
+const expandedDropdowns = ref(new Set<string>())
+
+const dropdownManager = {
+  isExpanded: (id: string) => expandedDropdowns.value.has(id),
+
+  toggle: (id: string, elementRef?: HTMLElement) => {
+    if (expandedDropdowns.value.has(id)) {
+      expandedDropdowns.value.delete(id)
+    } else {
+      // Close all other dropdowns
+      expandedDropdowns.value.clear()
+      // Open this dropdown
+      expandedDropdowns.value.add(id)
+
+      // Smooth scroll to the opened element
+      if (elementRef) {
+        nextTick(() => {
+          elementRef.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'nearest'
+          })
+        })
+      }
+    }
+  },
+
+  close: (id: string) => {
+    expandedDropdowns.value.delete(id)
+  },
+
+  closeAll: () => {
+    expandedDropdowns.value.clear()
+  }
+}
+
+provide('dropdownManager', dropdownManager)
+
+// Legacy provides for backward compatibility
 const expandedFontSelectors = ref(new Set<string>())
 provide('expandedFontSelectors', expandedFontSelectors)
+
+const expandedObjectSelectors = ref(new Set<string>())
+provide('expandedObjectSelectors', expandedObjectSelectors)
 
 // Mobile menu
 const showMobileMenu = ref(false)
@@ -199,8 +253,8 @@ const showDownloadModal = ref(false)
 // Form data - connected to store
 const textInputs = computed(() => store.textInputs.value)
 const selectedTemplateId = computed(() => store.selectedTemplateId.value)
+const shapeStyles = computed(() => store.shapeStyles.value)
 const badgeText = computed(() => store.badgeText.value)
-const badgeColor = computed(() => store.badgeColor.value)
 const textColor = computed(() => store.textColor.value)
 const selectedFont = computed(() => store.badgeFont.value)
 const fontSize = computed(() => store.fontSize.value)
@@ -239,6 +293,11 @@ onMounted(async () => {
     await store.initializeTextInputsFromTemplate(selectedTemplate.value)
   }
 
+  // Initialize shapeStyles array from template if they don't exist
+  if (selectedTemplate.value && (!shapeStyles.value || shapeStyles.value.length === 0)) {
+    await store.initializeShapeStylesFromTemplate(selectedTemplate.value)
+  }
+
 })
 
 // Template handlers
@@ -246,11 +305,17 @@ const handleTemplateSelection = async (template: SimpleTemplate) => {
   selectedTemplate.value = template
   await store.setSelectedTemplateId(template.id)
   await store.initializeTextInputsFromTemplate(template)
+  await store.initializeShapeStylesFromTemplate(template)
 }
 
 // Helper function to update text input by index
 const updateTextInputByIndex = async (index: number, updates: any) => {
   await store.updateTextInput(index, updates)
+}
+
+// Helper function to update shape style by index
+const updateShapeStyleByIndex = async (index: number, updates: any) => {
+  await store.updateShapeStyle(index, updates)
 }
 
 // Helper functions for template text inputs
@@ -266,5 +331,60 @@ const getTextInputPlaceholder = (template: SimpleTemplate | null, textInputId: s
   const textInputs = getTemplateTextInputs(template)
   const textInput = textInputs.find(input => input.id === textInputId)
   return textInput?.placeholder || 'Enter your text...'
+}
+
+// Helper functions for template shape objects
+const getShapeInfo = (template: SimpleTemplate | null, shapeStyleId: string) => {
+  if (!template) return null
+
+  // Get the original layer data directly from template.layers
+  const originalLayer = template.layers?.find(layer => layer.id === shapeStyleId && layer.type === 'shape')
+  return originalLayer || null
+}
+
+const getShapeLabel = (template: SimpleTemplate | null, shapeStyleId: string): string => {
+  if (!template || !template.layers) return 'Shape'
+
+  console.log('getShapeLabel: template structure:', template)
+  console.log('getShapeLabel: template.layers:', template.layers)
+
+  // Find the original layer data from the template
+  const originalLayer = template.layers.find(layer =>
+    layer.id === shapeStyleId && layer.type === 'shape'
+  )
+
+  console.log('getShapeLabel: originalLayer for', shapeStyleId, originalLayer)
+
+  if (!originalLayer) return 'Shape'
+
+  // Get the subtype directly from the original template data
+  const subtype = originalLayer.subtype
+  console.log('getShapeLabel: subtype found:', subtype)
+
+  if (!subtype) return 'Shape'
+
+  // Capitalize first letter
+  return subtype.charAt(0).toUpperCase() + subtype.slice(1)
+}
+
+const getShapeDimensions = (template: SimpleTemplate | null, shapeStyleId: string): string => {
+  if (!template || !template.layers) return ''
+
+  // Find the original layer data from the template
+  const originalLayer = template.layers.find(layer =>
+    layer.id === shapeStyleId && layer.type === 'shape'
+  )
+
+  if (!originalLayer) return ''
+
+  // Get dimensions directly from the original template data
+  const width = originalLayer.width
+  const height = originalLayer.height
+
+  if (width && height) {
+    return `${width}×${height}`
+  }
+
+  return ''
 }
 </script>

@@ -218,6 +218,9 @@ const convertYamlToSimpleTemplate = (rawTemplate: YamlTemplate | LegacyYamlTempl
       layers.push({
         id: layer.id,
         type: 'shape',
+        subtype: layer.subtype,  // Preserve original subtype
+        width: layer.width,      // Preserve original width
+        height: layer.height,    // Preserve original height
         shape: {
           id: layer.id,
           type: 'path',
@@ -370,7 +373,6 @@ const convertShapeLayerToPath = (layer: TemplateShapeLayer, viewBox: ViewBox): s
       // Default triangle if no points specified
       return `M${pos.x},${pos.y - 50} L${pos.x + 50},${pos.y + 25} L${pos.x - 50},${pos.y + 25} Z`
 
-
     default:
       // Default to rectangle
       const defWidth = layer.width || 100
@@ -486,7 +488,7 @@ export const getTemplateElements = (template: SimpleTemplate): TemplateElement[]
       if (layer.type === 'shape') {
         elements.push({
           type: 'shape',
-          shape: layer.shape
+          shape: layer.shape  // Extract the nested shape data
         })
       } else if (layer.type === 'text') {
         elements.push({

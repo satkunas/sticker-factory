@@ -1,6 +1,6 @@
 <template>
   <!-- Inline Accordion Design -->
-  <div class="w-full">
+  <div ref="containerRef" class="w-full">
     <!-- Accordion Content -->
     <div 
       v-if="isExpanded"
@@ -386,7 +386,10 @@ const emit = defineEmits<Emits>()
 const textColorInputRef = ref<HTMLInputElement>()
 const strokeColorInputRef = ref<HTMLInputElement>()
 
-// Global expanded state management
+// Unified dropdown management
+const dropdownManager = inject('dropdownManager')
+
+// Legacy fallback for backward compatibility
 const expandedInstances = inject('expandedFontSelectors', ref(new Set<string>()))
 
 // Local state
@@ -400,24 +403,43 @@ const selectedFontTile = ref<HTMLElement>()
 const visibleFontCount = ref(20) // Start with 20 fonts
 const isLoadingMore = ref(false)
 
+// Component container ref for scrolling
+const containerRef = ref<HTMLElement>()
+
 // Computed expanded state
-const isExpanded = computed(() => expandedInstances.value.has(props.instanceId))
+const isExpanded = computed(() => {
+  if (dropdownManager) {
+    return dropdownManager.isExpanded(props.instanceId)
+  }
+  // Legacy fallback
+  return expandedInstances.value.has(props.instanceId)
+})
 
 // Toggle expansion
 const toggleExpanded = () => {
-  if (isExpanded.value) {
-    expandedInstances.value.delete(props.instanceId)
+  if (dropdownManager) {
+    dropdownManager.toggle(props.instanceId, containerRef.value)
   } else {
-    // Close all other instances
-    expandedInstances.value.clear()
-    // Open this instance
-    expandedInstances.value.add(props.instanceId)
+    // Legacy fallback
+    if (isExpanded.value) {
+      expandedInstances.value.delete(props.instanceId)
+    } else {
+      // Close all other instances
+      expandedInstances.value.clear()
+      // Open this instance
+      expandedInstances.value.add(props.instanceId)
+    }
   }
 }
 
 // Handle click outside
 const handleClickOutside = () => {
-  expandedInstances.value.delete(props.instanceId)
+  if (dropdownManager) {
+    dropdownManager.close(props.instanceId)
+  } else {
+    // Legacy fallback
+    expandedInstances.value.delete(props.instanceId)
+  }
 }
 
 // Preset colors for quick selection
@@ -644,7 +666,12 @@ watch(() => props.selectedFont, async (newFont) => {
 // Handle escape key to close
 const handleKeydown = (event: KeyboardEvent) => {
   if (event.key === 'Escape' && isExpanded.value) {
-    expandedInstances.value.delete(props.instanceId)
+    if (dropdownManager) {
+      dropdownManager.close(props.instanceId)
+    } else {
+      // Legacy fallback
+      expandedInstances.value.delete(props.instanceId)
+    }
   }
 }
 
@@ -654,6 +681,11 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
-  expandedInstances.value.delete(props.instanceId)
+  if (dropdownManager) {
+    dropdownManager.close(props.instanceId)
+  } else {
+    // Legacy fallback
+    expandedInstances.value.delete(props.instanceId)
+  }
 })
 </script>

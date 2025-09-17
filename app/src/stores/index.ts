@@ -1,15 +1,17 @@
 import { ref, computed, readonly } from 'vue'
 import { DEFAULT_FONT, type FontConfig } from '../config/fonts'
-import type { TextInputState } from '../types/template-types'
+import type { TextInputState, ShapeStyleState } from '../types/template-types'
 
 export interface AppState {
   // New multi-text input system
   textInputs: TextInputState[]
   selectedTemplateId: string | null
 
+  // Template object styling system
+  shapeStyles: ShapeStyleState[]
+
   // Legacy single-text properties (for backward compatibility)
   badgeText: string
-  badgeColor: string
   svgContent: string
   badgeFont: FontConfig | null
   fontSize: number
@@ -40,9 +42,11 @@ const _state = ref<AppState>({
   textInputs: [],
   selectedTemplateId: null,
 
+  // Template object styling system
+  shapeStyles: [],
+
   // Legacy single-text properties (for backward compatibility)
   badgeText: '',
-  badgeColor: '#4CAF50',
   svgContent: '',
   badgeFont: DEFAULT_FONT,
   fontSize: 16,
@@ -113,9 +117,11 @@ const loadFromStorage = (): AppState => {
         textInputs: data.textInputs || [],
         selectedTemplateId: data.selectedTemplateId || null,
 
+        // Template object styling system
+        shapeStyles: data.shapeStyles || [],
+
         // Legacy single-text properties (for backward compatibility)
         badgeText: data.badgeText || '',
-        badgeColor: data.badgeColor || '#4CAF50',
         svgContent: data.svgContent || '',
         badgeFont: data.badgeFont || DEFAULT_FONT,
         fontSize: data.fontSize || 16,
@@ -151,9 +157,11 @@ const getDefaultState = (): AppState => ({
   textInputs: [],
   selectedTemplateId: null,
 
+  // Template object styling system
+  shapeStyles: [],
+
   // Legacy single-text properties (for backward compatibility)
   badgeText: '',
-  badgeColor: '#4CAF50',
   svgContent: '',
   badgeFont: DEFAULT_FONT,
   fontSize: 16,
@@ -208,16 +216,18 @@ export const useStore = () => {
     return _state.value.selectedTemplateId
   })
 
+  // Template object styling system
+  const shapeStyles = computed(() => {
+    loadFromStorage()
+    return _state.value.shapeStyles
+  })
+
   // Legacy single-text getters (for backward compatibility)
   const badgeText = computed(() => {
     loadFromStorage()
     return _state.value.badgeText
   })
 
-  const badgeColor = computed(() => {
-    loadFromStorage()
-    return _state.value.badgeColor
-  })
 
   const svgContent = computed(() => {
     loadFromStorage()
@@ -347,6 +357,45 @@ export const useStore = () => {
     await saveToStorage(_state.value)
   }
 
+  // Template object styling mutations
+  const setShapeStyles = async (styles: ShapeStyleState[]) => {
+    loadFromStorage()
+    _state.value.shapeStyles = styles
+    _isDirty.value = true
+    await saveToStorage(_state.value)
+  }
+
+  const updateShapeStyle = async (index: number, updates: Partial<ShapeStyleState>) => {
+    loadFromStorage()
+    if (index >= 0 && index < _state.value.shapeStyles.length) {
+      _state.value.shapeStyles[index] = { ..._state.value.shapeStyles[index], ...updates }
+      _isDirty.value = true
+      await saveToStorage(_state.value)
+    }
+  }
+
+  const initializeShapeStylesFromTemplate = async (template: any) => {
+    loadFromStorage()
+    const { getTemplateElements } = await import('../config/template-loader')
+    const elements = getTemplateElements(template)
+
+    // Extract shape elements and initialize with template defaults
+    const shapeElements = elements.filter(el => el.type === 'shape' && el.shape)
+    const newShapeStyles: ShapeStyleState[] = shapeElements.map((element) => {
+      return {
+        id: element.shape!.id,
+        fillColor: element.shape!.fill || '#22c55e', // Keep template default
+        strokeColor: element.shape!.stroke || '#000000',
+        strokeWidth: element.shape!.strokeWidth || 2,
+        strokeLinejoin: 'round'
+      }
+    })
+
+    _state.value.shapeStyles = newShapeStyles
+    _isDirty.value = true
+    await saveToStorage(_state.value)
+  }
+
   // Legacy single-text mutations (for backward compatibility)
   const setBadgeText = async (text: string) => {
     loadFromStorage()
@@ -355,12 +404,6 @@ export const useStore = () => {
     await saveToStorage(_state.value)
   }
 
-  const setBadgeColor = async (color: string) => {
-    loadFromStorage() 
-    _state.value.badgeColor = color
-    _isDirty.value = true
-    await saveToStorage(_state.value)
-  }
 
   const setSvgContent = async (svg: string) => {
     loadFromStorage()
@@ -488,7 +531,6 @@ export const useStore = () => {
       // Extract state data (handle different export formats)
       const stateData: Partial<AppState> = {
         badgeText: importData.badgeText || '',
-        badgeColor: importData.badgeColor || '#4CAF50',
         svgContent: importData.svgContent || '',
         badgeFont: importData.badgeFont || DEFAULT_FONT,
         fontSize: importData.fontSize || 16,
@@ -566,8 +608,8 @@ export const useStore = () => {
     // Getters
     textInputs,
     selectedTemplateId,
+    shapeStyles,
     badgeText,
-    badgeColor,
     svgContent,
     badgeFont,
     fontSize,
@@ -587,8 +629,10 @@ export const useStore = () => {
     updateTextInput,
     initializeTextInputsFromTemplate,
     setSelectedTemplateId,
+    setShapeStyles,
+    updateShapeStyle,
+    initializeShapeStylesFromTemplate,
     setBadgeText,
-    setBadgeColor,
     setSvgContent,
     setBadgeFont,
     setFontSize,

@@ -69,13 +69,14 @@ make start
 ## Features
 
 ### Template System
-- **13 Professional Templates** across 4 categories:
+- **14 Professional Templates** across 4 categories:
   - **Circle**: Quality sticker, vinyl record label, event promo sticker
   - **Rectangle**: Business card, conference badge, booklet cover, catalog page, shipping label, food packaging, concert ticket, YouTube thumbnail
   - **Square**: Social media post
   - **Diamond**: Safety warning diamond
 
 - **Multi-text Input Support**: Templates can contain multiple text fields with individual styling
+- **Shape Styling System**: Full customization of template shapes (fill, stroke, width, linejoin)
 - **YAML-based Configuration**: Easy to create and modify templates
 
 ### Typography & Styling
@@ -86,11 +87,17 @@ make start
   - Font weight (100-900)
   - Text color picker
   - Stroke width and color
-- **Real-time Preview**: Text inputs show selected font styling
+- **Shape Styling**: Each template shape supports:
+  - Fill color with preset palette and custom picker
+  - Stroke color with preset palette and custom picker
+  - Stroke width (0-12px) with slider and number input
+  - Stroke linejoin (round, miter, bevel, arcs, clip)
+- **Real-time Preview**: All styling changes reflect immediately in SVG
 
 ### User Experience
 - **Accordion Interface**: Expandable font selectors for each text field
-- **Template Persistence**: Selected template and all text restored on page reload
+- **Shape Styling Panels**: Expandable shape customization with visual previews
+- **Template Persistence**: Selected template, text, and shape styling restored on page reload
 - **Export/Import**: Save and load badge configurations as JSON
 - **Download Options**: Export as SVG or PNG files
 - **Responsive Design**: Works on desktop and mobile devices
@@ -285,15 +292,16 @@ position: { x: "50%", y: "50%" }  # Immediately clear this is centered
 - **Pinia Store** (`src/stores/index.ts`) manages global state
 - **LocalStorage Integration** with automatic persistence
 - **Multi-text Input System** with individual styling per text field
-- **Template State** persists selected template and form data
+- **Shape Styling System** with individual styling per template shape
+- **Template State** persists selected template, text data, and shape styling
 
 ### Data Persistence
 ```typescript
 interface AppState {
   textInputs: TextInputState[]           // Array of text inputs
+  shapeStyles: ShapeStyleState[]         // Array of shape styles
   selectedTemplateId: string | null      // Current template
   badgeColor: string                     // Background color
-  // Individual text input styling
 }
 
 interface TextInputState {
@@ -305,6 +313,15 @@ interface TextInputState {
   textColor: string                      // Text color
   strokeWidth: number                    // Stroke width
   strokeColor: string                    // Stroke color
+  strokeOpacity: number                  // Stroke opacity
+}
+
+interface ShapeStyleState {
+  id: string                             // Template shape layer ID
+  fillColor: string                      // Shape fill color
+  strokeColor: string                    // Shape stroke color
+  strokeWidth: number                    // Shape stroke width
+  strokeLinejoin: string                 // Stroke line join style
 }
 ```
 
@@ -331,6 +348,7 @@ interface TextInputState {
 - **SimpleTemplateSelector.vue** - Template selection dropdown
 - **TextInputWithFontSelector.vue** - Individual text input with styling
 - **ExpandableFontSelector.vue** - Font selection accordion
+- **TemplateObjectStyler.vue** - Shape styling with expandable controls
 - **TemplateAwareSvgViewer.vue** - SVG rendering engine
 - **ExportModal.vue** - Export/download functionality
 
@@ -389,4 +407,41 @@ interface TextInputState {
 
 ---
 
-**Production Ready**: This application is fully functional with professional templates, comprehensive font support, and robust state management.
+## Shape Styling System
+
+### TemplateObjectStyler Component
+Provides comprehensive shape customization with an expandable interface:
+
+#### Features
+- **Visual Preview**: Shape preview showing current fill/stroke colors
+- **Color Controls**: Fill and stroke color with preset palette + custom picker
+- **Stroke Options**: Width slider (0-12px) and linejoin selection
+- **Expandable Interface**: Click to expand/collapse styling controls
+- **Real-time Updates**: Changes immediately reflected in SVG preview
+
+#### Supported Shape Types
+- **Rectangles** (rect) - Business cards, labels, badges
+- **Circles** (circle) - Round stickers, record labels
+- **Polygons** (polygon) - Custom shapes, starbursts, diamonds
+- **Paths** - Complex SVG path definitions
+
+#### Styling Properties
+```typescript
+interface ShapeStyle {
+  fillColor: string      // Background color (#hex)
+  strokeColor: string    // Border color (#hex)
+  strokeWidth: number    // Border width (0-12px)
+  strokeLinejoin: string // Corner style (round, miter, bevel, arcs, miter-clip)
+}
+```
+
+#### Color Palette System
+- **24 Preset Colors**: Carefully selected color palette
+- **Custom Color Picker**: Native browser color picker integration
+- **Hex Input**: Direct hex color code entry
+- **Visual Feedback**: Selected colors highlighted with active state
+- **Consistent Design**: Same palette used for text and shape styling
+
+---
+
+**Production Ready**: This application is fully functional with 14 professional templates, comprehensive font support, complete shape styling system, and robust state management.

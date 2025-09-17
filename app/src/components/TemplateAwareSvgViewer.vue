@@ -59,10 +59,13 @@
               <!-- Shape rendering -->
               <path
                 v-if="element.type === 'shape' && element.shape"
+                v-for="shapeStyleData in [getShapeStyleById(element.shape.id)]"
+                :key="element.shape.id"
                 :d="element.shape.path"
-                :fill="element.shape.fill || stickerColor"
-                :stroke="element.shape.stroke || '#000000'"
-                :stroke-width="element.shape.strokeWidth || 2"
+                :fill="shapeStyleData?.fillColor || element.shape.fill || '#22c55e'"
+                :stroke="shapeStyleData?.strokeColor || element.shape.stroke || '#000000'"
+                :stroke-width="shapeStyleData?.strokeWidth ?? element.shape.strokeWidth ?? 2"
+                :stroke-linejoin="shapeStyleData?.strokeLinejoin || 'round'"
               />
 
               <!-- Text rendering with dynamic textInputs -->
@@ -99,7 +102,7 @@
               :height="viewBoxHeight - 4"
               :rx="Math.min(30, viewBoxHeight / 2 - 2)"
               :ry="Math.min(30, viewBoxHeight / 2 - 2)"
-              :fill="stickerColor"
+              :fill="'#22c55e'"
               stroke="#333333"
               stroke-width="2"
             />
@@ -150,7 +153,7 @@
                   <path
                     v-if="element.type === 'shape' && element.shape"
                     :d="element.shape.path"
-                    :fill="element.shape.fill || stickerColor || '#22c55e'"
+                    :fill="element.shape.fill || '#22c55e'"
                     :stroke="element.shape.stroke || '#16a34a'"
                     :stroke-width="element.shape.strokeWidth || 1"
                   />
@@ -174,7 +177,7 @@
                 v-else
                 class="rounded-full"
                 :style="{
-                  backgroundColor: stickerColor,
+                  backgroundColor: '#22c55e',
                   width: '24px',
                   height: '8px'
                 }"
@@ -258,7 +261,6 @@ import { getTemplateElements } from '../config/template-loader'
 
 interface Props {
   stickerText?: string
-  stickerColor?: string
   textColor?: string
   font?: FontConfig | null
   fontSize?: number
@@ -280,12 +282,18 @@ interface Props {
     strokeColor: string
     strokeOpacity: number
   }>
+  shapeStyles?: Array<{
+    id: string
+    fillColor: string
+    strokeColor: string
+    strokeWidth: number
+    strokeLinejoin: string
+  }>
   previewMode?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   stickerText: '',
-  stickerColor: '#22c55e',
   textColor: '#ffffff',
   font: null,
   fontSize: 16,
@@ -384,6 +392,11 @@ const templateElements = computed(() => {
 // Helper function to get textInput data by ID
 const getTextInputById = (id: string) => {
   return props.textInputs?.find(input => input.id === id)
+}
+
+// Helper function to get shape style data for a specific shape ID
+const getShapeStyleById = (id: string) => {
+  return props.shapeStyles?.find(style => style.id === id)
 }
 
 // Helper function to get font family for a specific textInput

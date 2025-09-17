@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full">
+  <div ref="containerRef" class="w-full">
     <!-- Text Input with Arrow Icon -->
     <div class="relative">
       <input
@@ -95,21 +95,38 @@ const props = withDefaults(defineProps<Props>(), {
 
 defineEmits<Emits>()
 
-// Global expanded state management
+// Unified dropdown management
+const dropdownManager = inject('dropdownManager')
+
+// Legacy fallback for backward compatibility
 const expandedInstances = inject('expandedFontSelectors', ref(new Set<string>()))
 
+// Component container ref for scrolling
+const containerRef = ref<HTMLElement>()
+
 // Computed expanded state
-const isExpanded = computed(() => expandedInstances.value.has(props.instanceId))
+const isExpanded = computed(() => {
+  if (dropdownManager) {
+    return dropdownManager.isExpanded(props.instanceId)
+  }
+  // Legacy fallback
+  return expandedInstances.value.has(props.instanceId)
+})
 
 // Toggle expansion
 const toggleExpanded = () => {
-  if (isExpanded.value) {
-    expandedInstances.value.delete(props.instanceId)
+  if (dropdownManager) {
+    dropdownManager.toggle(props.instanceId, containerRef.value)
   } else {
-    // Close all other instances
-    expandedInstances.value.clear()
-    // Open this instance
-    expandedInstances.value.add(props.instanceId)
+    // Legacy fallback
+    if (isExpanded.value) {
+      expandedInstances.value.delete(props.instanceId)
+    } else {
+      // Close all other instances
+      expandedInstances.value.clear()
+      // Open this instance
+      expandedInstances.value.add(props.instanceId)
+    }
   }
 }
 </script>

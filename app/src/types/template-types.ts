@@ -101,6 +101,15 @@ export interface TextInputState {
   strokeOpacity: number
 }
 
+// Shape style state for template object styling
+export interface ShapeStyleState {
+  id: string
+  fillColor: string
+  strokeColor: string
+  strokeWidth: number
+  strokeLinejoin: string
+}
+
 // Converted template for rendering (with SVG paths)
 export interface SimpleTemplate {
   id: string

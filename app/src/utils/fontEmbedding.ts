@@ -1,0 +1,172 @@
+/**
+ * Font Embedding Utility for PNG Export
+ * Converts Google Fonts to base64 embedded @font-face declarations
+ */
+
+interface FontEmbedCache {
+  [fontUrl: string]: string
+}
+
+// Cache for font data to avoid repeated downloads
+const fontCache: FontEmbedCache = {}
+
+/**
+ * Extract Google Font URLs from CSS @import statements
+ */
+export function extractGoogleFontUrls(cssContent: string): string[] {
+  const importRegex = /@import\s+url\(['"]([^'"]*googleapis[^'"]*)['"]\);?/g
+  const urls: string[] = []
+  let match
+
+  while ((match = importRegex.exec(cssContent)) !== null) {
+    urls.push(match[1])
+  }
+
+  return urls
+}
+
+/**
+ * Convert Google Fonts CSS URL to actual font file URLs
+ * Google Fonts CSS contains @font-face rules with font file URLs
+ */
+async function fetchGoogleFontsCss(googleFontUrl: string): Promise<string> {
+  try {
+    const response = await fetch(googleFontUrl, {
+      headers: {
+        // Request WOFF2 format (best compression, wide support)
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch Google Fonts CSS: ${response.status}`)
+    }
+
+    return await response.text()
+  } catch (error) {
+    console.error('Error fetching Google Fonts CSS:', error)
+    return ''
+  }
+}
+
+/**
+ * Extract font file URLs from Google Fonts CSS
+ */
+function extractFontFileUrls(css: string): Array<{ family: string; url: string; format: string }> {
+  const fontFaceRegex = /@font-face\s*\{[^}]*\}/g
+  const fontFamilyRegex = /font-family:\s*['"]([^'"]+)['"]/
+  const srcRegex = /src:\s*url\(([^)]+)\)\s*format\(['"]([^'"]+)['"]\)/
+
+  const fontFiles: Array<{ family: string; url: string; format: string }> = []
+  let match
+
+  while ((match = fontFaceRegex.exec(css)) !== null) {
+    const fontFaceRule = match[0]
+    const familyMatch = fontFamilyRegex.exec(fontFaceRule)
+    const srcMatch = srcRegex.exec(fontFaceRule)
+
+    if (familyMatch && srcMatch) {
+      fontFiles.push({
+        family: familyMatch[1],
+        url: srcMatch[1],
+        format: srcMatch[2]
+      })
+    }
+  }
+
+  return fontFiles
+}
+
+/**
+ * Download font file and convert to base64
+ */
+async function fetchAndEncodeFont(fontUrl: string): Promise<string> {
+  // Check cache first
+  if (fontCache[fontUrl]) {
+    return fontCache[fontUrl]
+  }
+
+  try {
+    const response = await fetch(fontUrl)
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch font: ${response.status}`)
+    }
+
+    const arrayBuffer = await response.arrayBuffer()
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
+    const mimeType = response.headers.get('content-type') || 'font/woff2'
+    const dataUri = `data:${mimeType};base64,${base64}`
+
+    // Cache the result
+    fontCache[fontUrl] = dataUri
+
+    return dataUri
+  } catch (error) {
+    console.error('Error fetching font file:', error)
+    return ''
+  }
+}
+
+/**
+ * Convert Google Fonts @import to embedded @font-face declarations
+ */
+export async function embedGoogleFonts(cssContent: string): Promise<string> {
+  const googleFontUrls = extractGoogleFontUrls(cssContent)
+
+  if (googleFontUrls.length === 0) {
+    return cssContent
+  }
+
+  let embeddedCss = cssContent
+
+  try {
+    // Process each Google Font URL
+    for (const googleFontUrl of googleFontUrls) {
+      // Fetch the Google Fonts CSS
+      const googleCss = await fetchGoogleFontsCss(googleFontUrl)
+
+      if (!googleCss) {
+        continue
+      }
+
+      // Extract font file URLs from the CSS
+      const fontFiles = extractFontFileUrls(googleCss)
+
+      // Download and embed each font file
+      const embeddedFontFaces: string[] = []
+
+      for (const fontFile of fontFiles) {
+        const embeddedFontData = await fetchAndEncodeFont(fontFile.url)
+
+        if (embeddedFontData) {
+          const fontFaceRule = `@font-face {
+  font-family: '${fontFile.family}';
+  src: url('${embeddedFontData}') format('${fontFile.format}');
+  font-display: swap;
+}`
+          embeddedFontFaces.push(fontFaceRule)
+        }
+      }
+
+      // Replace the @import with embedded @font-face rules
+      if (embeddedFontFaces.length > 0) {
+        const importPattern = new RegExp(`@import\\s+url\\(['"]${googleFontUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}['"]\\);?`, 'g')
+        embeddedCss = embeddedCss.replace(importPattern, embeddedFontFaces.join('\n'))
+      }
+    }
+  } catch (error) {
+    console.error('Error embedding Google Fonts:', error)
+    // Return original CSS as fallback
+    return cssContent
+  }
+
+  return embeddedCss
+}
+
+/**
+ * Clear the font cache (useful for development/testing)
+ */
+export function clearFontCache(): void {
+  Object.keys(fontCache).forEach(key => delete fontCache[key])
+}

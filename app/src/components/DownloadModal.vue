@@ -11,8 +11,8 @@
             ref="templateSvgRef"
             :template="template"
             :text-inputs="textInputs"
+            :shape-styles="shapeStyles"
             :sticker-text="badgeText"
-            :sticker-color="badgeColor"
             :text-color="textColor"
             :font="font"
             :font-size="fontSize"
@@ -150,7 +150,6 @@ import { embedGoogleFonts } from '../utils/fontEmbedding'
 interface Props {
   show: boolean
   badgeText: string
-  badgeColor: string
   textColor?: string
   fontSize?: number
   fontWeight?: number
@@ -169,6 +168,13 @@ interface Props {
     strokeColor: string
     strokeOpacity: number
   }>
+  shapeStyles?: Array<{
+    id: string
+    fillColor: string
+    strokeColor: string
+    strokeWidth: number
+    strokeLinejoin: string
+  }>
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -179,7 +185,8 @@ const props = withDefaults(defineProps<Props>(), {
   textStrokeColor: '#000000',
   font: null,
   template: null,
-  textInputs: () => []
+  textInputs: () => [],
+  shapeStyles: () => []
 })
 defineEmits<{
   close: []

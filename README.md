@@ -6,9 +6,10 @@ A modern Vue 3 application for creating custom SVG badges, stickers, and labels 
 
 ## ✨ Features
 
-- **13 Professional Templates** across 4 categories (Circle, Rectangle, Square, Diamond)
+- **14 Professional Templates** across 4 categories (Circle, Rectangle, Square, Diamond)
 - **600+ Google Fonts** with real-time preview
 - **Multi-text Input Support** with individual styling per text field
+- **Shape Styling System** with fill, stroke, and line join controls
 - **Advanced Typography Controls** (size, weight, color, stroke)
 - **Export Options** (SVG, PNG, JSON configuration)
 - **Template Persistence** - your work saves automatically
@@ -29,35 +30,34 @@ make dev-open
 
 Visit http://localhost:3000 to start creating!
 
-## 📋 Available Templates
+## 📋 Template Categories
 
-### Circle Templates
-- **Quality Sticker** - Quality assurance badge
-- **Vinyl Record Label** - Classic record center label
-- **Event Promo Sticker** - Bold promotional design
+**14 Professional Templates** organized across 4 shape categories:
 
-### Rectangle Templates
-- **Business Card** - Professional business card layout
-- **Conference Badge** - Event attendee badge
-- **Booklet Cover** - Manual/guide cover design
-- **Product Catalog** - Product showcase page
-- **Shipping Label** - Express shipping with tracking
-- **Food Package Label** - Organic product labeling
-- **Concert Ticket** - Retro ticket stub design
-- **YouTube Thumbnail** - Video thumbnail layout
+- **Circle Templates (3)**: Quality stickers, record labels, promotional badges
+- **Rectangle Templates (8)**: Business cards, conference badges, shipping labels, tickets
+- **Square Templates (1)**: Social media posts
+- **Diamond Templates (2)**: Safety warnings, caution labels
 
-### Square Templates
-- **Social Media Post** - Instagram/Facebook post design
+Each template supports multi-text input with individual font styling and shape customization.
 
-### Diamond Templates
-- **Safety Warning** - Diamond-shaped warning label
+## 🎨 Styling System
 
-## 🎨 Typography System
-
+### Typography Controls
 - **Font Categories**: Sans-serif, Serif, Monospace, Display, Handwriting, Dingbats
-- **Font Controls**: Size (8-500px), Weight (100-900), Color, Stroke
-- **Real-time Preview**: See fonts applied instantly
-- **Weight Validation**: Only show available weights per font
+- **Font Size**: 8-500px with slider and number input
+- **Font Weight**: 100-900 (only available weights shown per font)
+- **Text Color**: Color picker with preset palette
+- **Text Stroke**: Width (0-12px) and color customization
+- **Real-time Preview**: Text inputs show selected font styling
+
+### Shape Styling Controls
+- **Fill Color**: Background color with 24 preset colors + custom picker
+- **Stroke Color**: Border color with same palette system
+- **Stroke Width**: 0-12px with slider and number input
+- **Stroke Linejoin**: Corner styles (round, miter, bevel, arcs, clip)
+- **Visual Previews**: Shape thumbnails show current styling
+- **Expandable Interface**: Click shapes to expand styling controls
 
 ## 🔧 Development Commands
 
@@ -88,9 +88,12 @@ sticker-factory/
 │   ├── src/
 │   │   ├── stores/           # Pinia state management
 │   │   ├── components/       # Vue components
+│   │   │   ├── TextInputWithFontSelector.vue
+│   │   │   ├── TemplateObjectStyler.vue
+│   │   │   └── TemplateAwareSvgViewer.vue
 │   │   ├── config/           # Fonts & template config
 │   │   └── types/            # TypeScript definitions
-│   ├── templates/            # YAML template definitions
+│   ├── templates/            # YAML template definitions (14 files)
 │   └── dist/                 # Production build
 ├── server.js                 # Express static server
 └── Makefile                  # Command shortcuts
@@ -120,39 +123,40 @@ Your badges automatically save to browser localStorage:
 - Background colors and preferences
 - Export/import configurations as JSON
 
-## 🎨 Creating Custom Templates
+## 🎨 Template Parameters
 
-Templates are YAML files in `app/templates/`. Key concepts:
+Templates are YAML files supporting these layer types and parameters:
 
-- **Text positioning uses CENTER coordinates** (not top-left)
-- **Circles**: Text center = shape center
-- **Rectangles**: Text center = (x + width/2, y + height/2)
-- **Multiple text fields supported** with individual styling
+### Shape Layer Parameters
+- **id**: Unique identifier for the shape
+- **type**: "shape" (indicates this is a shape layer)
+- **subtype**: "rect", "circle", "polygon", or "path"
+- **position**: `{ x: "50%", y: "50%" }` (percentage or absolute coordinates)
+- **width/height**: Shape dimensions in pixels
+- **fill**: Default fill color (#hex)
+- **stroke**: Default stroke color (#hex)
+- **strokeWidth**: Default stroke width (pixels)
+- **points**: For polygons - SVG path coordinates
 
-Example:
-```yaml
-name: "My Custom Template"
-id: "my-template"
-description: "Custom design"
-category: "rectangle"
-layers:
-  - id: "background"
-    type: "shape"
-    subtype: "rect"
-    position: { x: 50, y: 50 }
-    width: 300
-    height: 200
-    fill: "#f0f0f0"
+### Text Layer Parameters
+- **id**: Unique identifier for the text input
+- **type**: "text" (indicates this is a text input layer)
+- **label**: Form label shown to user
+- **default**: Default text content
+- **placeholder**: Input placeholder text
+- **position**: `{ x: "50%", y: "50%" }` (text center coordinates)
+- **maxLength**: Maximum character limit
+- **fontFamily**: Default font family
+- **fontSize**: Default font size (pixels)
+- **fontWeight**: Default font weight (100-900)
+- **fontColor**: Default text color (#hex)
+- **clip**: Optional clipping shape ID
 
-  - id: "title"
-    type: "text"
-    label: "Title"
-    default: "My Title"
-    position: { x: 200, y: 150 }  # Center of rectangle
-    fontFamily: "Roboto"
-    fontSize: 24
-    fontColor: "#333333"
-```
+### Coordinate System
+- **Percentage**: `"50%"` = center, `"0%"` = left/top, `"100%"` = right/bottom
+- **Absolute**: Pixel values (e.g., `200` for 200px from origin)
+- **Mixed**: `{ x: "50%", y: 30 }` combines both systems
+- **Text Positioning**: Uses center coordinates (not top-left)
 
 ## 🌐 Browser Support
 
