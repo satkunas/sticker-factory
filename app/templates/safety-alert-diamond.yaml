@@ -1,0 +1,79 @@
+name: "Safety Alert Diamond"
+id: "safety-alert-diamond"
+description: "Diamond-shaped safety alert with warning icons and safety messaging"
+category: "diamond"
+layers:
+  - id: "background"
+    type: "shape"
+    subtype: "polygon"
+    position: { x: "50%", y: "50%" }
+    points: "100,10 190,100 100,190 10,100"
+    stroke: "#dc2626"
+    strokeWidth: 4
+    fill: "#fef2f2"
+
+  - id: "inner-diamond"
+    type: "shape"
+    subtype: "polygon"
+    position: { x: "50%", y: "50%" }
+    points: "100,25 170,100 100,175 30,100"
+    stroke: "#fecaca"
+    strokeWidth: 2
+    fill: "#ffffff"
+
+  - id: "warning-icon"
+    type: "svgImage"
+    svgId: "icons-alert"
+    position: { x: "50%", y: "35%" }
+    width: 36
+    height: 36
+    fill: "#dc2626"
+    stroke: "#991b1b"
+    strokeWidth: 2
+    strokeLinejoin: "round"
+
+  - id: "alert-title"
+    type: "text"
+    label: "Alert Title"
+    default: "CAUTION"
+    position: { x: "50%", y: "60%" }
+    clip: "background"
+    maxLength: 10
+    fontFamily: "Oswald"
+    fontSize: 20
+    fontWeight: 700
+    fontColor: "#dc2626"
+
+  - id: "safety-message"
+    type: "text"
+    label: "Safety Message"
+    default: "Safety First"
+    position: { x: "50%", y: "78%" }
+    clip: "background"
+    maxLength: 15
+    fontFamily: "Inter"
+    fontSize: 14
+    fontWeight: 600
+    fontColor: "#7f1d1d"
+
+  - id: "shield-icon-1"
+    type: "svgImage"
+    svgId: "icons-shield"
+    position: { x: "25%", y: "50%" }
+    width: 16
+    height: 16
+    fill: "#059669"
+    stroke: "none"
+    strokeWidth: 0
+    strokeLinejoin: "round"
+
+  - id: "shield-icon-2"
+    type: "svgImage"
+    svgId: "icons-shield"
+    position: { x: "75%", y: "50%" }
+    width: 16
+    height: 16
+    fill: "#059669"
+    stroke: "none"
+    strokeWidth: 0
+    strokeLinejoin: "round"

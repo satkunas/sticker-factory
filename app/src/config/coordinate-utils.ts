@@ -41,7 +41,7 @@ export const parsePercentage = (value: string): number => {
 export const resolveCoordinate = (
   value: number | string,
   viewBoxDimension: number,
-  viewBoxStart: number = 0
+  viewBoxStart = 0
 ): number => {
   if (typeof value === 'number') {
     return value

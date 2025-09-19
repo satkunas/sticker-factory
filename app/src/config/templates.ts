@@ -32,7 +32,6 @@ const initDefaultTemplate = async () => {
       Object.assign(DEFAULT_TEMPLATE, template)
     }
   } catch (error) {
-    console.error('Failed to load default template:', error)
   }
 
   return _defaultTemplate || DEFAULT_TEMPLATE

@@ -32,15 +32,15 @@
 
     <!-- Expandable Font Selector -->
     <ExpandableFontSelector
-      :selected-font="selectedFont"
-      :text-color="textColor"
+      :selectedFont="selectedFont"
+      :textColor="textColor"
       :font-size="fontSize"
       :font-weight="fontWeight"
       :text-stroke-width="textStrokeWidth"
-      :text-stroke-color="textStrokeColor"
+      :textStrokeColor="textStrokeColor"
       :text-stroke-linejoin="textStrokeLinejoin"
-      :sticker-text="modelValue"
-      :instance-id="instanceId"
+      :stickerText="modelValue"
+      :instanceId="instanceId"
       @update:selected-font="$emit('update:selectedFont', $event)"
       @update:text-color="$emit('update:textColor', $event)"
       @update:font-size="$emit('update:fontSize', $event)"

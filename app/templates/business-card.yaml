@@ -25,6 +25,17 @@ layers:
     strokeWidth: 1
     fill: "#f3f4f6"
 
+  - id: "company-logo"
+    type: "svgImage"
+    svgId: "icons-user"
+    position: { x: "20%", y: "30%" }
+    width: 32
+    height: 32
+    fill: "#3b82f6"
+    stroke: "none"
+    strokeWidth: 0
+    strokeLinejoin: "round"
+
   - id: "company-name"
     type: "text"
     label: "Company Name"

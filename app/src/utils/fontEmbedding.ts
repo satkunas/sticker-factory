@@ -44,7 +44,7 @@ async function fetchGoogleFontsCss(googleFontUrl: string): Promise<string> {
 
     return await response.text()
   } catch (error) {
-    console.error('Error fetching Google Fonts CSS:', error)
+    // Error fetching Google Fonts CSS - fail silently in production
     return ''
   }
 }
@@ -103,7 +103,7 @@ async function fetchAndEncodeFont(fontUrl: string): Promise<string> {
 
     return dataUri
   } catch (error) {
-    console.error('Error fetching font file:', error)
+    // Error fetching font file - fail silently in production
     return ''
   }
 }
@@ -156,8 +156,7 @@ export async function embedGoogleFonts(cssContent: string): Promise<string> {
       }
     }
   } catch (error) {
-    console.error('Error embedding Google Fonts:', error)
-    // Return original CSS as fallback
+    // Error embedding Google Fonts - fail silently and return original CSS
     return cssContent
   }
 
@@ -166,7 +165,35 @@ export async function embedGoogleFonts(cssContent: string): Promise<string> {
 
 /**
  * Clear the font cache (useful for development/testing)
+ * Includes proper memory cleanup
  */
 export function clearFontCache(): void {
-  Object.keys(fontCache).forEach(key => delete fontCache[key])
+  const keys = Object.keys(fontCache)
+  keys.forEach(key => {
+    delete fontCache[key]
+  })
+
+  // Explicit memory cleanup for large cache operations
+  if (keys.length > 50 && typeof global !== 'undefined' && global.gc) {
+    global.gc()
+  }
+}
+
+/**
+ * Get cache size for monitoring
+ */
+export function getFontCacheSize(): number {
+  return Object.keys(fontCache).length
+}
+
+/**
+ * Get cache memory usage estimate (bytes)
+ */
+export function getFontCacheMemoryUsage(): number {
+  let totalBytes = 0
+  Object.values(fontCache).forEach(dataUri => {
+    // Rough estimate: data URI length * 0.75 (base64 overhead)
+    totalBytes += dataUri.length * 0.75
+  })
+  return totalBytes
 }

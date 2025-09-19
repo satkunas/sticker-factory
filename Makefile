@@ -1,4 +1,4 @@
-.PHONY: help install clean dev build lint start stop test check
+.PHONY: help install clean dev build lint start stop test test-quick test-full check
 
 # Default target
 help: ## Show this help message
@@ -31,6 +31,39 @@ lint: ## Run linting on app code
 
 lint-fix: ## Fix linting issues automatically
 	cd app && npm run lint -- --fix || true
+
+# Testing (Required by behavioral guidelines)
+test-quick: ## Run quick tests (unit tests only)
+	@echo "🧪 Running quick tests..."
+	cd app && npm run test:run
+
+test-full: ## Run full test suite with coverage
+	@echo "🧪 Running full test suite with coverage..."
+	cd app && npm run test:coverage
+
+test: test-quick ## Run default test suite (alias for test-quick)
+
+test-ui: ## Open test UI for interactive testing
+	cd app && npm run test:ui
+
+test-watch: ## Run tests in watch mode during development
+	cd app && npm run test
+
+# Automated testing workflow
+test-auto: ## Auto-run tests after changes (with lint and type check)
+	@echo "🤖 Automated testing workflow..."
+	@./scripts/pre-commit.sh
+
+pre-commit: test-auto ## Run pre-commit checks (lint, test, type-check)
+	@echo "✅ Pre-commit checks completed"
+
+# Git integration
+install-hooks: ## Install Git pre-commit hooks
+	@echo "🪝 Installing Git hooks..."
+	@mkdir -p .git/hooks
+	@cp scripts/pre-commit.sh .git/hooks/pre-commit
+	@chmod +x .git/hooks/pre-commit
+	@echo "✅ Git pre-commit hook installed"
 
 # Production
 start: stop ## Start production server

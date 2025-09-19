@@ -1,9 +1,9 @@
-name: "Conference Badge"
-id: "conference-badge"
-description: "Professional conference attendee badge"
+name: "Conference Sticker"
+id: "conference-sticker"
+description: "Professional conference attendee sticker"
 category: "rectangle"
 layers:
-  - id: "badge-background"
+  - id: "sticker-background"
     type: "shape"
     subtype: "rect"
     position: { x: "50%", y: "50%" }
@@ -42,7 +42,7 @@ layers:
     label: "Attendee Name"
     default: "Jane Developer"
     position: { x: "50%", y: "42%" }
-    clip: "badge-background"
+    clip: "sticker-background"
     maxLength: 20
     fontFamily: "Oswald"
     fontSize: 22
@@ -54,7 +54,7 @@ layers:
     label: "Company Name"
     default: "Tech Solutions Inc."
     position: { x: "50%", y: "58%" }
-    clip: "badge-background"
+    clip: "sticker-background"
     maxLength: 25
     fontFamily: "Inter"
     fontSize: 16
@@ -66,7 +66,7 @@ layers:
     label: "Job Title"
     default: "Senior Engineer"
     position: { x: "50%", y: "72%" }
-    clip: "badge-background"
+    clip: "sticker-background"
     maxLength: 20
     fontFamily: "Inter"
     fontSize: 14

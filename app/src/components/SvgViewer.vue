@@ -17,17 +17,17 @@
           backgroundSize: `${20 * zoomLevel}px ${20 * zoomLevel}px`
         }"
       >
-        <BadgeSvg
-          ref="badgeSvgRef"
+        <StickerSvg
+          ref="stickerSvgRef"
           :text="text"
           :color="backgroundColor"
-          :text-color="textColor"
+          :textColor="textColor"
           :width="width"
           :height="height"
           :font-size="fontSize"
           :font-weight="fontWeight"
           :text-stroke-width="textStrokeWidth"
-          :text-stroke-color="textStrokeColor"
+          :textStrokeColor="textStrokeColor"
           :text-stroke-linejoin="textStrokeLinejoin"
           :font="font"
         />
@@ -45,7 +45,7 @@
               backgroundSize: '5px 5px'
             }"
           >
-            <!-- Mini Badge -->
+            <!-- Mini Sticker -->
             <div class="absolute inset-0 flex items-center justify-center">
               <div 
                 class="rounded-full"
@@ -118,7 +118,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import BadgeSvg from './BadgeSvg.vue'
+import StickerSvg from './StickerSvg.vue'
 import type { FontConfig } from '../config/fonts'
 
 interface Props {
@@ -151,7 +151,7 @@ const initialPanY = ref(0)
 
 // SVG container ref
 const svgContainer = ref<HTMLElement | null>(null)
-const badgeSvgRef = ref(null)
+const stickerSvgRef = ref(null)
 
 // Viewport calculation for compact legend
 const viewportStyle = computed(() => {
@@ -244,6 +244,6 @@ const handleWheel = (e: WheelEvent) => {
 
 // Expose methods if needed
 defineExpose({
-  badgeSvgRef
+  stickerSvgRef
 })
 </script>

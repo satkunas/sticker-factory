@@ -10,11 +10,42 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['vue']
+        manualChunks(id) {
+          // Vendor chunk for main dependencies
+          if (id.includes('node_modules')) {
+            if (id.includes('vue')) {
+              return 'vendor'
+            }
+            if (id.includes('html2canvas') || id.includes('purify')) {
+              return 'utils'
+            }
+            return 'libs'
+          }
+
+          // Template chunks - each template gets its own chunk
+          if (id.includes('/templates/') && id.includes('.yaml')) {
+            const templateName = id.split('/').pop()?.replace('.yaml', '')
+            return `template-${templateName}`
+          }
+
+          // Font chunk
+          if (id.includes('/config/fonts.ts')) {
+            return 'fonts'
+          }
+
+          // SVG library chunks
+          if (id.includes('/config/svg-library-loader.ts') || id.includes('/images/')) {
+            return 'svg-assets'
+          }
+
+          // Component chunks for heavy components
+          if (id.includes('DownloadModal.vue') || id.includes('TemplateAwareSvgViewer.vue')) {
+            return 'heavy-components'
+          }
         }
       }
-    }
+    },
+    chunkSizeWarningLimit: 1000
   },
   server: {
     port: 3000,

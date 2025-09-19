@@ -96,6 +96,25 @@
                   {{ textInputData?.text || stickerText || 'Sample Text' }}
                 </text>
               </template>
+
+              <!-- SVG Image rendering with dynamic svgImageStyles -->
+              <template v-if="element.type === 'svgImage' && element.svgImage">
+                <g
+                  v-for="svgImageStyleData in [getSvgImageStyleById(element.svgImage.id)]"
+                  :key="element.svgImage.id"
+                  :transform="`translate(${element.svgImage.position.x}, ${element.svgImage.position.y})`"
+                >
+                  <g
+                    :style="{
+                      fill: svgImageStyleData?.fillColor || element.svgImage.fill || '#22c55e',
+                      stroke: svgImageStyleData?.strokeColor || element.svgImage.stroke || '#000000',
+                      strokeWidth: svgImageStyleData?.strokeWidth ?? element.svgImage.strokeWidth ?? 2,
+                      strokeLinejoin: svgImageStyleData?.strokeLinejoin || element.svgImage.strokeLinejoin || 'round'
+                    }"
+                    v-html="element.svgImage.svgContent"
+                  />
+                </g>
+              </template>
             </template>
           </g>
 
@@ -146,7 +165,7 @@
               backgroundSize: '5px 5px'
             }"
           >
-            <!-- Mini Badge -->
+            <!-- Mini Sticker -->
             <div class="absolute inset-0 flex items-center justify-center">
               <svg
                 v-if="template"
@@ -177,6 +196,16 @@
                   >
                     {{ element.textInput.default }}
                   </text>
+                  <g
+                    v-if="element.type === 'svgImage' && element.svgImage"
+                    :transform="`translate(${element.svgImage.position.x}, ${element.svgImage.position.y}) scale(0.4)`"
+                    :style="{
+                      fill: element.svgImage.fill || '#22c55e',
+                      stroke: element.svgImage.stroke || '#000000',
+                      strokeWidth: element.svgImage.strokeWidth || 1
+                    }"
+                    v-html="element.svgImage.svgContent"
+                  />
                 </template>
               </svg>
               <div
@@ -264,6 +293,7 @@ import { computed, ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { getFontFamily, type FontConfig } from '../config/fonts'
 import type { SimpleTemplate } from '../types/template-types'
 import { getTemplateElements } from '../config/template-loader'
+import { logger, createPerformanceTimer } from '../utils/logger'
 
 interface Props {
   stickerText?: string
@@ -295,6 +325,13 @@ interface Props {
     strokeWidth: number
     strokeLinejoin: string
   }>
+  svgImageStyles?: Array<{
+    id: string
+    fillColor: string
+    strokeColor: string
+    strokeWidth: number
+    strokeLinejoin: string
+  }>
   previewMode?: boolean
 }
 
@@ -311,6 +348,7 @@ const props = withDefaults(defineProps<Props>(), {
   height: 120,
   template: null,
   textInputs: () => [],
+  svgImageStyles: () => [],
   previewMode: false
 })
 
@@ -389,7 +427,16 @@ const fontFamily = computed(() => {
 // Get ordered template elements
 const templateElements = computed(() => {
   if (props.template) {
+    const timer = createPerformanceTimer(`SVG render: ${props.template.name}`)
     const elements = getTemplateElements(props.template)
+
+    timer.end({
+      templateId: props.template.id,
+      elementCount: elements.length,
+      textInputCount: props.textInputs?.length || 0,
+      shapeStyleCount: props.shapeStyles?.length || 0
+    })
+
     return elements
   }
   return []
@@ -403,6 +450,11 @@ const getTextInputById = (id: string) => {
 // Helper function to get shape style data for a specific shape ID
 const getShapeStyleById = (id: string) => {
   return props.shapeStyles?.find(style => style.id === id)
+}
+
+// Helper function to get SVG image style data for a specific SVG image ID
+const getSvgImageStyleById = (id: string) => {
+  return props.svgImageStyles?.find(style => style.id === id)
 }
 
 // Helper function to get font family for a specific textInput
@@ -624,7 +676,6 @@ const altAutoFit = async () => {
 // Auto-fit function to scale template to fit the container
 const autoFitTemplate = async () => {
   if (!svgContainer.value || !props.template) {
-    console.log('AutoFit: Missing container or template')
     return
   }
 
@@ -638,7 +689,7 @@ const autoFitTemplate = async () => {
   const templateWidth = props.template.viewBox.width
   const templateHeight = props.template.viewBox.height
 
-  console.log('AutoFit Debug:', {
+  logger.debug('Size calculation info:', {
     containerSize: { width: containerRect.width, height: containerRect.height },
     availableSize: { width: availableWidth, height: availableHeight },
     templateSize: { width: templateWidth, height: templateHeight }
@@ -649,7 +700,6 @@ const autoFitTemplate = async () => {
   const scaleY = availableHeight / templateHeight
   const optimalScale = Math.min(scaleX, scaleY) * 0.8 // 80% to leave breathing room
 
-  console.log('AutoFit Scale:', { scaleX, scaleY, optimalScale })
 
   // Apply the optimal zoom level and center
   const finalZoom = Math.max(0.2, Math.min(5, optimalScale))
@@ -657,7 +707,6 @@ const autoFitTemplate = async () => {
   panX.value = 0 // Center horizontally
   panY.value = 0 // Center vertically
 
-  console.log('AutoFit Applied:', { zoom: finalZoom, panX: 0, panY: 0 })
 }
 
 // Drag functions
@@ -824,7 +873,6 @@ const downloadSvg = () => {
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
   } catch (error) {
-    console.error('Error downloading SVG:', error)
   }
 }
 

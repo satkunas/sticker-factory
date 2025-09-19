@@ -317,8 +317,8 @@
               :key="font.name"
               :ref="el => { if (selectedFont?.name === font.name && el) selectedFontTile = el }"
               :font="font"
-              :is-selected="selectedFont?.name === font.name"
-              :sticker-text="stickerText || ''"
+              :isSelected="selectedFont?.name === font.name"
+              :stickerText="stickerText || ''"
               @select="selectFont"
             />
           </div>
@@ -487,7 +487,7 @@ const fontWeights = computed(() => {
   )
 })
 
-// Get category color for the badge indicators
+// Get category color for the sticker indicators
 const getCategoryColor = (category: string): string => {
   const colorMap: Record<string, string> = {
     'serif': 'bg-blue-400',
@@ -645,7 +645,6 @@ const selectFont = async (font: FontConfig) => {
     
     emit('update:selectedFont', font)
   } catch (error) {
-    console.error('Failed to load font:', error)
     // Still emit the font change, fallback will be used
     emit('update:selectedFont', font)
   }
@@ -658,7 +657,6 @@ watch(() => props.selectedFont, async (newFont) => {
       await loadFont(newFont)
       loadedFonts.value.add(newFont.name)
     } catch (error) {
-      console.error('Failed to load font:', error)
     }
   }
 }, { immediate: true })

@@ -1,0 +1,119 @@
+name: "Social Media Announcement"
+id: "social-media-announcement"
+description: "Square social media post with announcement theme and decorative icons"
+category: "square"
+layers:
+  - id: "background"
+    type: "shape"
+    subtype: "rect"
+    position: { x: "50%", y: "50%" }
+    width: 400
+    height: 400
+    rx: 20
+    ry: 20
+    stroke: "#e5e7eb"
+    strokeWidth: 2
+    fill: "#fef3c7"
+
+  - id: "header-bar"
+    type: "shape"
+    subtype: "rect"
+    position: { x: "50%", y: "20%" }
+    width: 360
+    height: 60
+    rx: 12
+    ry: 12
+    stroke: "none"
+    strokeWidth: 0
+    fill: "#f59e0b"
+
+  - id: "megaphone-icon"
+    type: "svgImage"
+    svgId: "icons-volume"
+    position: { x: "25%", y: "20%" }
+    width: 28
+    height: 28
+    fill: "#ffffff"
+    stroke: "none"
+    strokeWidth: 0
+    strokeLinejoin: "round"
+
+  - id: "announcement-title"
+    type: "text"
+    label: "Announcement Title"
+    default: "BIG NEWS!"
+    position: { x: "60%", y: "20%" }
+    clip: "background"
+    maxLength: 15
+    fontFamily: "Oswald"
+    fontSize: 24
+    fontWeight: 700
+    fontColor: "#ffffff"
+
+  - id: "main-message"
+    type: "text"
+    label: "Main Message"
+    default: "We're launching something amazing!"
+    position: { x: "50%", y: "55%" }
+    clip: "background"
+    maxLength: 40
+    fontFamily: "Inter"
+    fontSize: 18
+    fontWeight: 600
+    fontColor: "#92400e"
+
+  - id: "call-to-action"
+    type: "text"
+    label: "Call to Action"
+    default: "Stay tuned for more details"
+    position: { x: "50%", y: "75%" }
+    clip: "background"
+    maxLength: 30
+    fontFamily: "Inter"
+    fontSize: 14
+    fontWeight: 500
+    fontColor: "#78350f"
+
+  - id: "sparkle-icon-1"
+    type: "svgImage"
+    svgId: "icons-star"
+    position: { x: "15%", y: "45%" }
+    width: 20
+    height: 20
+    fill: "#f59e0b"
+    stroke: "none"
+    strokeWidth: 0
+    strokeLinejoin: "round"
+
+  - id: "sparkle-icon-2"
+    type: "svgImage"
+    svgId: "icons-star"
+    position: { x: "85%", y: "55%" }
+    width: 16
+    height: 16
+    fill: "#d97706"
+    stroke: "none"
+    strokeWidth: 0
+    strokeLinejoin: "round"
+
+  - id: "thumbs-up-icon"
+    type: "svgImage"
+    svgId: "icons-user"
+    position: { x: "15%", y: "85%" }
+    width: 24
+    height: 24
+    fill: "#059669"
+    stroke: "none"
+    strokeWidth: 0
+    strokeLinejoin: "round"
+
+  - id: "calendar-icon"
+    type: "svgImage"
+    svgId: "icons-calendar"
+    position: { x: "85%", y: "85%" }
+    width: 24
+    height: 24
+    fill: "#7c3aed"
+    stroke: "none"
+    strokeWidth: 0
+    strokeLinejoin: "round"

@@ -10,17 +10,17 @@
           <TemplateAwareSvgViewer
             ref="templateSvgRef"
             :template="template"
-            :text-inputs="textInputs"
-            :shape-styles="shapeStyles"
-            :sticker-text="badgeText"
-            :text-color="textColor"
+            :textInputs="textInputs"
+            :shapeStyles="shapeStyles"
+            :stickerText="stickerText"
+            :textColor="textColor"
             :font="font"
             :font-size="fontSize"
             :font-weight="fontWeight"
-            :stroke-color="textStrokeColor"
+            :strokeColor="textStrokeColor"
             :stroke-width="textStrokeWidth"
             :stroke-opacity="1"
-            :preview-mode="true"
+            :previewMode="true"
             class="w-full h-full"
           />
         </div>
@@ -149,7 +149,7 @@ import { embedGoogleFonts } from '../utils/fontEmbedding'
 
 interface Props {
   show: boolean
-  badgeText: string
+  stickerText: string
   textColor?: string
   fontSize?: number
   fontWeight?: number
@@ -218,7 +218,7 @@ const pngResolutions = computed(() => {
 
 const getFileName = () => {
   const timestamp = Date.now()
-  const name = props.badgeText.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'image'
+  const name = props.stickerText.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'image'
   return `${name}-${timestamp}`
 }
 
@@ -226,7 +226,6 @@ const getSvgContent = async (embedFonts = false) => {
   // Get the SVG element from the template viewer and create clean SVG content
   const svgElement = templateSvgRef.value?.svgElementRef
   if (!svgElement) {
-    console.error('SVG element not found in template viewer')
     return ''
   }
 
@@ -297,7 +296,6 @@ const getSvgContent = async (embedFonts = false) => {
         try {
           finalCSS = await embedGoogleFonts(fontCSS)
         } catch (error) {
-          console.error('Error embedding fonts, falling back to @import:', error)
           // Keep original CSS as fallback
         }
       }
@@ -311,7 +309,6 @@ const getSvgContent = async (embedFonts = false) => {
     const svgString = new XMLSerializer().serializeToString(svgClone)
     return `<?xml version="1.0" encoding="UTF-8"?>\n${svgString}`
   } catch (error) {
-    console.error('Error generating SVG content:', error)
     return ''
   }
 }
@@ -319,7 +316,6 @@ const getSvgContent = async (embedFonts = false) => {
 const viewInNewTab = async () => {
   const svgContent = await getSvgContent() // Don't embed fonts for view (faster loading)
   if (!svgContent) {
-    console.error('No SVG content available for viewing')
     return
   }
 
@@ -341,7 +337,6 @@ const copyToClipboard = async () => {
       copyButtonText.value = 'Copy'
     }, 2000)
   } catch (err) {
-    console.error('Copy failed:', err)
   }
 }
 
@@ -374,7 +369,6 @@ const svgToCanvas = (svgContent, width, height) => {
 const downloadSVG = async () => {
   const svgContent = await getSvgContent() // Don't embed fonts for SVG (smaller file size)
   if (!svgContent) {
-    console.error('No SVG content available for download')
     return
   }
 
@@ -393,7 +387,6 @@ const downloadSVG = async () => {
 const downloadPNG = async () => {
   const svgContent = await getSvgContent(true) // Enable font embedding for PNG
   if (!svgContent) {
-    console.error('No SVG content available for PNG download')
     return
   }
 
@@ -420,7 +413,6 @@ const downloadPNG = async () => {
 const downloadWebP = async () => {
   const svgContent = await getSvgContent(true) // Enable font embedding for WebP
   if (!svgContent) {
-    console.error('No SVG content available for WebP download')
     return
   }
 
@@ -447,7 +439,6 @@ const downloadWebP = async () => {
 const downloadPDF = async () => {
   const svgContent = await getSvgContent(true) // Enable font embedding for PDF
   if (!svgContent) {
-    console.error('No SVG content available for PDF download')
     return
   }
   

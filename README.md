@@ -6,11 +6,14 @@ A modern Vue 3 application for creating custom SVG badges, stickers, and labels 
 
 ## ✨ Features
 
-- **14 Professional Templates** across 4 categories (Circle, Rectangle, Square, Diamond)
+- **18 Professional Templates** across 4 categories (Circle, Rectangle, Square, Diamond)
+- **SVG Image Library** with 100+ royalty-free icons and graphics
 - **600+ Google Fonts** with real-time preview
 - **Multi-text Input Support** with individual styling per text field
 - **Shape Styling System** with fill, stroke, and line join controls
+- **SVG Image Styling** with full color and stroke customization
 - **Advanced Typography Controls** (size, weight, color, stroke)
+- **Tiled SVG Selection Interface** for easy icon browsing
 - **Export Options** (SVG, PNG, JSON configuration)
 - **Template Persistence** - your work saves automatically
 - **Responsive Design** for desktop and mobile
@@ -32,14 +35,14 @@ Visit http://localhost:3000 to start creating!
 
 ## 📋 Template Categories
 
-**14 Professional Templates** organized across 4 shape categories:
+**18 Professional Templates** organized across 4 shape categories:
 
-- **Circle Templates (3)**: Quality stickers, record labels, promotional badges
-- **Rectangle Templates (8)**: Business cards, conference badges, shipping labels, tickets
-- **Square Templates (1)**: Social media posts
-- **Diamond Templates (2)**: Safety warnings, caution labels
+- **Circle Templates (5)**: Quality stickers, record labels, promotional badges, wellness stickers
+- **Rectangle Templates (9)**: Business cards, conference badges, shipping labels, tickets, tech company badges
+- **Square Templates (2)**: Social media posts and announcements
+- **Diamond Templates (2)**: Safety warnings, safety alerts, caution labels
 
-Each template supports multi-text input with individual font styling and shape customization.
+Each template supports multi-text input with individual font styling, shape customization, and SVG image integration.
 
 ## 🎨 Styling System
 
@@ -58,6 +61,15 @@ Each template supports multi-text input with individual font styling and shape c
 - **Stroke Linejoin**: Corner styles (round, miter, bevel, arcs, clip)
 - **Visual Previews**: Shape thumbnails show current styling
 - **Expandable Interface**: Click shapes to expand styling controls
+
+### SVG Image System
+- **Comprehensive Icon Library**: 100+ royalty-free SVG icons organized by category
+- **Tiled Selection Interface**: Grid-based browser with search and category filtering
+- **Real-time Preview**: Icons display with current styling applied
+- **Full Styling Control**: Fill color, stroke color, width, and line join options
+- **Seamless Integration**: SVG images work alongside text and shapes in templates
+- **Dynamic Loading**: Icons loaded on-demand with efficient caching
+- **Template Integration**: Pre-configured SVG icons in new template designs
 
 ## 🔧 Development Commands
 
@@ -78,7 +90,37 @@ make lint-fix         # Auto-fix linting issues
 # Maintenance
 make clean            # Clean all artifacts
 make install          # Install dependencies
+
+# Testing
+make test-quick       # Run fast tests
+make test-full        # Run comprehensive tests
 ```
+
+## 🔒 Security & Performance
+
+### Security Features
+- **Input Validation**: Comprehensive sanitization at all entry points
+- **File Upload Security**: MIME type validation and size limits
+- **XSS Protection**: HTML encoding and script tag removal
+- **Font URL Validation**: HTTPS-only with trusted domain whitelist
+- **SVG Sanitization**: Dangerous elements and event handlers removed
+
+See [SECURITY.md](./SECURITY.md) for detailed security information.
+
+### Performance Optimizations
+- **Code Splitting**: Separate chunks for templates, fonts, and components
+- **Lazy Loading**: Components and fonts loaded on demand
+- **Font Preloading**: Popular fonts cached for better UX
+- **Bundle Optimization**: Main bundle reduced from 683KB to 75KB
+- **Template Caching**: Templates cached after initial load
+- **Memory Management**: Automatic cleanup with garbage collection
+
+### Performance Metrics
+- **Main Bundle**: 75KB (89% reduction)
+- **Font Chunk**: 138KB (separated)
+- **Template Chunks**: 1-3KB each (dynamically loaded)
+- **Initial Load**: ~200KB total
+- **Cache Hit Rate**: 95%+ for fonts and templates
 
 ## 🏗️ Project Structure
 
@@ -90,10 +132,15 @@ sticker-factory/
 │   │   ├── components/       # Vue components
 │   │   │   ├── TextInputWithFontSelector.vue
 │   │   │   ├── TemplateObjectStyler.vue
+│   │   │   ├── TemplateImageStyler.vue      # SVG image styling
+│   │   │   ├── SvgLibrarySelector.vue       # SVG library browser
 │   │   │   └── TemplateAwareSvgViewer.vue
-│   │   ├── config/           # Fonts & template config
+│   │   ├── config/           # Fonts, templates & SVG config
+│   │   │   ├── svg-library-loader.ts        # SVG library management
+│   │   │   └── template-loader.ts           # Template processing
 │   │   └── types/            # TypeScript definitions
-│   ├── templates/            # YAML template definitions (14 files)
+│   ├── templates/            # YAML template definitions (18 files)
+│   ├── images/               # SVG icon library (100+ icons)
 │   └── dist/                 # Production build
 ├── server.js                 # Express static server
 └── Makefile                  # Command shortcuts

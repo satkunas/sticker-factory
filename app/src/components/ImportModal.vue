@@ -165,6 +165,7 @@
 import { ref } from 'vue'
 import Modal from './Modal.vue'
 import { useStore } from '../stores'
+import { validateFileUpload, validateImportData } from '../utils/security'
 
 interface Props {
   show: boolean
@@ -201,36 +202,55 @@ const clearMessages = () => {
 const importFromText = async () => {
   clearMessages()
   try {
+    const parsedData = JSON.parse(jsonText.value)
+    const validation = validateImportData(parsedData)
+    if (!validation.valid) {
+      errorMessage.value = validation.error
+      return
+    }
+
     await store.importData(jsonText.value)
     successMessage.value = 'Data imported successfully!'
     jsonText.value = ''
   } catch (error) {
-    errorMessage.value = error.message || 'Failed to import data'
+    if (error instanceof SyntaxError) {
+      errorMessage.value = 'Invalid JSON format'
+    } else {
+      errorMessage.value = error.message || 'Failed to import data'
+    }
   }
 }
 
 // File handling
 const handleFileSelect = (e) => {
   const file = e.target.files[0]
-  if (file && file.type === 'application/json') {
-    selectedFile.value = file
-    clearMessages()
-  } else {
-    errorMessage.value = 'Please select a valid JSON file'
+  if (!file) return
+
+  const validation = validateFileUpload(file)
+  if (!validation.valid) {
+    errorMessage.value = validation.error
+    return
   }
+
+  selectedFile.value = file
+  clearMessages()
 }
 
 const handleDrop = (e) => {
   e.preventDefault()
   isDragOver.value = false
-  
+
   const file = e.dataTransfer.files[0]
-  if (file && file.type === 'application/json') {
-    selectedFile.value = file
-    clearMessages()
-  } else {
-    errorMessage.value = 'Please drop a valid JSON file'
+  if (!file) return
+
+  const validation = validateFileUpload(file)
+  if (!validation.valid) {
+    errorMessage.value = validation.error
+    return
   }
+
+  selectedFile.value = file
+  clearMessages()
 }
 
 const handleDragOver = (e) => {
@@ -256,15 +276,26 @@ const clearFile = () => {
 
 const importFromFile = async () => {
   if (!selectedFile.value) return
-  
+
   clearMessages()
   try {
     const text = await selectedFile.value.text()
+    const parsedData = JSON.parse(text)
+    const validation = validateImportData(parsedData)
+    if (!validation.valid) {
+      errorMessage.value = validation.error
+      return
+    }
+
     await store.importData(text)
     successMessage.value = 'File imported successfully!'
     selectedFile.value = null
   } catch (error) {
-    errorMessage.value = error.message || 'Failed to import file'
+    if (error instanceof SyntaxError) {
+      errorMessage.value = 'Invalid JSON format in file'
+    } else {
+      errorMessage.value = error.message || 'Failed to import file'
+    }
   }
 }
 

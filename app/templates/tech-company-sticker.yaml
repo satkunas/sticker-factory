@@ -1,0 +1,86 @@
+name: "Tech Company Sticker"
+id: "tech-company-sticker"
+description: "Modern tech company sticker with SVG icons and clean typography"
+category: "rectangle"
+layers:
+  - id: "background"
+    type: "shape"
+    subtype: "rect"
+    position: { x: "50%", y: "50%" }
+    width: 320
+    height: 200
+    rx: 12
+    ry: 12
+    stroke: "#3b82f6"
+    strokeWidth: 2
+    fill: "#ffffff"
+
+  - id: "header-accent"
+    type: "shape"
+    subtype: "rect"
+    position: { x: "50%", y: "25%" }
+    width: 320
+    height: 40
+    rx: 12
+    ry: 12
+    stroke: "none"
+    strokeWidth: 0
+    fill: "#3b82f6"
+
+  - id: "tech-icon"
+    type: "svgImage"
+    svgId: "icons-code"
+    position: { x: "20%", y: "25%" }
+    width: 24
+    height: 24
+    fill: "#ffffff"
+    stroke: "none"
+    strokeWidth: 0
+    strokeLinejoin: "round"
+
+  - id: "company-name"
+    type: "text"
+    label: "Company Name"
+    default: "TechCorp"
+    position: { x: "65%", y: "25%" }
+    clip: "background"
+    maxLength: 20
+    fontFamily: "Roboto"
+    fontSize: 18
+    fontWeight: 700
+    fontColor: "#ffffff"
+
+  - id: "employee-name"
+    type: "text"
+    label: "Employee Name"
+    default: "Alex Developer"
+    position: { x: "50%", y: "55%" }
+    clip: "background"
+    maxLength: 25
+    fontFamily: "Inter"
+    fontSize: 16
+    fontWeight: 600
+    fontColor: "#1f2937"
+
+  - id: "job-title"
+    type: "text"
+    label: "Job Title"
+    default: "Senior Developer"
+    position: { x: "50%", y: "75%" }
+    clip: "background"
+    maxLength: 20
+    fontFamily: "Inter"
+    fontSize: 14
+    fontWeight: 500
+    fontColor: "#6b7280"
+
+  - id: "security-icon"
+    type: "svgImage"
+    svgId: "icons-shield"
+    position: { x: "85%", y: "80%" }
+    width: 16
+    height: 16
+    fill: "#10b981"
+    stroke: "none"
+    strokeWidth: 0
+    strokeLinejoin: "round"

@@ -1,3 +1,6 @@
+import { validateFontUrl } from '../utils/security'
+import { logger } from '../utils/logger'
+
 export interface FontConfig {
   name: string
   family: string
@@ -2156,10 +2159,27 @@ export const AVAILABLE_FONTS: FontConfig[] = [
 // Default font
 export const DEFAULT_FONT: FontConfig = AVAILABLE_FONTS.find(f => f.name === 'Inter') || AVAILABLE_FONTS[0]
 
-// Font loading utility
+// Font loading cache and performance tracking
+const loadedFonts = new Set<string>()
+const fontLoadPromises = new Map<string, Promise<void>>()
+
+// Font loading utility with caching and performance optimization
 export const loadFont = async (font: FontConfig): Promise<void> => {
-  return new Promise((resolve, reject) => {
+  const fontKey = `${font.name}-${font.source}`
+
+  // Return cached promise if font is already being loaded
+  if (fontLoadPromises.has(fontKey)) {
+    return fontLoadPromises.get(fontKey)!
+  }
+
+  // Return immediately if font is already loaded
+  if (loadedFonts.has(fontKey)) {
+    return Promise.resolve()
+  }
+
+  const loadPromise = new Promise<void>((resolve, reject) => {
     try {
+      const startTime = performance.now()
       const fontUrl = font.fontUrl || font.googleFontUrl
       
       if (font.source === 'system') {
@@ -2188,6 +2208,13 @@ export const loadFont = async (font: FontConfig): Promise<void> => {
       }
       
       if (fontUrl) {
+        // Security validation for font URL
+        if (!validateFontUrl(fontUrl)) {
+          logger.warn(`Unsafe font URL rejected: ${font.name} - ${fontUrl}`)
+          reject(new Error(`Unsafe font URL rejected: ${font.name}`))
+          return
+        }
+
         // Check if font is already loaded
         const existingLink = document.querySelector(`link[href="${fontUrl}"]`)
         if (existingLink) {
@@ -2204,22 +2231,66 @@ export const loadFont = async (font: FontConfig): Promise<void> => {
           link.href += '&display=swap'
         }
         
-        link.onload = () => resolve()
-        link.onerror = () => reject(new Error(`Failed to load font: ${font.name}`))
-        
+        link.onload = () => {
+          const loadTime = performance.now() - startTime
+          logger.info(`Font loaded: ${font.name} - ${loadTime.toFixed(2)}ms`)
+          loadedFonts.add(fontKey)
+          resolve()
+        }
+        link.onerror = () => {
+          const errorTime = performance.now() - startTime
+          logger.warn(`Font load failed: ${font.name} - ${errorTime.toFixed(2)}ms`)
+          reject(new Error(`Failed to load font: ${font.name}`))
+        }
+
         document.head.appendChild(link)
         return
       }
       
       // Fallback: assume system font
+      loadedFonts.add(fontKey)
       resolve()
     } catch (error) {
       reject(error)
     }
   })
+
+  fontLoadPromises.set(fontKey, loadPromise)
+
+  try {
+    await loadPromise
+  } finally {
+    fontLoadPromises.delete(fontKey)
+  }
+
+  return loadPromise
+}
+
+// Get font family string for CSS
+// Preload popular fonts for better performance
+export const preloadPopularFonts = async (): Promise<void> => {
+  const popularFonts = AVAILABLE_FONTS.filter(font =>
+    ['Inter', 'Roboto', 'Open Sans', 'Poppins', 'Montserrat'].includes(font.name)
+  )
+
+  const preloadPromises = popularFonts.map(font =>
+    loadFont(font).catch(error => {
+      logger.warn(`Failed to preload font ${font.name}:`, error)
+    })
+  )
+
+  await Promise.allSettled(preloadPromises)
+  logger.info(`Preloaded ${popularFonts.length} popular fonts`)
 }
 
 // Get font family string for CSS
 export const getFontFamily = (font: FontConfig): string => {
   return `"${font.family}", ${font.fallback}`
 }
+
+// Get performance metrics for font loading
+export const getFontMetrics = () => ({
+  loadedFonts: Array.from(loadedFonts),
+  totalLoaded: loadedFonts.size,
+  currentlyLoading: fontLoadPromises.size
+})

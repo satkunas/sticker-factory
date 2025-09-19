@@ -1,6 +1,14 @@
 import { ref, computed, readonly } from 'vue'
 import { DEFAULT_FONT, type FontConfig } from '../config/fonts'
-import type { TextInputState, ShapeStyleState } from '../types/template-types'
+import type { TextInputState, ShapeStyleState, SvgImageStyleState } from '../types/template-types'
+import { logger, reportCriticalError, createPerformanceTimer } from '../utils/logger'
+import { validateImportData, sanitizeTextInput } from '../utils/security'
+import {
+  STORAGE_KEY_MAIN,
+  STORAGE_VERSION,
+  COLOR_DEFAULT_WHITE,
+  COLOR_DEFAULT_BLACK
+} from '../config/constants'
 
 export interface AppState {
   // New multi-text input system
@@ -9,11 +17,12 @@ export interface AppState {
 
   // Template object styling system
   shapeStyles: ShapeStyleState[]
+  svgImageStyles: SvgImageStyleState[]
 
   // Legacy single-text properties (for backward compatibility)
-  badgeText: string
+  stickerText: string
   svgContent: string
-  badgeFont: FontConfig | null
+  stickerFont: FontConfig | null
   fontSize: number
   fontWeight: number
   textColor: string
@@ -29,8 +38,9 @@ interface StorageData extends AppState {
   timestamp: number
 }
 
-const STORAGE_KEY = 'sticker-factory-data'
-const STORAGE_VERSION = '2.0.0'
+// Use constants from config
+const STORAGE_KEY = STORAGE_KEY_MAIN
+const STORAGE_VERSION_STRING = '2.0.0'
 
 // Mutex for localStorage operations
 let isWriting = false
@@ -44,16 +54,17 @@ const _state = ref<AppState>({
 
   // Template object styling system
   shapeStyles: [],
+  svgImageStyles: [],
 
   // Legacy single-text properties (for backward compatibility)
-  badgeText: '',
+  stickerText: '',
   svgContent: '',
-  badgeFont: DEFAULT_FONT,
+  stickerFont: DEFAULT_FONT,
   fontSize: 16,
   fontWeight: 400,
-  textColor: '#ffffff',
+  textColor: COLOR_DEFAULT_WHITE,
   textOpacity: 1.0,
-  strokeColor: '#000000',
+  strokeColor: COLOR_DEFAULT_BLACK,
   strokeWidth: 0,
   strokeOpacity: 1.0,
   lastModified: 0
@@ -63,19 +74,40 @@ const _state = ref<AppState>({
 const _isLoaded = ref(false)
 const _isDirty = ref(false)
 
-// Process write queue
+// Process write queue with enhanced error handling and resource cleanup
 const processWriteQueue = () => {
   if (isWriting || writeQueue.length === 0) return
-  
+
   const nextWrite = writeQueue.shift()
   if (nextWrite) {
     isWriting = true
+    let operationSuccess = false
+
     try {
       nextWrite()
+      operationSuccess = true
+    } catch (error) {
+      reportCriticalError(error as Error, 'Write queue operation failed')
+
+      // Retry operation once if it failed
+      if (writeQueue.length < 100) { // Prevent infinite retry loops
+        logger.warn('Retrying failed write operation')
+        writeQueue.unshift(nextWrite)
+      }
     } finally {
       isWriting = false
-      // Process next in queue after a tick
-      setTimeout(processWriteQueue, 0)
+
+      // Clean up large write queues for memory management
+      if (writeQueue.length > 50) {
+        logger.warn(`Large write queue detected: ${writeQueue.length} operations`)
+        if (typeof global !== 'undefined' && global.gc) {
+          global.gc()
+        }
+      }
+
+      // Process next in queue with appropriate delay
+      const delay = operationSuccess ? 0 : 100 // Longer delay after failures
+      setTimeout(processWriteQueue, delay)
     }
   }
 }
@@ -107,8 +139,8 @@ const loadFromStorage = (): AppState => {
       const data: StorageData = JSON.parse(stored)
       
       // Version compatibility check
-      if (data.version !== STORAGE_VERSION) {
-        console.warn('Storage version mismatch, using defaults')
+      if (data.version !== STORAGE_VERSION_STRING) {
+        logger.warn(`Storage version mismatch: expected ${STORAGE_VERSION_STRING}, got ${data.version}`)
         return getDefaultState()
       }
 
@@ -121,9 +153,9 @@ const loadFromStorage = (): AppState => {
         shapeStyles: data.shapeStyles || [],
 
         // Legacy single-text properties (for backward compatibility)
-        badgeText: data.badgeText || '',
+        stickerText: data.stickerText || data.badgeText || '',
         svgContent: data.svgContent || '',
-        badgeFont: data.badgeFont || DEFAULT_FONT,
+        stickerFont: data.stickerFont || data.badgeFont || DEFAULT_FONT,
         fontSize: data.fontSize || 16,
         fontWeight: data.fontWeight || 400,
         textColor: data.textColor || '#ffffff',
@@ -141,7 +173,7 @@ const loadFromStorage = (): AppState => {
       return loadedState
     }
   } catch (error) {
-    console.error('Error loading from localStorage:', error)
+    logger.error('Error loading from localStorage:', error)
   }
 
   const defaultState = getDefaultState()
@@ -161,9 +193,9 @@ const getDefaultState = (): AppState => ({
   shapeStyles: [],
 
   // Legacy single-text properties (for backward compatibility)
-  badgeText: '',
+  stickerText: '',
   svgContent: '',
-  badgeFont: DEFAULT_FONT,
+  stickerFont: DEFAULT_FONT,
   fontSize: 16,
   fontWeight: 400,
   textColor: '#ffffff',
@@ -176,6 +208,8 @@ const getDefaultState = (): AppState => ({
 
 // Save to localStorage with mutex
 const saveToStorage = async (state: AppState): Promise<void> => {
+  const timer = createPerformanceTimer('LocalStorage save')
+
   const storageData: StorageData = {
     ...state,
     version: STORAGE_VERSION,
@@ -183,11 +217,22 @@ const saveToStorage = async (state: AppState): Promise<void> => {
     lastModified: Date.now()
   }
 
-  return queueWrite(() => {
+  const dataSize = JSON.stringify(storageData).length
+
+  const result = await queueWrite(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(storageData))
     _isDirty.value = false
     _state.value.lastModified = storageData.lastModified
   })
+
+  timer.end({
+    dataSize: `${(dataSize / 1024).toFixed(1)}KB`,
+    textInputCount: state.textInputs.length,
+    shapeStyleCount: state.shapeStyles.length,
+    svgImageStyleCount: state.svgImageStyles.length
+  })
+
+  return result
 }
 
 // Clear storage with mutex  
@@ -206,101 +251,61 @@ export const useStore = () => {
   // Getters with cache-on-demand
 
   // New multi-text input system
-  const textInputs = computed(() => {
-    loadFromStorage()
-    return _state.value.textInputs
-  })
+  const textInputs = computed(() => _state.value.textInputs)
 
-  const selectedTemplateId = computed(() => {
-    loadFromStorage()
-    return _state.value.selectedTemplateId
-  })
+  const selectedTemplateId = computed(() => _state.value.selectedTemplateId)
 
   // Template object styling system
-  const shapeStyles = computed(() => {
-    loadFromStorage()
-    return _state.value.shapeStyles
-  })
+  const shapeStyles = computed(() => _state.value.shapeStyles)
+
+  const svgImageStyles = computed(() => _state.value.svgImageStyles)
 
   // Legacy single-text getters (for backward compatibility)
-  const badgeText = computed(() => {
-    loadFromStorage()
-    return _state.value.badgeText
-  })
+  const stickerText = computed(() => _state.value.stickerText)
 
 
-  const svgContent = computed(() => {
-    loadFromStorage()
-    return _state.value.svgContent
-  })
+  const svgContent = computed(() => _state.value.svgContent)
 
-  const badgeFont = computed(() => {
-    loadFromStorage()
-    return _state.value.badgeFont
-  })
+  const stickerFont = computed(() => _state.value.stickerFont)
 
-  const fontSize = computed(() => {
-    loadFromStorage()
-    return _state.value.fontSize
-  })
+  const fontSize = computed(() => _state.value.fontSize)
 
-  const fontWeight = computed(() => {
-    loadFromStorage()
-    return _state.value.fontWeight
-  })
+  const fontWeight = computed(() => _state.value.fontWeight)
 
-  const textColor = computed(() => {
-    loadFromStorage()
-    return _state.value.textColor
-  })
+  const textColor = computed(() => _state.value.textColor)
 
-  const textOpacity = computed(() => {
-    loadFromStorage()
-    return _state.value.textOpacity
-  })
+  const textOpacity = computed(() => _state.value.textOpacity)
 
-  const strokeColor = computed(() => {
-    loadFromStorage()
-    return _state.value.strokeColor
-  })
+  const strokeColor = computed(() => _state.value.strokeColor)
 
-  const strokeWidth = computed(() => {
-    loadFromStorage()
-    return _state.value.strokeWidth
-  })
+  const strokeWidth = computed(() => _state.value.strokeWidth)
 
-  const strokeOpacity = computed(() => {
-    loadFromStorage()
-    return _state.value.strokeOpacity
-  })
+  const strokeOpacity = computed(() => _state.value.strokeOpacity)
 
-  const lastModified = computed(() => {
-    loadFromStorage()
-    return _state.value.lastModified
-  })
+  const lastModified = computed(() => _state.value.lastModified)
 
   const isLoaded = computed(() => _isLoaded.value)
   const isDirty = computed(() => _isDirty.value)
 
   // Get entire state (triggers load if needed)
-  const getState = computed((): Readonly<AppState> => {
-    loadFromStorage()
-    return readonly(_state.value).value
-  })
+  const getState = computed((): Readonly<AppState> => readonly(_state.value).value)
 
   // Mutations
 
   // New multi-text input mutations
   const setTextInputs = async (inputs: TextInputState[]) => {
-    loadFromStorage()
     _state.value.textInputs = inputs
     _isDirty.value = true
     await saveToStorage(_state.value)
   }
 
   const updateTextInput = async (index: number, updates: Partial<TextInputState>) => {
-    loadFromStorage()
     if (index >= 0 && index < _state.value.textInputs.length) {
+      // Sanitize text input if provided
+      if (updates.text !== undefined) {
+        updates.text = sanitizeTextInput(updates.text)
+      }
+
       _state.value.textInputs[index] = { ..._state.value.textInputs[index], ...updates }
       _isDirty.value = true
       await saveToStorage(_state.value)
@@ -308,7 +313,6 @@ export const useStore = () => {
   }
 
   const initializeTextInputsFromTemplate = async (template: any) => {
-    loadFromStorage()
     const { getTemplateTextInputs } = await import('../config/template-loader')
     const { AVAILABLE_FONTS } = await import('../config/fonts')
     const templateTextInputs = getTemplateTextInputs(template)
@@ -351,7 +355,6 @@ export const useStore = () => {
   }
 
   const setSelectedTemplateId = async (templateId: string | null) => {
-    loadFromStorage()
     _state.value.selectedTemplateId = templateId
     _isDirty.value = true
     await saveToStorage(_state.value)
@@ -359,14 +362,12 @@ export const useStore = () => {
 
   // Template object styling mutations
   const setShapeStyles = async (styles: ShapeStyleState[]) => {
-    loadFromStorage()
     _state.value.shapeStyles = styles
     _isDirty.value = true
     await saveToStorage(_state.value)
   }
 
   const updateShapeStyle = async (index: number, updates: Partial<ShapeStyleState>) => {
-    loadFromStorage()
     if (index >= 0 && index < _state.value.shapeStyles.length) {
       _state.value.shapeStyles[index] = { ..._state.value.shapeStyles[index], ...updates }
       _isDirty.value = true
@@ -375,7 +376,6 @@ export const useStore = () => {
   }
 
   const initializeShapeStylesFromTemplate = async (template: any) => {
-    loadFromStorage()
     const { getTemplateElements } = await import('../config/template-loader')
     const elements = getTemplateElements(template)
 
@@ -396,73 +396,93 @@ export const useStore = () => {
     await saveToStorage(_state.value)
   }
 
+  // SVG image style management functions
+  const updateSvgImageStyle = async (index: number, updates: Partial<SvgImageStyleState>) => {
+    if (index >= 0 && index < _state.value.svgImageStyles.length) {
+      _state.value.svgImageStyles[index] = { ..._state.value.svgImageStyles[index], ...updates }
+      _isDirty.value = true
+      await saveToStorage(_state.value)
+    }
+  }
+
+  const initializeSvgImageStylesFromTemplate = async (template: any) => {
+    const { getTemplateElements } = await import('../config/template-loader')
+    const elements = getTemplateElements(template)
+
+    // Extract SVG image elements and initialize with template defaults
+    const svgImageElements = elements.filter(el => el.type === 'svgImage' && el.svgImage)
+    const newSvgImageStyles: SvgImageStyleState[] = svgImageElements.map((element) => {
+      return {
+        id: element.svgImage!.id,
+        fillColor: element.svgImage!.fill || '#3b82f6', // Keep template default
+        strokeColor: element.svgImage!.stroke || '#1e40af',
+        strokeWidth: element.svgImage!.strokeWidth || 1,
+        strokeLinejoin: element.svgImage!.strokeLinejoin || 'round'
+      }
+    })
+
+    _state.value.svgImageStyles = newSvgImageStyles
+    _isDirty.value = true
+    await saveToStorage(_state.value)
+  }
+
   // Legacy single-text mutations (for backward compatibility)
-  const setBadgeText = async (text: string) => {
-    loadFromStorage()
-    _state.value.badgeText = text
+  const setStickerText = async (text: string) => {
+    _state.value.stickerText = sanitizeTextInput(text)
     _isDirty.value = true
     await saveToStorage(_state.value)
   }
 
 
   const setSvgContent = async (svg: string) => {
-    loadFromStorage()
     _state.value.svgContent = svg
     _isDirty.value = true
     await saveToStorage(_state.value)
   }
 
-  const setBadgeFont = async (font: FontConfig | null) => {
-    loadFromStorage()
-    _state.value.badgeFont = font
+  const setStickerFont = async (font: FontConfig | null) => {
+    _state.value.stickerFont = font
     _isDirty.value = true
     await saveToStorage(_state.value)
   }
 
   const setFontSize = async (size: number) => {
-    loadFromStorage()
     _state.value.fontSize = size
     _isDirty.value = true
     await saveToStorage(_state.value)
   }
 
   const setFontWeight = async (weight: number) => {
-    loadFromStorage()
     _state.value.fontWeight = weight
     _isDirty.value = true
     await saveToStorage(_state.value)
   }
 
   const setTextColor = async (color: string) => {
-    loadFromStorage()
     _state.value.textColor = color
     _isDirty.value = true
     await saveToStorage(_state.value)
   }
 
   const setTextOpacity = async (opacity: number) => {
-    loadFromStorage()
     _state.value.textOpacity = opacity
     _isDirty.value = true
     await saveToStorage(_state.value)
   }
 
   const setStrokeColor = async (color: string) => {
-    loadFromStorage()
     _state.value.strokeColor = color
     _isDirty.value = true
     await saveToStorage(_state.value)
   }
 
   const setStrokeWidth = async (width: number) => {
-    loadFromStorage()
     _state.value.strokeWidth = width
     _isDirty.value = true
     await saveToStorage(_state.value)
   }
 
   const setStrokeOpacity = async (opacity: number) => {
-    loadFromStorage()
     _state.value.strokeOpacity = opacity
     _isDirty.value = true
     await saveToStorage(_state.value)
@@ -470,7 +490,6 @@ export const useStore = () => {
 
   // Batch update
   const updateState = async (updates: Partial<AppState>) => {
-    loadFromStorage()
     Object.assign(_state.value, updates)
     _isDirty.value = true
     await saveToStorage(_state.value)
@@ -485,7 +504,6 @@ export const useStore = () => {
 
   // Export data
   const exportData = (): string => {
-    loadFromStorage()
     const exportData = {
       ..._state.value,
       exportedAt: new Date().toISOString(),
@@ -513,7 +531,7 @@ export const useStore = () => {
       document.body.removeChild(link)
       URL.revokeObjectURL(url)
     } catch (error) {
-      console.error('Export failed:', error)
+      reportCriticalError(error as Error, 'Export failed')
       throw new Error('Failed to export data')
     }
   }
@@ -521,31 +539,40 @@ export const useStore = () => {
   // Import data
   const importData = async (data: string | object): Promise<void> => {
     try {
-      const importData = typeof data === 'string' ? JSON.parse(data) : data
-      
-      // Validate import data
-      if (!importData || typeof importData !== 'object') {
-        throw new Error('Invalid import data format')
+      const parsedData = typeof data === 'string' ? JSON.parse(data) : data
+
+      // Security validation
+      const validation = validateImportData(parsedData)
+      if (!validation.valid) {
+        throw new Error(validation.error || 'Invalid import data format')
       }
 
-      // Extract state data (handle different export formats)
+      // Extract and sanitize state data (handle different export formats)
       const stateData: Partial<AppState> = {
-        badgeText: importData.badgeText || '',
-        svgContent: importData.svgContent || '',
-        badgeFont: importData.badgeFont || DEFAULT_FONT,
-        fontSize: importData.fontSize || 16,
-        fontWeight: importData.fontWeight || 400,
-        textColor: importData.textColor || '#ffffff',
-        textOpacity: importData.textOpacity ?? 1.0,
-        strokeColor: importData.strokeColor || '#000000',
-        strokeWidth: importData.strokeWidth ?? 0,
-        strokeOpacity: importData.strokeOpacity ?? 1.0
+        stickerText: sanitizeTextInput(parsedData.stickerText || parsedData.badgeText || ''),
+        svgContent: parsedData.svgContent || '',
+        stickerFont: parsedData.stickerFont || parsedData.badgeFont || DEFAULT_FONT,
+        fontSize: parsedData.fontSize || 16,
+        fontWeight: parsedData.fontWeight || 400,
+        textColor: parsedData.textColor || '#ffffff',
+        textOpacity: parsedData.textOpacity ?? 1.0,
+        strokeColor: parsedData.strokeColor || '#000000',
+        strokeWidth: parsedData.strokeWidth ?? 0,
+        strokeOpacity: parsedData.strokeOpacity ?? 1.0
+      }
+
+      // Sanitize textInputs if they exist
+      if (parsedData.textInputs && Array.isArray(parsedData.textInputs)) {
+        stateData.textInputs = parsedData.textInputs.map((textInput: any) => ({
+          ...textInput,
+          text: sanitizeTextInput(textInput.text || '')
+        }))
       }
 
       await updateState(stateData)
     } catch (error) {
-      console.error('Import failed:', error)
-      throw new Error('Failed to import data: ' + (error as Error).message)
+      reportCriticalError(error as Error, 'Import failed')
+      throw new Error(`Failed to import data: ${  (error as Error).message}`)
     }
   }
 
@@ -583,7 +610,6 @@ export const useStore = () => {
 
   // Storage info
   const getStorageInfo = () => {
-    loadFromStorage()
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
       return {
@@ -609,9 +635,10 @@ export const useStore = () => {
     textInputs,
     selectedTemplateId,
     shapeStyles,
-    badgeText,
+    svgImageStyles,
+    stickerText,
     svgContent,
-    badgeFont,
+    stickerFont,
     fontSize,
     fontWeight,
     textColor,
@@ -632,9 +659,11 @@ export const useStore = () => {
     setShapeStyles,
     updateShapeStyle,
     initializeShapeStylesFromTemplate,
-    setBadgeText,
+    updateSvgImageStyle,
+    initializeSvgImageStylesFromTemplate,
+    setStickerText,
     setSvgContent,
-    setBadgeFont,
+    setStickerFont,
     setFontSize,
     setFontWeight,
     setTextColor,
@@ -656,3 +685,6 @@ export const useStore = () => {
     getStorageInfo
   }
 }
+
+// Initialize store by loading data from localStorage
+loadFromStorage()

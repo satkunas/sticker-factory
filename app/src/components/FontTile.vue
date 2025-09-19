@@ -85,7 +85,7 @@ const getPreviewChar = (font: FontConfig, stickerText: string, showPreview?: boo
   }
   
   if (!stickerText || stickerText.trim() === '') {
-    // Show 'Aa' sample for empty badge text
+    // Show 'Aa' sample for empty sticker text
     return 'Aa'
   }
   return stickerText
@@ -102,7 +102,7 @@ const getOptimalFontSize = (font: FontConfig, stickerText: string, showPreview?:
   return '8px'                         // Very long text
 }
 
-// Get category color for the badge indicator
+// Get category color for the sticker indicator
 const getCategoryColor = (category: string): string => {
   const colorMap: Record<string, string> = {
     'serif': 'bg-blue-400',
@@ -130,7 +130,6 @@ const loadFontLazily = async () => {
     await loadFont(props.font)
     fontLoaded.value = true
   } catch (error) {
-    console.warn(`Failed to load font ${props.font.name}:`, error)
     // Still mark as loaded to prevent retry loops, will use fallback
     fontLoaded.value = true
   }

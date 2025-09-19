@@ -9,13 +9,23 @@ import type {
   TemplateLayer,
   ProcessedTemplateLayer,
   ProcessedShapeLayer,
-  ProcessedTextInputLayer
+  ProcessedTextInputLayer,
+  ProcessedSvgImageLayer,
+  TemplateSvgImageLayer
 } from '../types/template-types'
 import { resolvePosition, resolveLinePosition, type ViewBox } from './coordinate-utils'
+import { getSvgContent } from './svg-library-loader'
+import { logger, reportCriticalError, createPerformanceTimer } from '../utils/logger'
+import {
+  TEMPLATE_PADDING,
+  DEFAULT_VIEWBOX_WIDTH,
+  DEFAULT_VIEWBOX_HEIGHT,
+  MIN_VIEWBOX_WIDTH,
+  MIN_VIEWBOX_HEIGHT
+} from './constants'
 
 // Template cache to avoid repeated loading
 const templateCache = new Map<string, SimpleTemplate>()
-const templateListCache: SimpleTemplate[] | null = null
 
 // Import YAML templates dynamically - this will be populated at build time
 const templateModules = import.meta.glob('../../templates/*.yaml', {
@@ -40,14 +50,17 @@ export const getAvailableTemplateIds = (): string[] => {
 export const loadTemplate = async (templateId: string): Promise<SimpleTemplate | null> => {
   // Check cache first
   if (templateCache.has(templateId)) {
+    logger.debug(`Template loaded from cache: ${templateId}`)
     return templateCache.get(templateId)!
   }
+
+  const timer = createPerformanceTimer(`Template load: ${templateId}`)
 
   try {
     const templatePath = `../../templates/${templateId}.yaml`
 
     if (!templateModules[templatePath]) {
-      console.warn(`Template not found: ${templateId}`)
+      logger.warn(`Template not found: ${templateId}`)
       return null
     }
 
@@ -56,19 +69,28 @@ export const loadTemplate = async (templateId: string): Promise<SimpleTemplate |
     const yamlTemplate = yaml.load(yamlContent) as YamlTemplate
 
     if (!yamlTemplate || !validateYamlTemplate(yamlTemplate)) {
-      console.error(`Invalid YAML template: ${templateId}`)
+      logger.error(`Invalid YAML template: ${templateId}`)
       return null
     }
 
     // Convert YAML template to SimpleTemplate
-    const template = convertYamlToSimpleTemplate(yamlTemplate)
+    const template = await convertYamlToSimpleTemplate(yamlTemplate)
 
     // Cache the converted template
     templateCache.set(templateId, template)
+
+    timer.end({
+      templateId,
+      cached: false,
+      layerCount: template.layers?.length || 0,
+      cacheSize: templateCache.size
+    })
+
     return template
 
   } catch (error) {
-    console.error(`Failed to load template ${templateId}:`, error)
+    timer.end({ templateId, error: true })
+    reportCriticalError(error as Error, `Failed to load template ${templateId}`)
     return null
   }
 }
@@ -79,23 +101,49 @@ export const loadTemplate = async (templateId: string): Promise<SimpleTemplate |
 export const loadAllTemplates = async (): Promise<SimpleTemplate[]> => {
   const templateIds = getAvailableTemplateIds()
   const templates: SimpleTemplate[] = []
+  let processedTemplates = 0
 
-  for (const id of templateIds) {
-    const template = await loadTemplate(id)
-    if (template) {
-      templates.push(template)
+  try {
+    for (const id of templateIds) {
+      try {
+        const template = await loadTemplate(id)
+        if (template) {
+          templates.push(template)
+        }
+        processedTemplates++
+
+        // Memory cleanup for large operations
+        if (processedTemplates % 10 === 0) {
+          if (typeof global !== 'undefined' && global.gc) {
+            global.gc()
+          }
+        }
+      } catch (error) {
+        logger.error(`Failed to load template ${id}:`, error)
+        // Continue processing other templates
+      }
+    }
+
+    // Sort by category and name
+    templates.sort((a, b) => {
+      if (a.category !== b.category) {
+        return a.category.localeCompare(b.category)
+      }
+      return a.name.localeCompare(b.name)
+    })
+
+    logger.info(`Successfully loaded ${templates.length}/${templateIds.length} templates`)
+    return templates
+
+  } catch (error) {
+    reportCriticalError(error as Error, 'Template batch loading failed')
+    throw error
+  } finally {
+    // Cleanup after batch operation
+    if (typeof global !== 'undefined' && global.gc) {
+      global.gc()
     }
   }
-
-  // Sort by category and name
-  templates.sort((a, b) => {
-    if (a.category !== b.category) {
-      return a.category.localeCompare(b.category)
-    }
-    return a.name.localeCompare(b.name)
-  })
-
-  return templates
 }
 
 /**
@@ -112,14 +160,14 @@ export const getDefaultTemplate = async (): Promise<SimpleTemplate | null> => {
  */
 const validateYamlTemplate = (template: any): template is YamlTemplate | LegacyYamlTemplate => {
   if (!template || typeof template !== 'object') {
-    console.error('Template must be an object')
+    logger.error('Template must be an object')
     return false
   }
 
   const required = ['id', 'name', 'description', 'category']
   for (const field of required) {
     if (!(field in template)) {
-      console.error(`Template missing required field: ${field}`)
+      logger.error(`Template missing required field: ${field}`)
       return false
     }
   }
@@ -134,7 +182,7 @@ const validateYamlTemplate = (template: any): template is YamlTemplate | LegacyY
     return true
   }
 
-  console.error('Template must have either layers array (new format) or shapes+textInputs arrays (legacy format)')
+  logger.error('Template must have either layers array (new format) or shapes+textInputs arrays (legacy format)')
   return false
 }
 
@@ -195,14 +243,14 @@ const convertLegacyToNew = (legacy: LegacyYamlTemplate): YamlTemplate => {
     name: legacy.name,
     description: legacy.description,
     category: legacy.category,
-    layers: layers
+    layers
   }
 }
 
 /**
  * Convert YAML template to SimpleTemplate format (supports both new and legacy formats)
  */
-const convertYamlToSimpleTemplate = (rawTemplate: YamlTemplate | LegacyYamlTemplate): SimpleTemplate => {
+const convertYamlToSimpleTemplate = async (rawTemplate: YamlTemplate | LegacyYamlTemplate): Promise<SimpleTemplate> => {
   // Convert legacy format to new format if needed
   const yamlTemplate: YamlTemplate = isNewFormat(rawTemplate) ? rawTemplate : convertLegacyToNew(rawTemplate)
 
@@ -213,7 +261,8 @@ const convertYamlToSimpleTemplate = (rawTemplate: YamlTemplate | LegacyYamlTempl
   // Convert layers to processed template layers
   const layers: ProcessedTemplateLayer[] = []
 
-  yamlTemplate.layers.forEach((layer) => {
+  // Process all layers with proper async handling
+  for (const layer of yamlTemplate.layers) {
     if (layer.type === 'shape') {
       layers.push({
         id: layer.id,
@@ -256,8 +305,36 @@ const convertYamlToSimpleTemplate = (rawTemplate: YamlTemplate | LegacyYamlTempl
           fontWeight: layer.fontWeight
         }
       })
+    } else if (layer.type === 'svgImage') {
+      // Resolve percentage coordinates for SVG images
+      const resolvedPosition = resolvePosition(
+        layer.position as { x: number | string; y: number | string },
+        viewBox
+      )
+
+      // Get SVG content from library or use direct content
+      let svgContent = layer.svgContent || ''
+      if (layer.svgId && !svgContent) {
+        svgContent = await getSvgContent(layer.svgId) || ''
+      }
+
+      layers.push({
+        id: layer.id,
+        type: 'svgImage',
+        svgImage: {
+          id: layer.id,
+          svgContent,
+          position: resolvedPosition,
+          width: layer.width,
+          height: layer.height,
+          fill: layer.fill,
+          stroke: layer.stroke,
+          strokeWidth: layer.strokeWidth,
+          strokeLinejoin: layer.strokeLinejoin
+        }
+      })
     }
-  })
+  }
 
   return {
     id: yamlTemplate.id,
@@ -265,7 +342,7 @@ const convertYamlToSimpleTemplate = (rawTemplate: YamlTemplate | LegacyYamlTempl
     description: yamlTemplate.description,
     category: yamlTemplate.category,
     viewBox,
-    layers: layers
+    layers
   }
 }
 
@@ -311,15 +388,14 @@ const calculateViewBoxFromLayers = (shapeLayers: TemplateShapeLayer[]): { x: num
 
   // If no absolute coordinates found, use default dimensions
   if (!hasAbsoluteCoords || minX === Infinity) {
-    return { x: 0, y: 0, width: 500, height: 400 }
+    return { x: 0, y: 0, width: DEFAULT_VIEWBOX_WIDTH, height: DEFAULT_VIEWBOX_HEIGHT }
   }
 
   // Add padding
-  const padding = 20
-  const x = minX - padding
-  const y = minY - padding
-  const width = Math.max(400, maxX - minX + padding * 2)
-  const height = Math.max(400, maxY - minY + padding * 2)
+  const x = minX - TEMPLATE_PADDING
+  const y = minY - TEMPLATE_PADDING
+  const width = Math.max(MIN_VIEWBOX_WIDTH, maxX - minX + TEMPLATE_PADDING * 2)
+  const height = Math.max(MIN_VIEWBOX_HEIGHT, maxY - minY + TEMPLATE_PADDING * 2)
 
   return { x, y, width, height }
 }
@@ -383,98 +459,6 @@ const convertShapeLayerToPath = (layer: TemplateShapeLayer, viewBox: ViewBox): s
   }
 }
 
-/**
- * Calculate viewBox from shapes (legacy)
- */
-const calculateViewBox = (shapes: TemplateShape[]): { width: number; height: number } => {
-  let minX = Infinity
-  let minY = Infinity
-  let maxX = -Infinity
-  let maxY = -Infinity
-
-  shapes.forEach((shape) => {
-    if (shape.type === 'line') {
-      const pos = shape.position as { x1: number; y1: number; x2: number; y2: number }
-      minX = Math.min(minX, pos.x1, pos.x2)
-      minY = Math.min(minY, pos.y1, pos.y2)
-      maxX = Math.max(maxX, pos.x1, pos.x2)
-      maxY = Math.max(maxY, pos.y1, pos.y2)
-    } else {
-      const pos = shape.position as { x: number; y: number }
-      const width = shape.width || 0
-      const height = shape.height || 0
-
-      minX = Math.min(minX, pos.x - width/2)
-      minY = Math.min(minY, pos.y - height/2)
-      maxX = Math.max(maxX, pos.x + width/2)
-      maxY = Math.max(maxY, pos.y + height/2)
-    }
-  })
-
-  // Add padding
-  const padding = 20
-  return {
-    width: Math.max(400, maxX - minX + padding * 2),
-    height: Math.max(400, maxY - minY + padding * 2)
-  }
-}
-
-/**
- * Convert YAML shape to SVG path
- */
-const convertShapeToPath = (shape: TemplateShape): string => {
-  const pos = shape.position as { x: number; y: number }
-
-  switch (shape.type) {
-    case 'rect':
-      const width = shape.width || 100
-      const height = shape.height || 100
-      const rx = shape.rx || 0
-      const ry = shape.ry || 0
-      const x = pos.x - width/2
-      const y = pos.y - height/2
-
-      if (rx > 0 || ry > 0) {
-        return `M${x + rx},${y} L${x + width - rx},${y} Q${x + width},${y} ${x + width},${y + ry} L${x + width},${y + height - ry} Q${x + width},${y + height} ${x + width - rx},${y + height} L${x + rx},${y + height} Q${x},${y + height} ${x},${y + height - ry} L${x},${y + ry} Q${x},${y} ${x + rx},${y} Z`
-      } else {
-        return `M${x},${y} L${x + width},${y} L${x + width},${y + height} L${x},${y + height} Z`
-      }
-
-    case 'circle':
-      const radius = (shape.width || 100) / 2
-      return `M${pos.x - radius},${pos.y} A${radius},${radius} 0 1,0 ${pos.x + radius},${pos.y} A${radius},${radius} 0 1,0 ${pos.x - radius},${pos.y} Z`
-
-    case 'ellipse':
-      const rWidth = (shape.width || 100) / 2
-      const rHeight = (shape.height || 50) / 2
-      return `M${pos.x - rWidth},${pos.y} A${rWidth},${rHeight} 0 1,0 ${pos.x + rWidth},${pos.y} A${rWidth},${rHeight} 0 1,0 ${pos.x - rWidth},${pos.y} Z`
-
-    case 'polygon':
-      if (shape.points) {
-        // Convert relative points to absolute coordinates
-        const pointPairs = shape.points.split(' ')
-        const absolutePoints = pointPairs.map(pair => {
-          const [x, y] = pair.split(',').map(Number)
-          return `${pos.x + x},${pos.y + y}`
-        })
-        return `M${absolutePoints.join(' L')} Z`
-      }
-      // Default triangle if no points specified
-      return `M${pos.x},${pos.y - 50} L${pos.x + 50},${pos.y + 25} L${pos.x - 50},${pos.y + 25} Z`
-
-    case 'line':
-      const linePos = shape.position as { x1: number; y1: number; x2: number; y2: number }
-      return `M${linePos.x1},${linePos.y1} L${linePos.x2},${linePos.y2}`
-
-    default:
-      // Default to rectangle
-      const defWidth = shape.width || 100
-      const defHeight = shape.height || 100
-      const defX = pos.x - defWidth/2
-      const defY = pos.y - defHeight/2
-      return `M${defX},${defY} L${defX + defWidth},${defY} L${defX + defWidth},${defY + defHeight} L${defX},${defY + defHeight} Z`
-  }
-}
 
 /**
  * Helper function to get ordered elements from any template (backward compatible)
@@ -494,6 +478,11 @@ export const getTemplateElements = (template: SimpleTemplate): TemplateElement[]
         elements.push({
           type: 'text',
           textInput: layer.textInput
+        })
+      } else if (layer.type === 'svgImage') {
+        elements.push({
+          type: 'svgImage',
+          svgImage: layer.svgImage
         })
       }
     })
@@ -562,6 +551,27 @@ export const getTemplateTextInputs = (template: SimpleTemplate): TemplateTextInp
 export const getTemplateMainTextInput = (template: SimpleTemplate): TemplateTextInput | null => {
   const textInputs = getTemplateTextInputs(template)
   return textInputs.length > 0 ? textInputs[0] : null
+}
+
+/**
+ * Get all SVG images from template layers
+ */
+export const getTemplateSvgImages = (template: SimpleTemplate): ProcessedSvgImageLayer[] => {
+  // New layers structure
+  if (template.layers) {
+    return template.layers
+      .filter((layer): layer is ProcessedSvgImageLayer => layer.type === 'svgImage')
+  }
+
+  return []
+}
+
+/**
+ * Helper function to get SVG image data by ID
+ */
+export const getTemplateSvgImageById = (template: SimpleTemplate, svgImageId: string): ProcessedSvgImageLayer | null => {
+  const svgImages = getTemplateSvgImages(template)
+  return svgImages.find(img => img.id === svgImageId) || null
 }
 
 /**

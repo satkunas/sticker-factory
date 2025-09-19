@@ -74,7 +74,7 @@
           <div class="space-y-6">
             <!-- Template Selector -->
             <SimpleTemplateSelector
-              :selected-template="selectedTemplate"
+              :selectedTemplate="selectedTemplate"
               @update:selected-template="handleTemplateSelection"
             />
 
@@ -83,16 +83,16 @@
               <div v-for="textInput in textInputs" :key="textInput.id" class="space-y-2">
                 <FormLabel :text="getTextInputLabel(selectedTemplate, textInput.id)" />
                 <TextInputWithFontSelector
-                  :model-value="textInput.text"
+                  :modelValue="textInput.text"
                   :placeholder="getTextInputPlaceholder(selectedTemplate, textInput.id)"
-                  :selected-font="textInput.font"
+                  :selectedFont="textInput.font"
                   :font-size="textInput.fontSize"
                   :font-weight="textInput.fontWeight"
-                  :text-color="textInput.textColor"
-                  :text-stroke-color="textInput.strokeColor"
+                  :textColor="textInput.textColor"
+                  :textStrokeColor="textInput.strokeColor"
                   :text-stroke-width="textInput.strokeWidth"
                   :stroke-opacity="textInput.strokeOpacity"
-                  :instance-id="textInput.id"
+                  :instanceId="textInput.id"
                   @update:model-value="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { text: value })"
                   @update:selectedFont="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { font: value })"
                   @update:font-size="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { fontSize: value })"
@@ -108,19 +108,42 @@
             <div v-if="selectedTemplate && shapeStyles && shapeStyles.length > 0" class="space-y-4">
               <div v-for="(shapeStyle, index) in shapeStyles" :key="shapeStyle.id" class="space-y-2">
                 <TemplateObjectStyler
-                  :shape-label="getShapeLabel(selectedTemplate, shapeStyle.id)"
-                  :shape-dimensions="getShapeDimensions(selectedTemplate, shapeStyle.id)"
-                  :shape-data="getShapeData(selectedTemplate, shapeStyle.id)"
-                  :shape-path="getShapePath(selectedTemplate, shapeStyle.id)"
-                  :fill-color="shapeStyle.fillColor"
-                  :stroke-color="shapeStyle.strokeColor"
+                  :shapeLabel="getShapeLabel(selectedTemplate, shapeStyle.id)"
+                  :shapeDimensions="getShapeDimensions(selectedTemplate, shapeStyle.id)"
+                  :shapeData="getShapeData(selectedTemplate, shapeStyle.id)"
+                  :shapePath="getShapePath(selectedTemplate, shapeStyle.id)"
+                  :fillColor="shapeStyle.fillColor"
+                  :strokeColor="shapeStyle.strokeColor"
                   :stroke-width="shapeStyle.strokeWidth"
                   :stroke-linejoin="shapeStyle.strokeLinejoin"
-                  :instance-id="`shape-${index}`"
+                  :instanceId="`shape-${index}`"
                   @update:fillColor="(value) => updateShapeStyleByIndex(index, { fillColor: value })"
                   @update:strokeColor="(value) => updateShapeStyleByIndex(index, { strokeColor: value })"
                   @update:strokeWidth="(value) => updateShapeStyleByIndex(index, { strokeWidth: value })"
                   @update:strokeLinejoin="(value) => updateShapeStyleByIndex(index, { strokeLinejoin: value })"
+                />
+              </div>
+            </div>
+
+            <!-- SVG Image Styling -->
+            <div v-if="selectedTemplate && svgImageStyles && svgImageStyles.length > 0" class="space-y-4">
+              <div v-for="(svgImageStyle, index) in svgImageStyles" :key="svgImageStyle.id" class="space-y-2">
+                <TemplateImageStyler
+                  :imageLabel="getSvgImageLabel(selectedTemplate, svgImageStyle.id)"
+                  :imageDimensions="getSvgImageDimensions(selectedTemplate, svgImageStyle.id)"
+                  :svgContent="getSvgImageContent(selectedTemplate, svgImageStyle.id)"
+                  :svgId="getSvgImageId(selectedTemplate, svgImageStyle.id)"
+                  :fillColor="svgImageStyle.fillColor"
+                  :strokeColor="svgImageStyle.strokeColor"
+                  :stroke-width="svgImageStyle.strokeWidth"
+                  :stroke-linejoin="svgImageStyle.strokeLinejoin"
+                  :instanceId="`svgImage-${index}`"
+                  @update:svgContent="(value) => updateSvgImageContent(index, value)"
+                  @update:svgId="(value) => updateSvgImageId(index, value)"
+                  @update:fillColor="(value) => updateSvgImageStyleByIndex(index, { fillColor: value })"
+                  @update:strokeColor="(value) => updateSvgImageStyleByIndex(index, { strokeColor: value })"
+                  @update:strokeWidth="(value) => updateSvgImageStyleByIndex(index, { strokeWidth: value })"
+                  @update:strokeLinejoin="(value) => updateSvgImageStyleByIndex(index, { strokeLinejoin: value })"
                 />
               </div>
             </div>
@@ -132,19 +155,20 @@
       <!-- SVG Viewer Pane -->
       <TemplateAwareSvgViewer
         ref="svgViewerRef"
-        :sticker-text="badgeText"
-        :text-color="textColor"
+        :stickerText="stickerText"
+        :textColor="textColor"
         :font="selectedFont"
         :font-size="fontSize"
         :font-weight="fontWeight"
-        :stroke-color="strokeColor"
+        :strokeColor="strokeColor"
         :stroke-width="strokeWidth"
         :stroke-opacity="strokeOpacity"
         :width="svgWidth"
         :height="svgHeight"
         :template="selectedTemplate"
-        :text-inputs="textInputs"
-        :shape-styles="shapeStyles"
+        :textInputs="textInputs"
+        :shapeStyles="shapeStyles"
+        :svgImageStyles="svgImageStyles"
       />
     </main>
 
@@ -161,39 +185,56 @@
 
     <DownloadModal
       :show="showDownloadModal"
-      :badge-text="badgeText"
-      :text-color="textColor"
+      :stickerText="stickerText"
+      :textColor="textColor"
       :font-size="fontSize"
       :font-weight="fontWeight"
       :text-stroke-width="strokeWidth"
-      :text-stroke-color="strokeColor"
+      :textStrokeColor="strokeColor"
       :font="selectedFont"
       :template="selectedTemplate"
-      :text-inputs="textInputs"
-      :shape-styles="shapeStyles"
+      :textInputs="textInputs"
+      :shapeStyles="shapeStyles"
+      :svgImageStyles="svgImageStyles"
       @close="showDownloadModal = false"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, provide, nextTick } from 'vue'
+import { ref, computed, onMounted, provide, nextTick, defineAsyncComponent } from 'vue'
 import { useStore } from './stores'
-import ExportModal from './components/ExportModal.vue'
-import ImportModal from './components/ImportModal.vue'
-import DownloadModal from './components/DownloadModal.vue'
+import { logger } from './utils/logger'
+const ExportModal = defineAsyncComponent(() => import('./components/ExportModal.vue'))
+const ImportModal = defineAsyncComponent(() => import('./components/ImportModal.vue'))
+const DownloadModal = defineAsyncComponent(() => import('./components/DownloadModal.vue'))
 import SimpleTemplateSelector from './components/SimpleTemplateSelector.vue'
 import TemplateAwareSvgViewer from './components/TemplateAwareSvgViewer.vue'
 import TextInputWithFontSelector from './components/TextInputWithFontSelector.vue'
 import TemplateObjectStyler from './components/TemplateObjectStyler.vue'
-import ColorPicker from './components/ColorPicker.vue'
+import TemplateImageStyler from './components/TemplateImageStyler.vue'
 import FormLabel from './components/FormLabel.vue'
-import { getDefaultTemplate, loadTemplate, getTemplateTextInputs, getTemplateElements } from './config/template-loader'
+import { getDefaultTemplate, loadTemplate } from './config/template-loader'
 import type { SimpleTemplate } from './types/template-types'
+import { useTemplateHelpers } from './composables/useTemplateHelpers'
 
 
 // Store
 const store = useStore()
+
+// Template helpers
+const {
+  getTextInputLabel,
+  getTextInputPlaceholder,
+  getShapeLabel,
+  getShapeDimensions,
+  getShapeData,
+  getShapePath,
+  getSvgImageLabel,
+  getSvgImageDimensions,
+  getSvgImageContent,
+  getSvgImageId
+} = useTemplateHelpers()
 
 // Unified dropdown management system
 const expandedDropdowns = ref(new Set<string>())
@@ -256,9 +297,10 @@ const showDownloadModal = ref(false)
 const textInputs = computed(() => store.textInputs.value)
 const selectedTemplateId = computed(() => store.selectedTemplateId.value)
 const shapeStyles = computed(() => store.shapeStyles.value)
-const badgeText = computed(() => store.badgeText.value)
+const svgImageStyles = computed(() => store.svgImageStyles.value)
+const stickerText = computed(() => store.stickerText.value)
 const textColor = computed(() => store.textColor.value)
-const selectedFont = computed(() => store.badgeFont.value)
+const selectedFont = computed(() => store.stickerFont.value)
 const fontSize = computed(() => store.fontSize.value)
 const fontWeight = computed(() => store.fontWeight.value)
 const strokeColor = computed(() => store.strokeColor.value)
@@ -274,7 +316,12 @@ const svgHeight = computed(() => 300)
 
 // Initialize store and templates
 onMounted(async () => {
-  console.log('App mounted, initializing templates...')
+  // Start font preloading in background for better performance
+  import('./config/fonts').then(({ preloadPopularFonts }) => {
+    preloadPopularFonts().catch(error => {
+      logger.warn('Font preloading failed:', error)
+    })
+  })
 
   // Try to restore template from localStorage
   if (selectedTemplateId.value) {
@@ -300,6 +347,11 @@ onMounted(async () => {
     await store.initializeShapeStylesFromTemplate(selectedTemplate.value)
   }
 
+  // Initialize svgImageStyles array from template if they don't exist
+  if (selectedTemplate.value && (!svgImageStyles.value || svgImageStyles.value.length === 0)) {
+    await store.initializeSvgImageStylesFromTemplate(selectedTemplate.value)
+  }
+
 })
 
 // Template handlers
@@ -308,6 +360,7 @@ const handleTemplateSelection = async (template: SimpleTemplate) => {
   await store.setSelectedTemplateId(template.id)
   await store.initializeTextInputsFromTemplate(template)
   await store.initializeShapeStylesFromTemplate(template)
+  await store.initializeSvgImageStylesFromTemplate(template)
 }
 
 // Helper function to update text input by index
@@ -320,101 +373,34 @@ const updateShapeStyleByIndex = async (index: number, updates: any) => {
   await store.updateShapeStyle(index, updates)
 }
 
-// Helper functions for template text inputs
-const getTextInputLabel = (template: SimpleTemplate | null, textInputId: string): string => {
-  if (!template) return 'Text'
-  const textInputs = getTemplateTextInputs(template)
-  const textInput = textInputs.find(input => input.id === textInputId)
-  return textInput?.label || 'Text'
+// Helper function to update SVG image style by index
+const updateSvgImageStyleByIndex = async (index: number, updates: any) => {
+  await store.updateSvgImageStyle(index, updates)
 }
 
-const getTextInputPlaceholder = (template: SimpleTemplate | null, textInputId: string): string => {
-  if (!template) return 'Enter your text...'
-  const textInputs = getTemplateTextInputs(template)
-  const textInput = textInputs.find(input => input.id === textInputId)
-  return textInput?.placeholder || 'Enter your text...'
-}
+// Helper functions to update SVG image content and ID
+const updateSvgImageContent = async (index: number, svgContent: string) => {
+  if (!selectedTemplate.value || !selectedTemplate.value.layers) return
 
-// Helper functions for template shape objects
-const getShapeInfo = (template: SimpleTemplate | null, shapeStyleId: string) => {
-  if (!template) return null
-
-  // Get the original layer data directly from template.layers
-  const originalLayer = template.layers?.find(layer => layer.id === shapeStyleId && layer.type === 'shape')
-  return originalLayer || null
-}
-
-const getShapeLabel = (template: SimpleTemplate | null, shapeStyleId: string): string => {
-  if (!template || !template.layers) return 'Shape'
-
-  console.log('getShapeLabel: template structure:', template)
-  console.log('getShapeLabel: template.layers:', template.layers)
-
-  // Find the original layer data from the template
-  const originalLayer = template.layers.find(layer =>
-    layer.id === shapeStyleId && layer.type === 'shape'
-  )
-
-  console.log('getShapeLabel: originalLayer for', shapeStyleId, originalLayer)
-
-  if (!originalLayer) return 'Shape'
-
-  // Get the subtype directly from the original template data
-  const subtype = originalLayer.subtype
-  console.log('getShapeLabel: subtype found:', subtype)
-
-  if (!subtype) return 'Shape'
-
-  // Capitalize first letter
-  return subtype.charAt(0).toUpperCase() + subtype.slice(1)
-}
-
-const getShapeDimensions = (template: SimpleTemplate | null, shapeStyleId: string): string => {
-  if (!template || !template.layers) return ''
-
-  // Find the original layer data from the template
-  const originalLayer = template.layers.find(layer =>
-    layer.id === shapeStyleId && layer.type === 'shape'
-  )
-
-  if (!originalLayer) return ''
-
-  // Get dimensions directly from the original template data
-  const width = originalLayer.width
-  const height = originalLayer.height
-
-  if (width && height) {
-    return `${width}×${height}`
+  // Find the SVG image layer by index
+  const svgImageLayers = selectedTemplate.value.layers.filter(layer => layer.type === 'svgImage')
+  if (index >= 0 && index < svgImageLayers.length) {
+    const svgImageLayer = svgImageLayers[index]
+    // Update the template layer content
+    svgImageLayer.svgContent = svgContent
   }
-
-  return ''
 }
 
-// Get complete shape data for SVG preview
-const getShapeData = (template: SimpleTemplate | null, shapeStyleId: string) => {
-  if (!template || !template.layers) return null
+const updateSvgImageId = async (index: number, svgId: string) => {
+  if (!selectedTemplate.value || !selectedTemplate.value.layers) return
 
-  // Find the original layer data from the template
-  const originalLayer = template.layers.find(layer =>
-    layer.id === shapeStyleId && layer.type === 'shape'
-  )
-
-  return originalLayer || null
-}
-
-// Get the processed SVG path for the shape
-const getShapePath = (template: SimpleTemplate | null, shapeStyleId: string): string => {
-  if (!template || !template.layers) return ''
-
-  // Find the processed layer data from the template
-  const processedLayer = template.layers.find(layer =>
-    layer.id === shapeStyleId && layer.type === 'shape'
-  )
-
-  if (processedLayer && 'shape' in processedLayer && processedLayer.shape) {
-    return processedLayer.shape.path || ''
+  // Find the SVG image layer by index
+  const svgImageLayers = selectedTemplate.value.layers.filter(layer => layer.type === 'svgImage')
+  if (index >= 0 && index < svgImageLayers.length) {
+    const svgImageLayer = svgImageLayers[index]
+    // Update the template layer ID
+    svgImageLayer.svgId = svgId
   }
-
-  return ''
 }
+
 </script>

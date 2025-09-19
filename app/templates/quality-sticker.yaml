@@ -46,3 +46,36 @@ layers:
     fontSize: 15
     fontWeight: 600
     fontColor: "#991b1b"
+
+  - id: "check-icon-1"
+    type: "svgImage"
+    svgId: "icons-check"
+    position: { x: "30%", y: "25%" }
+    width: 16
+    height: 16
+    fill: "#16a34a"
+    stroke: "none"
+    strokeWidth: 0
+    strokeLinejoin: "round"
+
+  - id: "check-icon-2"
+    type: "svgImage"
+    svgId: "icons-check"
+    position: { x: "70%", y: "25%" }
+    width: 16
+    height: 16
+    fill: "#16a34a"
+    stroke: "none"
+    strokeWidth: 0
+    strokeLinejoin: "round"
+
+  - id: "star-icon"
+    type: "svgImage"
+    svgId: "icons-star"
+    position: { x: "50%", y: "75%" }
+    width: 20
+    height: 20
+    fill: "#fbbf24"
+    stroke: "#f59e0b"
+    strokeWidth: 1
+    strokeLinejoin: "round"

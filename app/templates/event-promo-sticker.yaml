@@ -59,3 +59,36 @@ layers:
     fontSize: 11
     fontWeight: 600
     fontColor: "#fef2f2"
+
+  - id: "tag-icon-1"
+    type: "svgImage"
+    svgId: "icons-tag"
+    position: { x: "25%", y: "35%" }
+    width: 14
+    height: 14
+    fill: "#fbbf24"
+    stroke: "none"
+    strokeWidth: 0
+    strokeLinejoin: "round"
+
+  - id: "tag-icon-2"
+    type: "svgImage"
+    svgId: "icons-tag"
+    position: { x: "75%", y: "35%" }
+    width: 14
+    height: 14
+    fill: "#fbbf24"
+    stroke: "none"
+    strokeWidth: 0
+    strokeLinejoin: "round"
+
+  - id: "fire-icon"
+    type: "svgImage"
+    svgId: "icons-fire"
+    position: { x: "50%", y: "70%" }
+    width: 16
+    height: 16
+    fill: "#f97316"
+    stroke: "none"
+    strokeWidth: 0
+    strokeLinejoin: "round"

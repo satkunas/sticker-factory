@@ -1,3 +1,12 @@
+// SVG library item interface
+export interface SvgLibraryItem {
+  id: string
+  name: string
+  category: string
+  svgContent: string
+  tags: string[]
+}
+
 export interface TemplateTextInput {
   id: string
   label: string
@@ -67,8 +76,23 @@ export interface TemplateTextInputLayer extends TemplateLayerBase {
   fontWeight?: number
 }
 
+// SVG image layer
+export interface TemplateSvgImageLayer extends TemplateLayerBase {
+  type: 'svgImage'
+  svgId?: string           // Reference to library SVG
+  svgContent?: string      // Direct SVG content
+  position: { x: number | string; y: number | string }
+  width?: number
+  height?: number
+  fill: string
+  stroke: string
+  strokeWidth: number
+  strokeLinejoin?: string
+  opacity?: number
+}
+
 // Union type for all layer types
-export type TemplateLayer = TemplateShapeLayer | TemplateTextInputLayer
+export type TemplateLayer = TemplateShapeLayer | TemplateTextInputLayer | TemplateSvgImageLayer
 
 export interface YamlTemplate {
   name: string
@@ -110,6 +134,15 @@ export interface ShapeStyleState {
   strokeLinejoin: string
 }
 
+// SVG image style state for template image styling
+export interface SvgImageStyleState {
+  id: string
+  fillColor: string
+  strokeColor: string
+  strokeWidth: number
+  strokeLinejoin: string
+}
+
 // Converted template for rendering (with SVG paths)
 export interface SimpleTemplate {
   id: string
@@ -123,7 +156,7 @@ export interface SimpleTemplate {
 // Base processed layer
 export interface ProcessedLayerBase {
   id: string
-  type: 'shape' | 'text'
+  type: 'shape' | 'text' | 'svgImage'
 }
 
 // Processed shape layer (converted to SVG path)
@@ -158,11 +191,27 @@ export interface ProcessedTextInputLayer extends ProcessedLayerBase {
   }
 }
 
-export type ProcessedTemplateLayer = ProcessedShapeLayer | ProcessedTextInputLayer
+// Processed SVG image layer
+export interface ProcessedSvgImageLayer extends ProcessedLayerBase {
+  type: 'svgImage'
+  svgImage: {
+    id: string
+    svgContent: string
+    position: { x: number; y: number }
+    width?: number
+    height?: number
+    fill?: string
+    stroke?: string
+    strokeWidth?: number
+    strokeLinejoin?: string
+  }
+}
+
+export type ProcessedTemplateLayer = ProcessedShapeLayer | ProcessedTextInputLayer | ProcessedSvgImageLayer
 
 // Legacy interface for backward compatibility
 export interface TemplateElement {
-  type: 'shape' | 'text'
+  type: 'shape' | 'text' | 'svgImage'
   shape?: {
     id: string
     type: 'path'
@@ -181,5 +230,16 @@ export interface TemplateElement {
     fontColor?: string
     fontSize?: number
     fontWeight?: number
+  }
+  svgImage?: {
+    id: string
+    svgContent: string
+    position: { x: number; y: number }
+    width?: number
+    height?: number
+    fill?: string
+    stroke?: string
+    strokeWidth?: number
+    strokeLinejoin?: string
   }
 }
