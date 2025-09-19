@@ -75,7 +75,7 @@
             <!-- Template Selector -->
             <SimpleTemplateSelector
               :selectedTemplate="selectedTemplate"
-              @update:selected-template="handleTemplateSelection"
+              @update:selectedTemplate="handleTemplateSelection"
             />
 
             <!-- Dynamic Text Inputs -->
@@ -93,10 +93,10 @@
                   :text-stroke-width="textInput.strokeWidth"
                   :stroke-opacity="textInput.strokeOpacity"
                   :instanceId="textInput.id"
-                  @update:model-value="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { text: value })"
+                  @update:modelValue="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { text: value })"
                   @update:selectedFont="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { font: value })"
-                  @update:font-size="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { fontSize: value })"
-                  @update:font-weight="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { fontWeight: value })"
+                  @update:fontSize="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { fontSize: value })"
+                  @update:fontWeight="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { fontWeight: value })"
                   @update:textColor="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { textColor: value })"
                   @update:textStrokeColor="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { strokeColor: value })"
                   @update:textStrokeWidth="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { strokeWidth: value })"

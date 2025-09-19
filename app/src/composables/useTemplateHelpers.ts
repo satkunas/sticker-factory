@@ -36,7 +36,7 @@ export function useTemplateHelpers() {
       layer.id === shapeStyleId && layer.type === 'shape'
     )
 
-    if (!originalLayer) return 'Shape'
+    if (!originalLayer || originalLayer.type !== 'shape') return 'Shape'
 
     const subtype = originalLayer.subtype
     if (!subtype) return 'Shape'
@@ -51,7 +51,7 @@ export function useTemplateHelpers() {
       layer.id === shapeStyleId && layer.type === 'shape'
     )
 
-    if (!originalLayer) return ''
+    if (!originalLayer || originalLayer.type !== 'shape') return ''
 
     const width = originalLayer.width
     const height = originalLayer.height
@@ -113,10 +113,10 @@ export function useTemplateHelpers() {
       layer.id === svgImageStyleId && layer.type === 'svgImage'
     )
 
-    if (!originalLayer) return ''
+    if (!originalLayer || originalLayer.type !== 'svgImage') return ''
 
-    const width = originalLayer.width
-    const height = originalLayer.height
+    const width = originalLayer.svgImage?.width
+    const height = originalLayer.svgImage?.height
 
     if (width && height) {
       return `${width}×${height}`
@@ -132,9 +132,9 @@ export function useTemplateHelpers() {
       layer.id === svgImageStyleId && layer.type === 'svgImage'
     )
 
-    if (!originalLayer) return ''
+    if (!originalLayer || originalLayer.type !== 'svgImage') return ''
 
-    return originalLayer.svgContent || ''
+    return originalLayer.svgContent || originalLayer.svgImage?.svgContent || ''
   }
 
   const getSvgImageId = (template: SimpleTemplate | null, svgImageStyleId: string): string => {
@@ -144,7 +144,7 @@ export function useTemplateHelpers() {
       layer.id === svgImageStyleId && layer.type === 'svgImage'
     )
 
-    if (!originalLayer) return ''
+    if (!originalLayer || originalLayer.type !== 'svgImage') return ''
 
     return originalLayer.svgId || ''
   }

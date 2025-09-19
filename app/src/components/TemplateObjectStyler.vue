@@ -11,7 +11,7 @@
         class="w-full p-3 bg-white border border-secondary-200 rounded-lg text-left focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 hover:border-secondary-300 transition-colors"
         :class="{ 'ring-2 ring-primary-500 border-primary-500': isExpanded }"
         type="button"
-        @click="toggleExpanded"
+        @click="_toggleExpanded"
       >
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-2">
@@ -360,7 +360,7 @@ const isExpanded = computed(() => {
   return expandedObjectInstances.value.has(props.instanceId)
 })
 
-const toggleExpanded = () => {
+const _toggleExpanded = () => {
   if (dropdownManager) {
     dropdownManager.toggle(props.instanceId, containerRef.value)
   } else {
@@ -392,7 +392,6 @@ const strokeLinejoinOptions = [
 ]
 
 // SVG Preview calculations
-const svgPreviewSize = 24 // 24x24px (w-6 h-6)
 const padding = 2
 
 // Calculate optimal viewBox for different shape types

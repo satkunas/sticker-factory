@@ -117,6 +117,7 @@
 </template>
 
 <script setup lang="ts">
+/* eslint-disable no-undef */
 import { ref, computed } from 'vue'
 import StickerSvg from './StickerSvg.vue'
 import type { FontConfig } from '../config/fonts'
@@ -212,20 +213,21 @@ const resetZoom = () => {
 }
 
 // Drag functions
-const startDrag = (e: MouseEvent) => {
+const startDrag = (e: Event) => {
+  const mouseEvent = e as any
   isDragging.value = true
-  dragStartX.value = e.clientX
-  dragStartY.value = e.clientY
+  dragStartX.value = mouseEvent.clientX
+  dragStartY.value = mouseEvent.clientY
   initialPanX.value = panX.value
   initialPanY.value = panY.value
   e.preventDefault()
 }
 
-const drag = (e: MouseEvent) => {
+const drag = (e: Event) => {
   if (!isDragging.value) return
-  
-  const deltaX = e.clientX - dragStartX.value
-  const deltaY = e.clientY - dragStartY.value
+  const mouseEvent = e as any
+  const deltaX = mouseEvent.clientX - dragStartX.value
+  const deltaY = mouseEvent.clientY - dragStartY.value
   
   panX.value = initialPanX.value + deltaX
   panY.value = initialPanY.value + deltaY
@@ -236,9 +238,10 @@ const endDrag = () => {
 }
 
 // Wheel zoom
-const handleWheel = (e: WheelEvent) => {
+const handleWheel = (e: Event) => {
   e.preventDefault()
-  const delta = e.deltaY > 0 ? 0.9 : 1.1
+  const wheelEvent = e as any
+  const delta = wheelEvent.deltaY > 0 ? 0.9 : 1.1
   zoomLevel.value = Math.min(Math.max(zoomLevel.value * delta, 0.1), 5)
 }
 

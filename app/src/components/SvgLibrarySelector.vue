@@ -102,7 +102,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import type { SvgLibraryItem } from '../types/template-types'
-import { loadSvgLibrary, getSvgCategories, searchSvgs } from '../config/svg-library-loader'
+import { loadSvgLibrary, getSvgCategories } from '../config/svg-library-loader'
 
 interface Emits {
   select: [svg: SvgLibraryItem]
@@ -165,6 +165,9 @@ onMounted(async () => {
     categories.value = cats
 
   } catch (error) {
+    // Failed to load SVG library, silently handle
+    // eslint-disable-next-line no-console
+    console.warn('Failed to load SVG library:', error)
   } finally {
     loading.value = false
   }

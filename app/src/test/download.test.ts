@@ -12,7 +12,7 @@ describe('Download Output Tests', () => {
   let mockTemplate: SimpleTemplate
   let mockTextInputs: TextInputState[]
   let mockShapeStyles: ShapeStyleState[]
-  let mockFonts: FontConfig[]
+  let _mockFonts: FontConfig[]
 
   beforeEach(() => {
     // Mock template with multiple layers
@@ -27,37 +27,50 @@ describe('Download Output Tests', () => {
           id: 'background',
           type: 'shape',
           subtype: 'rect',
-          position: { x: 200, y: 100 },
           width: 400,
           height: 200,
           fill: '#ffffff',
           stroke: '#000000',
           strokeWidth: 2,
-          zIndex: 1
+          zIndex: 1,
+          shape: {
+            id: 'background',
+            type: 'path',
+            path: 'M0,0 L400,0 L400,200 L0,200 Z',
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeWidth: 2
+          }
         },
         {
           id: 'title',
-          type: 'textInput',
-          label: 'Title',
-          position: { x: 200, y: 80 },
-          maxLength: 50,
-          fontFamily: 'Roboto',
-          fontSize: 24,
-          fontWeight: 600,
-          fontColor: '#333333',
-          zIndex: 10
+          type: 'text',
+          zIndex: 10,
+          textInput: {
+            id: 'title',
+            label: 'Title',
+            position: { x: 200, y: 80 },
+            maxLength: 50,
+            fontFamily: 'Roboto',
+            fontSize: 24,
+            fontWeight: 600,
+            fontColor: '#333333'
+          }
         },
         {
           id: 'subtitle',
-          type: 'textInput',
-          label: 'Subtitle',
-          position: { x: 200, y: 120 },
-          maxLength: 30,
-          fontFamily: 'Open Sans',
-          fontSize: 16,
-          fontWeight: 400,
-          fontColor: '#666666',
-          zIndex: 11
+          type: 'text',
+          zIndex: 11,
+          textInput: {
+            id: 'subtitle',
+            label: 'Subtitle',
+            position: { x: 200, y: 120 },
+            maxLength: 30,
+            fontFamily: 'Open Sans',
+            fontSize: 16,
+            fontWeight: 400,
+            fontColor: '#666666'
+          }
         }
       ]
     }
@@ -116,7 +129,7 @@ describe('Download Output Tests', () => {
     ]
 
     // Mock fonts
-    mockFonts = [
+    _mockFonts = [
       {
         name: 'Roboto',
         family: 'Roboto',
@@ -154,11 +167,11 @@ describe('Download Output Tests', () => {
 
       const titleLayer = mockTemplate.layers.find(l => l.id === 'title')
       expect(titleLayer).toBeTruthy()
-      expect(titleLayer?.type).toBe('textInput')
+      expect(titleLayer?.type).toBe('text')
 
       const subtitleLayer = mockTemplate.layers.find(l => l.id === 'subtitle')
       expect(subtitleLayer).toBeTruthy()
-      expect(subtitleLayer?.type).toBe('textInput')
+      expect(subtitleLayer?.type).toBe('text')
     })
 
     it('should have proper zIndex ordering for layers', () => {
@@ -312,7 +325,7 @@ describe('Download Output Tests', () => {
 
       expect(emptyTextInputs).toHaveLength(0)
       // Template should still be valid even without text inputs
-      expect(mockTemplate.layers.filter(l => l.type === 'textInput')).toHaveLength(2)
+      expect(mockTemplate.layers.filter(l => l.type === 'text')).toHaveLength(2)
     })
   })
 

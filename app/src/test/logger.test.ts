@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   logger,
   createPerformanceTimer,
@@ -111,8 +111,8 @@ describe('Enhanced Logger', () => {
       const timer = createPerformanceTimer('Test Timer')
 
       // Simulate some work
-      const start = performance.now()
-      while (performance.now() - start < 1) {
+      const start = (window as any).performance.now()
+      while ((window as any).performance.now() - start < 1) {
         // Wait at least 1ms
       }
 

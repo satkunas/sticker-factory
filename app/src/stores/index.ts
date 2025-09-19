@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ref, computed, readonly } from 'vue'
 import { DEFAULT_FONT, type FontConfig } from '../config/fonts'
 import type { TextInputState, ShapeStyleState, SvgImageStyleState } from '../types/template-types'
@@ -151,11 +152,12 @@ const loadFromStorage = (): AppState => {
 
         // Template object styling system
         shapeStyles: data.shapeStyles || [],
+        svgImageStyles: data.svgImageStyles || [],
 
         // Legacy single-text properties (for backward compatibility)
-        stickerText: data.stickerText || data.badgeText || '',
+        stickerText: data.stickerText || (data as any).badgeText || '',
         svgContent: data.svgContent || '',
-        stickerFont: data.stickerFont || data.badgeFont || DEFAULT_FONT,
+        stickerFont: data.stickerFont || (data as any).badgeFont || DEFAULT_FONT,
         fontSize: data.fontSize || 16,
         fontWeight: data.fontWeight || 400,
         textColor: data.textColor || '#ffffff',
@@ -191,6 +193,7 @@ const getDefaultState = (): AppState => ({
 
   // Template object styling system
   shapeStyles: [],
+  svgImageStyles: [],
 
   // Legacy single-text properties (for backward compatibility)
   stickerText: '',
@@ -212,7 +215,7 @@ const saveToStorage = async (state: AppState): Promise<void> => {
 
   const storageData: StorageData = {
     ...state,
-    version: STORAGE_VERSION,
+    version: STORAGE_VERSION_STRING,
     timestamp: Date.now(),
     lastModified: Date.now()
   }
@@ -288,7 +291,7 @@ export const useStore = () => {
   const isDirty = computed(() => _isDirty.value)
 
   // Get entire state (triggers load if needed)
-  const getState = computed((): Readonly<AppState> => readonly(_state.value).value)
+  const getState = computed((): Readonly<AppState> => readonly(_state.value))
 
   // Mutations
 

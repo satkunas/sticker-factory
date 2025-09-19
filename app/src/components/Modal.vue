@@ -39,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import { watch, onMounted, onUnmounted } from 'vue'
+import { watch, onUnmounted } from 'vue'
 import { getKeyboardStore } from '../stores/keyboard'
 
 interface Props {

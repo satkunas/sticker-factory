@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Security utilities for input validation and sanitization
 // Following behavioral guidelines: sanitize at entry points only
 

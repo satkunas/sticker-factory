@@ -8,7 +8,7 @@
         class="input-field w-full pr-10"
         :placeholder="placeholder"
         :style="{ 
-          fontFamily: selectedFont ? getFontFamily(selectedFont) : 'inherit',
+          fontFamily: selectedFont ? getFontFamily(selectedFont) : 'inherit', // Used in template
           fontSize: fontSize + 'px',
           fontWeight: fontWeight
         }"
@@ -17,7 +17,7 @@
       <button
         class="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
         type="button"
-        @click="toggleExpanded"
+        @click="_toggleExpanded"
       >
         <svg 
           class="w-5 h-5 transition-transform duration-200"
@@ -41,13 +41,13 @@
       :text-stroke-linejoin="textStrokeLinejoin"
       :stickerText="modelValue"
       :instanceId="instanceId"
-      @update:selected-font="$emit('update:selectedFont', $event)"
-      @update:text-color="$emit('update:textColor', $event)"
-      @update:font-size="$emit('update:fontSize', $event)"
-      @update:font-weight="$emit('update:fontWeight', $event)"
-      @update:text-stroke-width="$emit('update:textStrokeWidth', $event)"
-      @update:text-stroke-color="$emit('update:textStrokeColor', $event)"
-      @update:text-stroke-linejoin="$emit('update:textStrokeLinejoin', $event)"
+      @update:selectedFont="$emit('update:selectedFont', $event)"
+      @update:textColor="$emit('update:textColor', $event)"
+      @update:fontSize="$emit('update:fontSize', $event)"
+      @update:fontWeight="$emit('update:fontWeight', $event)"
+      @update:textStrokeWidth="$emit('update:textStrokeWidth', $event)"
+      @update:textStrokeColor="$emit('update:textStrokeColor', $event)"
+      @update:textStrokeLinejoin="$emit('update:textStrokeLinejoin', $event)"
     />
   </div>
 </template>
@@ -55,7 +55,7 @@
 <script setup lang="ts">
 import { inject, computed, ref } from 'vue'
 import ExpandableFontSelector from './ExpandableFontSelector.vue'
-import { getFontFamily, type FontConfig } from '../config/fonts'
+import { getFontFamily, type FontConfig } from '../config/fonts' // Used in template
 
 interface Props {
   modelValue: string
@@ -114,7 +114,7 @@ const isExpanded = computed(() => {
 })
 
 // Toggle expansion
-const toggleExpanded = () => {
+const _toggleExpanded = () => {
   if (dropdownManager) {
     dropdownManager.toggle(props.instanceId, containerRef.value)
   } else {

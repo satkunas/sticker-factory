@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Compatibility wrapper for old template system
 // This provides backward compatibility while using the new YAML-based system
 
@@ -32,6 +33,9 @@ const initDefaultTemplate = async () => {
       Object.assign(DEFAULT_TEMPLATE, template)
     }
   } catch (error) {
+    // Failed to load default template, use fallback
+    // eslint-disable-next-line no-console
+    console.warn('Failed to load default template:', error)
   }
 
   return _defaultTemplate || DEFAULT_TEMPLATE

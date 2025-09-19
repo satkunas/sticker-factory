@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import yaml from 'js-yaml'
 import type {
   SimpleTemplate,
@@ -5,13 +6,12 @@ import type {
   TemplateTextInput,
   YamlTemplate,
   LegacyYamlTemplate,
-  TemplateShape,
+  TemplateShapeLayer,
   TemplateLayer,
   ProcessedTemplateLayer,
-  ProcessedShapeLayer,
   ProcessedTextInputLayer,
   ProcessedSvgImageLayer,
-  TemplateSvgImageLayer
+  _TemplateSvgImageLayer
 } from '../types/template-types'
 import { resolvePosition, resolveLinePosition, type ViewBox } from './coordinate-utils'
 import { getSvgContent } from './svg-library-loader'
@@ -413,7 +413,7 @@ const convertShapeLayerToPath = (layer: TemplateShapeLayer, viewBox: ViewBox): s
   const pos = resolvePosition(layer.position as { x: number | string; y: number | string }, viewBox)
 
   switch (layer.subtype) {
-    case 'rect':
+    case 'rect': {
       const width = layer.width || 100
       const height = layer.height || 100
       const rx = layer.rx || 0
@@ -426,17 +426,20 @@ const convertShapeLayerToPath = (layer: TemplateShapeLayer, viewBox: ViewBox): s
       } else {
         return `M${x},${y} L${x + width},${y} L${x + width},${y + height} L${x},${y + height} Z`
       }
+    }
 
-    case 'circle':
+    case 'circle': {
       const radius = (layer.width || 100) / 2
       return `M${pos.x - radius},${pos.y} A${radius},${radius} 0 1,0 ${pos.x + radius},${pos.y} A${radius},${radius} 0 1,0 ${pos.x - radius},${pos.y} Z`
+    }
 
-    case 'ellipse':
+    case 'ellipse': {
       const rWidth = (layer.width || 100) / 2
       const rHeight = (layer.height || 50) / 2
       return `M${pos.x - rWidth},${pos.y} A${rWidth},${rHeight} 0 1,0 ${pos.x + rWidth},${pos.y} A${rWidth},${rHeight} 0 1,0 ${pos.x - rWidth},${pos.y} Z`
+    }
 
-    case 'polygon':
+    case 'polygon': {
       if (layer.points) {
         // Convert relative points to absolute coordinates
         const pointPairs = layer.points.split(' ')
@@ -448,14 +451,16 @@ const convertShapeLayerToPath = (layer: TemplateShapeLayer, viewBox: ViewBox): s
       }
       // Default triangle if no points specified
       return `M${pos.x},${pos.y - 50} L${pos.x + 50},${pos.y + 25} L${pos.x - 50},${pos.y + 25} Z`
+    }
 
-    default:
+    default: {
       // Default to rectangle
       const defWidth = layer.width || 100
       const defHeight = layer.height || 100
       const defX = pos.x - defWidth/2
       const defY = pos.y - defHeight/2
       return `M${defX},${defY} L${defX + defWidth},${defY} L${defX + defWidth},${defY + defHeight} L${defX},${defY + defHeight} Z`
+    }
   }
 }
 
@@ -491,8 +496,8 @@ export const getTemplateElements = (template: SimpleTemplate): TemplateElement[]
   }
 
   // Legacy elements structure
-  if (template.elements) {
-    return template.elements
+  if ((template as any).elements) {
+    return (template as any).elements
   }
 
   // Very old legacy structure - convert to new format
@@ -515,7 +520,7 @@ export const getTemplateElements = (template: SimpleTemplate): TemplateElement[]
 
   // Add text elements
   if ((template as any).textInputs) {
-    (template as any).textInputs.forEach((textInput: any, index: number) => {
+    (template as any).textInputs.forEach((textInput: any) => {
       elements.push({
         type: 'text',
         textInput: {

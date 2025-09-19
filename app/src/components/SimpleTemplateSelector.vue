@@ -149,7 +149,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+/* eslint-disable no-undef */
+import { ref, onMounted, onUnmounted } from 'vue'
 import { loadAllTemplates, getTemplateElements, getDefaultTemplate } from '../config/template-loader'
 import type { SimpleTemplate } from '../types/template-types'
 
@@ -205,8 +206,8 @@ const getOptimalViewBox = (template: SimpleTemplate, targetWidth: number, target
 }
 
 // Close dropdown when clicking outside
-const handleClickOutside = (event: MouseEvent) => {
-  const target = event.target as Element
+const _handleClickOutside = (event: Event) => {
+  const target = event.target as HTMLElement
   const dropdown = target.closest('.relative')
 
   if (!dropdown) {
@@ -216,7 +217,7 @@ const handleClickOutside = (event: MouseEvent) => {
 
 // Load templates on mount and initialize with default template if none selected
 onMounted(async () => {
-  document.addEventListener('click', handleClickOutside)
+  document.addEventListener("click", _handleClickOutside)
 
   templates.value = await loadAllTemplates()
 
@@ -229,7 +230,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
+  document.removeEventListener("click", _handleClickOutside)
 })
 </script>
 

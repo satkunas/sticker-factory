@@ -4,9 +4,9 @@ import {
   getFontFamily,
   getFontMetrics,
   preloadPopularFonts,
-  DEFAULT_FONT
+  DEFAULT_FONT,
+  type FontConfig
 } from '../config/fonts'
-import type { FontConfig } from '../config/fonts'
 
 // Mock DOM methods
 const createMockElement = () => ({

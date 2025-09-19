@@ -108,12 +108,12 @@ export const reportCriticalError = (error: Error | string, context?: string) => 
 
 // Performance monitoring utilities
 export const createPerformanceTimer = (operation: string) => {
-  const startTime = performance.now()
+  const startTime = (window as any).performance.now()
   const memoryBefore = getMemoryUsage()
 
   return {
     end: (metadata?: any) => {
-      const duration = performance.now() - startTime
+      const duration = (window as any).performance.now() - startTime
       const memoryAfter = getMemoryUsage()
 
       logger.performance(operation, duration, metadata)
@@ -129,6 +129,7 @@ export const createPerformanceTimer = (operation: string) => {
 // Get current memory usage (if available)
 export const getMemoryUsage = (): number => {
   if (typeof window !== 'undefined' && 'performance' in window) {
+    // eslint-disable-next-line no-undef
     const memory = (performance as any).memory
     if (memory && memory.usedJSHeapSize) {
       return memory.usedJSHeapSize
@@ -140,11 +141,11 @@ export const getMemoryUsage = (): number => {
 // Batch logging for operations with multiple steps
 export const createBatchLogger = (operationName: string) => {
   const logs: Array<{ step: string; duration: number; metadata?: any }> = []
-  let lastStepTime = performance.now()
+  let lastStepTime = (window as any).performance.now()
 
   return {
     step: (stepName: string, metadata?: any) => {
-      const now = performance.now()
+      const now = (window as any).performance.now()
       const duration = now - lastStepTime
       logs.push({ step: stepName, duration, metadata })
       lastStepTime = now

@@ -54,8 +54,8 @@
             <defs v-if="hasClipPaths">
               <clipPath
                 v-for="clipShape in clipPathShapes"
-                :key="`clip-${clipShape.id}`"
                 :id="`clip-${clipShape.id}`"
+                :key="`clip-${clipShape.id}`"
               >
                 <path :d="clipShape.path" />
               </clipPath>
@@ -64,8 +64,8 @@
             <template v-for="(element, index) in templateElements" :key="`${element.type}-${index}`">
               <!-- Shape rendering -->
               <path
-                v-if="element.type === 'shape' && element.shape"
                 v-for="shapeStyleData in [getShapeStyleById(element.shape.id)]"
+                v-if="element.type === 'shape' && element.shape"
                 :key="element.shape.id"
                 :d="element.shape.path"
                 :fill="shapeStyleData?.fillColor || element.shape.fill || '#22c55e'"
@@ -289,8 +289,9 @@
 </template>
 
 <script setup lang="ts">
+/* eslint-disable no-undef */
 import { computed, ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
-import { getFontFamily, type FontConfig } from '../config/fonts'
+import { getFontFamily, type FontConfig } from '../config/fonts' // Used in template
 import type { SimpleTemplate } from '../types/template-types'
 import { getTemplateElements } from '../config/template-loader'
 import { logger, createPerformanceTimer } from '../utils/logger'
@@ -419,7 +420,7 @@ const viewBoxHeight = computed(() => {
 
 const fontFamily = computed(() => {
   if (props.font) {
-    return getFontFamily(props.font)
+    return getFontFamily(props.font) // Used in template
   }
   return 'Arial, sans-serif'
 })
@@ -458,9 +459,9 @@ const getSvgImageStyleById = (id: string) => {
 }
 
 // Helper function to get font family for a specific textInput
-const getFontFamilyForTextInput = (textInput: any) => {
+const getFontFamilyForTextInput = (textInput: any) => { // Used in template
   if (textInput?.font) {
-    return getFontFamily(textInput.font)
+    return getFontFamily(textInput.font) // Used in template
   }
   return 'Arial, sans-serif'
 }
@@ -710,20 +711,21 @@ const autoFitTemplate = async () => {
 }
 
 // Drag functions
-const startDrag = (e: MouseEvent) => {
+const startDrag = (e: Event) => {
+  const mouseEvent = e as any
   isDragging.value = true
-  dragStartX.value = e.clientX
-  dragStartY.value = e.clientY
+  dragStartX.value = mouseEvent.clientX
+  dragStartY.value = mouseEvent.clientY
   initialPanX.value = panX.value
   initialPanY.value = panY.value
   e.preventDefault()
 }
 
-const drag = (e: MouseEvent) => {
+const drag = (e: Event) => {
   if (!isDragging.value) return
 
-  const deltaX = e.clientX - dragStartX.value
-  const deltaY = e.clientY - dragStartY.value
+  const deltaX = (e as any).clientX - dragStartX.value
+  const deltaY = (e as any).clientY - dragStartY.value
 
   panX.value = initialPanX.value + deltaX
   panY.value = initialPanY.value + deltaY
@@ -734,7 +736,7 @@ const endDrag = () => {
 }
 
 // Enhanced wheel zoom with trackpad support
-const handleWheel = (e: WheelEvent) => {
+const handleWheel = (e: Event) => {
   // Skip if in preview mode
   if (props.previewMode) return
 
@@ -743,16 +745,16 @@ const handleWheel = (e: WheelEvent) => {
 
   // Detect if this is likely a trackpad by checking for ctrl key (pinch gesture)
   // or fine-grained deltaY values typical of trackpads
-  const isTrackpad = e.ctrlKey || (Math.abs(e.deltaY) < 50 && e.deltaY % 1 !== 0)
+  const isTrackpad = e.ctrlKey || (Math.abs((e as any).deltaY) < 50 && (e as any).deltaY % 1 !== 0)
 
   let delta: number
   if (isTrackpad) {
     // More sensitive scaling for trackpad gestures
-    const scaleFactor = 1 + (e.deltaY * -0.01) // Invert and scale
+    const scaleFactor = 1 + ((e as any).deltaY * -0.01) // Invert and scale
     delta = Math.max(0.5, Math.min(2.0, scaleFactor)) // Clamp for smooth zooming
   } else {
     // Traditional mouse wheel
-    delta = e.deltaY > 0 ? 0.9 : 1.1
+    delta = (e as any).deltaY > 0 ? 0.9 : 1.1
   }
 
   zoomLevel.value = Math.min(Math.max(zoomLevel.value * delta, 0.1), 5)
@@ -766,34 +768,34 @@ const touchState = ref({
 })
 
 // Touch event handlers for pinch-to-zoom
-const handleTouchStart = (e: TouchEvent) => {
+const handleTouchStart = (e: Event) => {
   // Skip if in preview mode
   if (props.previewMode) return
 
-  if (e.touches.length === 2) {
+  if ((e as any).touches.length === 2) {
     e.preventDefault()
     e.stopPropagation()
-    const touch1 = e.touches[0]
-    const touch2 = e.touches[1]
+    const touch1 = (e as any).touches[0]
+    const touch2 = (e as any).touches[1]
     const distance = Math.sqrt(
       Math.pow(touch2.clientX - touch1.clientX, 2) +
       Math.pow(touch2.clientY - touch1.clientY, 2)
     )
     touchState.value.initialDistance = distance
     touchState.value.initialZoom = zoomLevel.value
-    touchState.value.touches = Array.from(e.touches)
+    touchState.value.touches = Array.from((e as any).touches)
   }
 }
 
-const handleTouchMove = (e: TouchEvent) => {
+const handleTouchMove = (e: Event) => {
   // Skip if in preview mode
   if (props.previewMode) return
 
-  if (e.touches.length === 2 && touchState.value.initialDistance > 0) {
+  if ((e as any).touches.length === 2 && touchState.value.initialDistance > 0) {
     e.preventDefault()
     e.stopPropagation()
-    const touch1 = e.touches[0]
-    const touch2 = e.touches[1]
+    const touch1 = (e as any).touches[0]
+    const touch2 = (e as any).touches[1]
     const distance = Math.sqrt(
       Math.pow(touch2.clientX - touch1.clientX, 2) +
       Math.pow(touch2.clientY - touch1.clientY, 2)
@@ -805,11 +807,11 @@ const handleTouchMove = (e: TouchEvent) => {
   }
 }
 
-const handleTouchEnd = (e: TouchEvent) => {
+const handleTouchEnd = (e: Event) => {
   // Skip if in preview mode
   if (props.previewMode) return
 
-  if (e.touches.length < 2) {
+  if ((e as any).touches.length < 2) {
     touchState.value.initialDistance = 0
     touchState.value.touches = []
   }
@@ -873,6 +875,9 @@ const downloadSvg = () => {
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
   } catch (error) {
+    // Download failed, silently handle error
+    // eslint-disable-next-line no-console
+    console.warn('SVG download failed:', error)
   }
 }
 

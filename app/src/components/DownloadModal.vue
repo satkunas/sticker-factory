@@ -336,7 +336,8 @@ const copyToClipboard = async () => {
     setTimeout(() => {
       copyButtonText.value = 'Copy'
     }, 2000)
-  } catch (err) {
+  } catch {
+    // Ignore copy errors
   }
 }
 

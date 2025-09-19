@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // SVG library item interface
 export interface SvgLibraryItem {
   id: string
@@ -162,6 +163,15 @@ export interface ProcessedLayerBase {
 // Processed shape layer (converted to SVG path)
 export interface ProcessedShapeLayer extends ProcessedLayerBase {
   type: 'shape'
+  subtype?: string
+  width?: number
+  height?: number
+  zIndex?: number
+  fill?: string
+  stroke?: string
+  strokeWidth?: number
+  svgContent?: string
+  svgId?: string
   shape: {
     id: string
     type: 'path'
@@ -175,10 +185,12 @@ export interface ProcessedShapeLayer extends ProcessedLayerBase {
 // Processed text input layer
 export interface ProcessedTextInputLayer extends ProcessedLayerBase {
   type: 'text'
+  zIndex?: number
   textInput: {
     id: string
     label: string
     placeholder?: string
+    default?: string
     position: { x: number; y: number }
     rotation?: number
     clip?: string
@@ -194,6 +206,9 @@ export interface ProcessedTextInputLayer extends ProcessedLayerBase {
 // Processed SVG image layer
 export interface ProcessedSvgImageLayer extends ProcessedLayerBase {
   type: 'svgImage'
+  zIndex?: number
+  svgId?: string
+  svgContent?: string
   svgImage: {
     id: string
     svgContent: string

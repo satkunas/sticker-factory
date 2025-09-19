@@ -15,7 +15,7 @@
       <span 
         class="font-bold leading-none select-none overflow-hidden text-ellipsis whitespace-nowrap max-w-full text-center"
         :style="{ 
-          fontFamily: fontLoaded ? getFontFamily(font) : font.fallback,
+          fontFamily: fontLoaded ? getFontFamily(font) : font.fallback, // Used in template
           color: isSelected ? '#059669' : '#374151',
           fontSize: getOptimalFontSize(font, stickerText, props.showPreview)
         }"
@@ -54,7 +54,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import { getFontFamily, FONT_CATEGORIES, loadFont, type FontConfig } from '../config/fonts'
+import { getFontFamily, FONT_CATEGORIES, loadFont, type FontConfig } from '../config/fonts' // Used in template
 
 interface Props {
   font: FontConfig
@@ -75,7 +75,7 @@ const fontLoaded = ref(false)
 const tileRef = ref<HTMLElement>()
 
 // Intersection Observer for lazy loading
-let observer: IntersectionObserver | null = null
+let observer: any | null = null
 
 // Get preview text - font name, full text, or alternating alphabet
 const getPreviewChar = (font: FontConfig, stickerText: string, showPreview?: boolean): string => {
@@ -139,7 +139,7 @@ const loadFontLazily = async () => {
 onMounted(() => {
   if (!tileRef.value) return
   
-  observer = new IntersectionObserver(
+  observer = new (window as any).IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {

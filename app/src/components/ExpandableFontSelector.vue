@@ -343,7 +343,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, inject, nextTick } from 'vue'
-import { AVAILABLE_FONTS, FONT_CATEGORIES, loadFont, getFontFamily, type FontConfig } from '../config/fonts'
+import { AVAILABLE_FONTS, FONT_CATEGORIES, loadFont, type FontConfig } from '../config/fonts'
 import FontTile from './FontTile.vue'
 
 interface Props {
@@ -415,32 +415,6 @@ const isExpanded = computed(() => {
   return expandedInstances.value.has(props.instanceId)
 })
 
-// Toggle expansion
-const toggleExpanded = () => {
-  if (dropdownManager) {
-    dropdownManager.toggle(props.instanceId, containerRef.value)
-  } else {
-    // Legacy fallback
-    if (isExpanded.value) {
-      expandedInstances.value.delete(props.instanceId)
-    } else {
-      // Close all other instances
-      expandedInstances.value.clear()
-      // Open this instance
-      expandedInstances.value.add(props.instanceId)
-    }
-  }
-}
-
-// Handle click outside
-const handleClickOutside = () => {
-  if (dropdownManager) {
-    dropdownManager.close(props.instanceId)
-  } else {
-    // Legacy fallback
-    expandedInstances.value.delete(props.instanceId)
-  }
-}
 
 // Preset colors for quick selection
 const presetColors = [
@@ -657,6 +631,9 @@ watch(() => props.selectedFont, async (newFont) => {
       await loadFont(newFont)
       loadedFonts.value.add(newFont.name)
     } catch (error) {
+      // Font loading failed, continue without error
+      // eslint-disable-next-line no-console
+      console.warn('Failed to load font:', newFont.name, error)
     }
   }
 }, { immediate: true })

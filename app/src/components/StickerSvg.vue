@@ -21,7 +21,7 @@
       :stroke="textStrokeWidth > 0 ? textStrokeColor : 'none'"
       :stroke-width="textStrokeWidth"
       :stroke-linejoin="textStrokeWidth > 0 ? textStrokeLinejoin : undefined"
-      :font-family="font ? getFontFamily(font) : 'Arial, sans-serif'"
+      :font-family="font ? getFontFamily(font) : 'Arial, sans-serif'" // Used in template
       :font-size="fontSize"
       :font-weight="fontWeight"
     >
@@ -31,8 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { getCurrentInstance } from 'vue'
-import { getFontFamily, type FontConfig } from '../config/fonts'
+import { getFontFamily, type FontConfig } from '../config/fonts' // Used in template
 
 interface Props {
   text?: string
@@ -64,7 +63,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 // Export SVG content for downloads
 const getSvgContent = () => {
-  const fontFamily = props.font ? getFontFamily(props.font) : 'Arial, sans-serif'
+  const fontFamily = props.font ? getFontFamily(props.font) : 'Arial, sans-serif' // Used in template
   const strokeAttributes = props.textStrokeWidth > 0
     ? ` stroke="${props.textStrokeColor}" stroke-width="${props.textStrokeWidth}" stroke-linejoin="${props.textStrokeLinejoin}"`
     : ''
