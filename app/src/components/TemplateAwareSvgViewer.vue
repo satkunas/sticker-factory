@@ -27,7 +27,7 @@
           previewMode ? '' : 'grid-background'
         ]"
         :style="previewMode ? {} : {
-          transform: `translate(${panX}px, ${panY}px) scale(${zoomLevel})`,
+          transform: transformString,
           transformOrigin: 'center center',
           backgroundSize: `${20 * zoomLevel}px ${20 * zoomLevel}px`
         }"
@@ -295,6 +295,16 @@ import { getFontFamily, type FontConfig } from '../config/fonts' // Used in temp
 import type { SimpleTemplate } from '../types/template-types'
 import { getTemplateElements } from '../config/template-loader'
 import { logger, createPerformanceTimer } from '../utils/logger'
+import {
+  calculateZoomLevel,
+  calculateOptimalScale,
+  constrainValue,
+  extractWheelData,
+  calculateDistance,
+  SVG_CONSTANTS,
+  type Point,
+  type Size
+} from '../utils/svg'
 
 interface Props {
   stickerText?: string
@@ -423,6 +433,12 @@ const fontFamily = computed(() => {
     return getFontFamily(props.font) // Used in template
   }
   return 'Arial, sans-serif'
+})
+
+// CSS transform string using utilities (with px units for CSS)
+const transformString = computed(() => {
+  const translate: Point = { x: panX.value, y: panY.value }
+  return `translate(${translate.x}px, ${translate.y}px) scale(${zoomLevel.value})`
 })
 
 // Get ordered template elements
@@ -577,13 +593,13 @@ const viewportStyle = computed(() => {
   }
 })
 
-// Zoom functions
+// Zoom functions using SVG utilities
 const zoomIn = () => {
-  zoomLevel.value = Math.min(zoomLevel.value * 1.2, 5)
+  zoomLevel.value = calculateZoomLevel(zoomLevel.value, SVG_CONSTANTS.WHEEL_ZOOM_STEP, false)
 }
 
 const zoomOut = () => {
-  zoomLevel.value = Math.max(zoomLevel.value / 1.2, 0.1)
+  zoomLevel.value = calculateZoomLevel(zoomLevel.value, -SVG_CONSTANTS.WHEEL_ZOOM_STEP, false)
 }
 
 const resetZoom = () => {
@@ -616,10 +632,10 @@ const altAutoFit = async () => {
   if (contentElements.length === 0) {
     // Fallback to SVG element if no content found
     const svgRect = svgElement.getBoundingClientRect()
-    const scaleToFitWidth = containerWidth / svgRect.width
-    const scaleToFitHeight = containerHeight / svgRect.height
-    const bestScale = Math.min(scaleToFitWidth, scaleToFitHeight) * 0.9
-    zoomLevel.value = Math.max(0.2, Math.min(3, bestScale))
+    const contentSize: Size = { width: svgRect.width, height: svgRect.height }
+    const containerSize: Size = { width: containerWidth, height: containerHeight }
+    const bestScale = calculateOptimalScale(contentSize, containerSize, 0.9)
+    zoomLevel.value = constrainValue(bestScale, 0.2, 3)
     return
   }
 
@@ -660,13 +676,13 @@ const altAutoFit = async () => {
   const contentScreenWidth = (contentWidth / viewBox.width) * svgRect.width
   const contentScreenHeight = (contentHeight / viewBox.height) * svgRect.height
 
-  // Calculate the scale needed to fit the actual content
-  const scaleToFitWidth = containerWidth / contentScreenWidth
-  const scaleToFitHeight = containerHeight / contentScreenHeight
-  const bestScale = Math.min(scaleToFitWidth, scaleToFitHeight) * 0.85 // Leave some margin
+  // Calculate the scale needed to fit the actual content using SVG utilities
+  const contentSize: Size = { width: contentScreenWidth, height: contentScreenHeight }
+  const containerSize: Size = { width: containerWidth, height: containerHeight }
+  const bestScale = calculateOptimalScale(contentSize, containerSize, 0.85)
 
   // Apply the scale and center the SVG
-  const finalZoom = Math.max(0.2, Math.min(5, bestScale))
+  const finalZoom = constrainValue(bestScale, 0.2, SVG_CONSTANTS.MAX_ZOOM)
   zoomLevel.value = finalZoom
 
   // Center the SVG by resetting pan values
@@ -696,14 +712,13 @@ const autoFitTemplate = async () => {
     templateSize: { width: templateWidth, height: templateHeight }
   })
 
-  // Calculate scale to fit both dimensions with some padding
-  const scaleX = availableWidth / templateWidth
-  const scaleY = availableHeight / templateHeight
-  const optimalScale = Math.min(scaleX, scaleY) * 0.8 // 80% to leave breathing room
-
+  // Calculate scale to fit both dimensions with some padding using SVG utilities
+  const contentSize: Size = { width: templateWidth, height: templateHeight }
+  const containerSize: Size = { width: availableWidth, height: availableHeight }
+  const optimalScale = calculateOptimalScale(contentSize, containerSize, 0.8)
 
   // Apply the optimal zoom level and center
-  const finalZoom = Math.max(0.2, Math.min(5, optimalScale))
+  const finalZoom = constrainValue(optimalScale, 0.2, SVG_CONSTANTS.MAX_ZOOM)
   zoomLevel.value = finalZoom
   panX.value = 0 // Center horizontally
   panY.value = 0 // Center vertically
@@ -735,7 +750,7 @@ const endDrag = () => {
   isDragging.value = false
 }
 
-// Enhanced wheel zoom with trackpad support
+// Enhanced wheel zoom with trackpad support using SVG utilities
 const handleWheel = (e: Event) => {
   // Skip if in preview mode
   if (props.previewMode) return
@@ -743,21 +758,20 @@ const handleWheel = (e: Event) => {
   e.preventDefault()
   e.stopPropagation()
 
-  // Detect if this is likely a trackpad by checking for ctrl key (pinch gesture)
-  // or fine-grained deltaY values typical of trackpads
-  const isTrackpad = e.ctrlKey || (Math.abs((e as any).deltaY) < 50 && (e as any).deltaY % 1 !== 0)
+  // Extract wheel data using SVG utilities
+  const wheelData = extractWheelData(e as WheelEvent)
 
-  let delta: number
-  if (isTrackpad) {
-    // More sensitive scaling for trackpad gestures
-    const scaleFactor = 1 + ((e as any).deltaY * -0.01) // Invert and scale
-    delta = Math.max(0.5, Math.min(2.0, scaleFactor)) // Clamp for smooth zooming
+  // Calculate new zoom level using SVG utilities
+  if (wheelData.isTrackpad) {
+    zoomLevel.value = constrainValue(
+      zoomLevel.value * wheelData.scaleFactor,
+      SVG_CONSTANTS.MIN_ZOOM,
+      SVG_CONSTANTS.MAX_ZOOM
+    )
   } else {
-    // Traditional mouse wheel
-    delta = (e as any).deltaY > 0 ? 0.9 : 1.1
+    const direction = wheelData.deltaY > 0 ? -1 : 1
+    zoomLevel.value = calculateZoomLevel(zoomLevel.value, direction, false)
   }
-
-  zoomLevel.value = Math.min(Math.max(zoomLevel.value * delta, 0.1), 5)
 }
 
 // Touch and gesture state for trackpad/touch zoom
@@ -767,7 +781,7 @@ const touchState = ref({
   touches: [] as Touch[]
 })
 
-// Touch event handlers for pinch-to-zoom
+// Touch event handlers for pinch-to-zoom using SVG utilities
 const handleTouchStart = (e: Event) => {
   // Skip if in preview mode
   if (props.previewMode) return
@@ -775,15 +789,14 @@ const handleTouchStart = (e: Event) => {
   if ((e as any).touches.length === 2) {
     e.preventDefault()
     e.stopPropagation()
-    const touch1 = (e as any).touches[0]
-    const touch2 = (e as any).touches[1]
-    const distance = Math.sqrt(
-      Math.pow(touch2.clientX - touch1.clientX, 2) +
-      Math.pow(touch2.clientY - touch1.clientY, 2)
-    )
+    const touches = (e as any).touches
+    const touch1 = { x: touches[0].clientX, y: touches[0].clientY }
+    const touch2 = { x: touches[1].clientX, y: touches[1].clientY }
+    const distance = calculateDistance(touch1, touch2)
+
     touchState.value.initialDistance = distance
     touchState.value.initialZoom = zoomLevel.value
-    touchState.value.touches = Array.from((e as any).touches)
+    touchState.value.touches = Array.from(touches)
   }
 }
 
@@ -794,16 +807,14 @@ const handleTouchMove = (e: Event) => {
   if ((e as any).touches.length === 2 && touchState.value.initialDistance > 0) {
     e.preventDefault()
     e.stopPropagation()
-    const touch1 = (e as any).touches[0]
-    const touch2 = (e as any).touches[1]
-    const distance = Math.sqrt(
-      Math.pow(touch2.clientX - touch1.clientX, 2) +
-      Math.pow(touch2.clientY - touch1.clientY, 2)
-    )
+    const touches = (e as any).touches
+    const touch1 = { x: touches[0].clientX, y: touches[0].clientY }
+    const touch2 = { x: touches[1].clientX, y: touches[1].clientY }
+    const distance = calculateDistance(touch1, touch2)
 
     const scale = distance / touchState.value.initialDistance
     const newZoom = touchState.value.initialZoom * scale
-    zoomLevel.value = Math.min(Math.max(newZoom, 0.1), 5)
+    zoomLevel.value = constrainValue(newZoom, SVG_CONSTANTS.MIN_ZOOM, SVG_CONSTANTS.MAX_ZOOM)
   }
 }
 

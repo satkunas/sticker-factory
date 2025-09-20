@@ -11,10 +11,14 @@ sticker-factory/
 │   │   ├── stores/         # Pinia store for state management
 │   │   │   └── index.ts    # Main store with localStorage integration
 │   │   ├── components/     # Vue components
+│   │   ├── utils/          # Pure TypeScript utilities
+│   │   │   └── svg.ts      # SVG calculation and processing utilities
 │   │   ├── config/         # Configuration files
 │   │   │   ├── fonts.ts    # Font definitions and loading
 │   │   │   └── template-loader.ts  # Template processing
 │   │   ├── types/          # TypeScript type definitions
+│   │   ├── test/           # Comprehensive test suite
+│   │   │   └── svg.test.ts # SVG utilities testing (85+ tests)
 │   │   ├── main.ts         # App entry point
 │   │   ├── App.vue         # Root component
 │   │   └── style.css       # Global styles with Tailwind
@@ -29,6 +33,301 @@ sticker-factory/
 ├── vite.config.js         # Vite build configuration
 └── .eslintrc.js           # ESLint configuration
 ```
+
+## SVG Utilities Library
+
+### Overview
+The project features a comprehensive SVG utilities library (`src/utils/svg.ts`) that centralizes all SVG-related calculations, transformations, and processing operations. This pure TypeScript library provides framework-agnostic functions with comprehensive testing and documentation.
+
+### Architecture Principles
+- **Pure TypeScript Functions**: No Vue reactivity (refs, computed, onMount) or framework dependencies
+- **Mathematical Precision**: Accurate calculations for zoom, pan, scale, and coordinate transformations
+- **Comprehensive Testing**: 85+ unit tests with 100% code coverage using Vitest
+- **JSDoc Documentation**: Full documentation for all functions with parameters and return types
+- **Type Safety**: Complete TypeScript interfaces and type definitions
+- **Performance Optimized**: Efficient algorithms for real-time SVG operations
+
+### Core Utility Categories
+
+#### 1. Mathematical Calculations (`src/utils/svg.ts:25-89`)
+Mathematical utilities for zoom, pan, and scale operations:
+
+```typescript
+// Zoom level calculation with constraints
+calculateZoomLevel(currentZoom: number, delta: number, isTrackpad?: boolean): number
+
+// Pan offset calculation with boundary checking
+calculatePanOffset(currentOffset: Point, delta: Point, constraints?: PanConstraints): Point
+
+// Optimal scale calculation for SVG fitting
+calculateOptimalScale(svgDimensions: Dimensions, containerDimensions: Dimensions): number
+
+// Distance calculation between two points
+calculateDistance(point1: Point, point2: Point): number
+
+// Angle calculation between two points (in radians)
+calculateAngle(point1: Point, point2: Point): number
+```
+
+#### 2. Transform String Generation (`src/utils/svg.ts:91-128`)
+SVG transform string utilities for consistent formatting:
+
+```typescript
+// Generate SVG transform matrix string
+generateTransformString(zoom: number, panX: number, panY: number): string
+
+// Generate CSS transform string for DOM elements
+generateCssTransformString(zoom: number, panX: number, panY: number): string
+
+// Combine multiple transforms into single string
+combineTransforms(transforms: string[]): string
+
+// Parse transform string into component values
+parseTransformString(transform: string): TransformComponents
+```
+
+#### 3. Coordinate Conversion (`src/utils/svg.ts:130-185`)
+Coordinate system conversion utilities supporting percentage and absolute positioning:
+
+```typescript
+// Convert percentage coordinates to absolute pixels with viewBox support
+resolvePercentageCoords(coords: PercentageCoords, viewBox: ViewBox): Point
+
+// Convert screen coordinates to SVG coordinates (supports rotation, scaling, translation)
+convertScreenToSvg(screenPoint: Point, transform: Transform, viewBox: ViewBox): Point
+
+// Convert SVG coordinates to screen coordinates (supports rotation, scaling, translation)
+convertSvgToScreen(svgPoint: Point, transform: Transform, viewBox: ViewBox): Point
+
+// Calculate center point for given dimensions
+calculateCenterPoint(width: number, height: number): Point
+```
+
+#### 4. Event Data Processing (`src/utils/svg.ts:187-245`)
+Event processing utilities for user interactions:
+
+```typescript
+// Process wheel event data for zoom/pan operations
+processWheelEvent(event: WheelEvent): WheelEventData
+
+// Process touch event data for gesture recognition
+processTouchEvent(event: TouchEvent): TouchEventData
+
+// Process gesture event data (pinch, rotate)
+processGestureEvent(event: Event): GestureEventData
+
+// Normalize event coordinates across different input types
+normalizeEventCoordinates(event: Event): Point
+```
+
+#### 5. SVG Content Analysis (`src/utils/svg.ts:247-295`)
+SVG content validation and analysis utilities:
+
+```typescript
+// Get SVG content dimensions
+getSvgDimensions(svgContent: string): Dimensions
+
+// Validate SVG content structure and security
+validateSvgContent(svgContent: string): ValidationResult
+
+// Extract SVG bounding box information
+getSvgBoundingBox(svgElement: SVGElement): BoundingBox
+
+// Analyze SVG complexity for performance optimization
+analyzeSvgComplexity(svgContent: string): ComplexityAnalysis
+```
+
+#### 6. Geometry Calculations (`src/utils/svg.ts:297-340`)
+Geometric calculation utilities for spatial operations:
+
+```typescript
+// Calculate bounding box for multiple points
+calculateBoundingBox(points: Point[]): BoundingBox
+
+// Check if point is inside bounding box
+isPointInBoundingBox(point: Point, bbox: BoundingBox): boolean
+
+// Calculate intersection of two bounding boxes
+getBoundingBoxIntersection(bbox1: BoundingBox, bbox2: BoundingBox): BoundingBox | null
+
+// Calculate centroid of multiple points
+calculateCentroid(points: Point[]): Point
+```
+
+### Key Interfaces and Types
+
+```typescript
+interface Point {
+  x: number;
+  y: number;
+}
+
+interface Dimensions {
+  width: number;
+  height: number;
+}
+
+interface ViewBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+interface BoundingBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+interface TransformComponents {
+  zoom: number;
+  panX: number;
+  panY: number;
+}
+
+interface WheelEventData {
+  deltaX: number;
+  deltaY: number;
+  isTrackpad: boolean;
+  point: Point;
+}
+```
+
+### Constants and Configuration
+
+```typescript
+export const SVG_CONSTANTS = {
+  MIN_ZOOM: 0.1,
+  MAX_ZOOM: 10.0,
+  ZOOM_STEP: 0.1,
+  WHEEL_ZOOM_STEP: 0.2,
+  TRACKPAD_ZOOM_STEP: 0.05,
+  PAN_STEP: 10
+} as const;
+```
+
+### Testing Requirements
+
+#### Test Coverage Standards
+- **Minimum Coverage**: 95% line coverage for all SVG utilities
+- **Test Categories**: 6 main test suites matching utility categories
+- **Test Types**: Unit tests, integration tests, edge cases, error handling
+- **Property-based Testing**: Mathematical functions with multiple input ranges
+
+#### Running Tests
+```bash
+# Run all tests including SVG utilities
+npm test
+
+# Run only SVG utility tests
+npm test src/test/svg.test.ts
+
+# Run tests with coverage report
+npm run test:coverage
+```
+
+#### Test Structure
+```typescript
+// Example test structure (src/test/svg.test.ts)
+describe('SVG Utilities', () => {
+  describe('Mathematical Calculations', () => {
+    describe('calculateZoomLevel', () => {
+      it('should zoom in with positive delta', () => {
+        const result = calculateZoomLevel(1.0, 0.2, false);
+        expect(result).toBe(1.2);
+      });
+    });
+  });
+});
+```
+
+### Development Workflow
+
+#### Adding New SVG Utilities
+1. **Function Development**: Add pure TypeScript function to appropriate category in `src/utils/svg.ts`
+2. **Documentation**: Add comprehensive JSDoc with parameters, return types, and examples
+3. **Type Safety**: Define or update TypeScript interfaces as needed
+4. **Testing**: Write comprehensive tests in `src/test/svg.test.ts`
+5. **Integration**: Update components to use new utilities
+6. **Validation**: Run full test suite and verify coverage
+
+#### Component Integration Pattern
+```typescript
+// Recommended import pattern in Vue components
+import {
+  calculateZoomLevel,
+  generateTransformString,
+  processWheelEvent
+} from '@/utils/svg';
+
+// Usage in component methods
+const handleZoom = (delta: number) => {
+  const newZoom = calculateZoomLevel(currentZoom.value, delta);
+  const transform = generateTransformString(newZoom, panX.value, panY.value);
+  // Apply transform to SVG element
+};
+```
+
+### Maintenance Guidelines
+
+#### Code Quality Standards
+- **Pure Functions**: No side effects, same input = same output
+- **Error Handling**: Graceful handling of invalid inputs with fallbacks
+- **Performance**: Optimized for real-time SVG operations
+- **Documentation**: JSDoc for all public functions
+- **Testing**: Maintain 95%+ test coverage
+
+#### Security Considerations
+- **Input Validation**: All coordinate and dimension inputs validated
+- **Range Constraints**: Zoom and scale values bounded within safe limits
+- **SVG Sanitization**: SVG content validated before processing
+- **Type Safety**: TypeScript enforcement prevents runtime errors
+
+#### Performance Guidelines
+- **Efficient Algorithms**: Use optimized mathematical calculations
+- **Minimal Allocations**: Reuse objects where possible
+- **Caching Strategy**: Cache expensive calculations when appropriate
+- **Lazy Evaluation**: Defer calculations until needed
+
+### Migration from Component Logic
+
+When SVG-related logic exists in Vue components, follow this migration pattern:
+
+```typescript
+// Before: Direct calculation in component
+const zoomIn = () => {
+  zoomLevel.value = Math.min(zoomLevel.value * 1.2, 5);
+};
+
+// After: Using SVG utilities
+import { calculateZoomLevel, SVG_CONSTANTS } from '@/utils/svg';
+
+const zoomIn = () => {
+  zoomLevel.value = calculateZoomLevel(
+    zoomLevel.value,
+    SVG_CONSTANTS.WHEEL_ZOOM_STEP,
+    false
+  );
+};
+```
+
+### Future Enhancements
+
+#### Planned Features
+- **Animation Utilities**: Smooth transitions for zoom/pan operations
+- **Path Calculations**: Advanced SVG path manipulation utilities
+- **Collision Detection**: Geometric intersection and overlap detection
+- **SVG Optimization**: Content optimization and compression utilities
+
+#### Extension Points
+- **Custom Transforms**: Additional transformation utility functions
+- **Advanced Gestures**: Multi-touch and complex gesture recognition
+- **Performance Profiling**: Built-in performance measurement tools
+- **WebGL Integration**: Hardware-accelerated SVG operations
+
+---
 
 ## Technology Stack
 

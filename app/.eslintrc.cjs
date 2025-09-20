@@ -5,8 +5,16 @@ module.exports = {
     browser: true,
     es2022: true
   },
+  globals: {
+    WheelEvent: 'readonly',
+    TouchEvent: 'readonly',
+    TouchList: 'readonly',
+    MouseEvent: 'readonly',
+    Event: 'readonly'
+  },
   extends: [
     'eslint:recommended',
+    '@typescript-eslint/recommended',
     'plugin:vue/vue3-recommended'
   ],
   parser: 'vue-eslint-parser',
@@ -20,12 +28,15 @@ module.exports = {
     extraFileExtensions: ['.vue']
   },
   plugins: [
-    'vue'
+    'vue',
+    '@typescript-eslint'
   ],
   rules: {
     'vue/multi-word-component-names': 'off',
     'vue/no-v-html': 'off',
-    'no-unused-vars': 'error',
+    'no-unused-vars': 'off',
+    '@typescript-eslint/no-unused-vars': 'error',
+    'no-undef': 'off',
     'vue/attribute-hyphenation': 'error',
     'vue/component-definition-name-casing': 'error',
     'vue/first-attribute-linebreak': 'error',
@@ -41,8 +52,14 @@ module.exports = {
   ignorePatterns: [
     'dist/**',
     'node_modules/**',
-    '*.d.ts',
-    '*.ts',
-    '*.tsx'
+    '*.d.ts'
+  ],
+  overrides: [
+    {
+      files: ['*.ts', '*.tsx'],
+      rules: {
+        'no-undef': 'off'
+      }
+    }
   ]
 }
