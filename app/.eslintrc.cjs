@@ -25,7 +25,7 @@ module.exports = {
     },
     ecmaVersion: 2022,
     sourceType: 'module',
-    extraFileExtensions: ['.vue']
+    extraFileExtensions: ['.vue'],
   },
   plugins: [
     'vue',
@@ -36,7 +36,7 @@ module.exports = {
     'vue/no-v-html': 'off',
     'no-unused-vars': 'off',
     '@typescript-eslint/no-unused-vars': 'error',
-    'no-undef': 'off',
+    'no-undef': 'off', // TypeScript handles this better than ESLint
     'vue/attribute-hyphenation': 'error',
     'vue/component-definition-name-casing': 'error',
     'vue/first-attribute-linebreak': 'error',
@@ -56,9 +56,19 @@ module.exports = {
   ],
   overrides: [
     {
-      files: ['*.ts', '*.tsx'],
+      files: ['*.ts', '*.tsx', '**/*.test.ts', 'src/test/**/*.ts'],
       rules: {
         'no-undef': 'off'
+      },
+      env: {
+        browser: true
+      },
+      globals: {
+        WheelEvent: 'readonly',
+        TouchEvent: 'readonly',
+        TouchList: 'readonly',
+        MouseEvent: 'readonly',
+        Event: 'readonly'
       }
     }
   ]

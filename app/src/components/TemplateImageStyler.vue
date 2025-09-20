@@ -278,6 +278,12 @@
 import { inject, computed, ref } from 'vue'
 import type { SvgLibraryItem } from '../types/template-types'
 import SvgLibrarySelector from './SvgLibrarySelector.vue'
+import {
+  injectSvgColors,
+  applySvgStrokeProperties,
+  normalizeSvgCurrentColor,
+  sanitizeColorValue
+} from '../utils/svg-styling'
 
 interface Props {
   imageLabel?: string
@@ -361,28 +367,42 @@ const clearSvg = () => {
   emit('update:svgId', '')
 }
 
-// Apply styling to SVG content for preview
-// eslint-disable-next-line no-unused-vars
+// Apply enhanced styling to SVG content for preview using utilities
 const styledSvgContent = computed(() => {
   if (!props.svgContent) return ''
 
-  // Apply fill and stroke styling to the SVG content
-  let styledSvg = props.svgContent
+  try {
+    let styledSvg = props.svgContent
 
-  // Add styles to existing SVG elements
-  styledSvg = styledSvg.replace(/<svg([^>]*)>/i, (match, attributes) => {
-    return `<svg${attributes} style="fill: ${props.fillColor}; stroke: ${props.strokeColor}; stroke-width: ${props.strokeWidth}; stroke-linejoin: ${props.strokeLinejoin};">`
-  })
+    // Sanitize colors first
+    const fillColor = sanitizeColorValue(props.fillColor)
+    const strokeColor = sanitizeColorValue(props.strokeColor)
 
-  // Also apply to path elements if they don't have explicit fill/stroke
-  styledSvg = styledSvg.replace(/<path([^>]*?)>/gi, (match, attributes) => {
-    if (!attributes.includes('fill=') && !attributes.includes('style=')) {
-      return `<path${attributes} fill="currentColor">`
+    // Apply color injection using the new utilities
+    styledSvg = injectSvgColors(
+      styledSvg,
+      fillColor,
+      strokeColor,
+      { forceFill: true, forceStroke: props.strokeWidth > 0 }
+    )
+
+    // Apply stroke properties
+    if (props.strokeWidth > 0) {
+      styledSvg = applySvgStrokeProperties(
+        styledSvg,
+        props.strokeWidth,
+        props.strokeLinejoin
+      )
     }
-    return match
-  })
 
-  return styledSvg
+    // Normalize currentColor for proper inheritance
+    styledSvg = normalizeSvgCurrentColor(styledSvg)
+
+    return styledSvg
+  } catch (error) {
+    // Fallback to original content on error
+    return props.svgContent
+  }
 })
 
 // Preset color palette (same as used in shape styling)

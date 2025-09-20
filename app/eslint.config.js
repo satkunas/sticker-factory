@@ -49,8 +49,14 @@ export default [
         HTMLInputElement: 'readonly',
         SVGElement: 'readonly',
         KeyboardEvent: 'readonly',
+        MouseEvent: 'readonly',
+        WheelEvent: 'readonly',
+        TouchEvent: 'readonly',
+        TouchList: 'readonly',
+        Event: 'readonly',
         Image: 'readonly',
         XMLSerializer: 'readonly',
+        DOMParser: 'readonly',
         global: 'readonly',
         console: 'readonly'
       }
@@ -63,6 +69,7 @@ export default [
 
       // Vue-specific rules
       'vue/multi-word-component-names': 'off',
+      'vue/no-v-html': 'off', // Allow v-html for SVG content rendering
       'vue/no-unused-vars': 'error',
       'vue/component-tags-order': ['error', {
         order: ['template', 'script', 'style']
@@ -108,8 +115,14 @@ export default [
         HTMLInputElement: 'readonly',
         SVGElement: 'readonly',
         KeyboardEvent: 'readonly',
+        MouseEvent: 'readonly',
+        WheelEvent: 'readonly',
+        TouchEvent: 'readonly',
+        TouchList: 'readonly',
+        Event: 'readonly',
         Image: 'readonly',
         XMLSerializer: 'readonly',
+        DOMParser: 'readonly',
         global: 'readonly'
       }
     },
