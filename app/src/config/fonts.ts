@@ -2730,8 +2730,24 @@ export const AVAILABLE_FONTS: FontConfig[] = [
     fontUrl: 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap', fallback: 'serif' },
   
   // Additional Creative Symbol/Icon Fonts
-  { name: 'Font Awesome', family: '"Font Awesome 6 Free"', weights: [400, 900], category: 'dingbats', source: 'web', fontUrl: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css', fallback: 'fantasy' },
-  { name: 'Feather', family: 'feather', weights: [400], category: 'dingbats', source: 'web', fontUrl: 'https://cdn.jsdelivr.net/npm/feather-icons@4.28.0/dist/feather.css', fallback: 'fantasy' },
+  {
+    name: 'Font Awesome',
+    family: '"Font Awesome 6 Free"',
+    weights: [400, 900],
+    category: 'dingbats',
+    source: 'web',
+    fontUrl: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css',
+    fallback: 'fantasy'
+  },
+  {
+    name: 'Feather',
+    family: 'feather',
+    weights: [400],
+    category: 'dingbats',
+    source: 'web',
+    fontUrl: 'https://cdn.jsdelivr.net/npm/feather-icons@4.28.0/dist/feather.css',
+    fallback: 'fantasy'
+  },
   
   // More Creative Display Fonts
   { name: 'Creepster', family: 'Creepster', weights: [400], category: 'display', source: 'google',
@@ -2772,32 +2788,109 @@ export const AVAILABLE_FONTS: FontConfig[] = [
     fontUrl: 'https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&display=swap', fallback: 'monospace' },
   
   // More Elegant Serif Fonts
-  { name: 'Playfair Display SC', family: 'Playfair Display SC', weights: [400, 700, 900], category: 'serif', source: 'google',
-    fontUrl: 'https://fonts.googleapis.com/css2?family=Playfair+Display+SC:wght@400;700;900&display=swap', fallback: 'serif' },
-  { name: 'EB Garamond', family: 'EB Garamond', weights: [400, 500, 600, 700, 800], category: 'serif', source: 'google',
-    fontUrl: 'https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600;700;800&display=swap', fallback: 'serif' },
-  { name: 'Crimson Text', family: 'Crimson Text', weights: [400, 600, 700], category: 'serif', source: 'google',
-    fontUrl: 'https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&display=swap', fallback: 'serif' },
+  {
+    name: 'Playfair Display SC',
+    family: 'Playfair Display SC',
+    weights: [400, 700, 900],
+    category: 'serif',
+    source: 'google',
+    fontUrl: 'https://fonts.googleapis.com/css2?family=Playfair+Display+SC:wght@400;700;900&display=swap',
+    fallback: 'serif'
+  },
+  {
+    name: 'EB Garamond',
+    family: 'EB Garamond',
+    weights: [400, 500, 600, 700, 800],
+    category: 'serif',
+    source: 'google',
+    fontUrl: 'https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600;700;800&display=swap',
+    fallback: 'serif'
+  },
+  {
+    name: 'Crimson Text',
+    family: 'Crimson Text',
+    weights: [400, 600, 700],
+    category: 'serif',
+    source: 'google',
+    fontUrl: 'https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&display=swap',
+    fallback: 'serif'
+  },
   
   // International/Cultural Fonts
-  { name: 'Noto Sans Arabic', family: 'Noto Sans Arabic', weights: [400, 700], category: 'sans-serif', source: 'google',
-    fontUrl: 'https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700&display=swap', fallback: 'sans-serif' },
-  { name: 'Noto Sans JP', family: 'Noto Sans JP', weights: [400, 700], category: 'sans-serif', source: 'google',
-    fontUrl: 'https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap', fallback: 'sans-serif' },
-  { name: 'Noto Sans KR', family: 'Noto Sans KR', weights: [400, 700], category: 'sans-serif', source: 'google',
-    fontUrl: 'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap', fallback: 'sans-serif' },
-  { name: 'Noto Sans SC', family: 'Noto Sans SC', weights: [400, 700], category: 'sans-serif', source: 'google',
-    fontUrl: 'https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap', fallback: 'sans-serif' },
+  {
+    name: 'Noto Sans Arabic',
+    family: 'Noto Sans Arabic',
+    weights: [400, 700],
+    category: 'sans-serif',
+    source: 'google',
+    fontUrl: 'https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700&display=swap',
+    fallback: 'sans-serif'
+  },
+  {
+    name: 'Noto Sans JP',
+    family: 'Noto Sans JP',
+    weights: [400, 700],
+    category: 'sans-serif',
+    source: 'google',
+    fontUrl: 'https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap',
+    fallback: 'sans-serif'
+  },
+  {
+    name: 'Noto Sans KR',
+    family: 'Noto Sans KR',
+    weights: [400, 700],
+    category: 'sans-serif',
+    source: 'google',
+    fontUrl: 'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap',
+    fallback: 'sans-serif'
+  },
+  {
+    name: 'Noto Sans SC',
+    family: 'Noto Sans SC',
+    weights: [400, 700],
+    category: 'sans-serif',
+    source: 'google',
+    fontUrl: 'https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap',
+    fallback: 'sans-serif'
+  },
   
   // Creative Script Fonts
-  { name: 'Great Vibes', family: 'Great Vibes', weights: [400], category: 'handwriting', source: 'google',
-    fontUrl: 'https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap', fallback: 'cursive' },
-  { name: 'Allura', family: 'Allura', weights: [400], category: 'handwriting', source: 'google',
-    fontUrl: 'https://fonts.googleapis.com/css2?family=Allura&display=swap', fallback: 'cursive' },
-  { name: 'Sacramento', family: 'Sacramento', weights: [400], category: 'handwriting', source: 'google',
-    fontUrl: 'https://fonts.googleapis.com/css2?family=Sacramento&display=swap', fallback: 'cursive' },
-  { name: 'Alex Brush', family: 'Alex Brush', weights: [400], category: 'handwriting', source: 'google',
-    fontUrl: 'https://fonts.googleapis.com/css2?family=Alex+Brush&display=swap', fallback: 'cursive' }
+  {
+    name: 'Great Vibes',
+    family: 'Great Vibes',
+    weights: [400],
+    category: 'handwriting',
+    source: 'google',
+    fontUrl: 'https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap',
+    fallback: 'cursive'
+  },
+  {
+    name: 'Allura',
+    family: 'Allura',
+    weights: [400],
+    category: 'handwriting',
+    source: 'google',
+    fontUrl: 'https://fonts.googleapis.com/css2?family=Allura&display=swap',
+    fallback: 'cursive'
+  },
+  {
+    name: 'Sacramento',
+    family: 'Sacramento',
+    weights: [400],
+    category: 'handwriting',
+    source: 'google',
+    fontUrl: 'https://fonts.googleapis.com/css2?family=Sacramento&display=swap',
+    fallback: 'cursive'
+  },
+  {
+    name: 'Alex Brush',
+    family: 'Alex Brush',
+    weights: [400],
+    category: 'handwriting',
+    source: 'google',
+    fontUrl: 'https://fonts.googleapis.com/css2?family=Alex+Brush&display=swap',
+    fallback: 'cursive'
+  }
 ]
 
 // Default font
