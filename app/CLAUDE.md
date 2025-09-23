@@ -25,6 +25,284 @@ npm run type-check
 npm run lint
 ```
 
+## 🔄 Git Workflow & Development Process
+
+### Core Development Principles
+- **Always create feature branches** for any development work
+- **Never work directly on main branch**
+- **One logical change per commit** with descriptive messages
+- **Incremental commits** as you progress through implementation
+- **Regular integration** with main branch to avoid conflicts
+
+### 📋 Feature Branch Development
+
+#### Branch Creation and Naming
+```bash
+# Always start from main branch
+git checkout main
+git pull origin main
+
+# Create feature branch with descriptive name
+git checkout -b feature/add-svg-image-support
+git checkout -b fix/coordinate-system-alignment
+git checkout -b refactor/template-loading-performance
+git checkout -b docs/update-development-workflow
+
+# Push branch to remote immediately
+git push -u origin feature/add-svg-image-support
+```
+
+#### Branch Naming Conventions
+- `feature/` - New functionality or enhancements
+- `fix/` - Bug fixes and corrections
+- `refactor/` - Code improvements without behavior changes
+- `docs/` - Documentation updates
+- `test/` - Test additions or improvements
+- `chore/` - Maintenance tasks (dependencies, config, etc.)
+
+### 🏗️ Incremental Commit Strategy
+
+#### Step-by-Step Development Workflow
+```bash
+# 1. Plan your work (create todo list, identify steps)
+# 2. Start with basic structure/scaffolding
+git add .
+git commit -m "feat: add basic SVG image component structure
+
+- Create ExpandableSvgSelector.vue component shell
+- Add SvgLibraryItem interface definition
+- Set up basic template structure with search input
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+
+# 3. Implement core functionality piece by piece
+git add src/components/ExpandableSvgSelector.vue
+git commit -m "feat: implement SVG library loading and filtering
+
+- Add loadSvgLibrary() integration
+- Implement search functionality with real-time filtering
+- Add category-based filtering with preset buttons
+- Display loading states and empty states
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+
+# 4. Add styling and UX improvements
+git add .
+git commit -m "feat: enhance SVG selector UX with lazy loading
+
+- Implement virtual scrolling for large SVG lists
+- Add selection indicators and hover states
+- Include SVG preview thumbnails
+- Add clear selection functionality
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+
+# 5. Integrate with existing components
+git add .
+git commit -m "feat: integrate SVG selector with template system
+
+- Connect ExpandableSvgSelector to TemplateImageStyler
+- Add SVG content loading and caching
+- Implement proper event emission for parent components
+- Update template processing to handle SVG images
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+
+# 6. Add tests and fix issues
+git add .
+git commit -m "test: add comprehensive tests for SVG selection
+
+- Unit tests for ExpandableSvgSelector component
+- Integration tests for SVG loading and filtering
+- Edge case testing for missing/invalid SVG files
+- Performance tests for large SVG libraries
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+
+# 7. Update documentation
+git add .
+git commit -m "docs: update component documentation for SVG system
+
+- Add JSDoc comments for new SVG functions
+- Update CLAUDE.md with SVG selection workflow
+- Include usage examples and integration patterns
+- Document SVG library structure and conventions
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+```
+
+#### Commit Message Format
+```
+<type>: <description>
+
+<detailed explanation if needed>
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+**Commit Types:**
+- `feat:` - New features or functionality
+- `fix:` - Bug fixes
+- `refactor:` - Code refactoring without behavior changes
+- `test:` - Adding or updating tests
+- `docs:` - Documentation changes
+- `style:` - Code style changes (formatting, etc.)
+- `chore:` - Maintenance tasks
+
+### 🔀 Integration and Cleanup
+
+#### Pre-Integration Checklist
+```bash
+# 1. Ensure all tests pass
+npm run test:run
+
+# 2. Run linting and fix issues
+npm run lint
+
+# 3. Type check
+npm run type-check
+
+# 4. Build successfully
+npm run build
+
+# 5. Check git status is clean
+git status
+```
+
+#### Integration with Main Branch
+```bash
+# 1. Update main branch
+git checkout main
+git pull origin main
+
+# 2. Return to feature branch and rebase
+git checkout feature/add-svg-image-support
+git rebase main
+
+# 3. Resolve any conflicts, test again
+npm run test:run
+npm run lint
+npm run build
+
+# 4. Push updated branch
+git push --force-with-lease origin feature/add-svg-image-support
+
+# 5. Create pull request (if using GitHub/GitLab)
+# OR merge directly if working solo:
+git checkout main
+git merge feature/add-svg-image-support
+git push origin main
+
+# 6. Clean up feature branch
+git branch -d feature/add-svg-image-support
+git push origin --delete feature/add-svg-image-support
+```
+
+### 🚨 Emergency Fixes and Hotfixes
+
+#### Critical Bug Fix Workflow
+```bash
+# 1. Create hotfix branch from main
+git checkout main
+git pull origin main
+git checkout -b hotfix/fix-critical-svg-rendering
+
+# 2. Make minimal fix with focused commit
+git add .
+git commit -m "fix: resolve SVG element nesting causing rendering failure
+
+- Fix regex patterns in svg-styling.ts to preserve self-closing tags
+- Prevent nested SVG elements that break DOM structure
+- Add validation for SVG content structure
+
+Fixes critical issue where complex SVG images showed as single path
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+
+# 3. Test fix thoroughly
+npm run test:run
+npm run lint
+npm run build
+
+# 4. Merge immediately to main
+git checkout main
+git merge hotfix/fix-critical-svg-rendering
+git push origin main
+
+# 5. Clean up hotfix branch
+git branch -d hotfix/fix-critical-svg-rendering
+```
+
+### 🔄 Daily Development Workflow
+
+#### Starting New Work
+```bash
+# 1. Always start fresh from main
+git checkout main
+git pull origin main
+
+# 2. Create descriptive feature branch
+git checkout -b feature/implement-font-preview-system
+
+# 3. Create implementation plan (use TodoWrite tool)
+# 4. Make first structural commit
+# 5. Work incrementally with frequent commits
+```
+
+#### During Development
+```bash
+# Commit frequently (every 15-30 minutes of focused work)
+git add .
+git commit -m "feat: add font preview component structure"
+
+# Push to remote regularly (at least daily)
+git push origin feature/implement-font-preview-system
+
+# Sync with main periodically (every few days)
+git fetch origin
+git rebase origin/main
+```
+
+#### Finishing Work
+```bash
+# 1. Final testing and cleanup
+npm run test:run && npm run lint && npm run build
+
+# 2. Final commit if needed
+git add .
+git commit -m "test: add comprehensive font preview tests"
+
+# 3. Integration with main
+git checkout main && git pull origin main
+git checkout feature/implement-font-preview-system
+git rebase main
+
+# 4. Final verification
+npm run test:run && npm run lint && npm run build
+
+# 5. Merge and cleanup
+git checkout main
+git merge feature/implement-font-preview-system
+git push origin main
+git branch -d feature/implement-font-preview-system
+```
+
 ## 🏗️ Architecture Overview
 
 ### Component Hierarchy
