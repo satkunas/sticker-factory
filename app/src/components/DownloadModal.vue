@@ -255,8 +255,8 @@ const getSvgContent = async (embedFonts = false) => {
 
       if (fontConfig) {
         // For web fonts (Google Fonts, etc.), include the font definition
-        const fontUrl = fontConfig.googleFontUrl || fontConfig.fontUrl
-        if (fontUrl && (fontConfig.source === 'google' || fontConfig.source === 'web' || fontConfig.googleFontUrl)) {
+        const fontUrl = fontConfig.fontUrl
+        if (fontUrl && (fontConfig.source === 'google' || fontConfig.source === 'web')) {
           fontCSS += `@import url('${fontUrl}');\n`
         }
 

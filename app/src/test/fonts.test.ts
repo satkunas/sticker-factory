@@ -60,7 +60,7 @@ describe('Font System', () => {
         weights: [400, 700],
         category: 'sans-serif',
         source: 'google',
-        googleFontUrl: 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap',
+        fontUrl: 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap',
         fallback: 'Arial, sans-serif'
       }
 
@@ -131,7 +131,7 @@ describe('Font System', () => {
         weights: [400],
         category: 'sans-serif',
         source: 'google',
-        googleFontUrl: 'https://fonts.googleapis.com/css2?family=NonExistent',
+        fontUrl: 'https://fonts.googleapis.com/css2?family=NonExistent',
         fallback: 'sans-serif'
       }
 
@@ -173,7 +173,7 @@ describe('Font System', () => {
         weights: [400],
         category: 'sans-serif',
         source: 'google',
-        googleFontUrl: 'http://evil.com/fonts.css', // Non-HTTPS, untrusted domain
+        fontUrl: 'http://evil.com/fonts.css', // Non-HTTPS, untrusted domain
         fallback: 'sans-serif'
       }
 
@@ -309,7 +309,7 @@ describe('Font System', () => {
         weights: [400],
         category: 'sans-serif',
         source: 'google',
-        googleFontUrl: 'https://fonts.googleapis.com/css2?family=CacheTest',
+        fontUrl: 'https://fonts.googleapis.com/css2?family=CacheTest',
         fallback: 'sans-serif'
       }
 

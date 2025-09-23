@@ -86,7 +86,7 @@ describe('Download Output Tests', () => {
           weights: [400, 600, 700],
           category: 'sans-serif',
           source: 'google',
-          googleFontUrl: 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;600;700&display=swap',
+          fontUrl: 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;600;700&display=swap',
           fallback: 'Arial, sans-serif'
         },
         fontSize: 24,
@@ -105,7 +105,7 @@ describe('Download Output Tests', () => {
           weights: [400, 600],
           category: 'sans-serif',
           source: 'google',
-          googleFontUrl: 'https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap',
+          fontUrl: 'https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap',
           fallback: 'Helvetica, sans-serif'
         },
         fontSize: 16,
@@ -136,7 +136,7 @@ describe('Download Output Tests', () => {
         weights: [400, 600, 700],
         category: 'sans-serif',
         source: 'google',
-        googleFontUrl: 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;600;700&display=swap',
+        fontUrl: 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;600;700&display=swap',
         fallback: 'Arial, sans-serif'
       },
       {
@@ -145,7 +145,7 @@ describe('Download Output Tests', () => {
         weights: [400, 600],
         category: 'sans-serif',
         source: 'google',
-        googleFontUrl: 'https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap',
+        fontUrl: 'https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap',
         fallback: 'Helvetica, sans-serif'
       }
     ]
@@ -211,14 +211,14 @@ describe('Download Output Tests', () => {
       const robotoFont = mockTextInputs.find(input => input.font?.name === 'Roboto')?.font
       expect(robotoFont).toBeTruthy()
       expect(robotoFont!.source).toBe('google')
-      expect(robotoFont!.googleFontUrl).toContain('fonts.googleapis.com')
-      expect(robotoFont!.googleFontUrl).toContain('Roboto')
+      expect(robotoFont!.fontUrl).toContain('fonts.googleapis.com')
+      expect(robotoFont!.fontUrl).toContain('Roboto')
 
       const openSansFont = mockTextInputs.find(input => input.font?.name === 'Open Sans')?.font
       expect(openSansFont).toBeTruthy()
       expect(openSansFont!.source).toBe('google')
-      expect(openSansFont!.googleFontUrl).toContain('fonts.googleapis.com')
-      expect(openSansFont!.googleFontUrl).toContain('Open+Sans')
+      expect(openSansFont!.fontUrl).toContain('fonts.googleapis.com')
+      expect(openSansFont!.fontUrl).toContain('Open+Sans')
     })
 
     it('should filter fonts by source type', () => {
@@ -363,8 +363,8 @@ describe('Download Output Tests', () => {
 
       // All should have Google Font URLs for downloading
       fontsNeedingEmbedding.forEach(font => {
-        expect(font!.googleFontUrl).toBeTruthy()
-        expect(font!.googleFontUrl).toContain('fonts.googleapis.com')
+        expect(font!.fontUrl).toBeTruthy()
+        expect(font!.fontUrl).toContain('fonts.googleapis.com')
       })
     })
   })
