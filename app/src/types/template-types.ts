@@ -90,6 +90,8 @@ export interface TemplateSvgImageLayer extends TemplateLayerBase {
   strokeWidth: number
   strokeLinejoin?: string
   opacity?: number
+  rotation?: number        // 0-360 degrees
+  scale?: number          // 0.01-100 multiplier
 }
 
 // Union type for all layer types
@@ -100,6 +102,7 @@ export interface YamlTemplate {
   id: string
   description: string
   category: 'circle' | 'square' | 'rectangle' | 'diamond' | 'hexagon'
+  viewBox?: { x: number; y: number; width: number; height: number }
   layers: TemplateLayer[]
 }
 
@@ -138,10 +141,13 @@ export interface ShapeStyleState {
 // SVG image style state for template image styling
 export interface SvgImageStyleState {
   id: string
-  fillColor: string
+  color: string
   strokeColor: string
   strokeWidth: number
   strokeLinejoin: string
+  svgContent?: string  // Selected SVG content that overrides template default
+  rotation: number     // 0-360 degrees, default: 0
+  scale: number        // 0.01-100 multiplier, default: 1.0
 }
 
 // Converted template for rendering (with SVG paths)

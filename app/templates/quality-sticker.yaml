@@ -2,6 +2,7 @@ name: "Product Quality Sticker"
 id: "quality-sticker"
 description: "Circular quality assurance sticker for products"
 category: "circle"
+viewBox: { x: 0, y: 0, width: 200, height: 200 }
 layers:
   - id: "outer-ring"
     type: "shape"
@@ -47,29 +48,29 @@ layers:
     fontWeight: 600
     fontColor: "#991b1b"
 
-  - id: "check-icon-1"
+  - id: "icon-top-left"
     type: "svgImage"
     svgId: "icons-check"
-    position: { x: "30%", y: "25%" }
-    width: 16
-    height: 16
+    position: { x: "28%", y: "25%" }
+    width: 18
+    height: 18
     fill: "#16a34a"
     stroke: "none"
     strokeWidth: 0
     strokeLinejoin: "round"
 
-  - id: "check-icon-2"
+  - id: "icon-top-right"
     type: "svgImage"
     svgId: "icons-check"
-    position: { x: "70%", y: "25%" }
-    width: 16
-    height: 16
+    position: { x: "72%", y: "25%" }
+    width: 18
+    height: 18
     fill: "#16a34a"
     stroke: "none"
     strokeWidth: 0
     strokeLinejoin: "round"
 
-  - id: "star-icon"
+  - id: "icon-bottom-center"
     type: "svgImage"
     svgId: "icons-star"
     position: { x: "50%", y: "75%" }

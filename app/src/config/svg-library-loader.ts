@@ -160,7 +160,10 @@ export const getSvgCategories = async (): Promise<string[]> => {
  */
 export const getSvgContent = async (svgId: string): Promise<string | null> => {
   const svg = await loadSvg(svgId)
-  return svg?.svgContent || null
+  const content = svg?.svgContent || null
+
+
+  return content
 }
 
 /**

@@ -20,7 +20,7 @@
               v-if="svgContent"
               class="w-6 h-6 flex-shrink-0 flex items-center justify-center"
               :style="{
-                color: fillColor
+                color: props.color
               }"
               v-html="styledSvgContent"
             />
@@ -59,35 +59,15 @@
       v-if="isExpanded"
       class="mt-4 bg-white border border-secondary-200 rounded-lg overflow-hidden"
     >
-      <!-- SVG Selection Section -->
-      <div class="p-4 bg-secondary-25 border-b border-secondary-200">
-        <h4 class="font-medium text-secondary-900 mb-3">
-          SVG Selection
-        </h4>
-        <div class="flex items-center space-x-2">
-          <button
-            class="flex-1 px-3 py-2 bg-white border border-secondary-200 rounded-md text-sm text-secondary-700 hover:border-secondary-300 transition-colors flex items-center justify-center space-x-2"
-            type="button"
-            @click="showSvgSelector = true"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <span>{{ svgContent ? 'Change SVG' : 'Select SVG' }}</span>
-          </button>
-          <button
-            v-if="svgContent"
-            class="px-3 py-2 bg-red-50 border border-red-200 rounded-md text-sm text-red-600 hover:bg-red-100 transition-colors"
-            type="button"
-            title="Remove SVG"
-            @click="clearSvg"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
-        </div>
-      </div>
+      <!-- Inline SVG Selector -->
+      <ExpandableSvgSelector
+        :selectedSvgId="svgId"
+        :selectedSvgContent="svgContent"
+        :instanceId="`svg-selector-${instanceId}`"
+        @update:selectedSvgId="$emit('update:svgId', $event)"
+        @update:selectedSvgContent="$emit('update:svgContent', $event)"
+        @clear="clearSvg"
+      />
 
       <!-- SVG Image Styling Section -->
       <div class="p-4 bg-secondary-25">
@@ -99,34 +79,34 @@
         <div class="space-y-4">
           <!-- SVG Controls -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-            <!-- Fill Color Section -->
+            <!-- Color Section -->
             <div class="min-w-0">
               <div class="text-sm font-medium text-secondary-700 mb-2">
-                Fill Color
+                Color
               </div>
               <div class="flex items-center space-x-1 mb-2">
                 <!-- Hidden color input -->
                 <input
-                  ref="fillColorInputRef"
-                  :value="fillColor"
+                  ref="colorInputRef"
+                  :value="props.color"
                   type="color"
                   class="sr-only"
-                  @input="$emit('update:fillColor', $event.target.value)"
+                  @input="$emit('update:color', $event.target.value)"
                 >
                 <!-- Color picker button -->
                 <button
                   class="w-7 h-7 rounded border border-secondary-300 cursor-pointer hover:border-secondary-400 transition-colors"
-                  :style="{ backgroundColor: fillColor }"
-                  :title="`Click to change fill color (${fillColor})`"
+                  :style="{ backgroundColor: props.color }"
+                  :title="`Click to change color (${props.color})`"
                   type="button"
-                  @click="$refs.fillColorInputRef?.click()"
+                  @click="$refs.colorInputRef?.click()"
                 />
                 <input
-                  :value="fillColor"
+                  :value="props.color"
                   type="text"
                   class="flex-1 px-2 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
                   placeholder="#22c55e"
-                  @input="$emit('update:fillColor', $event.target.value)"
+                  @input="$emit('update:color', $event.target.value)"
                 >
               </div>
               <div class="grid grid-cols-6 md:grid-cols-12 gap-1">
@@ -134,10 +114,10 @@
                   v-for="color in presetColors.slice(0, 12)"
                   :key="color"
                   class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
-                  :class="fillColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
+                  :class="color === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
                   :style="{ backgroundColor: color }"
                   :title="color"
-                  @click="$emit('update:fillColor', color)"
+                  @click="$emit('update:color', color)"
                 />
               </div>
               <div class="grid grid-cols-6 md:grid-cols-12 gap-1 mt-1">
@@ -145,10 +125,10 @@
                   v-for="color in presetColors.slice(12, 24)"
                   :key="color"
                   class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
-                  :class="fillColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
+                  :class="color === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
                   :style="{ backgroundColor: color }"
                   :title="color"
-                  @click="$emit('update:fillColor', color)"
+                  @click="$emit('update:color', color)"
                 />
               </div>
             </div>
@@ -261,23 +241,84 @@
               </div>
             </div>
           </div>
+
+          <!-- Advanced Controls Section -->
+          <div class="border-t border-secondary-100 pt-4">
+            <h5 class="text-sm font-medium text-secondary-700 mb-3">
+              Transform Controls
+            </h5>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+              <!-- Rotation Control -->
+              <div class="min-w-0">
+                <div class="text-xs font-medium text-secondary-600 mb-2">
+                  Rotation
+                </div>
+                <div class="flex items-center space-x-2">
+                  <input
+                    :value="rotation"
+                    type="range"
+                    min="0"
+                    max="360"
+                    step="1"
+                    class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
+                    @input="$emit('update:rotation', parseFloat($event.target.value) || 0)"
+                  >
+                  <div class="relative">
+                    <input
+                      :value="rotation"
+                      type="number"
+                      min="0"
+                      max="360"
+                      step="1"
+                      class="w-14 px-1 py-1 pr-4 text-xs border border-secondary-200 rounded text-center focus:outline-none focus:ring-1 focus:ring-primary-500"
+                      @input="$emit('update:rotation', Math.max(0, Math.min(360, parseFloat($event.target.value) || 0)))"
+                    >
+                    <span class="absolute right-1 top-1/2 transform -translate-y-1/2 text-xs text-secondary-400 pointer-events-none">°</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Scale Control -->
+              <div class="min-w-0">
+                <div class="text-xs font-medium text-secondary-600 mb-2">
+                  Scale
+                </div>
+                <div class="flex items-center space-x-2">
+                  <input
+                    :value="scaleSliderValue"
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
+                    @input="handleScaleSliderInput($event.target.value)"
+                  >
+                  <div class="relative">
+                    <input
+                      :value="scalePercentage"
+                      type="number"
+                      min="1"
+                      max="10000"
+                      step="1"
+                      class="w-16 px-1 py-1 pr-5 text-xs border border-secondary-200 rounded text-center focus:outline-none focus:ring-1 focus:ring-primary-500"
+                      @input="handleScaleTextInput($event.target.value)"
+                    >
+                    <span class="absolute right-1 top-1/2 transform -translate-y-1/2 text-xs text-secondary-400 pointer-events-none">%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- SVG Library Selector Modal -->
-    <SvgLibrarySelector
-      v-if="showSvgSelector"
-      @select="handleSvgSelect"
-      @close="showSvgSelector = false"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { inject, computed, ref } from 'vue'
-import type { SvgLibraryItem } from '../types/template-types'
-import SvgLibrarySelector from './SvgLibrarySelector.vue'
+import ExpandableSvgSelector from './ExpandableSvgSelector.vue'
 import {
   injectSvgColors,
   applySvgStrokeProperties,
@@ -290,20 +331,24 @@ interface Props {
   imageDimensions?: string
   svgContent?: string
   svgId?: string
-  fillColor?: string
+  color?: string
   strokeColor?: string
   strokeWidth?: number
   strokeLinejoin?: string
+  rotation?: number
+  scale?: number
   instanceId?: string
 }
 
 interface Emits {
   'update:svgContent': [value: string]
   'update:svgId': [value: string]
-  'update:fillColor': [value: string]
+  'update:color': [value: string]
   'update:strokeColor': [value: string]
   'update:strokeWidth': [value: number]
   'update:strokeLinejoin': [value: string]
+  'update:rotation': [value: number]
+  'update:scale': [value: number]
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -311,17 +356,17 @@ const props = withDefaults(defineProps<Props>(), {
   imageDimensions: '',
   svgContent: '',
   svgId: '',
-  fillColor: '#22c55e',
+  color: '#22c55e',
   strokeColor: '#000000',
   strokeWidth: 2,
   strokeLinejoin: 'round',
+  rotation: 0,
+  scale: 1.0,
   instanceId: 'default'
 })
 
 const emit = defineEmits<Emits>()
 
-// SVG Library Selector modal state
-const showSvgSelector = ref(false)
 
 // Unified dropdown management
 const dropdownManager = inject('dropdownManager')
@@ -354,12 +399,6 @@ const _toggleExpanded = () => {
   }
 }
 
-// Handle SVG selection from library
-const handleSvgSelect = (svg: SvgLibraryItem) => {
-  emit('update:svgContent', svg.svgContent)
-  emit('update:svgId', svg.id)
-  showSvgSelector.value = false
-}
 
 // Clear SVG selection
 const clearSvg = () => {
@@ -375,7 +414,7 @@ const styledSvgContent = computed(() => {
     let styledSvg = props.svgContent
 
     // Sanitize colors first
-    const fillColor = sanitizeColorValue(props.fillColor)
+    const fillColor = sanitizeColorValue(props.color)
     const strokeColor = sanitizeColorValue(props.strokeColor)
 
     // Apply color injection using the new utilities
@@ -422,4 +461,38 @@ const strokeLinejoinOptions = [
   { value: 'arcs', label: 'Arcs', description: 'Arc corners at line joins' },
   { value: 'miter-clip', label: 'Clip', description: 'Clipped miter corners at line joins' }
 ]
+
+// Scale handling - convert between 0.01-100x multiplier and 0-100 logarithmic slider
+const scaleToSliderValue = (scale: number): number => {
+  // Convert 0.01-100 scale to 0-100 slider using logarithmic mapping
+  const clampedScale = Math.max(0.01, Math.min(100, scale))
+  const logValue = Math.log10(clampedScale)
+  // Map log range [-2, 2] to slider range [0, 100]
+  return Math.round(((logValue + 2) / 4) * 100)
+}
+
+const sliderValueToScale = (sliderValue: number): number => {
+  // Convert 0-100 slider to 0.01-100 scale using logarithmic mapping
+  const clampedSlider = Math.max(0, Math.min(100, sliderValue))
+  // Map slider range [0, 100] to log range [-2, 2]
+  const logValue = ((clampedSlider / 100) * 4) - 2
+  return Math.pow(10, logValue)
+}
+
+// Computed properties for scale conversion
+const scaleSliderValue = computed(() => scaleToSliderValue(props.scale))
+const scalePercentage = computed(() => Math.round(props.scale * 100))
+
+// Scale event handlers
+const handleScaleSliderInput = (sliderValue: string) => {
+  const newScale = sliderValueToScale(parseFloat(sliderValue) || 0)
+  emit('update:scale', newScale)
+}
+
+const handleScaleTextInput = (percentageValue: string) => {
+  const percentage = parseFloat(percentageValue) || 100
+  const clampedPercentage = Math.max(1, Math.min(10000, percentage))
+  const newScale = clampedPercentage / 100
+  emit('update:scale', newScale)
+}
 </script>

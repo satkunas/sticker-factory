@@ -2,6 +2,7 @@ name: "Professional Business Card"
 id: "business-card"
 description: "Standard business card with company logo area and contact info"
 category: "rectangle"
+viewBox: { x: 0, y: 0, width: 370, height: 220 }
 layers:
   - id: "background"
     type: "shape"
@@ -25,7 +26,7 @@ layers:
     strokeWidth: 1
     fill: "#f3f4f6"
 
-  - id: "company-logo"
+  - id: "icon-left-center"
     type: "svgImage"
     svgId: "icons-user"
     position: { x: "20%", y: "30%" }

@@ -2,6 +2,7 @@ name: "Wellness & Health Sticker"
 id: "wellness-sticker"
 description: "Circular wellness sticker with health-themed SVG icons"
 category: "circle"
+viewBox: { x: 0, y: 0, width: 200, height: 200 }
 layers:
   - id: "background"
     type: "shape"
@@ -23,7 +24,7 @@ layers:
     strokeWidth: 1
     fill: "#ffffff"
 
-  - id: "heart-icon"
+  - id: "icon-top-center"
     type: "svgImage"
     svgId: "icons-heart"
     position: { x: "50%", y: "35%" }
@@ -58,23 +59,23 @@ layers:
     fontWeight: 500
     fontColor: "#22c55e"
 
-  - id: "star-icon-1"
+  - id: "icon-top-left"
     type: "svgImage"
     svgId: "icons-star"
-    position: { x: "25%", y: "25%" }
-    width: 12
-    height: 12
+    position: { x: "22%", y: "22%" }
+    width: 16
+    height: 16
     fill: "#fbbf24"
     stroke: "none"
     strokeWidth: 0
     strokeLinejoin: "round"
 
-  - id: "star-icon-2"
+  - id: "icon-top-right"
     type: "svgImage"
     svgId: "icons-star"
-    position: { x: "75%", y: "25%" }
-    width: 12
-    height: 12
+    position: { x: "78%", y: "22%" }
+    width: 16
+    height: 16
     fill: "#fbbf24"
     stroke: "none"
     strokeWidth: 0

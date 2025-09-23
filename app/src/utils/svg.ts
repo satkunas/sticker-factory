@@ -54,6 +54,18 @@ export interface PercentageCoords {
   y: number | string
 }
 
+/** Position with percentage support (alias for clarity) */
+export interface PercentagePosition {
+  x: number | string
+  y: number | string
+}
+
+/** Position resolved to absolute coordinates */
+export interface ResolvedPosition {
+  x: number
+  y: number
+}
+
 /** Processed wheel event data */
 export interface WheelData {
   deltaX: number
@@ -285,8 +297,136 @@ export function createStyleObject(
 }
 
 // ============================================================================
-// COORDINATE CONVERSION
+// COORDINATE CONVERSION AND RESOLUTION
 // ============================================================================
+
+/**
+ * Check if a coordinate value is a percentage string
+ *
+ * @param value - Coordinate value to check
+ * @returns True if value is a percentage string
+ *
+ * @example
+ * const isPercent = isPercentage('50%')
+ * // Returns: true
+ */
+export function isPercentage(value: number | string): value is string {
+  return typeof value === 'string' && value.includes('%')
+}
+
+/**
+ * Parse a percentage string and return the numeric value
+ *
+ * @param value - Percentage string
+ * @returns Numeric percentage value (0.5 for "50%")
+ *
+ * @example
+ * const numeric = parsePercentage('50%')
+ * // Returns: 0.5
+ */
+export function parsePercentage(value: string): number {
+  const numericPart = parseFloat(value.replace('%', ''))
+  return isNaN(numericPart) ? 0 : numericPart / 100
+}
+
+/**
+ * Resolve a single coordinate value (x or y) from percentage to absolute pixels
+ *
+ * @param value - Coordinate value (number or percentage string)
+ * @param viewBoxDimension - ViewBox dimension (width or height)
+ * @param viewBoxStart - ViewBox start offset (x or y)
+ * @returns Resolved absolute coordinate
+ *
+ * @example
+ * const x = resolveCoordinate('50%', 100, 0)
+ * // Returns: 50
+ */
+export function resolveCoordinate(
+  value: number | string,
+  viewBoxDimension: number,
+  viewBoxStart = 0
+): number {
+  if (typeof value === 'number') {
+    return isNaN(value) ? 0 : value
+  }
+
+  if (isPercentage(value)) {
+    const percentage = parsePercentage(value)
+    return viewBoxStart + (viewBoxDimension * percentage)
+  }
+
+  // Fallback: try to parse as number
+  const parsed = parseFloat(value)
+  return isNaN(parsed) ? 0 : parsed
+}
+
+/**
+ * Resolve a position object from percentage coordinates to absolute coordinates
+ *
+ * @param position - Position with percentage or absolute coordinates
+ * @param viewBox - ViewBox for coordinate resolution
+ * @returns Resolved position with absolute coordinates
+ *
+ * @example
+ * const resolved = resolvePosition({ x: '50%', y: '25%' }, { x: 0, y: 0, width: 100, height: 50 })
+ * // Returns: { x: 50, y: 12.5 }
+ */
+export function resolvePosition(
+  position: PercentagePosition,
+  viewBox: ViewBox
+): ResolvedPosition {
+  return {
+    x: resolveCoordinate(position.x, viewBox.width, viewBox.x),
+    y: resolveCoordinate(position.y, viewBox.height, viewBox.y)
+  }
+}
+
+/**
+ * Resolve line position (for line shapes with x1,y1,x2,y2)
+ *
+ * @param position - Line position with start and end coordinates
+ * @param viewBox - ViewBox for coordinate resolution
+ * @returns Resolved line position with absolute coordinates
+ *
+ * @example
+ * const resolved = resolveLinePosition({ x1: '0%', y1: '0%', x2: '100%', y2: '100%' }, viewBox)
+ * // Returns: { x1: 0, y1: 0, x2: 100, y2: 50 }
+ */
+export function resolveLinePosition(
+  position: { x1: number | string; y1: number | string; x2: number | string; y2: number | string },
+  viewBox: ViewBox
+): { x1: number; y1: number; x2: number; y2: number } {
+  return {
+    x1: resolveCoordinate(position.x1, viewBox.width, viewBox.x),
+    y1: resolveCoordinate(position.y1, viewBox.height, viewBox.y),
+    x2: resolveCoordinate(position.x2, viewBox.width, viewBox.x),
+    y2: resolveCoordinate(position.y2, viewBox.height, viewBox.y)
+  }
+}
+
+/**
+ * Helper function to resolve any position type (regular or line)
+ *
+ * @param position - Position object (regular or line type)
+ * @param viewBox - ViewBox for coordinate resolution
+ * @returns Resolved position (regular or line type)
+ *
+ * @example
+ * const resolved = resolveAnyPosition({ x: '50%', y: '50%' }, viewBox)
+ * // Returns: { x: 50, y: 25 }
+ */
+export function resolveAnyPosition(
+  position: PercentagePosition | { x1: number | string; y1: number | string; x2: number | string; y2: number | string },
+  viewBox: ViewBox
+): ResolvedPosition | { x1: number; y1: number; x2: number; y2: number } {
+  // Check if it's a line position (has x1, y1, x2, y2)
+  if ('x1' in position && 'y1' in position && 'x2' in position && 'y2' in position) {
+    return resolveLinePosition(position, viewBox)
+  }
+
+  // Regular position with x, y
+  return resolvePosition(position as PercentagePosition, viewBox)
+}
 
 /**
  * Resolve percentage coordinates to absolute coordinates
@@ -301,19 +441,9 @@ export function createStyleObject(
  * // Returns: { x: 50, y: 25 }
  */
 export function resolvePercentageCoords(coords: PercentageCoords, viewBox: ViewBox): Point {
-  const resolveCoord = (coord: number | string, dimension: number, offset = 0): number => {
-    if (typeof coord === 'string' && coord.endsWith('%')) {
-      const percentage = parseFloat(coord) / 100
-      if (!isFinite(percentage)) return offset
-      return offset + (dimension * percentage)
-    }
-    const numValue = Number(coord)
-    return isFinite(numValue) ? numValue : offset
-  }
-
   return {
-    x: resolveCoord(coords.x, viewBox.width, viewBox.x),
-    y: resolveCoord(coords.y, viewBox.height, viewBox.y)
+    x: resolveCoordinate(coords.x, viewBox.width, viewBox.x),
+    y: resolveCoordinate(coords.y, viewBox.height, viewBox.y)
   }
 }
 
@@ -764,6 +894,12 @@ export const SvgTransforms = {
  * Collection of coordinate conversion utilities
  */
 export const SvgCoordinates = {
+  isPercentage,
+  parsePercentage,
+  resolveCoordinate,
+  resolvePosition,
+  resolveLinePosition,
+  resolveAnyPosition,
   resolvePercentageCoords,
   convertScreenToSvg,
   convertSvgToScreen,
@@ -797,4 +933,50 @@ export const SvgGeometry = {
   calculateAngle,
   isPointInBounds,
   calculateBoundingBoxFromPoints
+}
+
+// ============================================================================
+// PERCENTAGE POSITION UTILITIES
+// ============================================================================
+
+/**
+ * Utility to create common percentage positions
+ */
+export const PercentagePositions = {
+  // Corners
+  topLeft: { x: '0%', y: '0%' },
+  topRight: { x: '100%', y: '0%' },
+  bottomLeft: { x: '0%', y: '100%' },
+  bottomRight: { x: '100%', y: '100%' },
+
+  // Centers
+  center: { x: '50%', y: '50%' },
+  topCenter: { x: '50%', y: '0%' },
+  bottomCenter: { x: '50%', y: '100%' },
+  leftCenter: { x: '0%', y: '50%' },
+  rightCenter: { x: '100%', y: '50%' },
+
+  // Quarters
+  topLeftQuarter: { x: '25%', y: '25%' },
+  topRightQuarter: { x: '75%', y: '25%' },
+  bottomLeftQuarter: { x: '25%', y: '75%' },
+  bottomRightQuarter: { x: '75%', y: '75%' },
+} as const
+
+/**
+ * Utility to create positions at specific percentages
+ *
+ * @param xPercent - X percentage value
+ * @param yPercent - Y percentage value
+ * @returns Position object with percentage coordinates
+ *
+ * @example
+ * const position = createPercentagePosition(50, 25)
+ * // Returns: { x: '50%', y: '25%' }
+ */
+export function createPercentagePosition(xPercent: number, yPercent: number): PercentagePosition {
+  return {
+    x: `${xPercent}%`,
+    y: `${yPercent}%`
+  }
 }

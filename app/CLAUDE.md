@@ -357,7 +357,7 @@ interface Props {
 - Test fallback fonts when Google Fonts fail
 
 ### State Management
-- Use Vue DevTools to inspect Pinia store
+- Use Vue Devtools to inspect Pinia store
 - Check provide/inject context for font selector states
 - Verify prop flow through component hierarchy
 
@@ -365,6 +365,82 @@ interface Props {
 - Inspect SVG DOM for correct attribute values
 - Check font-family, font-size, and font-weight attributes
 - Test with different fonts and weights
+
+## 🔍 Critical Visual Verification Protocol
+
+### MANDATORY: Always Take Screenshots for Layout Verification
+**NEVER assume positioning/alignment is correct based on console logs, DOM elements, or code inspection alone.**
+
+#### Required Steps for Any Layout/Positioning Work:
+1. **Take full-page screenshots** after making positioning changes
+2. **Examine screenshots in extreme detail** - zoom in on specific areas if needed
+3. **Verify actual visual alignment** of all elements (text, shapes, SVG icons)
+4. **Check for invisible/missing elements** that should be visible
+5. **Compare before/after screenshots** to confirm improvements
+
+#### Common Failure Patterns to Watch For:
+- **SVG icons positioned outside template bounds** (common with coordinate mapping issues)
+- **Elements positioned at (0,0) or extreme coordinates** indicating calculation errors
+- **Invisible elements with 0 scale/size** due to scaling problems
+- **Z-index layering issues** where elements render behind others
+- **Viewport clipping** where elements are positioned but cut off
+
+#### Screenshot Analysis Checklist:
+- [ ] Are all intended SVG icons/shapes visible within template boundaries?
+- [ ] Do text elements align properly with their container shapes?
+- [ ] Are coordinate calculations producing reasonable visual results?
+- [ ] Do percentage-based positions map correctly to actual template areas?
+- [ ] Are elements scaled appropriately for their containers?
+
+#### Never Trust These Indicators Alone:
+- ❌ Console log coordinates (e.g., "finalX=223.75, finalY=179")
+- ❌ DOM element presence in HTML snapshots
+- ❌ Successful function execution without errors
+- ❌ Calculated values that "look reasonable" mathematically
+
+#### Always Verify With:
+- ✅ Full-page screenshot showing actual rendered output
+- ✅ Element visibility and positioning in preview area
+- ✅ Visual comparison of template requirements vs actual output
+- ✅ Browser developer tools element inspection if needed
+
+### SVG Icon Positioning Debugging
+- **Problem**: SVG icons not visible despite console logs showing coordinates
+- **Root Cause**: Usually coordinate system misalignment or scaling issues
+- **Solution**: Take screenshot first, then debug coordinate mapping logic
+- **Verification**: Icons must be visually present within template boundaries
+
+### CRITICAL: SVG Coordinate System Alignment Requirements
+
+**MANDATORY: SVG Images Must Use Same Origin/Center as Text Elements**
+
+#### Core Coordinate System Rule
+All template elements (text, SVG images, shapes) MUST use the same coordinate system origin for proper visual alignment within template boundaries.
+
+#### Required Coordinate System Consistency:
+1. **Text Elements**: Use SVG coordinate attributes (e.g., `x="250", y="176"`)
+2. **SVG Images**: Must use SAME coordinate space as text, not separate transform space
+3. **Shapes**: Position using same coordinate system as text and SVG images
+4. **Reference Origin**: All elements should reference the same center point within template viewBox
+
+#### Debugging Checklist for SVG Coordinate Issues:
+- [ ] **Text Coordinates**: Check `x=` and `y=` attributes on text elements
+- [ ] **SVG Image Coordinates**: Verify SVG images use same coordinate space, not `transform="translate()"`
+- [ ] **Same Origin Validation**: Text at `x="250"` and SVG at `x="250"` should align horizontally
+- [ ] **Visual Alignment**: Screenshot verification shows elements properly positioned within template shapes
+- [ ] **Transform Analysis**: If using transforms, ensure they map to same coordinate space as text
+
+#### Common Coordinate System Failures:
+- ❌ **Mixed Coordinate Systems**: Text using SVG coordinates while SVG images use transform coordinates
+- ❌ **Origin Mismatch**: Text centered at template center while SVG images use different origin point
+- ❌ **Scale Conflicts**: Transform scaling causing SVG images to render outside template bounds
+- ❌ **Percentage vs Absolute**: Inconsistent use of percentage vs absolute positioning between element types
+
+#### Fix Requirements:
+1. **Unified Coordinate System**: All elements must use same coordinate calculation method
+2. **Consistent Origin**: SVG images must reference same center point as text elements
+3. **No Transform Isolation**: Avoid separate coordinate spaces for different element types
+4. **Template Boundary Respect**: All elements must render within template shape boundaries
 
 ## 🚀 Performance Considerations
 

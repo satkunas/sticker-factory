@@ -133,17 +133,21 @@
                   :imageDimensions="getSvgImageDimensions(selectedTemplate, svgImageStyle.id)"
                   :svgContent="getSvgImageContent(selectedTemplate, svgImageStyle.id)"
                   :svgId="getSvgImageId(selectedTemplate, svgImageStyle.id)"
-                  :fillColor="svgImageStyle.fillColor"
+                  :color="svgImageStyle.color"
                   :strokeColor="svgImageStyle.strokeColor"
                   :stroke-width="svgImageStyle.strokeWidth"
                   :stroke-linejoin="svgImageStyle.strokeLinejoin"
+                  :rotation="svgImageStyle.rotation"
+                  :scale="svgImageStyle.scale"
                   :instanceId="`svgImage-${index}`"
                   @update:svgContent="(value) => updateSvgImageContent(index, value)"
                   @update:svgId="(value) => updateSvgImageId(index, value)"
-                  @update:fillColor="(value) => updateSvgImageStyleByIndex(index, { fillColor: value })"
+                  @update:color="(value) => updateSvgImageStyleByIndex(index, { color: value })"
                   @update:strokeColor="(value) => updateSvgImageStyleByIndex(index, { strokeColor: value })"
                   @update:strokeWidth="(value) => updateSvgImageStyleByIndex(index, { strokeWidth: value })"
                   @update:strokeLinejoin="(value) => updateSvgImageStyleByIndex(index, { strokeLinejoin: value })"
+                  @update:rotation="(value) => updateSvgImageStyleByIndex(index, { rotation: value })"
+                  @update:scale="(value) => updateSvgImageStyleByIndex(index, { scale: value })"
                 />
               </div>
             </div>
@@ -388,6 +392,10 @@ const updateSvgImageContent = async (index: number, svgContent: string) => {
     const svgImageLayer = svgImageLayers[index]
     // Update the template layer content
     svgImageLayer.svgContent = svgContent
+
+    // CRITICAL FIX: Also update the svgImageStyles to store the selected content
+    // This ensures the preview updates when SVG selection changes
+    store.updateSvgImageStyle(index, { svgContent })
   }
 }
 
@@ -398,8 +406,20 @@ const updateSvgImageId = async (index: number, svgId: string) => {
   const svgImageLayers = selectedTemplate.value.layers.filter(layer => layer.type === 'svgImage')
   if (index >= 0 && index < svgImageLayers.length) {
     const svgImageLayer = svgImageLayers[index]
+
+
     // Update the template layer ID
     svgImageLayer.svgId = svgId
+
+    // CRITICAL FIX: Load new SVG content when svgId changes
+    const { getSvgContent } = await import('./config/svg-library-loader')
+    const newSvgContent = await getSvgContent(svgId)
+
+    if (newSvgContent) {
+      // Update the template layer's SVG content
+      svgImageLayer.svgContent = newSvgContent
+
+    }
   }
 }
 

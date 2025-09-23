@@ -2,6 +2,7 @@ name: "Tech Company Sticker"
 id: "tech-company-sticker"
 description: "Modern tech company sticker with SVG icons and clean typography"
 category: "rectangle"
+viewBox: { x: 0, y: 0, width: 340, height: 220 }
 layers:
   - id: "background"
     type: "shape"
@@ -27,7 +28,7 @@ layers:
     strokeWidth: 0
     fill: "#3b82f6"
 
-  - id: "tech-icon"
+  - id: "icon-header-left"
     type: "svgImage"
     svgId: "icons-code"
     position: { x: "20%", y: "25%" }
@@ -74,12 +75,12 @@ layers:
     fontWeight: 500
     fontColor: "#6b7280"
 
-  - id: "security-icon"
+  - id: "icon-bottom-right"
     type: "svgImage"
     svgId: "icons-shield"
-    position: { x: "85%", y: "80%" }
-    width: 16
-    height: 16
+    position: { x: "82%", y: "75%" }
+    width: 20
+    height: 20
     fill: "#10b981"
     stroke: "none"
     strokeWidth: 0

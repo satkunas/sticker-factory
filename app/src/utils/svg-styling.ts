@@ -129,9 +129,10 @@ function applyColorsToElement(
   strokeColor?: string,
   options: Omit<SvgColorStyling, 'fill' | 'stroke'> = {}
 ): string {
-  const regex = new RegExp(`<${elementType}([^>]*?)>`, 'gi')
+  // Updated regex to match both self-closing and opening tags while preserving structure
+  const regex = new RegExp(`<${elementType}([^>]*?)(/?)>`, 'gi')
 
-  return svgContent.replace(regex, (_match, attributes) => {
+  return svgContent.replace(regex, (_match, attributes, selfClosing) => {
     let modifiedAttributes = attributes
 
     // Handle fill color
@@ -170,7 +171,8 @@ function applyColorsToElement(
       }
     }
 
-    return `<${elementType}${modifiedAttributes}>`
+    // Preserve self-closing structure: add back the slash if it was there originally
+    return `<${elementType}${modifiedAttributes}${selfClosing}>`
   })
 }
 
@@ -260,9 +262,10 @@ function applyStrokePropertiesToElement(
   elementType: string,
   strokeProps: Record<string, string | number>
 ): string {
-  const regex = new RegExp(`<${elementType}([^>]*?)>`, 'gi')
+  // Updated regex to match both self-closing and opening tags while preserving structure
+  const regex = new RegExp(`<${elementType}([^>]*?)(/?)>`, 'gi')
 
-  return svgContent.replace(regex, (_match, attributes) => {
+  return svgContent.replace(regex, (_match, attributes, selfClosing) => {
     let modifiedAttributes = attributes
 
     Object.entries(strokeProps).forEach(([prop, value]) => {
@@ -275,7 +278,8 @@ function applyStrokePropertiesToElement(
       modifiedAttributes += ` ${prop}="${value}"`
     })
 
-    return `<${elementType}${modifiedAttributes}>`
+    // Preserve self-closing structure: add back the slash if it was there originally
+    return `<${elementType}${modifiedAttributes}${selfClosing}>`
   })
 }
 
@@ -304,17 +308,18 @@ export function normalizeSvgCurrentColor(svgContent: string): string {
     const inheritElements = ['path', 'circle', 'rect', 'ellipse', 'polygon', 'line', 'polyline']
 
     inheritElements.forEach(elementType => {
-      const regex = new RegExp(`<${elementType}([^>]*?)>`, 'gi')
+      // Updated regex to match both self-closing and opening tags while preserving structure
+      const regex = new RegExp(`<${elementType}([^>]*?)(/?)>`, 'gi')
 
-      processedSvg = processedSvg.replace(regex, (match, attributes) => {
+      processedSvg = processedSvg.replace(regex, (match, attributes, selfClosing) => {
         // If element doesn't have explicit fill and no stroke, add currentColor fill
         if (!attributes.includes('fill=') && !attributes.includes('stroke=')) {
-          return `<${elementType}${attributes} fill="currentColor">`
+          return `<${elementType}${attributes} fill="currentColor"${selfClosing}>`
         }
 
         // If element has stroke="currentColor" but no fill, ensure it inherits properly
         if (attributes.includes('stroke="currentColor"') && !attributes.includes('fill=')) {
-          return `<${elementType}${attributes} fill="none">`
+          return `<${elementType}${attributes} fill="none"${selfClosing}>`
         }
 
         return match

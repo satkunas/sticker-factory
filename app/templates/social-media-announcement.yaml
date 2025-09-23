@@ -2,6 +2,7 @@ name: "Social Media Announcement"
 id: "social-media-announcement"
 description: "Square social media post with announcement theme and decorative icons"
 category: "square"
+viewBox: { x: 0, y: 0, width: 420, height: 420 }
 layers:
   - id: "background"
     type: "shape"
@@ -27,7 +28,7 @@ layers:
     strokeWidth: 0
     fill: "#f59e0b"
 
-  - id: "megaphone-icon"
+  - id: "icon-header-left"
     type: "svgImage"
     svgId: "icons-volume"
     position: { x: "25%", y: "20%" }
@@ -74,7 +75,7 @@ layers:
     fontWeight: 500
     fontColor: "#78350f"
 
-  - id: "sparkle-icon-1"
+  - id: "icon-middle-left"
     type: "svgImage"
     svgId: "icons-star"
     position: { x: "15%", y: "45%" }
@@ -85,18 +86,18 @@ layers:
     strokeWidth: 0
     strokeLinejoin: "round"
 
-  - id: "sparkle-icon-2"
+  - id: "icon-middle-right"
     type: "svgImage"
     svgId: "icons-star"
     position: { x: "85%", y: "55%" }
-    width: 16
-    height: 16
+    width: 18
+    height: 18
     fill: "#d97706"
     stroke: "none"
     strokeWidth: 0
     strokeLinejoin: "round"
 
-  - id: "thumbs-up-icon"
+  - id: "icon-bottom-left"
     type: "svgImage"
     svgId: "icons-user"
     position: { x: "15%", y: "85%" }
@@ -107,7 +108,7 @@ layers:
     strokeWidth: 0
     strokeLinejoin: "round"
 
-  - id: "calendar-icon"
+  - id: "icon-bottom-right"
     type: "svgImage"
     svgId: "icons-calendar"
     position: { x: "85%", y: "85%" }

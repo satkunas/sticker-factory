@@ -10,10 +10,9 @@ import type {
   TemplateLayer,
   ProcessedTemplateLayer,
   ProcessedTextInputLayer,
-  ProcessedSvgImageLayer,
-  _TemplateSvgImageLayer
+  ProcessedSvgImageLayer
 } from '../types/template-types'
-import { resolvePosition, resolveLinePosition, type ViewBox } from './coordinate-utils'
+import { resolvePosition, resolveLinePosition, type ViewBox } from '../utils/svg'
 import { getSvgContent } from './svg-library-loader'
 import { logger, reportCriticalError, createPerformanceTimer } from '../utils/logger'
 import {
@@ -254,9 +253,11 @@ const convertYamlToSimpleTemplate = async (rawTemplate: YamlTemplate | LegacyYam
   // Convert legacy format to new format if needed
   const yamlTemplate: YamlTemplate = isNewFormat(rawTemplate) ? rawTemplate : convertLegacyToNew(rawTemplate)
 
-  // Calculate viewBox from shape layers
-  const shapeLayers = yamlTemplate.layers.filter((layer): layer is TemplateShapeLayer => layer.type === 'shape')
-  const viewBox = calculateViewBoxFromLayers(shapeLayers)
+  // Use explicit viewBox if provided, otherwise calculate from shape layers
+  const viewBox = yamlTemplate.viewBox || (() => {
+    const shapeLayers = yamlTemplate.layers.filter((layer): layer is TemplateShapeLayer => layer.type === 'shape')
+    return calculateViewBoxFromLayers(shapeLayers)
+  })()
 
   // Convert layers to processed template layers
   const layers: ProcessedTemplateLayer[] = []
@@ -441,11 +442,12 @@ const convertShapeLayerToPath = (layer: TemplateShapeLayer, viewBox: ViewBox): s
 
     case 'polygon': {
       if (layer.points) {
-        // Convert relative points to absolute coordinates
+        // For polygon, points are always absolute coordinates within the viewBox
+        // The position parameter is ignored for polygons - points define the shape directly
         const pointPairs = layer.points.split(' ')
         const absolutePoints = pointPairs.map(pair => {
           const [x, y] = pair.split(',').map(Number)
-          return `${pos.x + x},${pos.y + y}`
+          return `${x},${y}`
         })
         return `M${absolutePoints.join(' L')} Z`
       }

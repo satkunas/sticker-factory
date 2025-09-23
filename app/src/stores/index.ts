@@ -415,13 +415,19 @@ export const useStore = () => {
     // Extract SVG image elements and initialize with template defaults
     const svgImageElements = elements.filter(el => el.type === 'svgImage' && el.svgImage)
     const newSvgImageStyles: SvgImageStyleState[] = svgImageElements.map((element) => {
-      return {
+      const style = {
         id: element.svgImage!.id,
-        fillColor: element.svgImage!.fill || '#3b82f6', // Keep template default
+        color: element.svgImage!.fill || '#3b82f6', // Keep template default
         strokeColor: element.svgImage!.stroke || '#1e40af',
-        strokeWidth: element.svgImage!.strokeWidth || 1,
-        strokeLinejoin: element.svgImage!.strokeLinejoin || 'round'
+        strokeWidth: element.svgImage!.strokeWidth ?? 1, // Use nullish coalescing to preserve 0 values
+        strokeLinejoin: element.svgImage!.strokeLinejoin || 'round',
+        rotation: 0,    // Default rotation
+        scale: 1.0      // Default scale
       }
+
+      // SVG Image style initialization completed successfully
+
+      return style
     })
 
     _state.value.svgImageStyles = newSvgImageStyles

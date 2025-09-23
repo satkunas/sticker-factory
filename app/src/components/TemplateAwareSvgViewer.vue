@@ -9,10 +9,10 @@
           ? 'rounded border border-secondary-200'
           : 'rounded-lg border-2 border-dashed border-secondary-300 cursor-move'
       ]"
-      @mousedown="previewMode ? null : startDrag"
-      @mousemove="previewMode ? null : drag"
-      @mouseup="previewMode ? null : endDrag"
-      @mouseleave="previewMode ? null : endDrag"
+      @mousedown="handleMouseDown"
+      @mousemove="handleMouseMove"
+      @mouseup="handleMouseUp"
+      @mouseleave="handleMouseLeave"
       @wheel="handleWheel"
       @touchstart="handleTouchStart"
       @touchmove="handleTouchMove"
@@ -79,8 +79,8 @@
                 <text
                   v-for="textInputData in [getTextInputById(element.textInput.id)]"
                   :key="element.textInput.id"
-                  :x="resolveTextPosition(element.textInput, 'x')"
-                  :y="resolveTextPosition(element.textInput, 'y')"
+                  :x="resolveTextPositionUtil(element.textInput, 'x', template?.viewBox)"
+                  :y="resolveTextPositionUtil(element.textInput, 'y', template?.viewBox)"
                   text-anchor="middle"
                   dominant-baseline="central"
                   :font-family="textInputData ? getFontFamilyForTextInput(textInputData) : fontFamily"
@@ -97,14 +97,16 @@
                 </text>
               </template>
 
-              <!-- SVG Image rendering with enhanced styling using utilities -->
+              <!-- SVG Image rendering with color attribute on parent SVG -->
               <template v-if="element.type === 'svgImage' && element.svgImage">
                 <g
                   v-for="svgImageStyleData in [getSvgImageStyleById(element.svgImage.id)]"
                   :key="element.svgImage.id"
-                  :transform="getStyledSvgTransform(element.svgImage)"
+                  :transform="getStyledSvgTransformLocal(element.svgImage, svgImageStyleData)"
                 >
-                  <g v-html="getStyledSvgContent(element.svgImage, svgImageStyleData)" />
+                  <g
+                    v-html="getStyledSvgContent(element.svgImage, svgImageStyleData, element.svgImage.fill, element.svgImage.stroke, element.svgImage.strokeWidth)"
+                  />
                 </g>
               </template>
             </template>
@@ -190,7 +192,7 @@
                   </text>
                   <g
                     v-if="element.type === 'svgImage' && element.svgImage"
-                    :transform="getMiniSvgTransform(element.svgImage)"
+                    :transform="getMiniSvgTransform(element.svgImage, template?.viewBox)"
                     v-html="getMiniStyledSvgContent(element.svgImage)"
                   />
                 </template>
@@ -282,6 +284,7 @@ import { getFontFamily, type FontConfig } from '../config/fonts' // Used in temp
 import type { SimpleTemplate } from '../types/template-types'
 import { getTemplateElements } from '../config/template-loader'
 import { logger, createPerformanceTimer } from '../utils/logger'
+import { useStore } from '../stores'
 import {
   calculateZoomLevel,
   calculateOptimalScale,
@@ -293,19 +296,12 @@ import {
   type Size
 } from '../utils/svg'
 import {
-  injectSvgColors,
-  applySvgStrokeProperties,
-  normalizeSvgCurrentColor,
-  sanitizeColorValue
-} from '../utils/svg-styling'
-import {
-  calculateSvgCenterPosition,
-  calculateSvgScale,
-  resolveCoordinate
-} from '../utils/svg-positioning'
-import {
-  parseSvgContent
-} from '../utils/svg-content'
+  getStyledSvgContent,
+  getStyledSvgTransform,
+  getMiniStyledSvgContent,
+  getMiniSvgTransform,
+  resolveTextPosition as resolveTextPositionUtil
+} from '../utils/svg-template'
 
 interface Props {
   stickerText?: string
@@ -363,6 +359,10 @@ const props = withDefaults(defineProps<Props>(), {
   svgImageStyles: () => [],
   previewMode: false
 })
+
+// Store
+const store = useStore()
+
 
 // SVG element reference
 const svgElementRef = ref<SVGElement | null>(null)
@@ -472,129 +472,15 @@ const getShapeStyleById = (id: string) => {
 
 // Helper function to get SVG image style data for a specific SVG image ID
 const getSvgImageStyleById = (id: string) => {
-  return props.svgImageStyles?.find(style => style.id === id)
+  return store.svgImageStyles.value.find(style => style.id === id)
 }
 
-// Enhanced SVG styling with proper color injection and positioning
-const getStyledSvgContent = (svgImage: any, styleData: any) => {
-  if (!svgImage.svgContent) return ''
 
-  try {
-    let styledContent = svgImage.svgContent
-
-    // Sanitize colors first
-    const fillColor = sanitizeColorValue(styleData?.fillColor || svgImage.fill || '#22c55e')
-    const strokeColor = sanitizeColorValue(styleData?.strokeColor || svgImage.stroke || '#000000')
-    const strokeWidth = styleData?.strokeWidth ?? svgImage.strokeWidth ?? 2
-    const strokeLinejoin = styleData?.strokeLinejoin || svgImage.strokeLinejoin || 'round'
-
-    // Apply color injection using the new utilities
-    styledContent = injectSvgColors(
-      styledContent,
-      fillColor,
-      strokeColor,
-      { forceFill: true, forceStroke: strokeWidth > 0 }
-    )
-
-    // Apply stroke properties
-    if (strokeWidth > 0) {
-      styledContent = applySvgStrokeProperties(
-        styledContent,
-        strokeWidth,
-        strokeLinejoin
-      )
-    }
-
-    // Normalize currentColor for proper inheritance
-    styledContent = normalizeSvgCurrentColor(styledContent)
-
-    return styledContent
-  } catch (error) {
-    logger.warn('Failed to style SVG content:', error)
-    return svgImage.svgContent
-  }
-}
-
-// Calculate proper SVG transform with enhanced positioning utilities
-const getStyledSvgTransform = (svgImage: any) => {
-  try {
-    // Parse SVG metadata for proper positioning
-    const metadata = parseSvgContent(svgImage.svgContent)
-
-    if (!metadata) {
-      // Fallback to simple translation with coordinate resolution
-      const containerBounds = {
-        x: 0,
-        y: 0,
-        width: props.template?.viewBox.width || 200,
-        height: props.template?.viewBox.height || 200
-      }
-
-      const resolvedX = resolveCoordinate(svgImage.position.x, containerBounds.width, 0)
-      const resolvedY = resolveCoordinate(svgImage.position.y, containerBounds.height, 0)
-
-      return `translate(${resolvedX}, ${resolvedY})`
-    }
-
-    // Resolve percentage-based coordinates to absolute positions
-    const containerBounds = {
-      x: props.template?.viewBox.x || 0,
-      y: props.template?.viewBox.y || 0,
-      width: props.template?.viewBox.width || 200,
-      height: props.template?.viewBox.height || 200
-    }
-
-    const resolvedX = resolveCoordinate(svgImage.position.x, containerBounds.width, containerBounds.x)
-    const resolvedY = resolveCoordinate(svgImage.position.y, containerBounds.height, containerBounds.y)
-
-    const targetPosition = {
-      x: resolvedX,
-      y: resolvedY
-    }
-    const targetSize = {
-      width: svgImage.width || 24,
-      height: svgImage.height || 24
-    }
-
-    // Calculate centered position using positioning utilities
-    const centeredPosition = calculateSvgCenterPosition(
-      metadata,
-      targetPosition,
-      targetSize
-    )
-
-    // Calculate scale to fit target size with enhanced scaling
-    const scale = calculateSvgScale(metadata, targetSize, true)
-
-    // Apply minimum scale to prevent SVGs from becoming too small
-    const minScale = 0.1
-    const maxScale = 5.0
-    const constrainedScale = Math.max(minScale, Math.min(maxScale, scale))
-
-    // For very small target sizes, apply additional scaling adjustments
-    let finalScale = constrainedScale
-    if (targetSize.width < 16 || targetSize.height < 16) {
-      // For very small icons, use a more conservative scaling approach
-      finalScale = Math.min(constrainedScale, 1.0)
-    }
-
-    return `translate(${centeredPosition.x}, ${centeredPosition.y}) scale(${finalScale})`
-  } catch (error) {
-    logger.warn('Failed to calculate SVG transform:', error)
-
-    // Enhanced fallback with coordinate resolution
-    const containerBounds = {
-      x: 0,
-      y: 0,
-      width: props.template?.viewBox.width || 200,
-      height: props.template?.viewBox.height || 200
-    }
-
-    const resolvedX = resolveCoordinate(svgImage.position.x, containerBounds.width, 0)
-    const resolvedY = resolveCoordinate(svgImage.position.y, containerBounds.height, 0)
-
-    return `translate(${resolvedX}, ${resolvedY})`
-  }
+// Wrapper function that provides store access to the utility function
+const getStyledSvgTransformLocal = (svgImage: any, styleData?: any) => {
+  // Get style data from store if not provided
+  const storeStyleData = styleData || store.svgImageStyles.value.find(style => style.id === svgImage.id)
+  return getStyledSvgTransform(svgImage, storeStyleData)
 }
 
 // Helper function to get font family for a specific textInput
@@ -873,6 +759,28 @@ const endDrag = () => {
   isDragging.value = false
 }
 
+// Mouse event handlers that check preview mode
+const handleMouseDown = (e: Event) => {
+  if (props.previewMode) return
+  startDrag(e)
+}
+
+const handleMouseMove = (e: Event) => {
+  if (props.previewMode) return
+  if (!isDragging.value) return
+  drag(e)
+}
+
+const handleMouseUp = () => {
+  if (props.previewMode) return
+  endDrag()
+}
+
+const handleMouseLeave = () => {
+  if (props.previewMode) return
+  endDrag()
+}
+
 // Enhanced wheel zoom with trackpad support using SVG utilities
 const handleWheel = (e: Event) => {
   // Skip if in preview mode
@@ -1011,7 +919,6 @@ const downloadSvg = () => {
   } catch (error) {
     // Download failed, silently handle error
     // eslint-disable-next-line no-console
-    console.warn('SVG download failed:', error)
   }
 }
 
@@ -1056,7 +963,8 @@ onUnmounted(() => {
   window.removeEventListener('resize', updateContainerDimensions)
 })
 
-// Resolve text position coordinates (percentage or absolute)\nconst resolveTextPosition = (textInput: any, axis: 'x' | 'y') => {\n  try {\n    const containerBounds = {\n      x: props.template?.viewBox.x || 0,\n      y: props.template?.viewBox.y || 0,\n      width: props.template?.viewBox.width || 200,\n      height: props.template?.viewBox.height || 200\n    }\n\n    const coordinate = textInput.position[axis]\n    const containerSize = axis === 'x' ? containerBounds.width : containerBounds.height\n    const offset = axis === 'x' ? containerBounds.x : containerBounds.y\n\n    return resolveCoordinate(coordinate, containerSize, offset)\n  } catch (error) {\n    // Fallback to original coordinate if resolution fails\n    return textInput.position[axis] || 0\n  }\n}\n\n// Mini SVG preview helper functions\nconst getMiniStyledSvgContent = (svgImage: any) => {\n  if (!svgImage.svgContent) return ''\n\n  try {\n    let styledContent = svgImage.svgContent\n\n    // Apply basic styling for mini preview\n    const fillColor = sanitizeColorValue(svgImage.fill || '#22c55e')\n    const strokeColor = sanitizeColorValue(svgImage.stroke || '#000000')\n\n    // Apply simple color injection for mini preview\n    styledContent = injectSvgColors(\n      styledContent,\n      fillColor,\n      strokeColor,\n      { forceFill: true }\n    )\n\n    return styledContent\n  } catch (error) {\n    // Fallback to original content\n    return svgImage.svgContent\n  }\n}\n\nconst getMiniSvgTransform = (svgImage: any) => {\n  try {\n    // For mini preview, use a simple approach with coordinate resolution\n    const containerBounds = {\n      x: 0,\n      y: 0,\n      width: props.template?.viewBox.width || 200,\n      height: props.template?.viewBox.height || 200\n    }\n\n    const resolvedX = resolveCoordinate(svgImage.position.x, containerBounds.width, 0)\n    const resolvedY = resolveCoordinate(svgImage.position.y, containerBounds.height, 0)\n\n    // Use a fixed scale for mini preview\n    return `translate(${resolvedX}, ${resolvedY}) scale(0.4)`\n  } catch (error) {\n    // Fallback to original positioning\n    return `translate(${svgImage.position.x}, ${svgImage.position.y}) scale(0.4)`\n  }\n}\n\n// Expose download function and SVG ref for parent component
+
+// Expose download function and SVG ref for parent component
 defineExpose({
   downloadSvg,
   autoFitTemplate,
