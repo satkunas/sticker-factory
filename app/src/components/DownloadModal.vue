@@ -7,7 +7,7 @@
           Preview
         </label>
         <div class="h-48 flex items-center justify-center">
-          <TemplateAwareSvgViewer
+          <SvgViewer
             ref="templateSvgRef"
             :template="template"
             :textInputs="textInputs"
@@ -141,7 +141,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import Modal from './Modal.vue'
-import TemplateAwareSvgViewer from './TemplateAwareSvgViewer.vue'
+import SvgViewer from './SvgViewer.vue'
 import { jsPDF } from 'jspdf'
 import type { SimpleTemplate } from '../types/template-types'
 import { AVAILABLE_FONTS } from '../config/fonts'

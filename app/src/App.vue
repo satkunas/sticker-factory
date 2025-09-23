@@ -73,7 +73,7 @@
           </h2>
           <div class="space-y-6">
             <!-- Template Selector -->
-            <SimpleTemplateSelector
+            <TemplateSelector
               :selectedTemplate="selectedTemplate"
               @update:selectedTemplate="handleTemplateSelection"
             />
@@ -82,7 +82,7 @@
             <div v-if="selectedTemplate && textInputs" class="space-y-4">
               <div v-for="textInput in textInputs" :key="textInput.id" class="space-y-2">
                 <FormLabel :text="getTextInputLabel(selectedTemplate, textInput.id)" />
-                <TextInputWithFontSelector
+                <TextInputField
                   :modelValue="textInput.text"
                   :placeholder="getTextInputPlaceholder(selectedTemplate, textInput.id)"
                   :selectedFont="textInput.font"
@@ -157,7 +157,7 @@
       </div>
 
       <!-- SVG Viewer Pane -->
-      <TemplateAwareSvgViewer
+      <SvgViewer
         ref="svgViewerRef"
         :stickerText="stickerText"
         :textColor="textColor"
@@ -212,9 +212,9 @@ import { logger } from './utils/logger'
 const ExportModal = defineAsyncComponent(() => import('./components/ExportModal.vue'))
 const ImportModal = defineAsyncComponent(() => import('./components/ImportModal.vue'))
 const DownloadModal = defineAsyncComponent(() => import('./components/DownloadModal.vue'))
-import SimpleTemplateSelector from './components/SimpleTemplateSelector.vue'
-import TemplateAwareSvgViewer from './components/TemplateAwareSvgViewer.vue'
-import TextInputWithFontSelector from './components/TextInputWithFontSelector.vue'
+import TemplateSelector from './components/TemplateSelector.vue'
+import SvgViewer from './components/SvgViewer.vue'
+import TextInputField from './components/TextInputField.vue'
 import TemplateObjectStyler from './components/TemplateObjectStyler.vue'
 import TemplateImageStyler from './components/TemplateImageStyler.vue'
 import FormLabel from './components/FormLabel.vue'
