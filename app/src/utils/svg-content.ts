@@ -409,91 +409,9 @@ export function removeExplicitDimensions(svgContent: string): string {
 // SVG VALIDATION AND SANITIZATION
 // ============================================================================
 
-/**
- * Sanitize SVG content for security
- * Removes potentially dangerous elements and attributes
- *
- * @param svgContent - Raw SVG content
- * @returns Sanitized SVG content
- *
- * @example
- * const safe = sanitizeSvgContent('<svg><script>alert("xss")</script><path d="..."/></svg>')
- * // Returns: '<svg><path d="..."/></svg>'
- */
-export function sanitizeSvgContent(svgContent: string): string {
-  if (!svgContent) return svgContent
+// sanitizeSvgContent function removed - use the version in utils/security.ts to avoid duplication
 
-  let sanitized = svgContent
-
-  try {
-    // Remove script tags
-    sanitized = sanitized.replace(/<script[\s\S]*?<\/script>/gi, '')
-
-    // Remove event handlers (on* attributes)
-    sanitized = sanitized.replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, '')
-
-    // Remove javascript: protocols
-    sanitized = sanitized.replace(/javascript:[^"']*/gi, '')
-
-    // Remove foreignObject elements (can contain HTML)
-    sanitized = sanitized.replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi, '')
-
-    // Remove object and embed elements
-    sanitized = sanitized.replace(/<(object|embed)[\s\S]*?<\/\1>/gi, '')
-
-    // Basic structure validation
-    if (!sanitized.includes('<svg') || !sanitized.includes('</svg>')) {
-      // Invalid SVG structure detected
-      return ''
-    }
-
-    return sanitized
-
-  } catch (error) {
-    // Failed to sanitize SVG content
-    return ''
-  }
-}
-
-/**
- * Validate SVG content format and structure
- *
- * @param svgContent - SVG content to validate
- * @returns True if content appears to be valid SVG
- *
- * @example
- * const isValid = validateSvgContent('<svg viewBox="0 0 24 24"><path d="..."/></svg>')
- * // Returns: true
- */
-export function validateSvgContent(svgContent: string): boolean {
-  if (!svgContent || typeof svgContent !== 'string') {
-    return false
-  }
-
-  try {
-    const trimmed = svgContent.trim()
-
-    // Basic format validation
-    if (!trimmed.startsWith('<svg') || !trimmed.includes('</svg>')) {
-      return false
-    }
-
-    // Try to parse with DOMParser
-    const parser = new DOMParser()
-    const doc = parser.parseFromString(svgContent, 'image/svg+xml')
-    const parserError = doc.querySelector('parsererror')
-
-    if (parserError) {
-      return false
-    }
-
-    const svgElement = doc.querySelector('svg')
-    return svgElement !== null
-
-  } catch {
-    return false
-  }
-}
+// validateSvgContent function removed - use the version in utils/svg.ts to avoid duplication
 
 // ============================================================================
 // UTILITY FUNCTIONS

@@ -39,7 +39,7 @@ export default defineConfig({
           }
 
           // Component chunks for heavy components
-          if (id.includes('DownloadModal.vue') || id.includes('TemplateAwareSvgViewer.vue')) {
+          if (id.includes('DownloadModal.vue') || id.includes('SvgViewer.vue')) {
             return 'heavy-components'
           }
         }

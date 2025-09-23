@@ -27,7 +27,6 @@ export interface AppState {
   fontSize: number
   fontWeight: number
   textColor: string
-  textOpacity: number
   strokeColor: string
   strokeWidth: number
   strokeOpacity: number
@@ -64,7 +63,6 @@ const _state = ref<AppState>({
   fontSize: 16,
   fontWeight: 400,
   textColor: COLOR_DEFAULT_WHITE,
-  textOpacity: 1.0,
   strokeColor: COLOR_DEFAULT_BLACK,
   strokeWidth: 0,
   strokeOpacity: 1.0,
@@ -161,7 +159,6 @@ const loadFromStorage = (): AppState => {
         fontSize: data.fontSize || 16,
         fontWeight: data.fontWeight || 400,
         textColor: data.textColor || '#ffffff',
-        textOpacity: data.textOpacity ?? 1.0,
         strokeColor: data.strokeColor || '#000000',
         strokeWidth: data.strokeWidth ?? 0,
         strokeOpacity: data.strokeOpacity ?? 1.0,
@@ -202,7 +199,6 @@ const getDefaultState = (): AppState => ({
   fontSize: 16,
   fontWeight: 400,
   textColor: '#ffffff',
-  textOpacity: 1.0,
   strokeColor: '#000000',
   strokeWidth: 0,
   strokeOpacity: 1.0,
@@ -277,7 +273,6 @@ export const useStore = () => {
 
   const textColor = computed(() => _state.value.textColor)
 
-  const textOpacity = computed(() => _state.value.textOpacity)
 
   const strokeColor = computed(() => _state.value.strokeColor)
 
@@ -473,11 +468,6 @@ export const useStore = () => {
     await saveToStorage(_state.value)
   }
 
-  const setTextOpacity = async (opacity: number) => {
-    _state.value.textOpacity = opacity
-    _isDirty.value = true
-    await saveToStorage(_state.value)
-  }
 
   const setStrokeColor = async (color: string) => {
     _state.value.strokeColor = color
@@ -564,7 +554,6 @@ export const useStore = () => {
         fontSize: parsedData.fontSize || 16,
         fontWeight: parsedData.fontWeight || 400,
         textColor: parsedData.textColor || '#ffffff',
-        textOpacity: parsedData.textOpacity ?? 1.0,
         strokeColor: parsedData.strokeColor || '#000000',
         strokeWidth: parsedData.strokeWidth ?? 0,
         strokeOpacity: parsedData.strokeOpacity ?? 1.0
@@ -651,7 +640,6 @@ export const useStore = () => {
     fontSize,
     fontWeight,
     textColor,
-    textOpacity,
     strokeColor,
     strokeWidth,
     strokeOpacity,
@@ -676,7 +664,6 @@ export const useStore = () => {
     setFontSize,
     setFontWeight,
     setTextColor,
-    setTextOpacity,
     setStrokeColor,
     setStrokeWidth,
     setStrokeOpacity,

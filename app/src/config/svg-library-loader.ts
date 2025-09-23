@@ -166,18 +166,7 @@ export const getSvgContent = async (svgId: string): Promise<string | null> => {
   return content
 }
 
-/**
- * Validate SVG content
- */
-export const validateSvgContent = (svgContent: string): boolean => {
-  try {
-    // Basic validation - check if it's a valid SVG
-    const trimmed = svgContent.trim()
-    return trimmed.startsWith('<svg') && trimmed.includes('</svg>')
-  } catch {
-    return false
-  }
-}
+// validateSvgContent function removed - use the version in utils/svg.ts to avoid duplication
 
 /**
  * Clear SVG library cache (useful for development)
