@@ -529,6 +529,79 @@ textInputs: TextInputState[] = [
 ```
 
 ### Accordion Interface
+```vue
+<!-- Expandable font selector with instance-specific state -->
+<div class="border border-gray-200 rounded-lg">
+  <button
+    @click="toggleExpanded"
+    class="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50">
+    <span class="font-medium">{{ selectedFont ? selectedFont.family : 'Select Font' }}</span>
+    <svg :class="{ 'rotate-180': isExpanded }" class="w-5 h-5 transform transition-transform">
+      <!-- Chevron down icon -->
+    </svg>
+  </button>
+
+  <div v-show="isExpanded" class="border-t border-gray-200 p-4">
+    <!-- Font search and selection interface -->
+    <input
+      v-model="searchTerm"
+      placeholder="Search fonts..."
+      class="w-full mb-4 p-2 border rounded"
+    />
+
+    <!-- Font category tabs -->
+    <div class="flex flex-wrap gap-2 mb-4">
+      <button v-for="category in fontCategories"
+              :key="category"
+              @click="selectedCategory = category"
+              :class="[
+                'px-3 py-1 rounded text-sm',
+                selectedCategory === category
+                  ? 'bg-primary-500 text-white'
+                  : 'bg-gray-100 hover:bg-gray-200'
+              ]">
+        {{ category }}
+      </button>
+    </div>
+
+    <!-- Font grid with lazy loading -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 max-h-64 overflow-y-auto">
+      <button v-for="font in filteredFonts"
+              :key="font.family"
+              @click="selectFont(font)"
+              :class="[
+                'p-2 border rounded text-left hover:bg-blue-50',
+                selectedFont?.family === font.family
+                  ? 'border-primary-500 bg-primary-50'
+                  : 'border-gray-200'
+              ]"
+              :style="{ fontFamily: getFontFamily(font) }">
+        {{ font.family }}
+      </button>
+    </div>
+  </div>
+</div>
+```
+
+#### Accordion State Management
+```typescript
+// Provide/inject pattern for managing multiple accordion states
+const accordionStates = ref<Record<string, boolean>>({})
+
+const toggleExpanded = (instanceId: string) => {
+  accordionStates.value[instanceId] = !accordionStates.value[instanceId]
+}
+
+const isExpanded = computed(() => accordionStates.value[instanceId] || false)
+```
+
+#### Benefits
+- **Independent State**: Each text input has its own font selector state
+- **Space Efficient**: Collapsed by default, expands only when needed
+- **Visual Feedback**: Clear indication of selected font and expansion state
+- **Search & Filter**: Built-in search and category filtering
+- **Responsive Design**: Adapts to different screen sizes
+- **Auto-scroll**: Automatically scrolls to selected font when expanded
 
 ### Font Weight Validation
 ```typescript
