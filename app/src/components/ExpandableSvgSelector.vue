@@ -3,7 +3,7 @@
   <div ref="containerRef" class="w-full">
       <!-- SVG Selection Section -->
       <div class="p-4 border-b border-secondary-200 bg-secondary-25">
-        <h4 class="font-medium text-secondary-900 mb-3">
+        <h4 class="section-header">
           SVG Library
         </h4>
 

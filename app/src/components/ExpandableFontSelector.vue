@@ -8,7 +8,7 @@
     >
       <!-- Text Styling Section -->
       <div class="p-4 border-b border-secondary-200 bg-secondary-25">
-        <h4 class="font-medium text-secondary-900 mb-3">
+        <h4 class="section-header">
           Text Styling
         </h4>
         
@@ -248,7 +248,7 @@
 
       <!-- Font Selection Section -->
       <div class="p-4">
-        <h4 class="font-medium text-secondary-900 mb-3">
+        <h4 class="section-header">
           Font Family
         </h4>
         

@@ -8,7 +8,7 @@
     <!-- Arrow Button -->
     <div class="relative">
       <button
-        class="w-full p-3 bg-white border border-secondary-200 rounded-lg text-left focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 hover:border-secondary-300 transition-colors"
+        class="expandable-header-btn"
         :class="{ 'ring-2 ring-primary-500 border-primary-500': isExpanded }"
         type="button"
         @click="_toggleExpanded"
@@ -71,7 +71,7 @@
 
       <!-- SVG Image Styling Section -->
       <div class="p-4 bg-secondary-25">
-        <h4 class="font-medium text-secondary-900 mb-3">
+        <h4 class="section-header">
           {{ imageLabel }} Styling
         </h4>
 
