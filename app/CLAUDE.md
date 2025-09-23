@@ -2,6 +2,73 @@
 
 This document contains development instructions and context for working with the Sticker Factory application.
 
+## 🧠 Memory-Bank MCP Server Integration
+
+Claude has access to a memory-bank MCP server that stores comprehensive project documentation and development patterns. This provides persistent context across sessions.
+
+### Available Documentation
+The memory-bank contains detailed reference documentation for:
+- **Font System Reference** - Current implementation status, configuration patterns
+- **Template System Reference** - Template architecture and processing patterns
+- **Development Workflow** - Git strategies, commit patterns, quality assurance
+- **Font Management Strategy** - Font loading, caching, and optimization patterns
+- **Template Storage Strategy** - Template processing and state management
+- **Project Overview** - High-level architecture and component relationships
+
+### Using Memory-Bank for Development
+```bash
+# Claude can access stored documentation via MCP tools:
+# - mcp__memory-bank__list_projects
+# - mcp__memory-bank__list_project_files
+# - mcp__memory-bank__memory_bank_read
+# - mcp__memory-bank__memory_bank_write
+# - mcp__memory-bank__memory_bank_update
+```
+
+### Memory-Bank Guidelines for Claude
+
+#### When to Reference Memory-Bank
+- **New session starts** - Load project context and current implementation status
+- **Complex feature development** - Review architecture patterns and best practices
+- **Bug investigation** - Check known patterns and previous solutions
+- **Code refactoring** - Verify existing patterns before making changes
+- **Quality assurance** - Reference testing and validation requirements
+
+#### What's Stored in Memory-Bank
+- **Current Implementation Status** - Up-to-date state of major features
+- **Development Patterns** - Proven approaches for this specific codebase
+- **Testing Requirements** - Quality standards and validation procedures
+- **Architecture Decisions** - Component design and integration patterns
+- **Performance Guidelines** - Optimization strategies specific to this application
+
+#### Memory-Bank vs CLAUDE.md
+- **Memory-Bank**: Detailed technical reference, implementation patterns, current status
+- **CLAUDE.md**: Development workflow, commands, debugging procedures, general guidelines
+
+#### Updating Memory-Bank Documentation
+When significant changes are made to the project:
+1. **Update relevant memory-bank files** with new implementation details
+2. **Document new patterns** for future development reference
+3. **Update status information** to reflect current capabilities
+4. **Add lessons learned** from complex implementations
+
+### Memory-Bank Project Structure
+```
+sticker-factory/
+├── development-workflow.md      # Git workflow, commit strategy, QA commands
+├── font-management-strategy.md  # Font loading, caching, optimization patterns
+├── font-system-reference.md     # Current font implementation status
+├── project-overview.md          # High-level architecture overview
+├── template-storage-strategy.md # Template processing and state management
+└── template-system-reference.md # Template implementation details
+```
+
+### Integration Benefits
+- **Session Continuity** - Maintain context across multiple development sessions
+- **Pattern Consistency** - Apply proven patterns from previous successful implementations
+- **Quality Maintenance** - Reference established standards and requirements
+- **Efficient Onboarding** - Quick context loading for complex development tasks
+
 ## 🛠️ Development Commands
 
 ### Git Workflow Commands
