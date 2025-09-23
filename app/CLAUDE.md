@@ -4,6 +4,26 @@ This document contains development instructions and context for working with the
 
 ## 🛠️ Development Commands
 
+### Git Workflow Commands
+```bash
+# Start new feature work
+git checkout main && git pull origin main
+git checkout -b feature/your-feature-name
+git push -u origin feature/your-feature-name
+
+# Make incremental commits during development
+git add .
+git commit -m "feat: descriptive commit message"
+git push origin feature/your-feature-name
+
+# Integration and cleanup
+git checkout main && git pull origin main
+git checkout feature/your-feature-name && git rebase main
+npm run test:run && npm run lint && npm run build
+git checkout main && git merge feature/your-feature-name
+git push origin main && git branch -d feature/your-feature-name
+```
+
 ### Running the Application
 ```bash
 # Start development server
@@ -23,6 +43,18 @@ npm run type-check
 
 # Linting
 npm run lint
+```
+
+### Quality Assurance
+```bash
+# Run all quality checks (used by pre-commit hooks)
+npm run test:run
+npm run lint
+npm run type-check
+npm run build
+
+# Combined quality check
+npm run test:run && npm run lint && npm run type-check && npm run build
 ```
 
 ## 🔄 Git Workflow & Development Process
@@ -629,20 +661,49 @@ interface Props {
 
 ## 🐛 Debugging Tips
 
+### Git-Based Debugging Workflow
+- **Create debug branch**: `git checkout -b debug/investigate-font-loading`
+- **Commit investigation changes**: Document findings with incremental commits
+- **Test fixes incrementally**: One change per commit to isolate what works
+- **Clean up debug work**: Merge successful fixes, discard failed attempts
+
 ### Font Loading Issues
 - Check browser dev tools for CSS loading errors
 - Verify Google Fonts API URLs in `fonts.ts`
 - Test fallback fonts when Google Fonts fail
+- **Debug commits**: Commit each configuration change to track what works
 
 ### State Management
 - Use Vue Devtools to inspect Pinia store
 - Check provide/inject context for font selector states
 - Verify prop flow through component hierarchy
+- **State debugging**: Create temporary logging commits to track state changes
 
 ### SVG Rendering
 - Inspect SVG DOM for correct attribute values
 - Check font-family, font-size, and font-weight attributes
 - Test with different fonts and weights
+- **Visual debugging**: Commit screenshot evidence with each attempted fix
+
+### Iterative Problem Solving
+```bash
+# 1. Create investigation branch
+git checkout -b debug/svg-coordinate-alignment
+
+# 2. Add diagnostic logging
+git add . && git commit -m "debug: add coordinate logging for SVG positioning"
+
+# 3. Test potential fix
+git add . && git commit -m "debug: attempt coordinate system unification"
+
+# 4. Document results
+git add . && git commit -m "debug: fix confirmed - SVG elements now properly positioned"
+
+# 5. Clean up and integrate
+git checkout main
+git merge debug/svg-coordinate-alignment
+git branch -d debug/svg-coordinate-alignment
+```
 
 ## 🔍 Critical Visual Verification Protocol
 
