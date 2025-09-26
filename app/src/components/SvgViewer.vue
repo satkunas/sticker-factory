@@ -1,38 +1,34 @@
 <template>
   <div :class="previewMode ? 'w-full h-full' : 'w-full lg:w-1/2 bg-secondary-50 relative min-h-96 lg:min-h-0'">
-    <!-- SVG Container -->
+    <!-- SVG Viewport Container -->
     <div
       ref="svgContainer"
       :class="[
         'w-full h-full bg-white overflow-hidden relative',
         previewMode
           ? 'rounded border border-secondary-200'
-          : 'rounded-lg border-2 border-dashed border-secondary-300 cursor-move'
+          : 'rounded-lg border-2 border-dashed border-secondary-300'
       ]"
-      @mousedown="handleMouseDown"
-      @mousemove="handleMouseMove"
-      @mouseup="handleMouseUp"
-      @mouseleave="handleMouseLeave"
-      @wheel="handleWheel"
-      @touchstart="handleTouchStart"
-      @touchmove="handleTouchMove"
-      @touchend="handleTouchEnd"
-      @gesturestart="handleGestureStart"
-      @gesturechange="handleGestureChange"
-      @gestureend="handleGestureEnd"
     >
-      <div
-        :class="[
-          'w-full h-full flex items-center justify-center',
-          previewMode ? '' : 'grid-background'
-        ]"
-        :style="previewMode ? {} : {
-          transform: transformString,
-          transformOrigin: 'center center',
-          backgroundSize: `${20 * zoomLevel}px ${20 * zoomLevel}px`
-        }"
+      <!-- Native SVG Viewport with viewBox-based pan/zoom -->
+      <SvgViewport
+        ref="svgViewportRef"
+        :template="template"
+        :previewMode="previewMode"
+        :viewBoxX="viewBoxX"
+        :viewBoxY="viewBoxY"
+        :viewBoxWidth="viewBoxWidth"
+        :view-box-height="viewBoxHeight"
+        @mousedown="handleMouseDown"
+        @mousemove="handleMouseMove"
+        @mouseup="handleMouseUp"
+        @mouseleave="handleMouseLeave"
+        @wheel="handleWheel"
+        @touchstart="handleTouchStart"
+        @touchmove="handleTouchMove"
+        @touchend="handleTouchEnd"
       >
-        <!-- Use extracted SvgCanvas component -->
+        <!-- Template content rendered inside SVG viewport -->
         <SvgCanvas
           ref="svgElementRef"
           :stickerText="stickerText"
@@ -51,9 +47,8 @@
           :svgImageStyles="svgImageStyles"
           :previewMode="previewMode"
         />
-      </div>
+      </SvgViewport>
 
-      <!-- Use extracted ZoomPanControls component -->
       <ZoomPanControls
         :zoomLevel="zoomLevel"
         :panX="panX"
@@ -61,24 +56,41 @@
         :zoomPercentage="Math.round(zoomLevel * 100)"
         :canZoomIn="canZoomIn"
         :canZoomOut="canZoomOut"
+        :minZoom="getMinZoomLevel()"
         :template="template"
         :previewMode="previewMode"
+        :containerDimensions="containerDimensions"
+        :stickerText="stickerText"
+        :textColor="textColor"
+        :font="font"
+        :fontSize="fontSize"
+        :fontWeight="fontWeight"
+        :strokeColor="strokeColor"
+        :strokeWidth="strokeWidth"
+        :strokeOpacity="strokeOpacity"
+        :width="width"
+        :height="height"
+        :textInputs="textInputs"
+        :shapeStyles="shapeStyles"
+        :svgImageStyles="svgImageStyles"
         @zoomIn="zoomIn"
         @zoomOut="zoomOut"
         @zoomChange="setZoom"
         @autoFit="handleAutoFit"
         @resetZoom="resetZoom"
-      />
+      ></ZoomPanControls>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, nextTick, onMounted } from 'vue'
+import { computed, ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import type { FontConfig } from '../config/fonts'
 import type { SimpleTemplate } from '../types/template-types'
-import { useSvgInteraction } from '../composables/useSvgInteraction'
+import { useSvgViewBox } from '../composables/useSvgViewBox'
+import { useSvgDragInteraction } from '../composables/useSvgDragInteraction'
 import SvgCanvas from './SvgCanvas.vue'
+import SvgViewport from './SvgViewport.vue'
 import ZoomPanControls from './ZoomPanControls.vue'
 
 interface Props {
@@ -113,10 +125,13 @@ interface Props {
   }>
   svgImageStyles?: Array<{
     id: string
-    fillColor: string
+    color: string
     strokeColor: string
     strokeWidth: number
     strokeLinejoin: string
+    svgContent?: string
+    rotation: number
+    scale: number
   }>
   previewMode?: boolean
 }
@@ -139,50 +154,104 @@ const props = withDefaults(defineProps<Props>(), {
   previewMode: false
 })
 
-// SVG container ref for auto-fit functionality
+// Component references
 const svgContainer = ref<HTMLElement | null>(null)
+const svgViewportRef = ref<InstanceType<typeof SvgViewport> | null>(null)
+const svgElementRef = ref<InstanceType<typeof SvgCanvas> | null>(null)
 
-// SVG element reference for expose
-const svgElementRef = ref<SVGElement | null>(null)
+// Reactive container dimensions for viewport calculation
+const containerDimensions = ref({ width: 0, height: 0 })
 
-// Convert previewMode to ref for composable
+// Update container dimensions
+const updateContainerDimensions = () => {
+  if (svgContainer.value) {
+    const rect = svgContainer.value.getBoundingClientRect()
+    containerDimensions.value = {
+      width: rect.width,
+      height: rect.height
+    }
+  }
+}
+
+// Convert props to refs for composable
 const previewModeRef = computed(() => props.previewMode)
+const templateRef = computed(() => props.template)
 
-// Initialize SVG interaction composable
-const svgInteraction = useSvgInteraction(previewModeRef)
+// Initialize SVG viewBox composable - replaces CSS transform system
+const svgViewBox = useSvgViewBox(previewModeRef, templateRef, svgContainer)
 
 // Extract state and controls from composable
 const {
-  // State
-  zoomLevel,
-  panX,
-  panY,
-
-  // Computed
-  transformString,
-  canZoomIn,
-  canZoomOut,
-
-  // Event handlers
-  handleMouseDown,
-  handleMouseMove,
-  handleMouseUp,
-  handleMouseLeave,
-  handleWheel,
-  handleTouchStart,
-  handleTouchMove,
-  handleTouchEnd,
-  handleGestureStart,
-  handleGestureChange,
-  handleGestureEnd,
+  // ViewBox state (replaces panX/panY/zoomLevel)
+  viewBoxX,
+  viewBoxY,
+  viewBoxWidth,
+  viewBoxHeight,
 
   // Controls
   zoomIn,
   zoomOut,
   resetZoom,
   setZoom,
-  autoFitTemplate
-} = svgInteraction
+  setPan,
+  handleWheel: handleViewBoxWheel,
+  autoFitTemplate,
+  getZoomLevel,
+  getMinZoomLevel,
+  canZoomIn,
+  canZoomOut,
+  constrainViewBox
+} = svgViewBox
+
+// Computed properties for compatibility with existing components
+const zoomLevel = computed(() => getZoomLevel())
+const panX = computed(() => viewBoxX.value)
+const panY = computed(() => viewBoxY.value)
+
+// SVG drag interaction - replaces CSS coordinate drag system
+const { handleMouseDown: handleSvgMouseDown, handleMouseMove: handleSvgMouseMove, handleMouseUp: handleSvgMouseUp, handleMouseLeave: handleSvgMouseLeave } = useSvgDragInteraction(
+  previewModeRef,
+  setPan,
+  getZoomLevel,
+  constrainViewBox
+)
+
+// Event handler wrappers that pass SVG element to drag handlers
+const handleMouseDown = (e: MouseEvent) => {
+  const svgElement = svgViewportRef.value?.svgViewportRef || null
+  handleSvgMouseDown(e, svgElement)
+}
+
+const handleMouseMove = (e: MouseEvent) => {
+  const svgElement = svgViewportRef.value?.svgViewportRef || null
+  handleSvgMouseMove(e, svgElement)
+}
+
+const handleMouseUp = () => {
+  handleSvgMouseUp()
+}
+
+const handleMouseLeave = () => {
+  handleSvgMouseLeave()
+}
+
+const handleWheel = (e: WheelEvent) => {
+  const svgElement = svgViewportRef.value?.svgViewportRef || null
+  handleViewBoxWheel(e, svgElement)
+}
+
+// Touch event handlers (pass-through for now, can be enhanced later)
+const handleTouchStart = () => {
+  // Touch events for future enhancement
+}
+
+const handleTouchMove = () => {
+  // Touch events for future enhancement
+}
+
+const handleTouchEnd = () => {
+  // Touch events for future enhancement
+}
 
 // Handle auto-fit events from ZoomPanControls
 const handleAutoFit = async () => {
@@ -237,8 +306,21 @@ watch(() => props.template, (newTemplate) => {
   }
 }, { immediate: true })
 
+// Watch for container ref changes and update dimensions
+watch(svgContainer, () => {
+  if (svgContainer.value) {
+    nextTick(() => updateContainerDimensions())
+  }
+})
+
 // Auto-fit on mount for all modes
 onMounted(() => {
+  // Initialize container dimensions
+  updateContainerDimensions()
+
+  // Add window resize listener
+  window.addEventListener('resize', updateContainerDimensions)
+
   // Always auto-fit on mount if we have a template
   if (props.template && svgContainer.value) {
     nextTick(async () => {
@@ -248,6 +330,11 @@ onMounted(() => {
       }
     })
   }
+})
+
+// Clean up resize listener
+onUnmounted(() => {
+  window.removeEventListener('resize', updateContainerDimensions)
 })
 
 // Expose download function and SVG ref for parent component
@@ -274,5 +361,8 @@ defineExpose({
     linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
     linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
   background-size: 20px 20px;
+  /* Red border that zooms and pans with the background grid */
+  border: 6px solid #ef4444;
+  box-sizing: border-box;
 }
 </style>

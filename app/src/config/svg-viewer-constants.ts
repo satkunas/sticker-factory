@@ -16,8 +16,9 @@ export const SVG_VIEWER_CONSTANTS = {
   // Zoom configuration
   ZOOM_CONSTRAINTS: {
     MIN: 0.1,
-    MAX: 5,
+    MAX: 50,
     STEP: 0.1,
+    WHEEL_STEP: 0.5,
     DEFAULT: 1
   },
 

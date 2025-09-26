@@ -2,6 +2,151 @@
 
 A Vue 3 single-page application for creating custom SVG badges and stickers with multiple templates and font styling options.
 
+## 🚨 CRITICAL: NEVER USE HARDCODED VALUES
+
+### ABSOLUTE PROHIBITION ON HARDCODED VALUES
+**NEVER EVER EVER use hardcoded values or percentages in pan, zoom, or SVG calculation logic. ALL calculations MUST be based on actual dimensions, zoom levels, and container measurements.**
+
+#### ❌ FORBIDDEN Patterns:
+```typescript
+// NEVER DO THIS - Hardcoded values
+const maxPanX = 300  // ❌ FORBIDDEN
+const viewportPadding = 120  // ❌ FORBIDDEN
+const zoomConstraint = 0.8  // ❌ FORBIDDEN
+const scaleFactor = 1.2  // ❌ FORBIDDEN
+
+// NEVER DO THIS - Hardcoded percentages
+if (scaledWidth > containerWidth * 0.7) { }  // ❌ FORBIDDEN
+const constraint = availableSpace * 0.9  // ❌ FORBIDDEN
+```
+
+#### ✅ REQUIRED Patterns:
+```typescript
+// ALWAYS DO THIS - Calculate from actual dimensions
+const scaledTemplateWidth = templateSize.width * currentZoom
+const scaledTemplateHeight = templateSize.height * currentZoom
+const availableWidth = containerRect.width - controlsWidth
+const availableHeight = containerRect.height - controlsHeight
+
+// Calculate overflow based on actual content vs container
+const overflowX = Math.max(0, (scaledTemplateWidth - availableWidth) / 2)
+const overflowY = Math.max(0, (scaledTemplateHeight - availableHeight) / 2)
+
+// Calculate background pan based on actual space difference
+const backgroundPanX = Math.max(0, (availableWidth - scaledTemplateWidth) / 2)
+const backgroundPanY = Math.max(0, (availableHeight - scaledTemplateHeight) / 2)
+
+// Use real measurements for constraints
+const maxPanX = Math.max(overflowX, backgroundPanX)
+const minPanX = -maxPanX
+```
+
+#### Pan & Zoom Constraint Requirements:
+1. **Dynamic Calculation**: All constraints MUST be recalculated on every zoom change
+2. **Actual Dimensions**: Use template.viewBox.width/height * zoomLevel for content size
+3. **Real Container Size**: Use containerElement.getBoundingClientRect() for available space
+4. **No Magic Numbers**: Every numeric value MUST be derived from measurements
+5. **Background Grid Access**: Allow panning to edges of background grid without whitespace
+6. **Zoom-Responsive**: Higher zoom = more pan range, lower zoom = less pan range
+
+#### CRITICAL Enforcement Rules:
+- **Code Review**: Any PR with hardcoded values will be immediately rejected
+- **Testing**: All pan/zoom functionality MUST work across zoom levels 0.1x to 10x
+- **Documentation**: All calculation logic MUST include comments explaining the derivation
+- **Debugging**: When debugging, log actual calculated values, never assume reasonableness
+
+#### 🚨 MANDATORY: NO DISGUISED HARDCODED VALUES
+**NEVER use "configurable factors" or "parameters" that are actually hardcoded values in disguise:**
+
+❌ **FORBIDDEN - Disguised Hardcoded Values:**
+```typescript
+// NEVER DO THIS - These are still hardcoded values!
+const DEFAULT_FACTORS = {
+  gridExtensionFactor: 0.6,     // ❌ FORBIDDEN - Still hardcoded
+  panLimitFactor: 1.2,          // ❌ FORBIDDEN - Still hardcoded
+  marginFactor: 0.85            // ❌ FORBIDDEN - Still hardcoded
+}
+
+function calculateConstraints(template, container, factors = DEFAULT_FACTORS) {
+  const constraint = containerWidth * factors.gridExtensionFactor  // ❌ FORBIDDEN
+}
+```
+
+✅ **REQUIRED - Measured Values Only:**
+```typescript
+// ALWAYS DO THIS - Calculate from actual measurements
+function calculateConstraints(template, container, zoomLevel) {
+  // Calculate based on actual container size
+  const gridVisibilitySpace = containerWidth / 2
+  const contentOverflow = Math.max(0, (scaledWidth - containerWidth) / 2)
+  const constraintSpace = Math.max(contentOverflow, gridVisibilitySpace)
+}
+```
+
+#### 🚨 MANDATORY: VISUAL VERIFICATION PROTOCOL
+**NEVER EVER make changes to SVG utilities, pan/zoom logic, or UI components without explicit user verification:**
+
+❌ **FORBIDDEN - Assuming Changes Work:**
+```typescript
+// Changed pan constraint calculation
+// (continues without asking user to verify)
+```
+
+✅ **REQUIRED - Always Request Manual Testing:**
+```typescript
+// Changed pan constraint calculation
+//
+// 🚨 CRITICAL: Manual User Verification Required
+// Please test the following zoom levels and confirm:
+// - 25% zoom: Test panning in all directions
+// - 100% zoom: Test panning in all directions
+// - 200% zoom: Test panning in all directions
+// - 400% zoom: Test panning in all directions
+//
+// Please respond with ✅ PASS, ❌ FAIL, or 🤔 PARTIAL
+```
+
+**WHEN Manual Verification is MANDATORY:**
+- ANY modification to `src/utils/svg.ts`, `src/utils/pan-constraints.ts`
+- ANY changes to `src/composables/useZoomPan.ts`, `src/composables/useDragInteraction.ts`, `src/composables/useSvgInteraction.ts`
+- ANY updates to `src/components/SvgViewer.vue`, `src/components/SvgCanvas.vue`, `src/components/ZoomPanControls.vue`
+- Template system modifications affecting positioning or rendering
+- Pan/zoom constraint changes or mathematical calculations
+- Visual layout adjustments affecting user interaction
+
+### Examples of Correct Implementation:
+```typescript
+// ✅ CORRECT: Pan constraint calculation
+const calculatePanConstraints = (template, container, zoom) => {
+  // Get actual template dimensions at current zoom
+  const scaledWidth = template.viewBox.width * zoom
+  const scaledHeight = template.viewBox.height * zoom
+
+  // Get actual container dimensions (measured, not assumed)
+  const containerRect = container.getBoundingClientRect()
+  const availableWidth = containerRect.width - MEASURED_CONTROLS_WIDTH
+  const availableHeight = containerRect.height - MEASURED_CONTROLS_HEIGHT
+
+  // Calculate actual overflow (content larger than container)
+  const overflowX = Math.max(0, (scaledWidth - availableWidth) / 2)
+  const overflowY = Math.max(0, (scaledHeight - availableHeight) / 2)
+
+  // Calculate background access (container larger than content)
+  const backgroundX = Math.max(0, (availableWidth - scaledWidth) / 2)
+  const backgroundY = Math.max(0, (availableHeight - scaledHeight) / 2)
+
+  // Use the larger constraint to allow proper panning
+  return {
+    maxX: Math.max(overflowX, backgroundX),
+    minX: -Math.max(overflowX, backgroundX),
+    maxY: Math.max(overflowY, backgroundY),
+    minY: -Math.max(overflowY, backgroundY)
+  }
+}
+```
+
+---
+
 ## Project Structure
 
 ```
@@ -11,6 +156,10 @@ sticker-factory/
 │   │   ├── stores/         # Pinia store for state management
 │   │   │   └── index.ts    # Main store with localStorage integration
 │   │   ├── components/     # Vue components
+│   │   ├── composables/    # Vue 3 composables for reusable logic
+│   │   │   ├── useZoomPan.ts        # Zoom/pan state management (NO HARDCODED VALUES!)
+│   │   │   ├── useDragInteraction.ts # Mouse drag handling (CALCULATED CONSTRAINTS!)
+│   │   │   └── useSvgInteraction.ts  # Combined SVG interactions
 │   │   ├── utils/          # Pure TypeScript utilities
 │   │   │   └── svg.ts      # SVG calculation and processing utilities
 │   │   ├── config/         # Configuration files
@@ -34,6 +183,236 @@ sticker-factory/
 └── .eslintrc.js           # ESLint configuration
 ```
 
+## 🧠 Memory-Bank MCP Server Integration
+
+Claude has access to a memory-bank MCP server that stores comprehensive project documentation and development patterns. This provides persistent context across sessions.
+
+### Available Documentation
+The memory-bank contains detailed reference documentation for:
+- **Font System Reference** - Current implementation status, configuration patterns
+- **Template System Reference** - Template architecture and processing patterns
+- **Development Workflow** - Git strategies, commit patterns, quality assurance
+- **Font Management Strategy** - Font loading, caching, and optimization patterns
+- **Template Storage Strategy** - Template processing and state management
+- **Project Overview** - High-level architecture and component relationships
+
+### Using Memory-Bank for Development
+```bash
+# Claude can access stored documentation via MCP tools:
+# - mcp__memory-bank__list_projects
+# - mcp__memory-bank__list_project_files
+# - mcp__memory-bank__memory_bank_read
+# - mcp__memory-bank__memory_bank_write
+# - mcp__memory-bank__memory_bank_update
+```
+
+### Memory-Bank Guidelines for Claude
+
+#### When to Reference Memory-Bank
+- **New session starts** - Load project context and current implementation status
+- **Complex feature development** - Review architecture patterns and best practices
+- **Bug investigation** - Check known patterns and previous solutions
+- **Code refactoring** - Verify existing patterns before making changes
+- **Quality assurance** - Reference testing and validation requirements
+
+#### What's Stored in Memory-Bank
+- **Current Implementation Status** - Up-to-date state of major features
+- **Development Patterns** - Proven approaches for this specific codebase
+- **Testing Requirements** - Quality standards and validation procedures
+- **Architecture Decisions** - Component design and integration patterns
+- **Performance Guidelines** - Optimization strategies specific to this application
+
+#### Memory-Bank vs CLAUDE.md
+- **Memory-Bank**: Detailed technical reference, implementation patterns, current status
+- **CLAUDE.md**: Development workflow, commands, debugging procedures, general guidelines
+
+#### Updating Memory-Bank Documentation
+When significant changes are made to the project:
+1. **Update relevant memory-bank files** with new implementation details
+2. **Document new patterns** for future development reference
+3. **Update status information** to reflect current capabilities
+4. **Add lessons learned** from complex implementations
+
+### Memory-Bank Project Structure
+```
+sticker-factory/
+├── development-workflow.md      # Git workflow, commit strategy, QA commands
+├── font-management-strategy.md  # Font loading, caching, optimization patterns
+├── font-system-reference.md     # Current font implementation status
+├── project-overview.md          # High-level architecture overview
+├── template-storage-strategy.md # Template processing and state management
+└── template-system-reference.md # Template implementation details
+```
+
+### Integration Benefits
+- **Session Continuity** - Maintain context across multiple development sessions
+- **Pattern Consistency** - Apply proven patterns from previous successful implementations
+- **Quality Maintenance** - Reference established standards and requirements
+- **Efficient Onboarding** - Quick context loading for complex development tasks
+
+## 🛠️ Development Commands
+
+### Git Workflow Commands
+```bash
+# Start new feature work
+git checkout main && git pull origin main
+git checkout -b feature/your-feature-name
+git push -u origin feature/your-feature-name
+
+# Make incremental commits during development
+git add .
+git commit -m "feat: descriptive commit message"
+git push origin feature/your-feature-name
+
+# Integration and cleanup
+git checkout main && git pull origin main
+git checkout feature/your-feature-name && git rebase main
+npm run test:run && npm run lint && npm run build
+git checkout main && git merge feature/your-feature-name
+git push origin main && git branch -d feature/your-feature-name
+```
+
+### Running the Application
+
+#### ⚠️ IMPORTANT: Single Dev Server Policy
+**CRITICAL: Only run ONE development server at a time to avoid port conflicts and ensure both Claude and user reference the same instance.**
+
+Before starting a new dev server:
+```bash
+# Kill any existing dev servers
+pkill -f "vite|npm.*dev"
+# Or check for running processes
+lsof -i :3000
+```
+
+#### Development Commands
+```bash
+# Start development server (ONLY ONE AT A TIME)
+npm run dev
+
+# Start development server and open browser
+make dev
+
+# Install dependencies
+make install
+
+# Build for production
+npm run build
+
+# Type checking
+npm run type-check
+
+# Linting
+npm run lint
+```
+
+#### Dev Server Management
+- **Default Port**: http://localhost:3000
+- **Always verify**: Only ONE server is running before starting development
+- **If port conflict**: Kill existing processes or use different port
+- **Claude Usage**: Always check existing servers before starting new ones
+- **User Coordination**: Confirm which server instance is being used for testing
+
+### Quality Assurance
+```bash
+# Run all quality checks (used by pre-commit hooks)
+npm run test:run
+npm run lint
+npm run type-check
+npm run build
+
+# Combined quality check
+npm run test:run && npm run lint && npm run type-check && npm run build
+```
+
+## 🔄 Git Workflow & Development Process
+
+### Core Development Principles
+- **Always create feature branches** for any development work
+- **Never work directly on main branch**
+- **One logical change per commit** with descriptive messages
+- **Incremental commits** as you progress through implementation
+- **Regular integration** with main branch to avoid conflicts
+
+### 📋 Feature Branch Development
+
+#### Branch Creation and Naming
+```bash
+# Always start from main branch
+git checkout main
+git pull origin main
+
+# Create feature branch with descriptive name
+git checkout -b feature/add-svg-image-support
+git checkout -b fix/coordinate-system-alignment
+git checkout -b refactor/template-loading-performance
+git checkout -b docs/update-development-workflow
+
+# Push branch to remote immediately
+git push -u origin feature/add-svg-image-support
+```
+
+#### Branch Naming Conventions
+- `feature/` - New functionality or enhancements
+- `fix/` - Bug fixes and corrections
+- `refactor/` - Code improvements without behavior changes
+- `docs/` - Documentation updates
+- `test/` - Test additions or improvements
+- `chore/` - Maintenance tasks (dependencies, config, etc.)
+
+### 🏗️ Incremental Commit Strategy
+
+#### Step-by-Step Development Workflow
+```bash
+# 1. Plan your work (create todo list, identify steps)
+# 2. Start with basic structure/scaffolding
+git add .
+git commit -m "feat: add basic SVG image component structure
+
+- Create ExpandableSvgSelector.vue component shell
+- Add SvgLibraryItem interface definition
+- Set up basic template structure with search input
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+
+# 3. Implement core functionality piece by piece
+git add src/components/ExpandableSvgSelector.vue
+git commit -m "feat: implement SVG library loading and filtering
+
+- Add loadSvgLibrary() integration
+- Implement search functionality with real-time filtering
+- Add category-based filtering with preset buttons
+- Display loading states and empty states
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+
+# Continue with incremental commits...
+```
+
+#### Commit Message Format
+```
+<type>: <description>
+
+<detailed explanation if needed>
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+**Commit Types:**
+- `feat:` - New features or functionality
+- `fix:` - Bug fixes
+- `refactor:` - Code refactoring without behavior changes
+- `test:` - Adding or updating tests
+- `docs:` - Documentation changes
+- `style:` - Code style changes (formatting, etc.)
+- `chore:` - Maintenance tasks
+
 ## SVG Utilities Library
 
 ### Overview
@@ -42,6 +421,7 @@ The project features a comprehensive SVG utilities library (`src/utils/svg.ts`) 
 ### Architecture Principles
 - **Pure TypeScript Functions**: No Vue reactivity (refs, computed, onMount) or framework dependencies
 - **Mathematical Precision**: Accurate calculations for zoom, pan, scale, and coordinate transformations
+- **NO HARDCODED VALUES**: All calculations derived from actual measurements
 - **Comprehensive Testing**: 85+ unit tests with 100% code coverage using Vitest
 - **JSDoc Documentation**: Full documentation for all functions with parameters and return types
 - **Type Safety**: Complete TypeScript interfaces and type definitions
@@ -86,115 +466,6 @@ combineTransforms(transforms: string[]): string
 parseTransformString(transform: string): TransformComponents
 ```
 
-#### 3. Coordinate Conversion (`src/utils/svg.ts:130-185`)
-Coordinate system conversion utilities supporting percentage and absolute positioning:
-
-```typescript
-// Convert percentage coordinates to absolute pixels with viewBox support
-resolvePercentageCoords(coords: PercentageCoords, viewBox: ViewBox): Point
-
-// Convert screen coordinates to SVG coordinates (supports rotation, scaling, translation)
-convertScreenToSvg(screenPoint: Point, transform: Transform, viewBox: ViewBox): Point
-
-// Convert SVG coordinates to screen coordinates (supports rotation, scaling, translation)
-convertSvgToScreen(svgPoint: Point, transform: Transform, viewBox: ViewBox): Point
-
-// Calculate center point for given dimensions
-calculateCenterPoint(width: number, height: number): Point
-```
-
-#### 4. Event Data Processing (`src/utils/svg.ts:187-245`)
-Event processing utilities for user interactions:
-
-```typescript
-// Process wheel event data for zoom/pan operations
-processWheelEvent(event: WheelEvent): WheelEventData
-
-// Process touch event data for gesture recognition
-processTouchEvent(event: TouchEvent): TouchEventData
-
-// Process gesture event data (pinch, rotate)
-processGestureEvent(event: Event): GestureEventData
-
-// Normalize event coordinates across different input types
-normalizeEventCoordinates(event: Event): Point
-```
-
-#### 5. SVG Content Analysis (`src/utils/svg.ts:247-295`)
-SVG content validation and analysis utilities:
-
-```typescript
-// Get SVG content dimensions
-getSvgDimensions(svgContent: string): Dimensions
-
-// Validate SVG content structure and security
-validateSvgContent(svgContent: string): ValidationResult
-
-// Extract SVG bounding box information
-getSvgBoundingBox(svgElement: SVGElement): BoundingBox
-
-// Analyze SVG complexity for performance optimization
-analyzeSvgComplexity(svgContent: string): ComplexityAnalysis
-```
-
-#### 6. Geometry Calculations (`src/utils/svg.ts:297-340`)
-Geometric calculation utilities for spatial operations:
-
-```typescript
-// Calculate bounding box for multiple points
-calculateBoundingBox(points: Point[]): BoundingBox
-
-// Check if point is inside bounding box
-isPointInBoundingBox(point: Point, bbox: BoundingBox): boolean
-
-// Calculate intersection of two bounding boxes
-getBoundingBoxIntersection(bbox1: BoundingBox, bbox2: BoundingBox): BoundingBox | null
-
-// Calculate centroid of multiple points
-calculateCentroid(points: Point[]): Point
-```
-
-### Key Interfaces and Types
-
-```typescript
-interface Point {
-  x: number;
-  y: number;
-}
-
-interface Dimensions {
-  width: number;
-  height: number;
-}
-
-interface ViewBox {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-interface BoundingBox {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-interface TransformComponents {
-  zoom: number;
-  panX: number;
-  panY: number;
-}
-
-interface WheelEventData {
-  deltaX: number;
-  deltaY: number;
-  isTrackpad: boolean;
-  point: Point;
-}
-```
-
 ### Constants and Configuration
 
 ```typescript
@@ -227,107 +498,6 @@ npm test src/test/svg.test.ts
 # Run tests with coverage report
 npm run test:coverage
 ```
-
-#### Test Structure
-```typescript
-// Example test structure (src/test/svg.test.ts)
-describe('SVG Utilities', () => {
-  describe('Mathematical Calculations', () => {
-    describe('calculateZoomLevel', () => {
-      it('should zoom in with positive delta', () => {
-        const result = calculateZoomLevel(1.0, 0.2, false);
-        expect(result).toBe(1.2);
-      });
-    });
-  });
-});
-```
-
-### Development Workflow
-
-#### Adding New SVG Utilities
-1. **Function Development**: Add pure TypeScript function to appropriate category in `src/utils/svg.ts`
-2. **Documentation**: Add comprehensive JSDoc with parameters, return types, and examples
-3. **Type Safety**: Define or update TypeScript interfaces as needed
-4. **Testing**: Write comprehensive tests in `src/test/svg.test.ts`
-5. **Integration**: Update components to use new utilities
-6. **Validation**: Run full test suite and verify coverage
-
-#### Component Integration Pattern
-```typescript
-// Recommended import pattern in Vue components
-import {
-  calculateZoomLevel,
-  generateTransformString,
-  processWheelEvent
-} from '@/utils/svg';
-
-// Usage in component methods
-const handleZoom = (delta: number) => {
-  const newZoom = calculateZoomLevel(currentZoom.value, delta);
-  const transform = generateTransformString(newZoom, panX.value, panY.value);
-  // Apply transform to SVG element
-};
-```
-
-### Maintenance Guidelines
-
-#### Code Quality Standards
-- **Pure Functions**: No side effects, same input = same output
-- **Error Handling**: Graceful handling of invalid inputs with fallbacks
-- **Performance**: Optimized for real-time SVG operations
-- **Documentation**: JSDoc for all public functions
-- **Testing**: Maintain 95%+ test coverage
-
-#### Security Considerations
-- **Input Validation**: All coordinate and dimension inputs validated
-- **Range Constraints**: Zoom and scale values bounded within safe limits
-- **SVG Sanitization**: SVG content validated before processing
-- **Type Safety**: TypeScript enforcement prevents runtime errors
-
-#### Performance Guidelines
-- **Efficient Algorithms**: Use optimized mathematical calculations
-- **Minimal Allocations**: Reuse objects where possible
-- **Caching Strategy**: Cache expensive calculations when appropriate
-- **Lazy Evaluation**: Defer calculations until needed
-
-### Migration from Component Logic
-
-When SVG-related logic exists in Vue components, follow this migration pattern:
-
-```typescript
-// Before: Direct calculation in component
-const zoomIn = () => {
-  zoomLevel.value = Math.min(zoomLevel.value * 1.2, 5);
-};
-
-// After: Using SVG utilities
-import { calculateZoomLevel, SVG_CONSTANTS } from '@/utils/svg';
-
-const zoomIn = () => {
-  zoomLevel.value = calculateZoomLevel(
-    zoomLevel.value,
-    SVG_CONSTANTS.WHEEL_ZOOM_STEP,
-    false
-  );
-};
-```
-
-### Future Enhancements
-
-#### Planned Features
-- **Animation Utilities**: Smooth transitions for zoom/pan operations
-- **Path Calculations**: Advanced SVG path manipulation utilities
-- **Collision Detection**: Geometric intersection and overlap detection
-- **SVG Optimization**: Content optimization and compression utilities
-
-#### Extension Points
-- **Custom Transforms**: Additional transformation utility functions
-- **Advanced Gestures**: Multi-touch and complex gesture recognition
-- **Performance Profiling**: Built-in performance measurement tools
-- **WebGL Integration**: Hardware-accelerated SVG operations
-
----
 
 ## Technology Stack
 
@@ -476,115 +646,6 @@ position: { x: "25%", y: "75%" }    # Quarter from left, three-quarters down
 position: { x: "-10%", y: "110%" }  # Outside viewBox boundaries
 ```
 
-**Percentage Reference System:**
-- `"0%"` = Left edge / Top edge of viewBox
-- `"50%"` = Horizontal center / Vertical center
-- `"100%"` = Right edge / Bottom edge of viewBox
-- `"-25%"` = 25% outside left/top boundary
-- `"150%"` = 50% beyond right/bottom boundary
-
-#### Absolute Coordinates (Legacy)
-
-Traditional pixel-based positioning (fully backward compatible):
-
-```yaml
-position: { x: 200, y: 150 }        # Absolute pixel coordinates
-```
-
-#### Mixed Coordinate Systems
-
-Combine percentage and absolute coordinates as needed:
-
-```yaml
-position: { x: "50%", y: 30 }       # Centered horizontally, 30px from top
-position: { x: 100, y: "75%" }      # 100px from left, three-quarters down
-```
-
-#### Shape Positioning
-- **Circles**: `position: {x: "50%", y: "50%"}` → Center of viewBox
-- **Rectangles**: `position: {x: "25%", y: "25%"}` → Shape center at quarter point
-- **Polygons**: `position: {x: "50%", y: "50%"}` → Polygon center reference
-
-#### Text Positioning
-All text uses `text-anchor="middle"` and `dominant-baseline="central"`:
-- `position: {x: "50%", y: "50%"}` → Text center at viewBox center
-- Percentage coordinates are automatically resolved to absolute pixels during rendering
-
-#### Template Examples
-
-**Circle Template with Percentage Coordinates:**
-```yaml
-layers:
-  - id: "background"
-    type: "shape"
-    subtype: "circle"
-    position: { x: "50%", y: "50%" }    # Center of viewBox
-    width: 200
-    height: 200
-    fill: "#3b82f6"
-
-  - id: "title"
-    type: "text"
-    position: { x: "50%", y: "50%" }    # Same center as circle
-    default: "My Badge"
-    fontFamily: "Roboto"
-    fontSize: 18
-```
-
-**Rectangle Template with Percentage Layout:**
-```yaml
-layers:
-  - id: "background"
-    type: "shape"
-    subtype: "rect"
-    position: { x: "50%", y: "50%" }    # Centered rectangle
-    width: 400
-    height: 200
-    fill: "#f8fafc"
-
-  - id: "header"
-    type: "text"
-    position: { x: "50%", y: "25%" }    # Top quarter
-    default: "Header Text"
-
-  - id: "body"
-    type: "text"
-    position: { x: "50%", y: "50%" }    # Center
-    default: "Body Text"
-
-  - id: "footer"
-    type: "text"
-    position: { x: "50%", y: "75%" }    # Bottom quarter
-    default: "Footer Text"
-```
-
-### Template Development Workflow
-
-1. **Design Layout**: Plan shape and text positions using percentage coordinates for responsive design
-2. **Use Percentage Coordinates** (Recommended):
-   - `{ x: "50%", y: "50%" }` for center positioning
-   - `{ x: "25%", y: "25%" }` for quarter positions
-   - `{ x: "0%", y: "100%" }` for corners
-3. **Shape Positioning**: All shapes are positioned by their center point
-4. **Text Positioning**: Use same or calculated percentage coordinates for text
-5. **Test in Browser**: Verify text appears centered within shapes
-6. **Fine-tune**: Adjust percentages for visual balance (e.g., `"52%"` instead of `"50%"`)
-
-#### Percentage Coordinate Benefits
-- **Intuitive**: `"50%"` always means center regardless of viewBox size
-- **Responsive**: Templates automatically adapt to different dimensions
-- **Consistent**: No manual center calculations needed
-- **Maintainable**: Easy to understand and modify coordinates
-
-#### Migration from Absolute Coordinates
-```yaml
-# Old absolute coordinates
-position: { x: 250, y: 150 }  # Hard to understand without context
-
-# New percentage coordinates
-position: { x: "50%", y: "50%" }  # Immediately clear this is centered
-```
-
 ## State Management
 
 ### Store Architecture
@@ -648,7 +709,7 @@ interface ShapeStyleState {
 - **TextInputWithFontSelector.vue** - Individual text input with styling
 - **ExpandableFontSelector.vue** - Font selection accordion
 - **TemplateObjectStyler.vue** - Shape styling with expandable controls
-- **TemplateAwareSvgViewer.vue** - SVG rendering engine
+- **SvgViewer.vue** - SVG rendering engine with pan/zoom (NO HARDCODED CONSTRAINTS!)
 - **ExportModal.vue** - Export/download functionality
 
 ### Component Communication
@@ -656,42 +717,377 @@ interface ShapeStyleState {
 - **Provide/Inject** for font selector state management
 - **Store** for global state and persistence
 
-## Tailwind CSS Configuration
+## 🏗️ Architecture Overview
 
-### Custom Design System
-- **Primary Colors**: Green-based palette (50-950)
-- **Secondary Colors**: Gray-based palette (50-950)
-
-### Custom Components
-```css
-.btn-primary     /* Primary action buttons */
-.btn-secondary   /* Secondary action buttons */
-.input-field     /* Form input fields */
-.card           /* Card containers */
-.text-gradient  /* Gradient text effect */
+### Component Hierarchy
+```
+App.vue
+├── SimpleTemplateSelector.vue
+├── TextInputWithFontSelector.vue (multiple instances)
+│   └── ExpandableFontSelector.vue
+│       └── FontTile.vue
+├── SvgViewer.vue (with dynamic pan/zoom constraints)
+├── ColorPicker.vue
+├── ExportModal.vue
+├── ImportModal.vue
+└── DownloadModal.vue
 ```
 
-### Responsive Design
-- Mobile-first approach with Tailwind breakpoints
-- `sm:` (640px+), `md:` (768px+), `lg:` (1024px+), `xl:` (1280px+)
+### State Management
+- **Pinia-style store** (`src/stores/index.ts`) for global state with localStorage persistence
+- **Multi-text input system** with individual styling per text input
+- **Template persistence** with automatic restoration on page load
+- **Provide/Inject** for expandable font selector states
+- **Props/Emit** pattern for component communication
+- **localStorage persistence** for all form values, templates, and text input arrays
 
-## Development Notes
+### Key Data Flow
+1. User selects template → `SimpleTemplateSelector` → App updates `selectedTemplate`
+2. Template selection triggers `store.initializeTextInputsFromTemplate()` → creates `textInputs[]` array
+3. Dynamic form generation: App renders multiple `TextInputWithFontSelector` instances
+4. Each text input manages its own: font, size, weight, color, stroke properties
+5. User interactions update specific `textInputs[index]` via `store.updateTextInput()`
+6. `SvgViewer` receives `textInputs` array and renders each with individual styling
+7. Template and form data automatically persist to localStorage
 
-### Performance Optimizations
-- **Lazy Font Loading** - fonts loaded only when selected
-- **Component Optimization** with computed properties
-- **Minimal Re-renders** with reactive optimizations
+## 🎯 Template System Architecture
 
-### Browser Compatibility
-- Modern browsers with ES6+ support
-- SVG support required for badge rendering
-- LocalStorage required for persistence
+### Flattened Layers Structure
+```yaml
+# New unified template format (app/templates/*.yaml)
+name: "Square - Three Sections"
+id: "square-3"
+description: "Square with three horizontal sections"
+category: "square"
+layers:
+  - id: "background"
+    type: "shape"
+    subtype: "rect"
+    position: { x: 50, y: 50 }
+    width: 200
+    height: 200
+    stroke: "#ea580c"
+    strokeWidth: 2
+    fill: "#f97316"
+    zIndex: 1
+  - id: "header"
+    type: "textInput"
+    label: "Header"
+    position: { x: 50, y: 25 }
+    maxLength: 10
+    zIndex: 10
+```
 
-### Project Configuration
-- **TypeScript** strict mode enabled
-- **Vite** for fast development and building
-- **ESLint** with Vue 3 + TypeScript rules
-- **PostCSS** with Autoprefixer
+### Template Processing Pipeline
+```typescript
+// 1. YAML Template → SimpleTemplate (processed for rendering)
+const template = await loadTemplate('square-3')
+
+// 2. Extract text inputs from template
+const textInputs = getTemplateTextInputs(template)
+
+// 3. Initialize state for each text input
+await store.initializeTextInputsFromTemplate(template)
+
+// 4. Render ordered elements (shapes + text with proper zIndex)
+const elements = getTemplateElements(template)
+elements.sort((a, b) => a.zIndex - b.zIndex)
+```
+
+## 🐛 Debugging Tips
+
+### Git-Based Debugging Workflow
+- **Create debug branch**: `git checkout -b debug/investigate-font-loading`
+- **Commit investigation changes**: Document findings with incremental commits
+- **Test fixes incrementally**: One change per commit to isolate what works
+- **Clean up debug work**: Merge successful fixes, discard failed attempts
+
+### Font Loading Issues
+- Check browser dev tools for CSS loading errors
+- Verify Google Fonts API URLs in `fonts.ts`
+- Test fallback fonts when Google Fonts fail
+- **Debug commits**: Commit each configuration change to track what works
+
+### State Management
+- Use Vue Devtools to inspect Pinia store
+- Check provide/inject context for font selector states
+- Verify prop flow through component hierarchy
+- **State debugging**: Create temporary logging commits to track state changes
+
+### SVG Rendering
+- Inspect SVG DOM for correct attribute values
+- Check font-family, font-size, and font-weight attributes
+- Test with different fonts and weights
+- **Visual debugging**: Commit screenshot evidence with each attempted fix
+
+### Pan/Zoom Debugging
+- **NEVER assume**: Log all calculated constraint values
+- **Test extreme cases**: 0.1x zoom, 10x zoom, tiny/huge templates
+- **Verify measurements**: Use getBoundingClientRect() to confirm dimensions
+- **Visual validation**: Take screenshots to confirm constraint behavior
+
+## 🔍 Critical Visual Verification Protocol
+
+### 🚨 MANDATORY: Manual User Verification for SVG/UI Changes
+**ALL changes to SVG utilities, composables, or UI components MUST receive manual user confirmation before proceeding.**
+
+#### When Manual Verification is Required:
+- **Any modification to** `src/utils/svg.ts`, `src/utils/pan-constraints.ts`
+- **Any changes to** `src/composables/useZoomPan.ts`, `src/composables/useDragInteraction.ts`, `src/composables/useSvgInteraction.ts`
+- **Any updates to** `src/components/SvgViewer.vue`, `src/components/SvgCanvas.vue`, `src/components/ZoomPanControls.vue`
+- **Template system modifications** affecting positioning or rendering
+- **Pan/zoom constraint changes** or mathematical calculations
+- **Visual layout adjustments** affecting user interaction
+
+#### Required User Testing Protocol:
+
+**Step 1: Zoom Level Testing**
+*"Please test the following zoom levels and confirm each works correctly:"*
+- **25% zoom:** Click zoom out repeatedly or drag slider to 0.25
+- **50% zoom:** Drag slider to 0.5 or use controls to reach 50%
+- **100% zoom:** Click reset zoom button or drag slider to 1.0
+- **200% zoom:** Click zoom in repeatedly or drag slider to 2.0
+- **300% zoom:** Continue zooming in to maximum comfortable level
+
+**Step 2: Pan Testing at Each Zoom Level**
+*"At each zoom level, please test panning in all directions:"*
+- **Drag left:** Click and drag the SVG template as far left as possible
+- **Drag right:** Click and drag the SVG template as far right as possible
+- **Drag up:** Click and drag the SVG template as far up as possible
+- **Drag down:** Click and drag the SVG template as far down as possible
+- **Diagonal panning:** Try dragging to corners (top-left, top-right, bottom-left, bottom-right)
+
+**Step 3: Background Grid Access Verification**
+*"Please confirm you can access the background grid edges:"*
+- **At 25% zoom:** "Can you see plenty of background grid around the small template?"
+- **At 50% zoom:** "Can you drag far enough to see background grid edges in all directions?"
+- **At 100% zoom:** "Does panning allow you to explore the full background area?"
+- **At 200%+ zoom:** "Can you pan to see background grid despite the large template size?"
+
+**Step 4: Visual Quality Check**
+*"Please examine the visual behavior:"*
+- **Smooth dragging:** "Does dragging feel smooth without jumping or sticking?"
+- **No excessive whitespace:** "When you drag to edges, do you see appropriate background grid (not too much empty space)?"
+- **Zoom responsiveness:** "Do the pan limits feel appropriate at different zoom levels?"
+- **Template visibility:** "Is the template always accessible and not lost off-screen?"
+
+**Step 5: User Feedback Collection**
+*"Please respond with:"*
+- **✅ PASS** - "All zoom levels and panning work as expected"
+- **❌ FAIL** - "Issue found: [describe specific problem and zoom level]"
+- **🤔 PARTIAL** - "Mostly works but [describe specific concern]"
+
+#### Claude Protocol:
+1. **NEVER proceed** without explicit user testing feedback
+2. **WAIT for user response** before making additional changes
+3. **ASK specific questions** about zoom levels and panning behavior
+4. **PROVIDE clear instructions** for what to click, drag, and test
+5. **REQUEST screenshots** if user reports issues
+6. **ITERATE based on feedback** until user confirms ✅ PASS
+
+### 📏 Enhanced SVG Analysis Methods
+
+#### CRITICAL: Screenshots Miss Subtle Changes
+**Screenshots alone are insufficient for precise SVG positioning and sizing verification.**
+
+#### Required Multi-Method Analysis:
+1. **Console Debug Output**: Add temporary console.log statements to log actual calculated values
+   ```javascript
+   console.log('Pan Constraints:', {
+     scaledTemplateWidth, scaledTemplateHeight,
+     viewportWidth, viewportHeight,
+     overflowX, overflowY,
+     backgroundPanX, backgroundPanY,
+     maxPanX, minPanX, maxPanY, minPanY,
+     zoomLevel: currentZoom
+   });
+   ```
+
+2. **Browser Dev Tools Measurement**: Use element inspector to measure exact pixel dimensions
+   - Right-click elements → Inspect Element
+   - Check computed CSS width/height values
+   - Compare measurements at different zoom levels
+
+3. **Multi-State Comparison**: Test at extreme zoom levels to make differences obvious
+   - 25% zoom (should show large viewport rectangle)
+   - 100% zoom (baseline)
+   - 400% zoom (should show very small viewport rectangle)
+   - Document exact pixel measurements for each state
+
+4. **User Feedback Verification**: Always ask user to confirm specific behaviors
+   - "Can you pan to the edges of the background grid?"
+   - "Does panning work differently at high vs low zoom levels?"
+   - Never assume visual correctness from screenshots alone
+
+## 🎨 Design Patterns
+
+### Multi-Text Form Pattern
+```vue
+<!-- Dynamic form generation based on template -->
+<div v-for="(textInput, index) in textInputs" :key="textInput.id" class="space-y-2">
+  <FormLabel :text="`${getTextInputLabel(template, textInput.id)} ${textInputs.length > 1 ? '(' + (index + 1) + ')' : ''}`" />
+  <TextInputWithFontSelector
+    :model-value="textInput.text"
+    :selected-font="textInput.font"
+    :font-size="textInput.fontSize"
+    :font-weight="textInput.fontWeight"
+    :text-color="textInput.textColor"
+    :text-stroke-width="textInput.strokeWidth"
+    :text-stroke-color="textInput.strokeColor"
+    :instance-id="`textInput-${index}`"
+    @update:model-value="(text) => handleTextInputUpdate(index, text)"
+    @update:selected-font="(font) => handleTextInputFontUpdate(index, font)"
+    @update:font-size="(size) => handleTextInputFontSizeUpdate(index, size)"
+    @update:font-weight="(weight) => handleTextInputFontWeightUpdate(index, weight)"
+    @update:text-color="(color) => handleTextInputTextColorUpdate(index, color)"
+    @update:text-stroke-width="(width) => handleTextInputStrokeWidthUpdate(index, width)"
+    @update:text-stroke-color="(color) => handleTextInputStrokeColorUpdate(index, color)"
+  />
+</div>
+
+<!-- Fallback for backward compatibility -->
+<div v-if="(!textInputs || textInputs.length === 0) && selectedTemplate">
+  <!-- Legacy single text input -->
+</div>
+```
+
+## 💾 Local Storage Persistence
+
+### Persistent State Management
+- **All form values** automatically saved to localStorage on change
+- **Restored on page reload** - seamless user experience
+- **Version-aware storage** with migration support
+- **Mutation-safe operations** with write queue system
+
+### Storage Features
+- **Automatic persistence** - No manual save/load needed
+- **Error recovery** - Graceful fallback to defaults
+- **Import/Export** - JSON format for backup/sharing
+- **Cache optimization** - Load-on-demand pattern
+- **Write queuing** - Prevents localStorage corruption
+
+## 🎯 Component APIs
+
+### TextInputWithFontSelector Props
+```typescript
+interface Props {
+  modelValue: string
+  placeholder?: string
+  selectedFont?: FontConfig | null
+  textColor?: string
+  fontSize?: number
+  fontWeight?: number
+  instanceId?: string
+}
+```
+
+### SvgViewer Props
+```typescript
+interface Props {
+  template?: SimpleTemplate | null
+  textInputs?: Array<TextInputState>
+  shapeStyles?: Array<ShapeStyleState>
+  previewMode?: boolean
+}
+```
+
+## 📋 Testing Strategy
+
+### Manual Testing Checklist
+
+#### Pan/Zoom System (CRITICAL)
+- [ ] Pan works at 0.1x zoom level (minimum)
+- [ ] Pan works at 10x zoom level (maximum)
+- [ ] Pan constraints adjust dynamically with zoom changes
+- [ ] Can pan to edges of background grid at all zoom levels
+- [ ] No excessive whitespace visible when panning
+- [ ] Smooth drag interaction without jumping or sticking
+- [ ] Zoom controls update pan constraints immediately
+
+#### Template System
+- [ ] Template selection saves to localStorage and restores on reload
+- [ ] Dynamic form generation works for templates with multiple text inputs
+- [ ] Template switching properly initializes new textInputs array
+- [ ] zIndex ordering renders text above shapes
+
+#### Multi-Text Input System
+- [ ] Each text input has independent font selection
+- [ ] Each text input has independent size control (8-500px)
+- [ ] Each text input has independent weight selection
+- [ ] Each text input has independent color picker
+- [ ] Each text input has independent stroke width/color
+- [ ] Form data persists across page reloads
+- [ ] Multiple text inputs render correctly in SVG with individual styling
+
+#### Core Functionality
+- [ ] Font selection updates text input styling preview
+- [ ] Font weight buttons show only available weights for selected font
+- [ ] SVG viewer reflects all styling changes in real-time
+- [ ] Mobile responsive design works with dynamic forms
+- [ ] Export/import functionality works with new data structure
+
+### Git-Integrated Testing Workflow
+```bash
+# Create testing branch for comprehensive verification
+git checkout -b test/verify-latest-changes
+
+# Run all quality checks
+npm run test:run && npm run lint && npm run type-check && npm run build
+
+# Document test results with commits
+git add . && git commit -m "test: verify all manual testing checklist items pass"
+
+# Merge back if all tests pass
+git checkout main && git merge test/verify-latest-changes
+git branch -d test/verify-latest-changes
+```
+
+## 🎨 Styling Guidelines
+
+### CSS Architecture
+- **Tailwind CSS** for utility-first styling
+- **Component-scoped styles** where needed
+- **Responsive design** with mobile-first approach
+- **Consistent spacing** and color schemes
+
+### Design Tokens
+- **Colors**: Primary, secondary, accent palettes
+- **Typography**: Font sizes, weights, line heights
+- **Spacing**: Consistent margin/padding scale
+- **Animations**: Smooth transitions and interactions
+
+## 🎯 Development Workflow Summary
+
+### Key Principles
+1. **Always use feature branches** - Never work directly on main
+2. **Commit incrementally** - One logical change per commit
+3. **Test before integration** - Quality checks must pass
+4. **Document as you go** - Commit messages tell the story
+5. **Clean up after merging** - Remove merged branches
+6. **NEVER use hardcoded values** - All calculations must be derived from measurements
+
+### Quick Reference Commands
+```bash
+# Start new work
+git checkout main && git pull origin main
+git checkout -b feature/your-feature-name
+
+# Work incrementally
+git add . && git commit -m "feat: descriptive message"
+
+# Integrate safely
+npm run test:run && npm run lint && npm run build
+git checkout main && git merge feature/your-feature-name
+git branch -d feature/your-feature-name
+```
+
+### Essential Tools
+- **TodoWrite tool** for tracking implementation progress
+- **Incremental commits** for safe, reviewable changes
+- **Pre-commit hooks** for automatic quality assurance
+- **Visual verification** with screenshots for UI changes
+- **Branch-based debugging** for systematic problem solving
+- **Console logging** for verifying calculated constraint values
 
 ## Server Configuration
 
@@ -703,8 +1099,6 @@ interface ShapeStyleState {
 - **Express Static Server**: http://localhost:3000
 - **SPA Fallback** for client-side routing
 - **Static File Serving** from `app/dist/`
-
----
 
 ## Shape Styling System
 
@@ -743,4 +1137,7 @@ interface ShapeStyle {
 
 ---
 
-**Production Ready**: This application is fully functional with 14 professional templates, comprehensive font support, complete shape styling system, and robust state management.
+**Production Ready**: This application is fully functional with 14 professional templates, comprehensive font support, complete shape styling system, robust state management, and dynamically calculated pan/zoom constraints.
+
+**Last Updated**: Anti-hardcoding guidelines and comprehensive documentation merge (2024)
+**Maintainer**: Claude AI Assistant

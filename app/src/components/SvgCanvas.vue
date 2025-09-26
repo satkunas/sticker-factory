@@ -115,7 +115,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { FontConfig } from '../config/fonts'
 import { getFontFamily } from '../config/fonts'
 import type { SimpleTemplate } from '../types/template-types'
@@ -159,10 +159,13 @@ interface Props {
   }>
   svgImageStyles?: Array<{
     id: string
-    fillColor: string
+    color: string
     strokeColor: string
     strokeWidth: number
     strokeLinejoin: string
+    svgContent?: string
+    rotation: number
+    scale: number
   }>
   previewMode?: boolean
 }
@@ -186,7 +189,12 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 // SVG element reference
-const svgElementRef = defineExpose({ svgElementRef })
+const svgElementRef = ref<SVGElement | null>(null)
+
+// Expose the SVG element reference
+defineExpose({
+  svgElementRef
+})
 
 // Computed properties - make SVG dimensions match the viewBox to avoid clipping
 const svgWidth = computed(() => {
