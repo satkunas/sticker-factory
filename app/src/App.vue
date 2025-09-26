@@ -1,5 +1,14 @@
 <template>
-  <div class="h-screen bg-secondary-50 flex flex-col">
+  <!-- Global Loading Overlay -->
+  <div v-if="isLoading" class="fixed inset-0 bg-white z-50 flex items-center justify-center">
+    <div class="text-center">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mb-4"></div>
+      <h2 class="text-lg font-semibold text-secondary-900 mb-2">Loading Sticker Factory</h2>
+      <p class="text-sm text-secondary-600">{{ loadingMessage }}</p>
+    </div>
+  </div>
+
+  <div class="h-screen bg-secondary-50 flex flex-col" @click="closeMenuOnOutsideClick">
     <header class="h-14 bg-white shadow-sm border-b border-secondary-200 flex-shrink-0">
       <div class="flex items-center justify-between px-4 h-full">
         <h1 class="text-lg font-semibold text-secondary-900">
@@ -8,8 +17,9 @@
 
         <!-- Mobile menu button -->
         <button
-          class="lg:hidden p-2 rounded-md text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100"
-          @click="showMobileMenu = !showMobileMenu"
+          class="lg:hidden p-2 rounded-md z-50 relative transition-colors"
+          :class="showMobileMenu ? 'text-primary-600 bg-primary-50' : 'text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100'"
+          @click.stop="toggleMobileMenu"
         >
           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
             <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
@@ -37,7 +47,7 @@
       </div>
 
       <!-- Mobile Menu Dropdown -->
-      <div v-if="showMobileMenu" class="lg:hidden border-t border-secondary-200 bg-white">
+      <div v-if="showMobileMenu" class="lg:hidden border-t border-secondary-200 bg-white shadow-lg relative z-40">
         <div class="px-4 py-3 space-y-2">
           <button
             class="w-full flex items-center space-x-2 px-3 py-2 bg-primary-600 text-white text-sm rounded-md hover:bg-primary-700 transition-colors"
@@ -278,8 +288,25 @@ provide('expandedFontSelectors', expandedFontSelectors)
 const expandedObjectSelectors = ref(new Set<string>())
 provide('expandedObjectSelectors', expandedObjectSelectors)
 
+// Loading state
+const isLoading = ref(true)
+const loadingMessage = ref('Initializing...')
+
 // Mobile menu
 const showMobileMenu = ref(false)
+
+const toggleMobileMenu = () => {
+  showMobileMenu.value = !showMobileMenu.value
+}
+
+const closeMenuOnOutsideClick = (event: Event) => {
+  // Only close if clicking outside the header area
+  const target = event.target as HTMLElement
+  const header = target.closest('header')
+  if (!header && showMobileMenu.value) {
+    showMobileMenu.value = false
+  }
+}
 
 // Template system
 const selectedTemplate = ref<SimpleTemplate | null>(null)
@@ -312,42 +339,73 @@ const svgHeight = computed(() => 300)
 
 // Initialize store and templates
 onMounted(async () => {
-  // Start font preloading in background for better performance
-  import('./config/fonts').then(({ preloadPopularFonts }) => {
-    preloadPopularFonts().catch(error => {
-      logger.warn('Font preloading failed:', error)
+  try {
+    // Step 1: Start font preloading
+    loadingMessage.value = 'Loading fonts...'
+    const fontPromise = import('./config/fonts').then(({ preloadPopularFonts }) => {
+      return preloadPopularFonts().catch(error => {
+        logger.warn('Font preloading failed:', error)
+      })
     })
-  })
 
-  // Try to restore template from localStorage
-  if (selectedTemplateId.value) {
-    selectedTemplate.value = await loadTemplate(selectedTemplateId.value)
-  }
+    // Step 2: Load template
+    loadingMessage.value = 'Loading templates...'
 
-  // If no template or template failed to load, use default
-  if (!selectedTemplate.value) {
-    selectedTemplate.value = await getDefaultTemplate()
-    // Save the default template ID to store
-    if (selectedTemplate.value) {
-      await store.setSelectedTemplateId(selectedTemplate.value.id)
+    // Try to restore template from localStorage
+    if (selectedTemplateId.value) {
+      selectedTemplate.value = await loadTemplate(selectedTemplateId.value)
     }
-  }
 
-  // Initialize textInputs array from template if they don't exist
-  if (selectedTemplate.value && (!textInputs.value || textInputs.value.length === 0)) {
-    await store.initializeTextInputsFromTemplate(selectedTemplate.value)
-  }
+    // If no template or template failed to load, use default
+    if (!selectedTemplate.value) {
+      selectedTemplate.value = await getDefaultTemplate()
+      // Save the default template ID to store
+      if (selectedTemplate.value) {
+        await store.setSelectedTemplateId(selectedTemplate.value.id)
+      }
+    }
 
-  // Initialize shapeStyles array from template if they don't exist
-  if (selectedTemplate.value && (!shapeStyles.value || shapeStyles.value.length === 0)) {
-    await store.initializeShapeStylesFromTemplate(selectedTemplate.value)
-  }
+    // Step 3: Initialize template data
+    loadingMessage.value = 'Initializing template data...'
 
-  // Initialize svgImageStyles array from template if they don't exist
-  if (selectedTemplate.value && (!svgImageStyles.value || svgImageStyles.value.length === 0)) {
-    await store.initializeSvgImageStylesFromTemplate(selectedTemplate.value)
-  }
+    // Initialize textInputs array from template if they don't exist
+    if (selectedTemplate.value && (!textInputs.value || textInputs.value.length === 0)) {
+      await store.initializeTextInputsFromTemplate(selectedTemplate.value)
+    }
 
+    // Initialize shapeStyles array from template if they don't exist
+    if (selectedTemplate.value && (!shapeStyles.value || shapeStyles.value.length === 0)) {
+      await store.initializeShapeStylesFromTemplate(selectedTemplate.value)
+    }
+
+    // Initialize svgImageStyles array from template if they don't exist
+    if (selectedTemplate.value && (!svgImageStyles.value || svgImageStyles.value.length === 0)) {
+      await store.initializeSvgImageStylesFromTemplate(selectedTemplate.value)
+    }
+
+    // Step 4: Initialize SVG library metadata (no content loading)
+    loadingMessage.value = 'Loading SVG library...'
+    const { useSvgStore } = await import('./stores/svg-store')
+    const svgStore = useSvgStore()
+
+    // This only loads metadata now, not the actual SVG content
+    await svgStore.loadSvgLibraryStore()
+
+    // Step 5: Wait for fonts to complete
+    loadingMessage.value = 'Finalizing...'
+    await fontPromise
+
+    // Step 6: Small delay to ensure everything is ready
+    await new Promise(resolve => setTimeout(resolve, 200))
+
+    // Loading complete
+    isLoading.value = false
+
+  } catch (error) {
+    logger.error('Failed to initialize application:', error)
+    loadingMessage.value = 'Error loading application. Please refresh the page.'
+    // Don't hide loading on error - show error message
+  }
 })
 
 // Template handlers

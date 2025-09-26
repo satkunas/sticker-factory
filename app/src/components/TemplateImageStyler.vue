@@ -111,7 +111,7 @@
               </div>
               <div class="grid grid-cols-6 md:grid-cols-12 gap-1">
                 <button
-                  v-for="color in presetColors.slice(0, 12)"
+                  v-for="color in PRESET_COLORS.slice(0, 12)"
                   :key="color"
                   class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
                   :class="color === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
@@ -122,7 +122,7 @@
               </div>
               <div class="grid grid-cols-6 md:grid-cols-12 gap-1 mt-1">
                 <button
-                  v-for="color in presetColors.slice(12, 24)"
+                  v-for="color in PRESET_COLORS.slice(12, 24)"
                   :key="color"
                   class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
                   :class="color === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
@@ -165,7 +165,7 @@
               </div>
               <div class="grid grid-cols-6 md:grid-cols-12 gap-1">
                 <button
-                  v-for="color in presetColors.slice(0, 12)"
+                  v-for="color in PRESET_COLORS.slice(0, 12)"
                   :key="color"
                   class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
                   :class="strokeColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
@@ -176,7 +176,7 @@
               </div>
               <div class="grid grid-cols-6 md:grid-cols-12 gap-1 mt-1">
                 <button
-                  v-for="color in presetColors.slice(12, 24)"
+                  v-for="color in PRESET_COLORS.slice(12, 24)"
                   :key="color"
                   class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
                   :class="strokeColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
@@ -228,7 +228,7 @@
                 </div>
                 <div class="grid grid-cols-2 gap-1">
                   <button
-                    v-for="linejoin in strokeLinejoinOptions"
+                    v-for="linejoin in STROKE_LINEJOIN_OPTIONS"
                     :key="linejoin.value"
                     class="px-2 py-1 text-xs rounded border transition-all text-center"
                     :class="strokeLinejoin === linejoin.value ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white border-secondary-200 text-secondary-600 hover:border-secondary-300'"
@@ -325,6 +325,7 @@ import {
   normalizeSvgCurrentColor,
   sanitizeColorValue
 } from '../utils/svg-styling'
+import { PRESET_COLORS, STROKE_LINEJOIN_OPTIONS } from '../utils/ui-constants'
 
 interface Props {
   imageLabel?: string
@@ -444,23 +445,6 @@ const styledSvgContent = computed(() => {
   }
 })
 
-// Preset color palette (same as used in shape styling)
-const presetColors = [
-  '#000000', '#374151', '#6b7280', '#9ca3af', '#d1d5db', '#f3f4f6',
-  '#ffffff', '#f9fafb', '#f3f4f6', '#e5e7eb', '#d1d5db', '#9ca3af',
-  '#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e',
-  '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1',
-  '#8b5cf6', '#a855f7', '#c026d3', '#d946ef', '#ec4899', '#f43f5e'
-]
-
-// Stroke linejoin options (same as TemplateObjectStyler)
-const strokeLinejoinOptions = [
-  { value: 'round', label: 'Round', description: 'Rounded corners at line joins' },
-  { value: 'miter', label: 'Miter', description: 'Sharp pointed corners at line joins' },
-  { value: 'bevel', label: 'Bevel', description: 'Flat corners at line joins' },
-  { value: 'arcs', label: 'Arcs', description: 'Arc corners at line joins' },
-  { value: 'miter-clip', label: 'Clip', description: 'Clipped miter corners at line joins' }
-]
 
 // Scale handling - convert between 0.01-100x multiplier and 0-100 logarithmic slider
 const scaleToSliderValue = (scale: number): number => {

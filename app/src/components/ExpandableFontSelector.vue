@@ -48,7 +48,7 @@
               </div>
               <div class="grid grid-cols-6 md:grid-cols-12 gap-1">
                 <button
-                  v-for="color in presetColors.slice(0, 12)"
+                  v-for="color in PRESET_COLORS.slice(0, 12)"
                   :key="color"
                   class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
                   :class="textColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
@@ -59,7 +59,7 @@
               </div>
               <div class="grid grid-cols-6 md:grid-cols-12 gap-1 mt-1">
                 <button
-                  v-for="color in presetColors.slice(12, 24)"
+                  v-for="color in PRESET_COLORS.slice(12, 24)"
                   :key="color"
                   class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
                   :class="textColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
@@ -95,7 +95,7 @@
               </div>
               <div class="grid grid-cols-3 md:grid-cols-6 gap-1">
                 <button
-                  v-for="size in commonSizes"
+                  v-for="size in COMMON_FONT_SIZES"
                   :key="size"
                   class="px-1 py-1 text-xs rounded border transition-all"
                   :class="fontSize === size ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white border-secondary-200 text-secondary-600 hover:border-secondary-300'"
@@ -174,7 +174,7 @@
                 </div>
                 <div class="grid grid-cols-6 md:grid-cols-12 gap-1">
                   <button
-                    v-for="color in presetColors.slice(0, 12)"
+                    v-for="color in PRESET_COLORS.slice(0, 12)"
                     :key="color"
                     class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
                     :class="textStrokeColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
@@ -185,7 +185,7 @@
                 </div>
                 <div class="grid grid-cols-6 md:grid-cols-12 gap-1 mt-1">
                   <button
-                    v-for="color in presetColors.slice(12, 24)"
+                    v-for="color in PRESET_COLORS.slice(12, 24)"
                     :key="color"
                     class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
                     :class="textStrokeColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
@@ -230,7 +230,7 @@
                 </div>
                 <div class="grid grid-cols-2 gap-1">
                   <button
-                    v-for="linejoin in strokeLinejoinOptions"
+                    v-for="linejoin in STROKE_LINEJOIN_OPTIONS"
                     :key="linejoin.value"
                     class="px-2 py-1 text-xs rounded border transition-all text-center"
                     :class="textStrokeLinejoin === linejoin.value ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white border-secondary-200 text-secondary-600 hover:border-secondary-300'"
@@ -301,7 +301,7 @@
               <div 
                 :class="[
                   'w-2 h-2 rounded-full',
-                  getCategoryColor(category)
+                  getFontCategoryColor(category)
                 ]"
               />
               <span>{{ label }}</span>
@@ -343,8 +343,11 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, inject, nextTick } from 'vue'
-import { AVAILABLE_FONTS, FONT_CATEGORIES, loadFont, type FontConfig } from '../config/fonts'
+import { FONT_CATEGORIES, loadFont, type FontConfig } from '../config/fonts'
 import FontTile from './FontTile.vue'
+import { useFontSelector } from '../composables/useFontSelector'
+import { getFontCategoryColor } from '../utils/font-utils'
+import { PRESET_COLORS, COMMON_FONT_SIZES, STROKE_LINEJOIN_OPTIONS } from '../utils/ui-constants'
 
 interface Props {
   selectedFont?: FontConfig | null
@@ -393,15 +396,21 @@ const dropdownManager = inject('dropdownManager')
 const expandedInstances = inject('expandedFontSelectors', ref(new Set<string>()))
 
 // Local state
-const searchQuery = ref('')
-const selectedCategory = ref<string | null>(null)
 const loadedFonts = ref(new Set<string>())
-
-// Lazy loading state
-const fontListContainer = ref<HTMLElement>()
 const selectedFontTile = ref<HTMLElement>()
-const visibleFontCount = ref(20) // Start with 20 fonts
-const isLoadingMore = ref(false)
+
+// Use font selector composable
+const {
+  searchQuery,
+  selectedCategory,
+  fontListContainer,
+  visibleFontCount,
+  isLoadingMore,
+  filteredFonts,
+  visibleFonts,
+  fontWeights,
+  handleScroll
+} = useFontSelector(computed(() => props.selectedFont))
 
 // Component container ref for scrolling
 const containerRef = ref<HTMLElement>()
@@ -416,116 +425,6 @@ const isExpanded = computed(() => {
 })
 
 
-// Preset colors for quick selection
-const presetColors = [
-  '#000000', '#ffffff', '#ef4444', '#f97316',
-  '#eab308', '#22c55e', '#3b82f6', '#8b5cf6',
-  '#ec4899', '#6b7280', '#dc2626', '#059669',
-  '#1f2937', '#f3f4f6', '#7f1d1d', '#7c2d12',
-  '#713f12', '#14532d', '#1e3a8a', '#581c87',
-  '#831843', '#374151', '#fbbf24', '#34d399'
-]
-
-// Common font sizes for quick selection
-const commonSizes = [12, 16, 20, 24, 32, 48]
-
-// Stroke linejoin options
-const strokeLinejoinOptions = [
-  { value: 'round', label: 'Round', description: 'Rounded corners at line joins' },
-  { value: 'miter', label: 'Miter', description: 'Sharp pointed corners at line joins' },
-  { value: 'bevel', label: 'Bevel', description: 'Flat corners at line joins' },
-  { value: 'arcs', label: 'Arcs', description: 'Arc corners at line joins' },
-  { value: 'miter-clip', label: 'Clip', description: 'Clipped miter corners at line joins' }
-]
-
-// All possible font weight options
-const allFontWeights = [
-  { label: '100', value: 100 },
-  { label: '300', value: 300 },
-  { label: '400', value: 400 },
-  { label: '500', value: 500 },
-  { label: '600', value: 600 },
-  { label: '700', value: 700 },
-  { label: '800', value: 800 },
-  { label: '900', value: 900 }
-]
-
-// Available font weights based on selected font
-const fontWeights = computed(() => {
-  if (!props.selectedFont?.weights?.length) {
-    return allFontWeights.filter(w => [400, 700].includes(w.value)) // Default fallback
-  }
-  
-  return allFontWeights.filter(weight => 
-    props.selectedFont.weights.includes(weight.value)
-  )
-})
-
-// Get category color for the sticker indicators
-const getCategoryColor = (category: string): string => {
-  const colorMap: Record<string, string> = {
-    'serif': 'bg-blue-400',
-    'sans-serif': 'bg-green-400', 
-    'monospace': 'bg-purple-400',
-    'display': 'bg-orange-400',
-    'handwriting': 'bg-pink-400'
-  }
-  return colorMap[category] || 'bg-gray-400'
-}
-
-// Filtered fonts based on search and category
-const filteredFonts = computed(() => {
-  let fonts = AVAILABLE_FONTS
-  
-  // Filter by category
-  if (selectedCategory.value) {
-    fonts = fonts.filter(font => font.category === selectedCategory.value)
-  }
-  
-  // Filter by search query
-  if (searchQuery.value.trim()) {
-    const query = searchQuery.value.toLowerCase().trim()
-    fonts = fonts.filter(font =>
-      font.name.toLowerCase().includes(query) ||
-      font.category.toLowerCase().includes(query)
-    )
-  }
-  
-  return fonts
-})
-
-// Visible fonts for lazy loading
-const visibleFonts = computed(() => {
-  return filteredFonts.value.slice(0, visibleFontCount.value)
-})
-
-// Handle scroll for lazy loading
-const handleScroll = () => {
-  const container = fontListContainer.value
-  if (!container || isLoadingMore.value) return
-  
-  const scrollThreshold = 100 // Load more when 100px from bottom
-  const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < scrollThreshold
-  
-  if (isNearBottom && visibleFontCount.value < filteredFonts.value.length) {
-    isLoadingMore.value = true
-    
-    // Add more fonts after a short delay
-    setTimeout(() => {
-      visibleFontCount.value = Math.min(
-        visibleFontCount.value + 20,
-        filteredFonts.value.length
-      )
-      isLoadingMore.value = false
-    }, 100)
-  }
-}
-
-// Reset visible count when filters change
-watch([searchQuery, selectedCategory], () => {
-  visibleFontCount.value = 20
-  isLoadingMore.value = false
-})
 
 // Note: Font loading is now handled by individual FontTile components via lazy loading
 // This improves performance by only loading fonts that are actually visible

@@ -26,7 +26,7 @@ layers:
 
   - id: "icon-top-center"
     type: "svgImage"
-    svgId: "icons-heart"
+    svgId: "ui-social-heart"
     position: { x: "50%", y: "35%" }
     width: 32
     height: 32
@@ -61,7 +61,7 @@ layers:
 
   - id: "icon-top-left"
     type: "svgImage"
-    svgId: "icons-star"
+    svgId: "ui-feedback-star"
     position: { x: "22%", y: "22%" }
     width: 16
     height: 16
@@ -72,7 +72,7 @@ layers:
 
   - id: "icon-top-right"
     type: "svgImage"
-    svgId: "icons-star"
+    svgId: "ui-feedback-star"
     position: { x: "78%", y: "22%" }
     width: 16
     height: 16

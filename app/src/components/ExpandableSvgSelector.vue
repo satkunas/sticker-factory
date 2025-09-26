@@ -44,7 +44,7 @@
               All Categories
             </button>
             <button
-              v-for="category in categories"
+              v-for="category in svgStore.categories.value"
               :key="category"
               :class="[
                 'px-2 py-1 text-xs rounded transition-colors',
@@ -67,9 +67,9 @@
 
       <!-- SVG Grid -->
       <div class="p-4">
-        <div v-if="loading" class="flex items-center justify-center py-8">
+        <div v-if="svgStore.isLoading.value" class="flex items-center justify-center py-8">
           <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
-          <span class="ml-3 text-sm text-secondary-600">Loading SVGs...</span>
+          <span class="ml-3 text-sm text-secondary-600">Loading 5000+ SVGs...</span>
         </div>
 
         <div v-else-if="filteredSvgs.length === 0" class="text-center py-8">
@@ -116,16 +116,26 @@
             </div>
           </div>
 
-          <!-- Loading indicator for lazy loading -->
-          <div v-if="isLoadingMore && visibleSvgs.length < filteredSvgs.length" class="py-2 text-center text-secondary-500">
-            <div class="text-xs">
-              Loading more icons...
+          <!-- Enhanced loading indicator with progress for massive collections -->
+          <div v-if="isLoadingMore && visibleSvgs.length < filteredSvgs.length" class="py-3 text-center text-secondary-500">
+            <div class="flex items-center justify-center space-x-2">
+              <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-500"></div>
+              <div class="text-xs">
+                Loading more icons... ({{ visibleSvgs.length }}/{{ filteredSvgs.length }})
+              </div>
+            </div>
+            <!-- Progress bar for large collections -->
+            <div v-if="filteredSvgs.length > 200" class="mt-2 w-full bg-secondary-200 rounded-full h-1">
+              <div
+                class="bg-primary-500 h-1 rounded-full transition-all duration-300"
+                :style="{ width: (visibleSvgs.length / filteredSvgs.length * 100) + '%' }"
+              ></div>
             </div>
           </div>
         </div>
 
         <!-- Action Buttons -->
-        <div v-if="!loading && filteredSvgs.length > 0" class="mt-4 pt-3 border-t border-secondary-100">
+        <div v-if="!svgStore.isLoading.value && filteredSvgs.length > 0" class="mt-4 pt-3 border-t border-secondary-100">
           <div class="flex items-center justify-between">
             <div class="text-xs text-secondary-500">
               Click an icon to select it
@@ -148,7 +158,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import type { SvgLibraryItem } from '../types/template-types'
-import { loadSvgLibrary, getSvgCategories } from '../config/svg-library-loader'
+import { useSvgStore } from '../stores/svg-store'
 
 interface Props {
   selectedSvgId?: string
@@ -166,41 +176,36 @@ defineProps<Props>()
 
 const emit = defineEmits<Emits>()
 
+// SVG Store
+const svgStore = useSvgStore()
+
 // Component state
-const loading = ref(true)
-const svgLibrary = ref<SvgLibraryItem[]>([])
-const categories = ref<string[]>([])
 const searchQuery = ref('')
 const selectedCategory = ref<string | null>(null)
 
-// Lazy loading state
+// Enhanced lazy loading state for 5000+ icons
 const svgGridContainer = ref<HTMLElement>()
-const visibleSvgCount = ref(40) // Start with 40 SVGs
+const visibleSvgCount = ref(60) // Optimized initial count for better UX
 const isLoadingMore = ref(false)
+const loadingBatchSize = ref(40) // Dynamic batch size
 
 // Component container ref for scrolling
 const containerRef = ref<HTMLElement>()
 
 // Filtered SVGs based on search and category
 const filteredSvgs = computed(() => {
-  let filtered = svgLibrary.value
-
-  // Filter by category
-  if (selectedCategory.value) {
-    filtered = filtered.filter(svg => svg.category === selectedCategory.value)
-  }
-
-  // Filter by search query
   if (searchQuery.value.trim()) {
-    const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(svg =>
-      svg.name.toLowerCase().includes(query) ||
-      svg.category.toLowerCase().includes(query) ||
-      svg.tags.some(tag => tag.toLowerCase().includes(query))
-    )
+    // Use store's search functionality
+    return svgStore.searchSvgs(searchQuery.value)
   }
 
-  return filtered
+  if (selectedCategory.value) {
+    // Use store's category filtering
+    return svgStore.getSvgsByCategory(selectedCategory.value)
+  }
+
+  // Return all items
+  return svgStore.items.value
 })
 
 // Visible SVGs for lazy loading
@@ -208,31 +213,59 @@ const visibleSvgs = computed(() => {
   return filteredSvgs.value.slice(0, visibleSvgCount.value)
 })
 
-// Handle scroll for lazy loading
+// Enhanced scroll handler for massive collections (5000+ icons)
 const handleScroll = () => {
   const container = svgGridContainer.value
   if (!container || isLoadingMore.value) return
 
-  const scrollThreshold = 50 // Load more when 50px from bottom
+  const scrollThreshold = 150 // Optimized threshold for smoother loading
   const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < scrollThreshold
 
   if (isNearBottom && visibleSvgCount.value < filteredSvgs.value.length) {
     isLoadingMore.value = true
 
-    // Add more SVGs after a short delay
-    setTimeout(() => {
-      visibleSvgCount.value = Math.min(
-        visibleSvgCount.value + 20,
-        filteredSvgs.value.length
-      )
-      isLoadingMore.value = false
-    }, 100)
+    // Dynamic batch sizing based on collection size and performance
+    const remainingItems = filteredSvgs.value.length - visibleSvgCount.value
+    const adaptiveBatchSize = Math.min(
+      loadingBatchSize.value,
+      remainingItems,
+      Math.max(20, Math.floor(filteredSvgs.value.length / 100)) // Scale batch size with collection
+    )
+
+    // Use requestAnimationFrame for smoother loading
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        visibleSvgCount.value = Math.min(
+          visibleSvgCount.value + adaptiveBatchSize,
+          filteredSvgs.value.length
+        )
+        isLoadingMore.value = false
+      }, 30) // Optimized delay for better perceived performance
+    })
   }
 }
 
-// Reset visible count when filters change
+// Reset visible count when filters change with adaptive sizing
 watch([searchQuery, selectedCategory], () => {
-  visibleSvgCount.value = 40
+  // Adaptive initial count based on filtered results size
+  const filteredLength = filteredSvgs.value.length
+  if (filteredLength <= 100) {
+    visibleSvgCount.value = Math.min(filteredLength, 60) // Show all if small collection
+  } else if (filteredLength <= 500) {
+    visibleSvgCount.value = 80 // Medium collection gets more initial items
+  } else {
+    visibleSvgCount.value = 60 // Large collection gets standard amount
+  }
+
+  // Adjust batch size based on filtered collection size
+  if (filteredLength > 1000) {
+    loadingBatchSize.value = 50 // Larger batches for huge collections
+  } else if (filteredLength > 300) {
+    loadingBatchSize.value = 40 // Standard batches for medium collections
+  } else {
+    loadingBatchSize.value = 20 // Smaller batches for small collections
+  }
+
   isLoadingMore.value = false
 })
 
@@ -254,24 +287,16 @@ const clearSelection = () => {
   emit('clear')
 }
 
-// Load SVG library on mount
+// Load SVG library on mount using store
 onMounted(async () => {
   try {
-    loading.value = true
-
-    // Load SVGs and categories in parallel
-    const [svgs, cats] = await Promise.all([
-      loadSvgLibrary(),
-      getSvgCategories()
-    ])
-
-    svgLibrary.value = svgs
-    categories.value = cats
-
-  } catch {
-    // Failed to load SVG library, silently handle
-  } finally {
-    loading.value = false
+    // Load SVG library through store if not already loaded
+    if (!svgStore.isLoaded.value) {
+      await svgStore.loadSvgLibraryStore()
+    }
+  } catch (error) {
+    console.warn('Failed to load SVG library:', error)
+    // Store handles error state internally
   }
 })
 

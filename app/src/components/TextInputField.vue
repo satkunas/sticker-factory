@@ -124,7 +124,7 @@ const handleFocus = () => {
 // Toggle expansion
 const _toggleExpanded = () => {
   if (dropdownManager) {
-    dropdownManager.toggle(props.instanceId, containerRef.value)
+    dropdownManager.toggle(props.instanceId)
   } else {
     // Legacy fallback
     if (isExpanded.value) {

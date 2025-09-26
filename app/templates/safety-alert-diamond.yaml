@@ -24,7 +24,7 @@ layers:
 
   - id: "icon-top-center"
     type: "svgImage"
-    svgId: "icons-alert"
+    svgId: "ui-feedback-alert"
     position: { x: "50%", y: "35%" }
     width: 36
     height: 36
@@ -59,7 +59,7 @@ layers:
 
   - id: "icon-middle-left"
     type: "svgImage"
-    svgId: "icons-shield"
+    svgId: "ui-security-shield"
     position: { x: "28%", y: "50%" }
     width: 18
     height: 18
@@ -70,7 +70,7 @@ layers:
 
   - id: "icon-middle-right"
     type: "svgImage"
-    svgId: "icons-shield"
+    svgId: "ui-security-shield"
     position: { x: "72%", y: "50%" }
     width: 18
     height: 18

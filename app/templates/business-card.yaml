@@ -28,7 +28,7 @@ layers:
 
   - id: "icon-left-center"
     type: "svgImage"
-    svgId: "icons-user"
+    svgId: "ui-people-user"
     position: { x: "20%", y: "30%" }
     width: 32
     height: 32

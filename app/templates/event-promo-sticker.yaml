@@ -61,7 +61,7 @@ layers:
 
   - id: "icon-left"
     type: "svgImage"
-    svgId: "icons-tag"
+    svgId: "ui-content-tag"
     position: { x: "25%", y: "30%" }
     width: 16
     height: 16
@@ -72,7 +72,7 @@ layers:
 
   - id: "icon-right"
     type: "svgImage"
-    svgId: "icons-tag"
+    svgId: "ui-content-tag"
     position: { x: "75%", y: "30%" }
     width: 16
     height: 16
@@ -83,7 +83,7 @@ layers:
 
   - id: "icon-bottom-center"
     type: "svgImage"
-    svgId: "icons-fire"
+    svgId: "ui-misc-fire"
     position: { x: "50%", y: "72%" }
     width: 20
     height: 20

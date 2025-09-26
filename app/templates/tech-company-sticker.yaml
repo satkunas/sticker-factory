@@ -30,7 +30,7 @@ layers:
 
   - id: "icon-header-left"
     type: "svgImage"
-    svgId: "icons-code"
+    svgId: "tech-development-code"
     position: { x: "20%", y: "25%" }
     width: 24
     height: 24
@@ -77,7 +77,7 @@ layers:
 
   - id: "icon-bottom-right"
     type: "svgImage"
-    svgId: "icons-shield"
+    svgId: "ui-security-shield"
     position: { x: "82%", y: "75%" }
     width: 20
     height: 20

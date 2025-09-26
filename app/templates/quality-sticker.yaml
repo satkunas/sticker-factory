@@ -50,7 +50,7 @@ layers:
 
   - id: "icon-top-left"
     type: "svgImage"
-    svgId: "icons-check"
+    svgId: "ui-feedback-check"
     position: { x: "28%", y: "25%" }
     width: 18
     height: 18
@@ -61,7 +61,7 @@ layers:
 
   - id: "icon-top-right"
     type: "svgImage"
-    svgId: "icons-check"
+    svgId: "ui-feedback-check"
     position: { x: "72%", y: "25%" }
     width: 18
     height: 18
@@ -72,7 +72,7 @@ layers:
 
   - id: "icon-bottom-center"
     type: "svgImage"
-    svgId: "icons-star"
+    svgId: "ui-feedback-star"
     position: { x: "50%", y: "75%" }
     width: 20
     height: 20
