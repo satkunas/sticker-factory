@@ -409,9 +409,6 @@ export function removeExplicitDimensions(svgContent: string): string {
 // SVG VALIDATION AND SANITIZATION
 // ============================================================================
 
-// sanitizeSvgContent function removed - use the version in utils/security.ts to avoid duplication
-
-// validateSvgContent function removed - use the version in utils/svg.ts to avoid duplication
 
 // ============================================================================
 // UTILITY FUNCTIONS

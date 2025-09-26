@@ -106,15 +106,6 @@ export interface YamlTemplate {
   layers: TemplateLayer[]
 }
 
-// Legacy interfaces for backward compatibility
-export interface LegacyYamlTemplate {
-  name: string
-  id: string
-  description: string
-  category: 'circle' | 'square' | 'rectangle' | 'diamond' | 'hexagon'
-  shapes: TemplateShape[]
-  textInputs: TemplateTextInput[]
-}
 
 // Text input state for the store
 export interface TextInputState {

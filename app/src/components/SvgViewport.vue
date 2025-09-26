@@ -31,7 +31,7 @@
         <path
           :d="`M ${gridSize} 0 L 0 0 0 ${gridSize}`"
           fill="none"
-          stroke="rgba(0, 0, 0, 0.05)"
+          stroke="rgba(0, 0, 0, 0.15)"
           stroke-width="1"
         />
       </pattern>
@@ -48,17 +48,6 @@
         fill="url(#background-grid)"
       />
 
-      <!-- Red border -->
-      <rect
-        :x="backgroundBounds.x"
-        :y="backgroundBounds.y"
-        :width="backgroundBounds.width"
-        :height="backgroundBounds.height"
-        fill="none"
-        stroke="#ef4444"
-        :stroke-width="borderWidth"
-        stroke-linejoin="round"
-      />
     </g>
 
     <!-- Template content slot -->

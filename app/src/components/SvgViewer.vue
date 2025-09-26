@@ -1,5 +1,5 @@
 <template>
-  <div :class="previewMode ? 'w-full h-full' : 'w-full lg:w-1/2 bg-secondary-50 relative min-h-96 lg:min-h-0'">
+  <div :class="previewMode ? 'w-full h-full' : 'w-full h-full bg-secondary-50 relative'">
     <!-- SVG Viewport Container -->
     <div
       ref="svgContainer"
@@ -15,10 +15,10 @@
         ref="svgViewportRef"
         :template="template"
         :previewMode="previewMode"
-        :viewBoxX="viewBoxX"
-        :viewBoxY="viewBoxY"
-        :viewBoxWidth="viewBoxWidth"
-        :view-box-height="viewBoxHeight"
+        :viewBoxX="previewMode && template ? template.viewBox.x : viewBoxX"
+        :viewBoxY="previewMode && template ? template.viewBox.y : viewBoxY"
+        :viewBoxWidth="previewMode && template ? template.viewBox.width : viewBoxWidth"
+        :view-box-height="previewMode && template ? template.viewBox.height : viewBoxHeight"
         @mousedown="handleMouseDown"
         @mousemove="handleMouseMove"
         @mouseup="handleMouseUp"

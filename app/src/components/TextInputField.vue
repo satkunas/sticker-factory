@@ -13,6 +13,7 @@
           fontWeight: fontWeight
         }"
         @input="$emit('update:modelValue', $event.target.value)"
+        @focus="handleFocus"
       >
       <button
         class="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
@@ -112,6 +113,13 @@ const isExpanded = computed(() => {
   // Legacy fallback
   return expandedInstances.value.has(props.instanceId)
 })
+
+// Handle focus - expand the options
+const handleFocus = () => {
+  if (!isExpanded.value) {
+    _toggleExpanded()
+  }
+}
 
 // Toggle expansion
 const _toggleExpanded = () => {

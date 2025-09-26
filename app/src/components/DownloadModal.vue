@@ -6,12 +6,13 @@
         <label class="block text-sm font-medium text-secondary-700 mb-3">
           Preview
         </label>
-        <div class="h-48 flex items-center justify-center">
+        <div class="h-48 bg-secondary-50 rounded-lg border border-secondary-200 flex items-center justify-center p-4">
           <SvgViewer
             ref="templateSvgRef"
             :template="template"
             :textInputs="textInputs"
             :shapeStyles="shapeStyles"
+            :svgImageStyles="svgImageStyles"
             :stickerText="stickerText"
             :textColor="textColor"
             :font="font"
@@ -21,7 +22,7 @@
             :stroke-width="textStrokeWidth"
             :stroke-opacity="1"
             :previewMode="true"
-            class="w-full h-full"
+            class="max-w-full max-h-full"
           />
         </div>
       </div>
@@ -174,6 +175,16 @@ interface Props {
     strokeColor: string
     strokeWidth: number
     strokeLinejoin: string
+  }>
+  svgImageStyles?: Array<{
+    id: string
+    color: string
+    strokeColor: string
+    strokeWidth: number
+    strokeLinejoin: string
+    svgContent?: string
+    rotation: number
+    scale: number
   }>
 }
 

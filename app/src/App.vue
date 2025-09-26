@@ -1,7 +1,7 @@
 <template>
-  <div class="min-h-screen bg-secondary-50 flex flex-col">
-    <header class="bg-white shadow-sm border-b border-secondary-200 flex-shrink-0">
-      <div class="flex items-center justify-between px-4 h-14">
+  <div class="h-screen bg-secondary-50 flex flex-col">
+    <header class="h-14 bg-white shadow-sm border-b border-secondary-200 flex-shrink-0">
+      <div class="flex items-center justify-between px-4 h-full">
         <h1 class="text-lg font-semibold text-secondary-900">
           Sticker Factory
         </h1>
@@ -64,13 +64,33 @@
       </div>
     </header>
     <!-- Main Content -->
-    <main class="flex-1 flex flex-col lg:flex-row min-h-0">
-      <!-- Form Pane -->
-      <div class="w-full lg:w-1/2 p-6 bg-white border-r border-secondary-200 lg:min-h-0">
-        <div class="w-full">
-          <h2 class="text-xl font-semibold text-secondary-900 mb-6">
-            Sticker Design
-          </h2>
+    <main class="flex-1 flex flex-col lg:flex-row lg:overflow-hidden">
+      <!-- SVG Viewer Pane (Now on Left) -->
+      <div class="flex-shrink-0 h-64 lg:h-auto lg:w-1/2">
+        <SvgViewer
+          ref="svgViewerRef"
+          :stickerText="stickerText"
+          :textColor="textColor"
+          :font="selectedFont"
+          :font-size="fontSize"
+          :font-weight="fontWeight"
+          :strokeColor="strokeColor"
+          :stroke-width="strokeWidth"
+          :stroke-opacity="strokeOpacity"
+          :width="svgWidth"
+          :height="svgHeight"
+          :template="selectedTemplate"
+          :textInputs="textInputs"
+          :shapeStyles="shapeStyles"
+          :svgImageStyles="svgImageStyles"
+        />
+      </div>
+
+      <!-- Form Pane (Now on Right with Scrolling) -->
+      <div class="flex-1 lg:w-1/2 bg-white border-t lg:border-t-0 lg:border-l border-secondary-200 flex flex-col min-h-0">
+
+        <!-- Scrollable Form Content -->
+        <div class="flex-1 overflow-y-auto p-6">
           <div class="space-y-6">
             <!-- Template Selector -->
             <TemplateSelector
@@ -91,6 +111,7 @@
                   :textColor="textInput.textColor"
                   :textStrokeColor="textInput.strokeColor"
                   :text-stroke-width="textInput.strokeWidth"
+                  :textStrokeLinejoin="textInput.strokeLinejoin"
                   :stroke-opacity="textInput.strokeOpacity"
                   :instanceId="textInput.id"
                   @update:modelValue="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { text: value })"
@@ -100,6 +121,7 @@
                   @update:textColor="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { textColor: value })"
                   @update:textStrokeColor="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { strokeColor: value })"
                   @update:textStrokeWidth="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { strokeWidth: value })"
+                  @update:textStrokeLinejoin="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { strokeLinejoin: value })"
                 />
               </div>
             </div>
@@ -155,25 +177,6 @@
           </div>
         </div>
       </div>
-
-      <!-- SVG Viewer Pane -->
-      <SvgViewer
-        ref="svgViewerRef"
-        :stickerText="stickerText"
-        :textColor="textColor"
-        :font="selectedFont"
-        :font-size="fontSize"
-        :font-weight="fontWeight"
-        :strokeColor="strokeColor"
-        :stroke-width="strokeWidth"
-        :stroke-opacity="strokeOpacity"
-        :width="svgWidth"
-        :height="svgHeight"
-        :template="selectedTemplate"
-        :textInputs="textInputs"
-        :shapeStyles="shapeStyles"
-        :svgImageStyles="svgImageStyles"
-      />
     </main>
 
     <!-- Modals -->
@@ -206,7 +209,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, provide, nextTick, defineAsyncComponent } from 'vue'
+import { ref, computed, onMounted, provide, defineAsyncComponent } from 'vue'
 import { useStore } from './stores'
 import { logger } from './utils/logger'
 const ExportModal = defineAsyncComponent(() => import('./components/ExportModal.vue'))
@@ -246,7 +249,7 @@ const expandedDropdowns = ref(new Set<string>())
 const dropdownManager = {
   isExpanded: (id: string) => expandedDropdowns.value.has(id),
 
-  toggle: (id: string, elementRef?: HTMLElement) => {
+  toggle: (id: string) => {
     if (expandedDropdowns.value.has(id)) {
       expandedDropdowns.value.delete(id)
     } else {
@@ -254,17 +257,6 @@ const dropdownManager = {
       expandedDropdowns.value.clear()
       // Open this dropdown
       expandedDropdowns.value.add(id)
-
-      // Smooth scroll to the opened element
-      if (elementRef) {
-        nextTick(() => {
-          elementRef.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center',
-            inline: 'nearest'
-          })
-        })
-      }
     }
   },
 

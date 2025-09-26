@@ -256,11 +256,14 @@ export function useSvgViewBox(
   const getConstraintBounds = () => {
     if (!template?.value) return null
 
-    // Calculate background grid bounds (2x template size)
+    // Calculate background grid bounds with reasonable limits
     const templateWidth = template.value.viewBox.width
     const templateHeight = template.value.viewBox.height
-    const gridWidth = templateWidth * 2
-    const gridHeight = templateHeight * 2
+
+    // Limit background grid to reasonable size (2x template but with maximum bounds)
+    const maxGridSize = Math.max(templateWidth, templateHeight) * 3
+    const gridWidth = Math.min(templateWidth * 2, maxGridSize)
+    const gridHeight = Math.min(templateHeight * 2, maxGridSize)
 
     // Center background grid around template center
     const templateCenterX = template.value.viewBox.x + templateWidth / 2

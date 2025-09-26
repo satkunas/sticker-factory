@@ -65,7 +65,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { TemplateShape } from '../config/templates'
+import type { TemplateShape } from '../types/template-types'
 
 interface Props {
   shape: TemplateShape

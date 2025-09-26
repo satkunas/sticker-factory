@@ -5,9 +5,7 @@ import type {
   TemplateElement,
   TemplateTextInput,
   YamlTemplate,
-  LegacyYamlTemplate,
   TemplateShapeLayer,
-  TemplateLayer,
   ProcessedTemplateLayer,
   ProcessedTextInputLayer,
   ProcessedSvgImageLayer
@@ -155,9 +153,9 @@ export const getDefaultTemplate = async (): Promise<SimpleTemplate | null> => {
 }
 
 /**
- * Validate YAML template structure (supports both new and legacy formats)
+ * Validate YAML template structure
  */
-const validateYamlTemplate = (template: any): template is YamlTemplate | LegacyYamlTemplate => {
+const validateYamlTemplate = (template: any): template is YamlTemplate => {
   if (!template || typeof template !== 'object') {
     logger.error('Template must be an object')
     return false
@@ -171,87 +169,20 @@ const validateYamlTemplate = (template: any): template is YamlTemplate | LegacyY
     }
   }
 
-  // Check for new format (layers array)
+  // Check for layers array
   if (Array.isArray(template.layers)) {
     return true
   }
 
-  // Check for legacy format (shapes + textInputs arrays)
-  if (Array.isArray(template.shapes) && Array.isArray(template.textInputs)) {
-    return true
-  }
-
-  logger.error('Template must have either layers array (new format) or shapes+textInputs arrays (legacy format)')
+  logger.error('Template must have layers array')
   return false
 }
 
-/**
- * Check if template uses the new layers format
- */
-const isNewFormat = (template: YamlTemplate | LegacyYamlTemplate): template is YamlTemplate => {
-  return 'layers' in template && Array.isArray(template.layers)
-}
 
 /**
- * Convert legacy template to new format
+ * Convert YAML template to SimpleTemplate format
  */
-const convertLegacyToNew = (legacy: LegacyYamlTemplate): YamlTemplate => {
-  const layers: TemplateLayer[] = []
-
-  // Add shapes as shape layers
-  legacy.shapes.forEach((shape) => {
-    layers.push({
-      id: shape.id,
-      type: 'shape',
-      subtype: shape.type, // Convert legacy type to subtype
-      position: shape.position,
-      width: shape.width,
-      height: shape.height,
-      rx: shape.rx,
-      ry: shape.ry,
-      points: shape.points,
-      stroke: shape.stroke,
-      strokeWidth: shape.strokeWidth,
-      fill: shape.fill,
-      opacity: shape.opacity
-    })
-  })
-
-  // Add textInputs as text layers
-  legacy.textInputs.forEach((textInput) => {
-    layers.push({
-      id: textInput.id,
-      type: 'text',
-      label: textInput.label,
-      placeholder: textInput.placeholder,
-      default: textInput.default,
-      position: textInput.position,
-      rotation: textInput.rotation,
-      clip: textInput.clip,
-      clipPath: textInput.clipPath,
-      maxLength: textInput.maxLength,
-      fontFamily: textInput.fontFamily,
-      fontColor: textInput.fontColor,
-      fontSize: textInput.fontSize,
-      fontWeight: textInput.fontWeight
-    })
-  })
-
-  return {
-    id: legacy.id,
-    name: legacy.name,
-    description: legacy.description,
-    category: legacy.category,
-    layers
-  }
-}
-
-/**
- * Convert YAML template to SimpleTemplate format (supports both new and legacy formats)
- */
-const convertYamlToSimpleTemplate = async (rawTemplate: YamlTemplate | LegacyYamlTemplate): Promise<SimpleTemplate> => {
-  // Convert legacy format to new format if needed
-  const yamlTemplate: YamlTemplate = isNewFormat(rawTemplate) ? rawTemplate : convertLegacyToNew(rawTemplate)
+const convertYamlToSimpleTemplate = async (yamlTemplate: YamlTemplate): Promise<SimpleTemplate> => {
 
   // Use explicit viewBox if provided, otherwise calculate from shape layers
   const viewBox = yamlTemplate.viewBox || (() => {
@@ -497,42 +428,8 @@ export const getTemplateElements = (template: SimpleTemplate): TemplateElement[]
     return elements
   }
 
-  // Legacy elements structure
-  if ((template as any).elements) {
-    return (template as any).elements
-  }
 
-  // Very old legacy structure - convert to new format
-  const elements: TemplateElement[] = []
-
-  // Add shape element
-  if ((template as any).path) {
-    elements.push({
-      type: 'shape',
-      shape: {
-        id: 'legacy-shape',
-        type: 'path',
-        path: (template as any).path,
-        fill: (template as any).fillColor,
-        stroke: (template as any).strokeColor,
-        strokeWidth: (template as any).strokeWidth
-      }
-    })
-  }
-
-  // Add text elements
-  if ((template as any).textInputs) {
-    (template as any).textInputs.forEach((textInput: any) => {
-      elements.push({
-        type: 'text',
-        textInput: {
-          ...textInput
-        }
-      })
-    })
-  }
-
-  return elements
+  return []
 }
 
 /**
@@ -546,10 +443,8 @@ export const getTemplateTextInputs = (template: SimpleTemplate): TemplateTextInp
       .map(layer => layer.textInput)
   }
 
-  // Legacy elements structure
-  const elements = getTemplateElements(template)
-  const textElements = elements.filter(el => el.type === 'text')
-  return textElements.map(el => el.textInput!)
+  // Fallback for templates without layers (shouldn't happen with current templates)
+  return []
 }
 
 /**

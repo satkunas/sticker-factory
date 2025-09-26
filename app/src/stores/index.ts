@@ -20,7 +20,6 @@ export interface AppState {
   shapeStyles: ShapeStyleState[]
   svgImageStyles: SvgImageStyleState[]
 
-  // Legacy single-text properties (for backward compatibility)
   stickerText: string
   svgContent: string
   stickerFont: FontConfig | null
@@ -56,7 +55,6 @@ const _state = ref<AppState>({
   shapeStyles: [],
   svgImageStyles: [],
 
-  // Legacy single-text properties (for backward compatibility)
   stickerText: '',
   svgContent: '',
   stickerFont: DEFAULT_FONT,
@@ -152,8 +150,7 @@ const loadFromStorage = (): AppState => {
         shapeStyles: data.shapeStyles || [],
         svgImageStyles: data.svgImageStyles || [],
 
-        // Legacy single-text properties (for backward compatibility)
-        stickerText: data.stickerText || (data as any).badgeText || '',
+              stickerText: data.stickerText || (data as any).badgeText || '',
         svgContent: data.svgContent || '',
         stickerFont: data.stickerFont || (data as any).badgeFont || DEFAULT_FONT,
         fontSize: data.fontSize || 16,
@@ -192,7 +189,6 @@ const getDefaultState = (): AppState => ({
   shapeStyles: [],
   svgImageStyles: [],
 
-  // Legacy single-text properties (for backward compatibility)
   stickerText: '',
   svgContent: '',
   stickerFont: DEFAULT_FONT,
@@ -259,7 +255,6 @@ export const useStore = () => {
 
   const svgImageStyles = computed(() => _state.value.svgImageStyles)
 
-  // Legacy single-text getters (for backward compatibility)
   const stickerText = computed(() => _state.value.stickerText)
 
 
@@ -430,7 +425,6 @@ export const useStore = () => {
     await saveToStorage(_state.value)
   }
 
-  // Legacy single-text mutations (for backward compatibility)
   const setStickerText = async (text: string) => {
     _state.value.stickerText = sanitizeTextInput(text)
     _isDirty.value = true
