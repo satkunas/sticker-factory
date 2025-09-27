@@ -48,35 +48,14 @@ layers:
     fontWeight: 600
     fontColor: "#991b1b"
 
-  - id: "icon-top-left"
-    type: "svgImage"
-    svgId: "ui-feedback-check"
-    position: { x: "28%", y: "25%" }
-    width: 18
-    height: 18
-    fill: "#16a34a"
-    stroke: "none"
-    strokeWidth: 0
-    strokeLinejoin: "round"
-
-  - id: "icon-top-right"
-    type: "svgImage"
-    svgId: "ui-feedback-check"
-    position: { x: "72%", y: "25%" }
-    width: 18
-    height: 18
-    fill: "#16a34a"
-    stroke: "none"
-    strokeWidth: 0
-    strokeLinejoin: "round"
-
   - id: "icon-bottom-center"
     type: "svgImage"
     svgId: "ui-feedback-star"
     position: { x: "50%", y: "75%" }
-    width: 20
-    height: 20
+    width: 28
+    height: 28
     fill: "#fbbf24"
     stroke: "#f59e0b"
-    strokeWidth: 1
+    strokeWidth: 2
     strokeLinejoin: "round"
+    clip: "inner-circle"

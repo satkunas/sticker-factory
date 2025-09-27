@@ -89,6 +89,8 @@ export interface TemplateSvgImageLayer extends TemplateLayerBase {
   stroke: string
   strokeWidth: number
   strokeLinejoin?: string
+  clip?: string            // Clip path reference
+  clipPath?: string        // Direct clip path
   opacity?: number
   rotation?: number        // 0-360 degrees
   scale?: number          // 0.01-100 multiplier
@@ -216,6 +218,8 @@ export interface ProcessedSvgImageLayer extends ProcessedLayerBase {
     stroke?: string
     strokeWidth?: number
     strokeLinejoin?: string
+    clip?: string
+    clipPath?: string
   }
 }
 
@@ -253,5 +257,7 @@ export interface TemplateElement {
     stroke?: string
     strokeWidth?: number
     strokeLinejoin?: string
+    clip?: string
+    clipPath?: string
   }
 }

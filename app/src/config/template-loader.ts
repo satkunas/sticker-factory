@@ -253,6 +253,7 @@ const convertYamlToSimpleTemplate = async (yamlTemplate: YamlTemplate): Promise<
       layers.push({
         id: layer.id,
         type: 'svgImage',
+        svgId: layer.svgId,  // Preserve original svgId from YAML
         svgImage: {
           id: layer.id,
           svgContent,
@@ -262,7 +263,9 @@ const convertYamlToSimpleTemplate = async (yamlTemplate: YamlTemplate): Promise<
           fill: layer.fill,
           stroke: layer.stroke,
           strokeWidth: layer.strokeWidth,
-          strokeLinejoin: layer.strokeLinejoin
+          strokeLinejoin: layer.strokeLinejoin,
+          clip: layer.clip,
+          clipPath: layer.clipPath
         }
       })
     }

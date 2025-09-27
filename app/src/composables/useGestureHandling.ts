@@ -15,7 +15,7 @@ import {
 export interface TouchState {
   initialDistance: number
   initialZoom: number
-  touches: any[]  // Use any for Touch to avoid global type issues
+  touches: { clientX: number; clientY: number; identifier: number }[]
 }
 
 export interface GestureState {
@@ -109,7 +109,8 @@ export function useGestureHandling(
     e.stopPropagation()
 
     // e.scale represents the scaling factor from the gesture
-    const newZoom = gestureState.value.initialZoom * (e as any).scale
+    const gestureEvent = e as TouchEvent & { scale: number }
+    const newZoom = gestureState.value.initialZoom * gestureEvent.scale
     zoomLevel.value = constrainValue(newZoom, SVG_CONSTANTS.MIN_ZOOM, SVG_CONSTANTS.MAX_ZOOM)
   }
 

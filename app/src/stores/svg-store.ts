@@ -768,7 +768,7 @@ export async function loadSvgLibraryStore(): Promise<SvgLibraryItem[]> {
 /**
  * Create SVG library item from filename and content
  */
-function createSvgLibraryItem(filename: string, content: string): SvgLibraryItem | null {
+function _createSvgLibraryItem(filename: string, content: string): SvgLibraryItem | null {
   if (!content || !filename) return null
 
   const { category, name, tags } = parseSvgFilename(filename)

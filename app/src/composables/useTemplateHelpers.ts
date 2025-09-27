@@ -1,5 +1,6 @@
 import type { SimpleTemplate } from '../types/template-types'
 import { getTemplateTextInputs } from '../config/template-loader'
+import { useSvgStore } from '../stores/svg-store'
 
 /**
  * Composable for template helper functions
@@ -101,9 +102,54 @@ export function useTemplateHelpers() {
       layer.id === svgImageStyleId && layer.type === 'svgImage'
     )
 
-    if (!originalLayer) return 'SVG Image'
+    if (!originalLayer || originalLayer.type !== 'svgImage') return 'SVG Image'
 
+    // Get the actual SVG name from the store if available
+    const svgId = originalLayer.svgId || (originalLayer.svgImage?.svgContent ? 'custom' : '')
+    if (svgId && svgId !== 'custom') {
+      const svgStore = useSvgStore()
+      const svgItem = svgStore.getSvgById(svgId)
+      if (svgItem) {
+        return svgItem.name
+      }
+      // If SVG not found in store but we have an ID, ensure store is loaded
+      if (!svgStore.isLoaded.value) {
+        svgStore.loadSvgLibraryStore()
+      }
+    }
+
+    // Fallback to formatted layer ID
     return `SVG ${originalLayer.id.charAt(0).toUpperCase() + originalLayer.id.slice(1)}`
+  }
+
+  const getSvgImageDisplayName = (template: SimpleTemplate | null, svgImageStyleId: string): string => {
+    if (!template || !template.layers) return 'No SVG Selected'
+
+    const originalLayer = template.layers.find(layer =>
+      layer.id === svgImageStyleId && layer.type === 'svgImage'
+    )
+
+    if (!originalLayer || originalLayer.type !== 'svgImage') return 'No SVG Selected'
+
+    // Get the actual SVG name from the store
+    const svgId = originalLayer.svgId || (originalLayer.svgImage?.svgContent ? 'custom' : '')
+
+    if (svgId && svgId !== 'custom') {
+      const svgStore = useSvgStore()
+      const svgItem = svgStore.getSvgById(svgId)
+
+      if (svgItem) {
+        return svgItem.name
+      }
+      // If SVG not found in store but we have an ID, ensure store is loaded
+      if (!svgStore.isLoaded.value) {
+        svgStore.loadSvgLibraryStore()
+      }
+      // Return the SVG ID if we can't find the name
+      return svgId
+    }
+
+    return 'Custom SVG'
   }
 
   const getSvgImageDimensions = (template: SimpleTemplate | null, svgImageStyleId: string): string => {
@@ -161,6 +207,7 @@ export function useTemplateHelpers() {
     getSvgImageId,
     getSvgImageInfo,
     getSvgImageLabel,
+    getSvgImageDisplayName,
     getTextInputLabel,
     getTextInputPlaceholder
   }

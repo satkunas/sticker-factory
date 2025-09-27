@@ -69,11 +69,15 @@
           <g
             v-for="svgImageStyleData in [getSvgImageStyleById(element.svgImage.id)]"
             :key="element.svgImage.id"
-            :transform="getStyledSvgTransform(element.svgImage, svgImageStyleData)"
+            :clip-path="element.svgImage.clip ? `url(#clip-${element.svgImage.clip})` : (element.svgImage.clipPath || undefined)"
           >
             <g
-              v-html="getStyledSvgContent(element.svgImage, svgImageStyleData, element.svgImage.fill, element.svgImage.stroke, element.svgImage.strokeWidth)"
-            />
+              :transform="getStyledSvgTransform(element.svgImage, svgImageStyleData)"
+            >
+              <g
+                v-html="getStyledSvgContent(element.svgImage, svgImageStyleData, element.svgImage.fill, element.svgImage.stroke, element.svgImage.strokeWidth)"
+              />
+            </g>
           </g>
         </template>
       </template>
@@ -257,6 +261,9 @@ const clipPathShapes = computed(() => {
   templateElements.value.forEach(element => {
     if (element.type === 'text' && element.textInput?.clip) {
       clipIds.add(element.textInput.clip)
+    }
+    if (element.type === 'svgImage' && element.svgImage?.clip) {
+      clipIds.add(element.svgImage.clip)
     }
   })
 

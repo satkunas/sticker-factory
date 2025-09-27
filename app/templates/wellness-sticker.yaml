@@ -34,6 +34,7 @@ layers:
     stroke: "#dc2626"
     strokeWidth: 1
     strokeLinejoin: "round"
+    clip: "background"
 
   - id: "main-text"
     type: "text"
@@ -69,6 +70,7 @@ layers:
     stroke: "none"
     strokeWidth: 0
     strokeLinejoin: "round"
+    clip: "background"
 
   - id: "icon-top-right"
     type: "svgImage"
@@ -80,3 +82,4 @@ layers:
     stroke: "none"
     strokeWidth: 0
     strokeLinejoin: "round"
+    clip: "background"

@@ -6,10 +6,10 @@
     </div>
 
     <!-- Arrow Button -->
-    <div class="relative">
+    <div class="relative rounded-lg overflow-hidden transition-all duration-300 ease-in-out" :class="{ 'ring-2 ring-primary-500': isExpanded }">
       <button
         class="expandable-header-btn"
-        :class="{ 'ring-2 ring-primary-500 border-primary-500': isExpanded }"
+        :class="{ 'border-primary-500': isExpanded }"
         type="button"
         @click="_toggleExpanded"
       >
@@ -52,30 +52,88 @@
           </svg>
         </div>
       </button>
-    </div>
 
-    <!-- Expandable SVG Image Styling Section -->
-    <div
-      v-if="isExpanded"
-      class="mt-4 bg-white border border-secondary-200 rounded-lg overflow-hidden"
-    >
-      <!-- Inline SVG Selector -->
-      <ExpandableSvgSelector
-        :selectedSvgId="svgId"
-        :selectedSvgContent="svgContent"
-        :instanceId="`svg-selector-${instanceId}`"
-        @update:selectedSvgId="$emit('update:svgId', $event)"
-        @update:selectedSvgContent="$emit('update:svgContent', $event)"
-        @clear="clearSvg"
-      />
+      <!-- Expandable SVG Image Styling Section -->
+      <Transition
+        name="slide-down"
+        enterActiveClass="transition-all duration-300 ease-out"
+        leaveActiveClass="transition-all duration-300 ease-in"
+        enterFromClass="max-h-0 opacity-0"
+        enterToClass="max-h-[1000px] opacity-100"
+        leaveFromClass="max-h-[1000px] opacity-100"
+        leaveToClass="max-h-0 opacity-0"
+      >
+        <div
+          v-if="isExpanded"
+          class="bg-secondary-25 border-t border-secondary-200 overflow-hidden"
+        >
+        <!-- Transform Controls Section -->
+        <div class="p-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+          <!-- Scale Control -->
+          <div class="min-w-0">
+            <div class="text-xs font-medium text-secondary-600 mb-2">
+              Scale
+            </div>
+            <div class="flex items-center space-x-2">
+              <input
+                :value="scaleSliderValue"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
+                @input="handleScaleSliderInput($event.target.value)"
+              >
+              <div class="relative">
+                <input
+                  :value="scalePercentage"
+                  type="number"
+                  min="1"
+                  max="10000"
+                  step="1"
+                  class="w-16 px-1 py-1 pr-5 text-xs border border-secondary-200 rounded text-center focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  @input="handleScaleTextInput($event.target.value)"
+                >
+                <span class="absolute right-1 top-1/2 transform -translate-y-1/2 text-xs text-secondary-400 pointer-events-none">%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rotation Control -->
+          <div class="min-w-0">
+            <div class="text-xs font-medium text-secondary-600 mb-2">
+              Rotation
+            </div>
+            <div class="flex items-center space-x-2">
+              <input
+                :value="rotation"
+                type="range"
+                min="0"
+                max="360"
+                step="1"
+                class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
+                @input="$emit('update:rotation', parseFloat($event.target.value) || 0)"
+              >
+              <div class="relative">
+                <input
+                  :value="rotation"
+                  type="number"
+                  min="0"
+                  max="360"
+                  step="1"
+                  class="w-14 px-1 py-1 pr-4 text-xs border border-secondary-200 rounded text-center focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  @input="$emit('update:rotation', Math.max(0, Math.min(360, parseFloat($event.target.value) || 0)))"
+                >
+                <span class="absolute right-1 top-1/2 transform -translate-y-1/2 text-xs text-secondary-400 pointer-events-none">°</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- SVG Image Styling Section -->
-      <div class="p-4 bg-secondary-25">
-        <h4 class="section-header">
-          {{ imageLabel }} Styling
-        </h4>
-
-        <!-- Compact Horizontal Layout -->
+      <div class="p-4 bg-secondary-25 border-t border-secondary-200">
         <div class="space-y-4">
           <!-- SVG Controls -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
@@ -110,25 +168,47 @@
                 >
               </div>
               <div class="grid grid-cols-6 md:grid-cols-12 gap-1">
+                <!-- None button with red cross icon -->
                 <button
-                  v-for="color in PRESET_COLORS.slice(0, 12)"
-                  :key="color"
+                  class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all flex items-center justify-center bg-white"
+                  :class="color === COLOR_NONE ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
+                  :title="'None (invisible SVG)'"
+                  @click="$emit('update:color', COLOR_NONE)"
+                >
+                  <svg class="w-2 h-2 md:w-3 md:h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+                <button
+                  v-for="paletteColor in PRESET_COLORS.slice(0, 11)"
+                  :key="paletteColor"
                   class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
-                  :class="color === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
-                  :style="{ backgroundColor: color }"
-                  :title="color"
-                  @click="$emit('update:color', color)"
+                  :class="color === paletteColor ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
+                  :style="{ backgroundColor: paletteColor }"
+                  :title="paletteColor"
+                  @click="$emit('update:color', paletteColor)"
                 />
               </div>
               <div class="grid grid-cols-6 md:grid-cols-12 gap-1 mt-1">
                 <button
-                  v-for="color in PRESET_COLORS.slice(12, 24)"
-                  :key="color"
+                  v-for="paletteColor in PRESET_COLORS.slice(11, 23)"
+                  :key="paletteColor"
                   class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
-                  :class="color === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
-                  :style="{ backgroundColor: color }"
-                  :title="color"
-                  @click="$emit('update:color', color)"
+                  :class="color === paletteColor ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
+                  :style="{ backgroundColor: paletteColor }"
+                  :title="paletteColor"
+                  @click="$emit('update:color', paletteColor)"
+                />
+              </div>
+              <div class="grid grid-cols-6 md:grid-cols-12 gap-1 mt-1">
+                <button
+                  v-for="paletteColor in PRESET_COLORS.slice(23, 35)"
+                  :key="paletteColor"
+                  class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
+                  :class="color === paletteColor ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
+                  :style="{ backgroundColor: paletteColor }"
+                  :title="paletteColor"
+                  @click="$emit('update:color', paletteColor)"
                 />
               </div>
             </div>
@@ -164,25 +244,47 @@
                 >
               </div>
               <div class="grid grid-cols-6 md:grid-cols-12 gap-1">
+                <!-- None button with red cross icon -->
                 <button
-                  v-for="color in PRESET_COLORS.slice(0, 12)"
-                  :key="color"
+                  class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all flex items-center justify-center bg-white"
+                  :class="strokeColor === COLOR_NONE ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
+                  :title="'None (no SVG stroke)'"
+                  @click="$emit('update:strokeColor', COLOR_NONE)"
+                >
+                  <svg class="w-2 h-2 md:w-3 md:h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+                <button
+                  v-for="paletteColor in PRESET_COLORS.slice(0, 11)"
+                  :key="paletteColor"
                   class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
-                  :class="strokeColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
-                  :style="{ backgroundColor: color }"
-                  :title="color"
-                  @click="$emit('update:strokeColor', color)"
+                  :class="strokeColor === paletteColor ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
+                  :style="{ backgroundColor: paletteColor }"
+                  :title="paletteColor"
+                  @click="$emit('update:strokeColor', paletteColor)"
                 />
               </div>
               <div class="grid grid-cols-6 md:grid-cols-12 gap-1 mt-1">
                 <button
-                  v-for="color in PRESET_COLORS.slice(12, 24)"
-                  :key="color"
+                  v-for="paletteColor in PRESET_COLORS.slice(11, 23)"
+                  :key="paletteColor"
                   class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
-                  :class="strokeColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
-                  :style="{ backgroundColor: color }"
-                  :title="color"
-                  @click="$emit('update:strokeColor', color)"
+                  :class="strokeColor === paletteColor ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
+                  :style="{ backgroundColor: paletteColor }"
+                  :title="paletteColor"
+                  @click="$emit('update:strokeColor', paletteColor)"
+                />
+              </div>
+              <div class="grid grid-cols-6 md:grid-cols-12 gap-1 mt-1">
+                <button
+                  v-for="paletteColor in PRESET_COLORS.slice(23, 35)"
+                  :key="paletteColor"
+                  class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
+                  :class="strokeColor === paletteColor ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
+                  :style="{ backgroundColor: paletteColor }"
+                  :title="paletteColor"
+                  @click="$emit('update:strokeColor', paletteColor)"
                 />
               </div>
             </div>
@@ -242,82 +344,27 @@
             </div>
           </div>
 
-          <!-- Advanced Controls Section -->
-          <div class="border-t border-secondary-100 pt-4">
-            <h5 class="text-sm font-medium text-secondary-700 mb-3">
-              Transform Controls
-            </h5>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-              <!-- Rotation Control -->
-              <div class="min-w-0">
-                <div class="text-xs font-medium text-secondary-600 mb-2">
-                  Rotation
-                </div>
-                <div class="flex items-center space-x-2">
-                  <input
-                    :value="rotation"
-                    type="range"
-                    min="0"
-                    max="360"
-                    step="1"
-                    class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
-                    @input="$emit('update:rotation', parseFloat($event.target.value) || 0)"
-                  >
-                  <div class="relative">
-                    <input
-                      :value="rotation"
-                      type="number"
-                      min="0"
-                      max="360"
-                      step="1"
-                      class="w-14 px-1 py-1 pr-4 text-xs border border-secondary-200 rounded text-center focus:outline-none focus:ring-1 focus:ring-primary-500"
-                      @input="$emit('update:rotation', Math.max(0, Math.min(360, parseFloat($event.target.value) || 0)))"
-                    >
-                    <span class="absolute right-1 top-1/2 transform -translate-y-1/2 text-xs text-secondary-400 pointer-events-none">°</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Scale Control -->
-              <div class="min-w-0">
-                <div class="text-xs font-medium text-secondary-600 mb-2">
-                  Scale
-                </div>
-                <div class="flex items-center space-x-2">
-                  <input
-                    :value="scaleSliderValue"
-                    type="range"
-                    min="0"
-                    max="100"
-                    step="1"
-                    class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
-                    @input="handleScaleSliderInput($event.target.value)"
-                  >
-                  <div class="relative">
-                    <input
-                      :value="scalePercentage"
-                      type="number"
-                      min="1"
-                      max="10000"
-                      step="1"
-                      class="w-16 px-1 py-1 pr-5 text-xs border border-secondary-200 rounded text-center focus:outline-none focus:ring-1 focus:ring-primary-500"
-                      @input="handleScaleTextInput($event.target.value)"
-                    >
-                    <span class="absolute right-1 top-1/2 transform -translate-y-1/2 text-xs text-secondary-400 pointer-events-none">%</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
+
+      <!-- SVG Library Section -->
+      <ExpandableSvgSelector
+        :selectedSvgId="svgId"
+        :selectedSvgContent="svgContent"
+        :instanceId="`svg-selector-${instanceId}`"
+        @update:selectedSvgId="$emit('update:svgId', $event)"
+        @update:selectedSvgContent="$emit('update:svgContent', $event)"
+        @clear="clearSvg"
+      />
+        </div>
+      </Transition>
     </div>
 
   </div>
 </template>
 
 <script setup lang="ts">
-import { inject, computed, ref } from 'vue'
+import { inject, computed, ref, onMounted, onUnmounted } from 'vue'
 import ExpandableSvgSelector from './ExpandableSvgSelector.vue'
 import {
   injectSvgColors,
@@ -325,7 +372,7 @@ import {
   normalizeSvgCurrentColor,
   sanitizeColorValue
 } from '../utils/svg-styling'
-import { PRESET_COLORS, STROKE_LINEJOIN_OPTIONS } from '../utils/ui-constants'
+import { PRESET_COLORS, STROKE_LINEJOIN_OPTIONS, COLOR_NONE } from '../utils/ui-constants'
 
 interface Props {
   imageLabel?: string
@@ -406,6 +453,27 @@ const clearSvg = () => {
   emit('update:svgContent', '')
   emit('update:svgId', '')
 }
+
+// Escape key handler
+const handleKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape' && isExpanded.value) {
+    if (dropdownManager) {
+      dropdownManager.close(props.instanceId)
+    } else {
+      // Legacy fallback
+      expandedImageInstances.value.delete(props.instanceId)
+    }
+  }
+}
+
+// Mount event listeners
+onMounted(() => {
+  document.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown)
+})
 
 // Apply enhanced styling to SVG content for preview using utilities
 const styledSvgContent = computed(() => {

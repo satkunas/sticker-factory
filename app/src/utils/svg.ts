@@ -228,7 +228,7 @@ export function constrainValue(value: number, min: number, max: number): number 
  *
  * @example
  * const transform = createTransformString({ x: 10, y: 20 }, 1.5, 45)
- * // Returns: "translate(10, 20) scale(1.5) rotate(45)"
+ * // Returns: "translate(10, 20) rotate(45) scale(1.5)"
  */
 export function createTransformString(
   translate: Point,
@@ -241,12 +241,12 @@ export function createTransformString(
     transforms.push(`translate(${translate.x}, ${translate.y})`)
   }
 
-  if (scale !== 1) {
-    transforms.push(`scale(${scale})`)
-  }
-
   if (rotate !== undefined && rotate !== 0) {
     transforms.push(`rotate(${rotate})`)
+  }
+
+  if (scale !== 1) {
+    transforms.push(`scale(${scale})`)
   }
 
   return transforms.join(' ')

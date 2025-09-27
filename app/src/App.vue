@@ -108,79 +108,80 @@
               @update:selectedTemplate="handleTemplateSelection"
             />
 
-            <!-- Dynamic Text Inputs -->
-            <div v-if="selectedTemplate && textInputs" class="space-y-4">
-              <div v-for="textInput in textInputs" :key="textInput.id" class="space-y-2">
-                <FormLabel :text="getTextInputLabel(selectedTemplate, textInput.id)" />
-                <TextInputField
-                  :modelValue="textInput.text"
-                  :placeholder="getTextInputPlaceholder(selectedTemplate, textInput.id)"
-                  :selectedFont="textInput.font"
-                  :font-size="textInput.fontSize"
-                  :font-weight="textInput.fontWeight"
-                  :textColor="textInput.textColor"
-                  :textStrokeColor="textInput.strokeColor"
-                  :text-stroke-width="textInput.strokeWidth"
-                  :textStrokeLinejoin="textInput.strokeLinejoin"
-                  :stroke-opacity="textInput.strokeOpacity"
-                  :instanceId="textInput.id"
-                  @update:modelValue="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { text: value })"
-                  @update:selectedFont="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { font: value })"
-                  @update:fontSize="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { fontSize: value })"
-                  @update:fontWeight="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { fontWeight: value })"
-                  @update:textColor="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { textColor: value })"
-                  @update:textStrokeColor="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { strokeColor: value })"
-                  @update:textStrokeWidth="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { strokeWidth: value })"
-                  @update:textStrokeLinejoin="(value) => updateTextInputByIndex(textInputs.indexOf(textInput), { strokeLinejoin: value })"
-                />
-              </div>
-            </div>
+            <!-- Dynamic Form Elements in Template Layer Order -->
+            <div v-if="selectedTemplate && orderedFormElements.length > 0" class="space-y-4">
+              <div v-for="element in orderedFormElements" :key="element.id" class="space-y-2">
 
-            <!-- Template Object Styling -->
-            <div v-if="selectedTemplate && shapeStyles && shapeStyles.length > 0" class="space-y-4">
-              <div v-for="(shapeStyle, index) in shapeStyles" :key="shapeStyle.id" class="space-y-2">
-                <TemplateObjectStyler
-                  :shapeLabel="getShapeLabel(selectedTemplate, shapeStyle.id)"
-                  :shapeDimensions="getShapeDimensions(selectedTemplate, shapeStyle.id)"
-                  :shapeData="getShapeData(selectedTemplate, shapeStyle.id)"
-                  :shapePath="getShapePath(selectedTemplate, shapeStyle.id)"
-                  :fillColor="shapeStyle.fillColor"
-                  :strokeColor="shapeStyle.strokeColor"
-                  :stroke-width="shapeStyle.strokeWidth"
-                  :stroke-linejoin="shapeStyle.strokeLinejoin"
-                  :instanceId="`shape-${index}`"
-                  @update:fillColor="(value) => updateShapeStyleByIndex(index, { fillColor: value })"
-                  @update:strokeColor="(value) => updateShapeStyleByIndex(index, { strokeColor: value })"
-                  @update:strokeWidth="(value) => updateShapeStyleByIndex(index, { strokeWidth: value })"
-                  @update:strokeLinejoin="(value) => updateShapeStyleByIndex(index, { strokeLinejoin: value })"
-                />
-              </div>
-            </div>
+                <!-- Text Input -->
+                <template v-if="element.type === 'text'">
+                  <FormLabel :text="getTextInputLabel(selectedTemplate, element.id)" />
+                  <TextInputField
+                    :modelValue="element.data.text"
+                    :placeholder="getTextInputPlaceholder(selectedTemplate, element.id)"
+                    :selectedFont="element.data.font"
+                    :font-size="element.data.fontSize"
+                    :font-weight="element.data.fontWeight"
+                    :textColor="element.data.textColor"
+                    :textStrokeColor="element.data.strokeColor"
+                    :text-stroke-width="element.data.strokeWidth"
+                    :textStrokeLinejoin="element.data.strokeLinejoin"
+                    :stroke-opacity="element.data.strokeOpacity"
+                    :instanceId="element.id"
+                    @update:modelValue="(value) => updateTextInputByIndex(element.index, { text: value })"
+                    @update:selectedFont="(value) => updateTextInputByIndex(element.index, { font: value })"
+                    @update:fontSize="(value) => updateTextInputByIndex(element.index, { fontSize: value })"
+                    @update:fontWeight="(value) => updateTextInputByIndex(element.index, { fontWeight: value })"
+                    @update:textColor="(value) => updateTextInputByIndex(element.index, { textColor: value })"
+                    @update:textStrokeColor="(value) => updateTextInputByIndex(element.index, { strokeColor: value })"
+                    @update:textStrokeWidth="(value) => updateTextInputByIndex(element.index, { strokeWidth: value })"
+                    @update:textStrokeLinejoin="(value) => updateTextInputByIndex(element.index, { strokeLinejoin: value })"
+                  />
+                </template>
 
-            <!-- SVG Image Styling -->
-            <div v-if="selectedTemplate && svgImageStyles && svgImageStyles.length > 0" class="space-y-4">
-              <div v-for="(svgImageStyle, index) in svgImageStyles" :key="svgImageStyle.id" class="space-y-2">
-                <TemplateImageStyler
-                  :imageLabel="getSvgImageLabel(selectedTemplate, svgImageStyle.id)"
-                  :imageDimensions="getSvgImageDimensions(selectedTemplate, svgImageStyle.id)"
-                  :svgContent="getSvgImageContent(selectedTemplate, svgImageStyle.id)"
-                  :svgId="getSvgImageId(selectedTemplate, svgImageStyle.id)"
-                  :color="svgImageStyle.color"
-                  :strokeColor="svgImageStyle.strokeColor"
-                  :stroke-width="svgImageStyle.strokeWidth"
-                  :stroke-linejoin="svgImageStyle.strokeLinejoin"
-                  :rotation="svgImageStyle.rotation"
-                  :scale="svgImageStyle.scale"
-                  :instanceId="`svgImage-${index}`"
-                  @update:svgContent="(value) => updateSvgImageContent(index, value)"
-                  @update:svgId="(value) => updateSvgImageId(index, value)"
-                  @update:color="(value) => updateSvgImageStyleByIndex(index, { color: value })"
-                  @update:strokeColor="(value) => updateSvgImageStyleByIndex(index, { strokeColor: value })"
-                  @update:strokeWidth="(value) => updateSvgImageStyleByIndex(index, { strokeWidth: value })"
-                  @update:strokeLinejoin="(value) => updateSvgImageStyleByIndex(index, { strokeLinejoin: value })"
-                  @update:rotation="(value) => updateSvgImageStyleByIndex(index, { rotation: value })"
-                  @update:scale="(value) => updateSvgImageStyleByIndex(index, { scale: value })"
-                />
+                <!-- Shape Styling -->
+                <template v-else-if="element.type === 'shape'">
+                  <TemplateObjectStyler
+                    :shapeLabel="getShapeLabel(selectedTemplate, element.id)"
+                    :shapeDimensions="getShapeDimensions(selectedTemplate, element.id)"
+                    :shapeData="getShapeData(selectedTemplate, element.id)"
+                    :shapePath="getShapePath(selectedTemplate, element.id)"
+                    :fillColor="element.data.fillColor"
+                    :strokeColor="element.data.strokeColor"
+                    :stroke-width="element.data.strokeWidth"
+                    :stroke-linejoin="element.data.strokeLinejoin"
+                    :instanceId="`shape-${element.index}`"
+                    @update:fillColor="(value) => updateShapeStyleByIndex(element.index, { fillColor: value })"
+                    @update:strokeColor="(value) => updateShapeStyleByIndex(element.index, { strokeColor: value })"
+                    @update:strokeWidth="(value) => updateShapeStyleByIndex(element.index, { strokeWidth: value })"
+                    @update:strokeLinejoin="(value) => updateShapeStyleByIndex(element.index, { strokeLinejoin: value })"
+                  />
+                </template>
+
+                <!-- SVG Image Styling -->
+                <template v-else-if="element.type === 'svgImage'">
+                  <TemplateImageStyler
+                    :imageLabel="getSvgImageDisplayName(selectedTemplate, element.id)"
+                    :imageDimensions="getSvgImageDimensions(selectedTemplate, element.id)"
+                    :svgContent="getSvgImageContent(selectedTemplate, element.id)"
+                    :svgId="getSvgImageId(selectedTemplate, element.id)"
+                    :color="element.data.color"
+                    :strokeColor="element.data.strokeColor"
+                    :stroke-width="element.data.strokeWidth"
+                    :stroke-linejoin="element.data.strokeLinejoin"
+                    :rotation="element.data.rotation"
+                    :scale="element.data.scale"
+                    :instanceId="`svgImage-${element.index}`"
+                    @update:svgContent="(value) => updateSvgImageContent(element.index, value)"
+                    @update:svgId="(value) => updateSvgImageId(element.index, value)"
+                    @update:color="(value) => updateSvgImageStyleByIndex(element.index, { color: value })"
+                    @update:strokeColor="(value) => updateSvgImageStyleByIndex(element.index, { strokeColor: value })"
+                    @update:strokeWidth="(value) => updateSvgImageStyleByIndex(element.index, { strokeWidth: value })"
+                    @update:strokeLinejoin="(value) => updateSvgImageStyleByIndex(element.index, { strokeLinejoin: value })"
+                    @update:rotation="(value) => updateSvgImageStyleByIndex(element.index, { rotation: value })"
+                    @update:scale="(value) => updateSvgImageStyleByIndex(element.index, { scale: value })"
+                  />
+                </template>
+
               </div>
             </div>
 
@@ -247,7 +248,7 @@ const {
   getShapeDimensions,
   getShapeData,
   getShapePath,
-  getSvgImageLabel,
+  getSvgImageDisplayName,
   getSvgImageDimensions,
   getSvgImageContent,
   getSvgImageId
@@ -329,6 +330,54 @@ const fontWeight = computed(() => store.fontWeight.value)
 const strokeColor = computed(() => store.strokeColor.value)
 const strokeWidth = computed(() => store.strokeWidth.value)
 const strokeOpacity = computed(() => store.strokeOpacity.value)
+
+// Computed property for form elements in template layer order
+const orderedFormElements = computed(() => {
+  if (!selectedTemplate.value?.layers) return []
+
+  const elements: Array<{
+    type: 'text' | 'shape' | 'svgImage'
+    id: string
+    data: any
+    index: number
+  }> = []
+
+  selectedTemplate.value.layers.forEach((layer) => {
+    if (layer.type === 'text') {
+      const textInputIndex = textInputs.value?.findIndex(t => t.id === layer.id) ?? -1
+      if (textInputIndex >= 0 && textInputs.value?.[textInputIndex]) {
+        elements.push({
+          type: 'text',
+          id: layer.id,
+          data: textInputs.value[textInputIndex],
+          index: textInputIndex
+        })
+      }
+    } else if (layer.type === 'shape') {
+      const shapeStyleIndex = shapeStyles.value?.findIndex(s => s.id === layer.id) ?? -1
+      if (shapeStyleIndex >= 0 && shapeStyles.value?.[shapeStyleIndex]) {
+        elements.push({
+          type: 'shape',
+          id: layer.id,
+          data: shapeStyles.value[shapeStyleIndex],
+          index: shapeStyleIndex
+        })
+      }
+    } else if (layer.type === 'svgImage') {
+      const svgImageStyleIndex = svgImageStyles.value?.findIndex(s => s.id === layer.id) ?? -1
+      if (svgImageStyleIndex >= 0 && svgImageStyles.value?.[svgImageStyleIndex]) {
+        elements.push({
+          type: 'svgImage',
+          id: layer.id,
+          data: svgImageStyles.value[svgImageStyleIndex],
+          index: svgImageStyleIndex
+        })
+      }
+    }
+  })
+
+  return elements
+})
 
 // SVG viewer ref
 const svgViewerRef = ref(null)

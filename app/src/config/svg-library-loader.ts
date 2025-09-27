@@ -1,5 +1,4 @@
 import type { SvgLibraryItem } from '../types/template-types'
-import { logger } from '../utils/logger'
 import { useSvgStore } from '../stores/svg-store'
 
 // Backward compatibility layer - delegates to SVG store

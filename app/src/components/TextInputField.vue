@@ -1,13 +1,14 @@
 <template>
   <div ref="containerRef" class="w-full">
     <!-- Text Input with Arrow Icon -->
-    <div class="relative">
+    <div class="relative rounded-lg overflow-hidden transition-all duration-300 ease-in-out" :class="{ 'ring-2 ring-primary-500': isExpanded }">
       <input
         :value="modelValue"
         type="text"
         class="input-field w-full pr-10"
+        :class="{ 'border-primary-500': isExpanded }"
         :placeholder="placeholder"
-        :style="{ 
+        :style="{
           fontFamily: selectedFont ? getFontFamily(selectedFont) : 'inherit', // Used in template
           fontSize: fontSize + 'px',
           fontWeight: fontWeight
@@ -20,19 +21,18 @@
         type="button"
         @click="_toggleExpanded"
       >
-        <svg 
+        <svg
           class="w-5 h-5 transition-transform duration-200"
           :class="{ 'rotate-180': isExpanded }"
-          fill="currentColor" 
+          fill="currentColor"
           viewBox="0 0 20 20"
         >
           <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
         </svg>
       </button>
-    </div>
 
-    <!-- Expandable Font Selector -->
-    <ExpandableFontSelector
+      <!-- Expandable Font Selector -->
+      <ExpandableFontSelector
       :selectedFont="selectedFont"
       :textColor="textColor"
       :font-size="fontSize"
@@ -50,6 +50,7 @@
       @update:textStrokeColor="$emit('update:textStrokeColor', $event)"
       @update:textStrokeLinejoin="$emit('update:textStrokeLinejoin', $event)"
     />
+    </div>
   </div>
 </template>
 

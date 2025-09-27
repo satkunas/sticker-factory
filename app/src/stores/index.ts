@@ -299,7 +299,11 @@ export const useStore = () => {
         updates.text = sanitizeTextInput(updates.text)
       }
 
-      _state.value.textInputs[index] = { ..._state.value.textInputs[index], ...updates }
+      // Create a new array to ensure Vue reactivity triggers
+      const newTextInputs = [..._state.value.textInputs]
+      newTextInputs[index] = { ...newTextInputs[index], ...updates }
+      _state.value.textInputs = newTextInputs
+
       _isDirty.value = true
       await saveToStorage(_state.value)
     }
@@ -362,7 +366,11 @@ export const useStore = () => {
 
   const updateShapeStyle = async (index: number, updates: Partial<ShapeStyleState>) => {
     if (index >= 0 && index < _state.value.shapeStyles.length) {
-      _state.value.shapeStyles[index] = { ..._state.value.shapeStyles[index], ...updates }
+      // Create a new array to ensure Vue reactivity triggers
+      const newShapeStyles = [..._state.value.shapeStyles]
+      newShapeStyles[index] = { ...newShapeStyles[index], ...updates }
+      _state.value.shapeStyles = newShapeStyles
+
       _isDirty.value = true
       await saveToStorage(_state.value)
     }
@@ -392,7 +400,10 @@ export const useStore = () => {
   // SVG image style management functions
   const updateSvgImageStyle = async (index: number, updates: Partial<SvgImageStyleState>) => {
     if (index >= 0 && index < _state.value.svgImageStyles.length) {
-      _state.value.svgImageStyles[index] = { ..._state.value.svgImageStyles[index], ...updates }
+      // Create a new array to ensure Vue reactivity triggers
+      const newSvgImageStyles = [..._state.value.svgImageStyles]
+      newSvgImageStyles[index] = { ...newSvgImageStyles[index], ...updates }
+      _state.value.svgImageStyles = newSvgImageStyles
       _isDirty.value = true
       await saveToStorage(_state.value)
     }

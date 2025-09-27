@@ -195,7 +195,7 @@ describe('SVG Transform Generation', () => {
 
     it('should include rotation when provided', () => {
       const result = createTransformString({ x: 10, y: 20 }, 1.5, 45)
-      expect(result).toBe('translate(10, 20) scale(1.5) rotate(45)')
+      expect(result).toBe('translate(10, 20) rotate(45) scale(1.5)')
     })
 
     it('should handle zero values correctly', () => {
@@ -205,7 +205,7 @@ describe('SVG Transform Generation', () => {
 
     it('should handle decimal values correctly', () => {
       const result = createTransformString({ x: 10.5, y: 20.75 }, 1.25, 22.5)
-      expect(result).toBe('translate(10.5, 20.75) scale(1.25) rotate(22.5)')
+      expect(result).toBe('translate(10.5, 20.75) rotate(22.5) scale(1.25)')
     })
   })
 

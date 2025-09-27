@@ -38,6 +38,7 @@ layers:
     stroke: "none"
     strokeWidth: 0
     strokeLinejoin: "round"
+    clip: "background"
 
   - id: "announcement-title"
     type: "text"
@@ -85,6 +86,7 @@ layers:
     stroke: "none"
     strokeWidth: 0
     strokeLinejoin: "round"
+    clip: "background"
 
   - id: "icon-middle-right"
     type: "svgImage"
@@ -96,6 +98,7 @@ layers:
     stroke: "none"
     strokeWidth: 0
     strokeLinejoin: "round"
+    clip: "background"
 
   - id: "icon-bottom-left"
     type: "svgImage"
@@ -107,6 +110,7 @@ layers:
     stroke: "none"
     strokeWidth: 0
     strokeLinejoin: "round"
+    clip: "background"
 
   - id: "icon-bottom-right"
     type: "svgImage"
@@ -118,3 +122,4 @@ layers:
     stroke: "none"
     strokeWidth: 0
     strokeLinejoin: "round"
+    clip: "background"

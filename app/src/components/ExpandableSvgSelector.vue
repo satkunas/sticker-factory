@@ -9,13 +9,65 @@
 
         <!-- Search and Filters -->
         <div class="space-y-3">
-          <!-- Search Input -->
+          <!-- Category Filter (moved to top) -->
+          <div class="flex flex-wrap gap-1">
+            <!-- When focused: show all pills. When blurred: show only selected pill -->
+            <template v-if="searchFocused">
+              <!-- All Categories pill when focused -->
+              <button
+                :class="[
+                  'px-2 py-1 text-xs rounded transition-colors',
+                  selectedCategory === null
+                    ? 'bg-primary-100 text-primary-700'
+                    : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
+                ]"
+                @click="selectCategoryAndClose(null)"
+              >
+                All Categories
+              </button>
+              <!-- All category pills when focused -->
+              <button
+                v-for="category in svgStore.categories.value"
+                :key="category"
+                :class="[
+                  'px-2 py-1 text-xs rounded transition-colors',
+                  selectedCategory === category
+                    ? 'bg-primary-100 text-primary-700'
+                    : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
+                ]"
+                @click="selectCategoryAndClose(category)"
+              >
+                {{ categoryDisplayName(category) }}
+              </button>
+            </template>
+            <template v-else>
+              <!-- When blurred: show only the selected pill -->
+              <button
+                v-if="selectedCategory === null"
+                class="px-2 py-1 text-xs rounded bg-primary-100 text-primary-700"
+                @click="selectedCategory = null"
+              >
+                All Categories
+              </button>
+              <button
+                v-else
+                class="px-2 py-1 text-xs rounded bg-primary-100 text-primary-700"
+                @click="searchFocused = true"
+              >
+                {{ categoryDisplayName(selectedCategory) }}
+              </button>
+            </template>
+          </div>
+
+          <!-- Search Input (moved below pills) -->
           <div class="relative">
             <input
               v-model="searchQuery"
               type="text"
               placeholder="Search SVGs by name or tag..."
               class="w-full px-3 py-2 pr-8 border border-secondary-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              @focus="searchFocused = true"
+              @blur="handleSearchBlur"
             >
             <button
               v-if="searchQuery.length > 0"
@@ -27,34 +79,6 @@
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
               </svg>
-            </button>
-          </div>
-
-          <!-- Category Filter -->
-          <div class="flex flex-wrap gap-1">
-            <button
-              :class="[
-                'px-2 py-1 text-xs rounded transition-colors',
-                selectedCategory === null
-                  ? 'bg-primary-100 text-primary-700'
-                  : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-              ]"
-              @click="selectedCategory = null"
-            >
-              All Categories
-            </button>
-            <button
-              v-for="category in svgStore.categories.value"
-              :key="category"
-              :class="[
-                'px-2 py-1 text-xs rounded transition-colors',
-                selectedCategory === category
-                  ? 'bg-primary-100 text-primary-700'
-                  : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-              ]"
-              @click="selectedCategory = category"
-            >
-              {{ categoryDisplayName(category) }}
             </button>
           </div>
 
@@ -83,7 +107,7 @@
         </div>
 
         <div v-else ref="svgGridContainer" class="max-h-64 overflow-y-auto" @scroll="handleScroll">
-          <div class="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2">
+          <div class="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2 pt-2">
             <div
               v-for="svg in visibleSvgs"
               :key="svg.id"
@@ -92,12 +116,17 @@
               :title="`${svg.name} (${svg.category})`"
               @click="selectSvg(svg)"
             >
-              <!-- SVG Preview -->
+              <!-- SVG Preview with Lazy Loading -->
               <div
+                :ref="(el) => setTileRef(el, svg.id)"
                 class="w-full h-full flex items-center justify-center text-secondary-700 transition-colors"
                 :class="{ 'text-primary-600': selectedSvgId === svg.id }"
-                v-html="svg.svgContent"
-              />
+              >
+                <!-- Loaded SVG Content -->
+                <div v-if="loadedSvgContent[svg.id]" class="w-full h-full flex items-center justify-center" v-html="loadedSvgContent[svg.id]"></div>
+                <!-- Loading indicator for empty SVG -->
+                <div v-else class="w-4 h-4 bg-secondary-300 rounded animate-pulse"></div>
+              </div>
 
               <!-- Selection indicator -->
               <div
@@ -155,10 +184,12 @@
   </div>
 </template>
 
+<!-- eslint-disable no-undef -->
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, type ComponentPublicInstance } from 'vue'
 import type { SvgLibraryItem } from '../types/template-types'
 import { useSvgStore } from '../stores/svg-store'
+import { logger } from '../utils/logger'
 
 interface Props {
   selectedSvgId?: string
@@ -182,6 +213,7 @@ const svgStore = useSvgStore()
 // Component state
 const searchQuery = ref('')
 const selectedCategory = ref<string | null>(null)
+const searchFocused = ref(false)
 
 // Enhanced lazy loading state for 5000+ icons
 const svgGridContainer = ref<HTMLElement>()
@@ -191,6 +223,12 @@ const loadingBatchSize = ref(40) // Dynamic batch size
 
 // Component container ref for scrolling
 const containerRef = ref<HTMLElement>()
+
+// Lazy loading state for SVG content
+const loadedSvgContent = ref<Record<string, string>>({})
+const tileRefs = new Map<string, HTMLElement>()
+// eslint-disable-next-line no-undef
+const intersectionObserver = ref<IntersectionObserver | null>(null)
 
 // Filtered SVGs based on search and category
 const filteredSvgs = computed(() => {
@@ -232,16 +270,14 @@ const handleScroll = () => {
       Math.max(20, Math.floor(filteredSvgs.value.length / 100)) // Scale batch size with collection
     )
 
-    // Use requestAnimationFrame for smoother loading
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        visibleSvgCount.value = Math.min(
-          visibleSvgCount.value + adaptiveBatchSize,
-          filteredSvgs.value.length
-        )
-        isLoadingMore.value = false
-      }, 30) // Optimized delay for better perceived performance
-    })
+    // Use setTimeout for smoother loading
+    setTimeout(() => {
+      visibleSvgCount.value = Math.min(
+        visibleSvgCount.value + adaptiveBatchSize,
+        filteredSvgs.value.length
+      )
+      isLoadingMore.value = false
+    }, 30) // Optimized delay for better perceived performance
   }
 }
 
@@ -267,6 +303,13 @@ watch([searchQuery, selectedCategory], () => {
   }
 
   isLoadingMore.value = false
+
+  // Reset intersection observer when filters change
+  cleanupIntersectionObserver()
+  // Reset tile refs map
+  tileRefs.clear()
+  // Setup fresh intersection observer
+  setupIntersectionObserver()
 })
 
 // Helper function to display category names
@@ -274,10 +317,89 @@ const categoryDisplayName = (category: string): string => {
   return category.charAt(0).toUpperCase() + category.slice(1).replace(/([A-Z])/g, ' $1')
 }
 
+// Handle search blur with delay to allow pill clicks to complete
+const handleSearchBlur = () => {
+  // Delay the blur handling to allow click events on category pills to complete
+  setTimeout(() => {
+    searchFocused.value = false
+  }, 150)
+}
+
+// Select category and automatically close the expanded list
+const selectCategoryAndClose = (category: string | null) => {
+  selectedCategory.value = category
+  searchFocused.value = false
+}
+
+// Lazy loading helper functions
+// eslint-disable-next-line no-undef
+const setTileRef = (el: Element | ComponentPublicInstance | null, svgId: string) => {
+  if (el && el instanceof HTMLElement) {
+    tileRefs.set(svgId, el)
+
+    // Observe the element for intersection
+    if (intersectionObserver.value) {
+      intersectionObserver.value.observe(el)
+    }
+  }
+}
+
+const loadSvgContent = async (svgId: string) => {
+  if (loadedSvgContent.value[svgId]) {
+    return // Already loaded
+  }
+
+  try {
+    const content = await svgStore.getSvgContent(svgId)
+    if (content) {
+      loadedSvgContent.value[svgId] = content
+    }
+  } catch (error) {
+    logger.warn(`Failed to load SVG content for ${svgId}:`, error)
+  }
+}
+
+const setupIntersectionObserver = () => {
+  // eslint-disable-next-line no-undef
+  intersectionObserver.value = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          // Find the SVG ID for this element
+          for (const [svgId, element] of tileRefs.entries()) {
+            if (element === entry.target) {
+              loadSvgContent(svgId)
+              break
+            }
+          }
+        }
+      })
+    },
+    {
+      rootMargin: '50px', // Load SVGs when they're 50px away from viewport
+      threshold: 0.1
+    }
+  )
+}
+
+const cleanupIntersectionObserver = () => {
+  if (intersectionObserver.value) {
+    intersectionObserver.value.disconnect()
+    intersectionObserver.value = null
+  }
+  tileRefs.clear()
+}
+
 // Select SVG handler
-const selectSvg = (svg: SvgLibraryItem) => {
+const selectSvg = async (svg: SvgLibraryItem) => {
   emit('update:selectedSvgId', svg.id)
-  emit('update:selectedSvgContent', svg.svgContent)
+
+  // Ensure the SVG content is loaded before emitting
+  if (!loadedSvgContent.value[svg.id]) {
+    await loadSvgContent(svg.id)
+  }
+
+  emit('update:selectedSvgContent', loadedSvgContent.value[svg.id] || svg.svgContent)
 }
 
 // Clear selection
@@ -294,10 +416,18 @@ onMounted(async () => {
     if (!svgStore.isLoaded.value) {
       await svgStore.loadSvgLibraryStore()
     }
+
+    // Setup intersection observer for lazy loading
+    setupIntersectionObserver()
   } catch (error) {
-    console.warn('Failed to load SVG library:', error)
+    logger.warn('Failed to load SVG library:', error)
     // Store handles error state internally
   }
+})
+
+// Cleanup on unmount
+onUnmounted(() => {
+  cleanupIntersectionObserver()
 })
 
 </script>

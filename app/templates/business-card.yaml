@@ -30,12 +30,13 @@ layers:
     type: "svgImage"
     svgId: "ui-people-user"
     position: { x: "20%", y: "30%" }
-    width: 32
-    height: 32
-    fill: "#3b82f6"
-    stroke: "none"
-    strokeWidth: 0
+    width: 36
+    height: 36
+    fill: "none"
+    stroke: "#3b82f6"
+    strokeWidth: 3
     strokeLinejoin: "round"
+    clip: "background"
 
   - id: "company-name"
     type: "text"
@@ -65,7 +66,7 @@ layers:
     type: "text"
     label: "Phone Number"
     default: "(555) 123-4567"
-    position: { x: "65%", y: "68%" }
+    position: { x: "68%", y: "68%" }
     clip: "background"
     maxLength: 15
     fontFamily: "Inter"
@@ -77,10 +78,34 @@ layers:
     type: "text"
     label: "Email Address"
     default: "john@company.com"
-    position: { x: "65%", y: "82%" }
+    position: { x: "68%", y: "82%" }
     clip: "background"
     maxLength: 30
     fontFamily: "Inter"
     fontSize: 13
     fontWeight: 500
     fontColor: "#4b5563"
+
+  - id: "phone-icon"
+    type: "svgImage"
+    svgId: "ui-communication-phone"
+    position: { x: "55%", y: "68%" }
+    width: 16
+    height: 16
+    fill: "none"
+    stroke: "#6b7280"
+    strokeWidth: 2
+    strokeLinejoin: "round"
+    clip: "background"
+
+  - id: "email-icon"
+    type: "svgImage"
+    svgId: "ui-communication-mail"
+    position: { x: "55%", y: "82%" }
+    width: 16
+    height: 16
+    fill: "none"
+    stroke: "#6b7280"
+    strokeWidth: 2
+    strokeLinejoin: "round"
+    clip: "background"

@@ -2,17 +2,21 @@
   <!-- Inline Accordion Design -->
   <div ref="containerRef" class="w-full">
     <!-- Accordion Content -->
-    <div 
-      v-if="isExpanded"
-      class="mb-4 bg-white border border-secondary-200 rounded-lg overflow-hidden"
+    <Transition
+      name="slide-down"
+      enterActiveClass="transition-all duration-300 ease-out"
+      leaveActiveClass="transition-all duration-300 ease-in"
+      enterFromClass="max-h-0 opacity-0"
+      enterToClass="max-h-[1000px] opacity-100"
+      leaveFromClass="max-h-[1000px] opacity-100"
+      leaveToClass="max-h-0 opacity-0"
     >
+      <div
+        v-if="isExpanded"
+        class="bg-secondary-25 border-t border-secondary-200 overflow-hidden"
+      >
       <!-- Text Styling Section -->
-      <div class="p-4 border-b border-secondary-200 bg-secondary-25">
-        <h4 class="section-header">
-          Text Styling
-        </h4>
-        
-        <!-- Compact Horizontal Layout -->
+      <div class="p-4">
         <div class="space-y-4">
           <!-- Text Controls -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
@@ -47,8 +51,19 @@
                 >
               </div>
               <div class="grid grid-cols-6 md:grid-cols-12 gap-1">
+                <!-- None button with red cross icon -->
                 <button
-                  v-for="color in PRESET_COLORS.slice(0, 12)"
+                  class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all flex items-center justify-center bg-white"
+                  :class="textColor === COLOR_NONE ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
+                  :title="'None (invisible text)'"
+                  @click="$emit('update:textColor', COLOR_NONE)"
+                >
+                  <svg class="w-2 h-2 md:w-3 md:h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+                <button
+                  v-for="color in PRESET_COLORS.slice(0, 11)"
                   :key="color"
                   class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
                   :class="textColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
@@ -59,7 +74,18 @@
               </div>
               <div class="grid grid-cols-6 md:grid-cols-12 gap-1 mt-1">
                 <button
-                  v-for="color in PRESET_COLORS.slice(12, 24)"
+                  v-for="color in PRESET_COLORS.slice(11, 23)"
+                  :key="color"
+                  class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
+                  :class="textColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
+                  :style="{ backgroundColor: color }"
+                  :title="color"
+                  @click="$emit('update:textColor', color)"
+                />
+              </div>
+              <div class="grid grid-cols-6 md:grid-cols-12 gap-1 mt-1">
+                <button
+                  v-for="color in PRESET_COLORS.slice(23, 35)"
                   :key="color"
                   class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
                   :class="textColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
@@ -173,8 +199,19 @@
                   >
                 </div>
                 <div class="grid grid-cols-6 md:grid-cols-12 gap-1">
+                  <!-- None button with red cross icon -->
                   <button
-                    v-for="color in PRESET_COLORS.slice(0, 12)"
+                    class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all flex items-center justify-center bg-white"
+                    :class="textStrokeColor === COLOR_NONE ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
+                    :title="'None (no text stroke)'"
+                    @click="$emit('update:textStrokeColor', COLOR_NONE)"
+                  >
+                    <svg class="w-2 h-2 md:w-3 md:h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                  <button
+                    v-for="color in PRESET_COLORS.slice(0, 11)"
                     :key="color"
                     class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
                     :class="textStrokeColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
@@ -185,7 +222,18 @@
                 </div>
                 <div class="grid grid-cols-6 md:grid-cols-12 gap-1 mt-1">
                   <button
-                    v-for="color in PRESET_COLORS.slice(12, 24)"
+                    v-for="color in PRESET_COLORS.slice(11, 23)"
+                    :key="color"
+                    class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
+                    :class="textStrokeColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
+                    :style="{ backgroundColor: color }"
+                    :title="color"
+                    @click="$emit('update:textStrokeColor', color)"
+                  />
+                </div>
+                <div class="grid grid-cols-6 md:grid-cols-12 gap-1 mt-1">
+                  <button
+                    v-for="color in PRESET_COLORS.slice(23, 35)"
                     :key="color"
                     class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
                     :class="textStrokeColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
@@ -337,7 +385,8 @@
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -347,7 +396,7 @@ import { FONT_CATEGORIES, loadFont, type FontConfig } from '../config/fonts'
 import FontTile from './FontTile.vue'
 import { useFontSelector } from '../composables/useFontSelector'
 import { getFontCategoryColor } from '../utils/font-utils'
-import { PRESET_COLORS, COMMON_FONT_SIZES, STROKE_LINEJOIN_OPTIONS } from '../utils/ui-constants'
+import { PRESET_COLORS, COMMON_FONT_SIZES, STROKE_LINEJOIN_OPTIONS, COLOR_NONE } from '../utils/ui-constants'
 
 interface Props {
   selectedFont?: FontConfig | null

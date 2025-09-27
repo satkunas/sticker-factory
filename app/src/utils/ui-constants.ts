@@ -4,14 +4,37 @@
  */
 
 // Preset colors for quick selection (used in font selector and color pickers)
+// Organized by color families for intuitive selection (35 colors total)
 export const PRESET_COLORS = [
-  '#000000', '#ffffff', '#ef4444', '#f97316',
-  '#eab308', '#22c55e', '#3b82f6', '#8b5cf6',
-  '#ec4899', '#6b7280', '#dc2626', '#059669',
-  '#1f2937', '#f3f4f6', '#7f1d1d', '#7c2d12',
-  '#713f12', '#14532d', '#1e3a8a', '#581c87',
-  '#831843', '#374151', '#fbbf24', '#34d399'
+  // Neutrals & Basics (8 colors)
+  '#000000', '#1f2937', '#4b5563', '#6b7280',
+  '#9ca3af', '#d1d5db', '#f3f4f6', '#ffffff',
+
+  // Reds (4 colors)
+  '#7f1d1d', '#dc2626', '#ef4444', '#fca5a5',
+
+  // Oranges (3 colors)
+  '#7c2d12', '#ea580c', '#fb923c',
+
+  // Yellows & Ambers (4 colors)
+  '#a16207', '#d97706', '#f59e0b', '#fbbf24',
+
+  // Greens (4 colors)
+  '#14532d', '#16a34a', '#22c55e', '#86efac',
+
+  // Blues (4 colors)
+  '#1e3a8a', '#2563eb', '#3b82f6', '#93c5fd',
+
+  // Purples (4 colors)
+  '#581c87', '#7c3aed', '#8b5cf6', '#c4b5fd',
+
+  // Pinks & Special (4 colors)
+  '#be185d', '#e11d48', '#ec4899', '#06b6d4'
 ] as const
+
+// Special color values
+export const COLOR_NONE = 'none' as const
+export const COLOR_TRANSPARENT = 'transparent' as const
 
 // Common font sizes for quick selection
 export const COMMON_FONT_SIZES = [12, 16, 20, 24, 32, 48] as const

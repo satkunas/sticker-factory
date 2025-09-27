@@ -120,9 +120,9 @@ export const getStyledSvgTransform = (
     const svgCenterOffsetX = -svgIntrinsicSize / 2  // -12
     const svgCenterOffsetY = -svgIntrinsicSize / 2  // -12
 
-    // Apply the transforms: translate to position, rotate and scale at origin,
+    // Apply the transforms: translate to position, scale and rotate at origin,
     // then translate to center the SVG content properly
-    return `translate(${centerX}, ${centerY}) rotate(${rotation}) scale(${clampedScale}) translate(${svgCenterOffsetX}, ${svgCenterOffsetY})`
+    return `translate(${centerX}, ${centerY}) scale(${clampedScale}) rotate(${rotation}) translate(${svgCenterOffsetX}, ${svgCenterOffsetY})`
   } catch (error) {
     logger.warn('Failed to calculate SVG transform:', error)
     // Simple fallback - use coordinates as absolute values
