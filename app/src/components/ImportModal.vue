@@ -164,7 +164,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import Modal from './Modal.vue'
-import { useStore } from '../stores'
+import { importData } from '../stores/urlDrivenStore'
 import { validateFileUpload, validateImportData } from '../utils/security'
 
 interface Props {
@@ -175,8 +175,6 @@ defineProps<Props>()
 defineEmits<{
   close: []
 }>()
-
-const store = useStore()
 
 // Tab state
 const activeTab = ref('text')
@@ -209,7 +207,7 @@ const importFromText = async () => {
       return
     }
 
-    await store.importData(jsonText.value)
+    await importData(jsonText.value)
     successMessage.value = 'Data imported successfully!'
     jsonText.value = ''
   } catch (error) {
@@ -287,7 +285,7 @@ const importFromFile = async () => {
       return
     }
 
-    await store.importData(text)
+    await importData(text)
     successMessage.value = 'File imported successfully!'
     selectedFile.value = null
   } catch (error) {

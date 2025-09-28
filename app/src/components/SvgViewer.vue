@@ -31,20 +31,8 @@
         <!-- Template content rendered inside SVG viewport -->
         <SvgCanvas
           ref="svgElementRef"
-          :stickerText="stickerText"
-          :textColor="textColor"
-          :font="font"
-          :fontSize="fontSize"
-          :fontWeight="fontWeight"
-          :strokeColor="strokeColor"
-          :strokeWidth="strokeWidth"
-          :strokeOpacity="strokeOpacity"
-          :width="width"
-          :height="height"
           :template="template"
-          :textInputs="textInputs"
-          :shapeStyles="shapeStyles"
-          :svgImageStyles="svgImageStyles"
+          :layers="layers"
           :previewMode="previewMode"
         />
       </SvgViewport>
@@ -54,8 +42,8 @@
         :panX="panX"
         :panY="panY"
         :zoomPercentage="Math.round(zoomLevel * 100)"
-        :canZoomIn="canZoomIn"
-        :canZoomOut="canZoomOut"
+        :canZoomIn="canZoomIn()"
+        :canZoomOut="canZoomOut()"
         :minZoom="getMinZoomLevel()"
         :template="template"
         :previewMode="previewMode"
@@ -70,9 +58,7 @@
         :strokeOpacity="strokeOpacity"
         :width="width"
         :height="height"
-        :textInputs="textInputs"
-        :shapeStyles="shapeStyles"
-        :svgImageStyles="svgImageStyles"
+        :layers="layers"
         @zoomIn="zoomIn"
         @zoomOut="zoomOut"
         @zoomChange="setZoom"
@@ -105,33 +91,10 @@ interface Props {
   width?: number
   height?: number
   template?: SimpleTemplate | null
-  textInputs?: Array<{
+  layers?: Array<{
     id: string
-    text: string
-    font: any | null
-    fontSize: number
-    fontWeight: number
-    textColor: string
-    strokeWidth: number
-    strokeColor: string
-    strokeOpacity: number
-  }>
-  shapeStyles?: Array<{
-    id: string
-    fillColor: string
-    strokeColor: string
-    strokeWidth: number
-    strokeLinejoin: string
-  }>
-  svgImageStyles?: Array<{
-    id: string
-    color: string
-    strokeColor: string
-    strokeWidth: number
-    strokeLinejoin: string
-    svgContent?: string
-    rotation: number
-    scale: number
+    type: 'text' | 'shape' | 'svgImage'
+    [key: string]: any
   }>
   previewMode?: boolean
 }
@@ -148,9 +111,7 @@ const props = withDefaults(defineProps<Props>(), {
   width: 400,
   height: 120,
   template: null,
-  textInputs: () => [],
-  shapeStyles: () => [],
-  svgImageStyles: () => [],
+  layers: () => [],
   previewMode: false
 })
 

@@ -415,7 +415,6 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
-
 // Unified dropdown management
 const dropdownManager = inject('dropdownManager')
 
@@ -436,12 +435,15 @@ const isExpanded = computed(() => {
 
 const _toggleExpanded = () => {
   if (dropdownManager) {
-    dropdownManager.toggle(props.instanceId, containerRef.value)
+    dropdownManager.toggle(props.instanceId)
   } else {
     // Legacy fallback
     if (isExpanded.value) {
       expandedImageInstances.value.delete(props.instanceId)
     } else {
+      // Close all other instances first
+      expandedImageInstances.value.clear()
+      // Open this instance
       expandedImageInstances.value.add(props.instanceId)
     }
   }

@@ -10,9 +10,7 @@
           <SvgViewer
             ref="templateSvgRef"
             :template="template"
-            :textInputs="textInputs"
-            :shapeStyles="shapeStyles"
-            :svgImageStyles="svgImageStyles"
+            :layers="layers"
             :stickerText="stickerText"
             :textColor="textColor"
             :font="font"
@@ -158,33 +156,10 @@ interface Props {
   textStrokeColor?: string
   font?: any
   template?: SimpleTemplate | null
-  textInputs?: Array<{
+  layers?: Array<{
     id: string
-    text: string
-    font: any | null
-    fontSize: number
-    fontWeight: number
-    textColor: string
-    strokeWidth: number
-    strokeColor: string
-    strokeOpacity: number
-  }>
-  shapeStyles?: Array<{
-    id: string
-    fillColor: string
-    strokeColor: string
-    strokeWidth: number
-    strokeLinejoin: string
-  }>
-  svgImageStyles?: Array<{
-    id: string
-    color: string
-    strokeColor: string
-    strokeWidth: number
-    strokeLinejoin: string
-    svgContent?: string
-    rotation: number
-    scale: number
+    type: 'text' | 'shape' | 'svgImage'
+    [key: string]: any
   }>
 }
 
@@ -196,8 +171,7 @@ const props = withDefaults(defineProps<Props>(), {
   textStrokeColor: '#000000',
   font: null,
   template: null,
-  textInputs: () => [],
-  shapeStyles: () => []
+  layers: () => []
 })
 defineEmits<{
   close: []

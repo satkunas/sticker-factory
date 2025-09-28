@@ -28,91 +28,66 @@
         </clipPath>
       </defs>
 
-      <template v-for="(element, index) in templateElements" :key="`${element.type}-${index}`">
+      <template v-for="(element, index) in props.layers" :key="`${element.type}-${index}`">
         <!-- Shape rendering -->
         <path
-          v-for="shapeStyleData in [getShapeStyleById(element.shape.id)]"
           v-if="element.type === 'shape' && element.shape"
           :key="element.shape.id"
           :d="element.shape.path"
-          :fill="shapeStyleData?.fillColor || element.shape.fill || '#22c55e'"
-          :stroke="shapeStyleData?.strokeColor || element.shape.stroke || '#000000'"
-          :stroke-width="shapeStyleData?.strokeWidth ?? element.shape.strokeWidth ?? 2"
-          :stroke-linejoin="(shapeStyleData?.strokeLinejoin as 'round' | 'miter' | 'bevel') || 'round'"
+          :fill="element.shape.fill"
+          :stroke="element.shape.stroke"
+          :stroke-width="element.shape.strokeWidth"
+          :stroke-linejoin="element.shape.strokeLinejoin as 'round' | 'miter' | 'bevel'"
         />
 
-        <!-- Text rendering with dynamic textInputs -->
+        <!-- Text rendering with normalized data -->
         <template v-if="element.type === 'text' && element.textInput">
           <text
-            v-for="textInputData in [getTextInputById(element.textInput.id)]"
             :key="element.textInput.id"
             :x="resolveTextPositionUtil(element.textInput, 'x', template?.viewBox)"
             :y="resolveTextPositionUtil(element.textInput, 'y', template?.viewBox)"
             text-anchor="middle"
             dominant-baseline="central"
-            :font-family="textInputData ? getFontFamilyForTextInput(textInputData) : fontFamily"
-            :font-size="textInputData?.fontSize || fontSize"
-            :font-weight="textInputData?.fontWeight || fontWeight"
-            :fill="textInputData?.textColor || textColor"
-            :stroke="(textInputData?.strokeWidth || strokeWidth) > 0 ? (textInputData?.strokeColor || strokeColor) : 'none'"
-            :stroke-width="textInputData?.strokeWidth || strokeWidth"
-            :stroke-opacity="textInputData?.strokeOpacity || strokeOpacity"
-            :clip-path="element.textInput.clip ? `url(#clip-${element.textInput.clip})` : (element.textInput.clipPath || undefined)"
+            :font-family="element.textInput.fontFamily"
+            :font-size="element.textInput.fontSize"
+            :font-weight="element.textInput.fontWeight"
+            :fill="element.textInput.fontColor"
+            :stroke="element.textInput.stroke"
+            :stroke-width="element.textInput.strokeWidth"
+            :stroke-opacity="element.textInput.strokeOpacity"
+            :clip-path="element.textInput.clipPath"
             class="select-none"
           >
-            {{ textInputData?.text || stickerText || 'Sample Text' }}
+            {{ element.textInput.text }}
           </text>
         </template>
 
-        <!-- SVG Image rendering with color attribute on parent SVG -->
+        <!-- SVG Image rendering with normalized data -->
         <template v-if="element.type === 'svgImage' && element.svgImage">
           <g
-            v-for="svgImageStyleData in [getSvgImageStyleById(element.svgImage.id)]"
             :key="element.svgImage.id"
-            :clip-path="element.svgImage.clip ? `url(#clip-${element.svgImage.clip})` : (element.svgImage.clipPath || undefined)"
+            :clip-path="element.svgImage.clipPath"
+            :transform="getStyledSvgTransform(element.svgImage)"
           >
-            <g
-              :transform="getStyledSvgTransform(element.svgImage, svgImageStyleData)"
-            >
-              <g
-                v-html="getStyledSvgContent(element.svgImage, svgImageStyleData, element.svgImage.fill, element.svgImage.stroke, element.svgImage.strokeWidth)"
-              />
-            </g>
+            <g v-html="getStyledSvgContent(element.svgImage)" />
           </g>
         </template>
       </template>
     </g>
 
-    <!-- Fallback to original rectangle -->
+    <!-- Fallback: Show empty state when no template -->
     <g v-else>
-      <rect
-        :x="2"
-        :y="2"
-        :width="viewBoxWidth - 4"
-        :height="viewBoxHeight - 4"
-        :rx="Math.min(30, viewBoxHeight / 2 - 2)"
-        :ry="Math.min(30, viewBoxHeight / 2 - 2)"
-        :fill="'#22c55e'"
-        stroke="#333333"
-        stroke-width="2"
-      />
-
-      <!-- Text content -->
       <text
         :x="viewBoxWidth / 2"
         :y="viewBoxHeight / 2"
         text-anchor="middle"
         dominant-baseline="central"
-        :font-family="fontFamily"
-        :font-size="fontSize"
-        :font-weight="fontWeight"
-        :fill="textColor"
-        :stroke="strokeWidth > 0 ? strokeColor : 'none'"
-        :stroke-width="strokeWidth"
-        :stroke-opacity="strokeOpacity"
+        font-family="Arial, sans-serif"
+        font-size="14"
+        fill="#6b7280"
         class="select-none"
       >
-        {{ stickerText }}
+        No template selected
       </text>
     </g>
   </svg>
@@ -121,7 +96,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { FontConfig } from '../config/fonts'
-import { getFontFamily } from '../config/fonts'
 import type { SimpleTemplate } from '../types/template-types'
 import { createPerformanceTimer } from '../utils/logger'
 import { getTemplateElements } from '../config/template-loader'
@@ -143,33 +117,10 @@ interface Props {
   width?: number
   height?: number
   template?: SimpleTemplate | null
-  textInputs?: Array<{
+  layers?: Array<{
     id: string
-    text: string
-    font: any | null
-    fontSize: number
-    fontWeight: number
-    textColor: string
-    strokeWidth: number
-    strokeColor: string
-    strokeOpacity: number
-  }>
-  shapeStyles?: Array<{
-    id: string
-    fillColor: string
-    strokeColor: string
-    strokeWidth: number
-    strokeLinejoin: string
-  }>
-  svgImageStyles?: Array<{
-    id: string
-    color: string
-    strokeColor: string
-    strokeWidth: number
-    strokeLinejoin: string
-    svgContent?: string
-    rotation: number
-    scale: number
+    type: 'text' | 'shape' | 'svgImage'
+    [key: string]: any
   }>
   previewMode?: boolean
 }
@@ -186,9 +137,7 @@ const props = withDefaults(defineProps<Props>(), {
   width: 400,
   height: 120,
   template: null,
-  textInputs: () => [],
-  shapeStyles: () => [],
-  svgImageStyles: () => [],
+  layers: () => [],
   previewMode: false
 })
 
@@ -231,14 +180,8 @@ const viewBoxHeight = computed(() => {
   return 60 // Default rectangle height
 })
 
-const fontFamily = computed(() => {
-  if (props.font) {
-    return getFontFamily(props.font)
-  }
-  return 'Arial, sans-serif'
-})
 
-// Get ordered template elements
+// Get ordered template elements merged with form data
 const templateElements = computed(() => {
   if (props.template) {
     const timer = createPerformanceTimer(`SVG render: ${props.template.name}`)
@@ -248,6 +191,9 @@ const templateElements = computed(() => {
   }
   return []
 })
+
+// Enhanced: Use renderableElements directly from props (no merge logic needed)
+// The layers prop now contains complete render-ready data with precedence applied
 
 // Get clip path shapes - implement locally since not available in utils
 const clipPathShapes = computed(() => {
@@ -280,23 +226,4 @@ const hasClipPaths = computed(() => {
   return clipPathShapes.value.length > 0
 })
 
-// Helper functions for data retrieval
-const getTextInputById = (id: string) => {
-  return props.textInputs?.find(input => input.id === id)
-}
-
-const getShapeStyleById = (id: string) => {
-  return props.shapeStyles?.find(style => style.id === id)
-}
-
-const getSvgImageStyleById = (id: string) => {
-  return props.svgImageStyles?.find(style => style.id === id)
-}
-
-const getFontFamilyForTextInput = (textInputData: any) => {
-  if (textInputData.font) {
-    return getFontFamily(textInputData.font)
-  }
-  return fontFamily.value
-}
 </script>

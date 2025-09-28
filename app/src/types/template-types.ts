@@ -22,11 +22,15 @@ export interface TemplateTextInput {
   fontColor?: string
   fontSize?: number
   fontWeight?: number
+  strokeColor?: string
+  strokeWidth?: number
+  strokeOpacity?: number
+  strokeLinejoin?: string
 }
 
 export interface TemplateShape {
   id: string
-  type: 'rect' | 'circle' | 'polygon' | 'ellipse' | 'line'
+  type: 'rect' | 'circle' | 'polygon' | 'ellipse' | 'line' | 'path'
   position: { x: number | string; y: number | string } | { x1: number | string; y1: number | string; x2: number | string; y2: number | string }
   width?: number
   height?: number
@@ -35,8 +39,10 @@ export interface TemplateShape {
   points?: string
   stroke: string
   strokeWidth: number
+  strokeLinejoin?: string
   fill: string
   opacity?: number
+  path?: string
 }
 
 // Base layer interface
@@ -56,6 +62,7 @@ export interface TemplateShapeLayer extends TemplateLayerBase {
   points?: string
   stroke: string
   strokeWidth: number
+  strokeLinejoin?: string
   fill: string
   opacity?: number
 }
@@ -75,6 +82,10 @@ export interface TemplateTextInputLayer extends TemplateLayerBase {
   fontColor?: string
   fontSize?: number
   fontWeight?: number
+  strokeColor?: string
+  strokeWidth?: number
+  strokeOpacity?: number
+  strokeLinejoin?: string
 }
 
 // SVG image layer

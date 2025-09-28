@@ -56,7 +56,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import Modal from './Modal.vue'
-import { useStore } from '../stores'
+import { exportData, exportToFile } from '../stores/urlDrivenStore'
 
 interface Props {
   show: boolean
@@ -67,11 +67,10 @@ defineEmits<{
   close: []
 }>()
 
-const store = useStore()
 const copyButtonText = ref('Copy JSON')
 
 const jsonData = computed(() => {
-  return store.exportData()
+  return exportData()
 })
 
 const selectAll = (e) => {
@@ -101,6 +100,6 @@ const copyToClipboard = async () => {
 }
 
 const downloadFile = () => {
-  store.exportToFile()
+  exportToFile()
 }
 </script>

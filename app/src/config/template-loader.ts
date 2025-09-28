@@ -265,7 +265,9 @@ const convertYamlToSimpleTemplate = async (yamlTemplate: YamlTemplate): Promise<
           strokeWidth: layer.strokeWidth,
           strokeLinejoin: layer.strokeLinejoin,
           clip: layer.clip,
-          clipPath: layer.clipPath
+          clipPath: layer.clipPath,
+          ...(layer.scale !== undefined && { scale: layer.scale }),
+          ...(layer.rotation !== undefined && { rotation: layer.rotation })
         }
       })
     }
@@ -484,4 +486,21 @@ export const getTemplateSvgImageById = (template: SimpleTemplate, svgImageId: st
  */
 export const getTemplateById = async (id: string): Promise<SimpleTemplate | null> => {
   return await loadTemplate(id)
+}
+
+/**
+ * Get all available templates
+ */
+export const getAllTemplates = async (): Promise<SimpleTemplate[]> => {
+  const templateIds = getAvailableTemplateIds()
+  const templates: SimpleTemplate[] = []
+
+  for (const id of templateIds) {
+    const template = await loadTemplate(id)
+    if (template) {
+      templates.push(template)
+    }
+  }
+
+  return templates
 }

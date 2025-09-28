@@ -409,12 +409,15 @@ const isExpanded = computed(() => {
 
 const _toggleExpanded = () => {
   if (dropdownManager) {
-    dropdownManager.toggle(props.instanceId, containerRef.value)
+    dropdownManager.toggle(props.instanceId)
   } else {
     // Legacy fallback
     if (isExpanded.value) {
       expandedObjectInstances.value.delete(props.instanceId)
     } else {
+      // Close all other instances first
+      expandedObjectInstances.value.clear()
+      // Open this instance
       expandedObjectInstances.value.add(props.instanceId)
     }
   }

@@ -12,36 +12,31 @@ import { resolveCoordinate } from './svg'
  * Enhanced SVG styling with proper color injection and positioning
  * Pure function that doesn't depend on reactive state
  */
-export const getStyledSvgContent = (
-  svgImage: any,
-  styleData: any,
-  fallbackFill = '#22c55e',
-  fallbackStroke = '#000000',
-  fallbackStrokeWidth = 2
-) => {
-  // Use selected SVG content from styleData if available, otherwise fall back to template default
-  const svgContent = styleData?.svgContent || svgImage.svgContent
+export const getStyledSvgContent = (svgImage: any) => {
+  const svgContent = svgImage.svgContent
   if (!svgContent) return ''
 
   try {
     let styledContent = svgContent
 
-    // Sanitize colors first
-    const fillColor = sanitizeColorValue(styleData?.color || svgImage.fill || fallbackFill)
-    const strokeColor = sanitizeColorValue(styleData?.strokeColor || svgImage.stroke || fallbackStroke)
-    const strokeWidth = styleData?.strokeWidth ?? svgImage.strokeWidth ?? fallbackStrokeWidth
-    const strokeLinejoin = styleData?.strokeLinejoin || svgImage.strokeLinejoin || 'round'
+    // Get styling properties directly from svgImage object - no hardcoded fallbacks
+    const fillColor = svgImage.fill ? sanitizeColorValue(svgImage.fill) : undefined
+    const strokeColor = svgImage.stroke ? sanitizeColorValue(svgImage.stroke) : undefined
+    const strokeWidth = svgImage.strokeWidth
+    const strokeLinejoin = svgImage.strokeLinejoin
 
-    // Apply color injection using the new utilities - force fill to override fill="none" in SVG templates
-    styledContent = injectSvgColors(
-      styledContent,
-      fillColor,
-      strokeColor,
-      { forceFill: true, forceStroke: strokeWidth > 0 }
-    )
+    // Apply color injection only if colors are defined
+    if (fillColor || strokeColor) {
+      styledContent = injectSvgColors(
+        styledContent,
+        fillColor,
+        strokeColor,
+        { forceFill: !!fillColor, forceStroke: !!(strokeColor && strokeWidth) }
+      )
+    }
 
-    // Apply stroke properties
-    if (strokeWidth > 0) {
+    // Apply stroke properties only if defined
+    if (strokeWidth !== undefined && strokeLinejoin) {
       styledContent = applySvgStrokeProperties(
         styledContent,
         strokeWidth,
@@ -71,64 +66,46 @@ export const getStyledSvgContent = (
  * Calculate proper SVG transform using SAME coordinate system as text elements
  * Pure function that doesn't depend on reactive state
  */
-export const getStyledSvgTransform = (
-  svgImage: any,
-  styleData?: any,
-  fallbackRotation = 0,
-  fallbackScale = 1.0
-) => {
+export const getStyledSvgTransform = (svgImage: any) => {
   try {
     // SVG image coordinates are already resolved to absolute values during template loading
     // Do NOT call resolveCoordinate() again to avoid double coordinate resolution
     const absoluteX = svgImage.position.x
     const absoluteY = svgImage.position.y
 
-    // Get target size from template
-    const targetWidth = svgImage.width || 24
-    const targetHeight = svgImage.height || 24
+    // Get target size from template - no hardcoded fallbacks
+    const _targetWidth = svgImage.width
+    const _targetHeight = svgImage.height
 
-    // Get style data for rotation and scale
-    const rotation = styleData?.rotation || fallbackRotation
-    const userScale = styleData?.scale || fallbackScale
+    // Get style data for rotation and scale directly from svgImage - no hardcoded fallbacks
+    const rotation = svgImage.rotation
+    const userScale = svgImage.scale
 
 
-    // Calculate base scale to fit the target size
-    // SVG images have viewBox="0 0 24 24", so their intrinsic size is 24x24
-    const svgIntrinsicSize = 24
-    const scaleX = targetWidth / svgIntrinsicSize
-    const scaleY = targetHeight / svgIntrinsicSize
-    const autoScale = Math.min(scaleX, scaleY)
+    // Build transform string only with defined properties
+    const transforms = []
 
-    // Apply user scale multiplier to the auto scale
-    const finalScale = autoScale * userScale
+    // Always translate to position if coordinates exist
+    if (absoluteX !== undefined && absoluteY !== undefined) {
+      transforms.push(`translate(${absoluteX}, ${absoluteY})`)
+    }
 
-    // Ensure final scale is reasonable (not too big or too small)
-    const clampedScale = Math.max(0.01, Math.min(100, finalScale))
+    // Add scale if defined
+    if (userScale !== undefined) {
+      transforms.push(`scale(${userScale})`)
+    }
 
-    // Apply transforms with proper center-point rotation and scaling:
-    // The correct approach for SVG center-point transforms is:
-    // 1. Translate to center point
-    // 2. Rotate and scale (both happen around origin after translate)
-    // 3. Offset by half the base size to center the content
+    // Add rotation if defined
+    if (rotation !== undefined) {
+      transforms.push(`rotate(${rotation})`)
+    }
 
-    const centerX = absoluteX
-    const centerY = absoluteY
-
-    // For proper centering, we need to offset by half the SVG's intrinsic size
-    // The SVG content is in its native 24x24 coordinate space, so we offset by half of that
-    // This offset happens AFTER scaling, so it needs to be in the SVG's native dimensions
-    const svgCenterOffsetX = -svgIntrinsicSize / 2  // -12
-    const svgCenterOffsetY = -svgIntrinsicSize / 2  // -12
-
-    // Apply the transforms: translate to position, scale and rotate at origin,
-    // then translate to center the SVG content properly
-    return `translate(${centerX}, ${centerY}) scale(${clampedScale}) rotate(${rotation}) translate(${svgCenterOffsetX}, ${svgCenterOffsetY})`
+    // Return combined transform or empty string if no transforms
+    return transforms.length > 0 ? transforms.join(' ') : ''
   } catch (error) {
     logger.warn('Failed to calculate SVG transform:', error)
-    // Simple fallback - use coordinates as absolute values
-    const absoluteX = svgImage.position.x || 0
-    const absoluteY = svgImage.position.y || 0
-    return `translate(${absoluteX - 12}, ${absoluteY - 12})`
+    // Return empty string on error - no hardcoded fallbacks
+    return ''
   }
 }
 
@@ -136,27 +113,25 @@ export const getStyledSvgTransform = (
  * Mini SVG preview helper for scaled-down previews
  * Pure function that doesn't depend on reactive state
  */
-export const getMiniStyledSvgContent = (
-  svgImage: any,
-  fallbackFill = '#22c55e',
-  fallbackStroke = '#000000'
-) => {
+export const getMiniStyledSvgContent = (svgImage: any) => {
   if (!svgImage.svgContent) return ''
 
   try {
     let styledContent = svgImage.svgContent
 
-    // Apply basic styling for mini preview
-    const fillColor = sanitizeColorValue(svgImage.fill || fallbackFill)
-    const strokeColor = sanitizeColorValue(svgImage.stroke || fallbackStroke)
+    // Apply basic styling for mini preview - no hardcoded fallbacks
+    const fillColor = svgImage.fill ? sanitizeColorValue(svgImage.fill) : undefined
+    const strokeColor = svgImage.stroke ? sanitizeColorValue(svgImage.stroke) : undefined
 
-    // Apply simple color injection for mini preview
-    styledContent = injectSvgColors(
-      styledContent,
-      fillColor,
-      strokeColor,
-      { forceFill: true }
-    )
+    // Apply simple color injection for mini preview only if colors are defined
+    if (fillColor || strokeColor) {
+      styledContent = injectSvgColors(
+        styledContent,
+        fillColor,
+        strokeColor,
+        { forceFill: !!fillColor }
+      )
+    }
 
     return styledContent
   } catch (error) {
@@ -172,25 +147,36 @@ export const getMiniStyledSvgContent = (
 export const getMiniSvgTransform = (
   svgImage: any,
   templateViewBox?: { width: number; height: number },
-  scale = 0.4
+  scale?: number
 ) => {
   try {
     // For mini preview, use a simple approach with coordinate resolution
     const containerBounds = {
       x: 0,
       y: 0,
-      width: templateViewBox?.width || 200,
-      height: templateViewBox?.height || 200
+      width: templateViewBox?.width,
+      height: templateViewBox?.height
+    }
+
+    // Only proceed if we have required data
+    if (!containerBounds.width || !containerBounds.height) {
+      return ''
     }
 
     const resolvedX = resolveCoordinate(svgImage.position.x, containerBounds.width, 0)
     const resolvedY = resolveCoordinate(svgImage.position.y, containerBounds.height, 0)
 
-    // Use a fixed scale for mini preview
-    return `translate(${resolvedX}, ${resolvedY}) scale(${scale})`
+    const transforms = [`translate(${resolvedX}, ${resolvedY})`]
+
+    // Add scale only if provided
+    if (scale !== undefined) {
+      transforms.push(`scale(${scale})`)
+    }
+
+    return transforms.join(' ')
   } catch (error) {
-    // Fallback to original positioning
-    return `translate(${svgImage.position.x}, ${svgImage.position.y}) scale(${scale})`
+    // Return empty string on error - no hardcoded fallbacks
+    return ''
   }
 }
 
@@ -205,19 +191,24 @@ export const resolveTextPosition = (
 ) => {
   try {
     const containerBounds = {
-      x: templateViewBox?.x || 0,
-      y: templateViewBox?.y || 0,
-      width: templateViewBox?.width || 200,
-      height: templateViewBox?.height || 200
+      x: templateViewBox?.x,
+      y: templateViewBox?.y,
+      width: templateViewBox?.width,
+      height: templateViewBox?.height
+    }
+
+    // Return undefined if we don't have required container bounds
+    if (containerBounds.width === undefined || containerBounds.height === undefined) {
+      return undefined
     }
 
     const coordinate = textInput.position[axis]
     const containerSize = axis === 'x' ? containerBounds.width : containerBounds.height
-    const offset = axis === 'x' ? containerBounds.x : containerBounds.y
+    const offset = axis === 'x' ? (containerBounds.x ?? 0) : (containerBounds.y ?? 0)
 
     return resolveCoordinate(coordinate, containerSize, offset)
   } catch (error) {
-    // Fallback to original coordinate if resolution fails
-    return textInput.position[axis] || 0
+    // Return undefined on error - no hardcoded fallbacks
+    return undefined
   }
 }

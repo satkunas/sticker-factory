@@ -85,7 +85,7 @@ layers:
 
   - id: "music-icon"
     type: "svgImage"
-    svgId: "ui-audio-music-note-1"
+    svgId: "music"
     position: { x: "8%", y: "25%" }
     width: 32
     height: 32
@@ -97,7 +97,7 @@ layers:
 
   - id: "ticket-icon"
     type: "svgImage"
-    svgId: "ui-content-ticket"
+    svgId: "ticket"
     position: { x: "85%", y: "25%" }
     width: 24
     height: 24
@@ -109,7 +109,7 @@ layers:
 
   - id: "calendar-icon"
     type: "svgImage"
-    svgId: "ui-time-calendar"
+    svgId: "business-datetime-calendar"
     position: { x: "8%", y: "68%" }
     width: 20
     height: 20

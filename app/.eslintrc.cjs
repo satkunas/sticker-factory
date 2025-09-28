@@ -10,7 +10,9 @@ module.exports = {
     TouchEvent: 'readonly',
     TouchList: 'readonly',
     MouseEvent: 'readonly',
-    Event: 'readonly'
+    Event: 'readonly',
+    TextEncoder: 'readonly',
+    TextDecoder: 'readonly'
   },
   extends: [
     'eslint:recommended',
@@ -68,7 +70,9 @@ module.exports = {
         TouchEvent: 'readonly',
         TouchList: 'readonly',
         MouseEvent: 'readonly',
-        Event: 'readonly'
+        Event: 'readonly',
+        TextEncoder: 'readonly',
+        TextDecoder: 'readonly'
       }
     }
   ]

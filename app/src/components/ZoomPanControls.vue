@@ -34,9 +34,7 @@
             :width="width"
             :height="height"
             :template="template"
-            :textInputs="textInputs"
-            :shapeStyles="shapeStyles"
-            :svgImageStyles="svgImageStyles"
+            :layers="layers"
             :previewMode="true"
           />
 
@@ -156,33 +154,10 @@ interface Props {
   strokeOpacity?: number
   width?: number
   height?: number
-  textInputs?: Array<{
+  layers?: Array<{
     id: string
-    text: string
-    font: any | null
-    fontSize: number
-    fontWeight: number
-    textColor: string
-    strokeWidth: number
-    strokeColor: string
-    strokeOpacity: number
-  }>
-  shapeStyles?: Array<{
-    id: string
-    fillColor: string
-    strokeColor: string
-    strokeWidth: number
-    strokeLinejoin: string
-  }>
-  svgImageStyles?: Array<{
-    id: string
-    color: string
-    strokeColor: string
-    strokeWidth: number
-    strokeLinejoin: string
-    svgContent?: string
-    rotation: number
-    scale: number
+    type: 'text' | 'shape' | 'svgImage'
+    [key: string]: any
   }>
 }
 
@@ -202,9 +177,7 @@ const props = withDefaults(defineProps<Props>(), {
   strokeOpacity: 1.0,
   width: 400,
   height: 120,
-  textInputs: () => [],
-  shapeStyles: () => [],
-  svgImageStyles: () => []
+  layers: () => []
 })
 
 defineEmits<{

@@ -34,6 +34,10 @@ export const SVG_LEGEND_HEIGHT = 40
 export const SVG_MINI_HEIGHT = 32
 export const SVG_PREVIEW_SIZE = 24
 
+// URL Sync Configuration
+export const URL_SYNC_DEBOUNCE_MS = 500 // Debounce delay for URL updates
+export const URL_SYNC_TIMEOUT_MS = 500 // Timeout value for URL sync operations
+
 // File handling
 export const SUPPORTED_JSON_MIME_TYPE = 'application/json'
 export const FILE_SIZE_KB = 1024
