@@ -11,14 +11,6 @@
             ref="templateSvgRef"
             :template="template"
             :layers="layers"
-            :stickerText="stickerText"
-            :textColor="textColor"
-            :font="font"
-            :font-size="fontSize"
-            :font-weight="fontWeight"
-            :strokeColor="textStrokeColor"
-            :stroke-width="textStrokeWidth"
-            :stroke-opacity="1"
             :previewMode="true"
             class="max-w-full max-h-full"
           />
@@ -148,13 +140,6 @@ import { embedGoogleFonts } from '../utils/fontEmbedding'
 
 interface Props {
   show: boolean
-  stickerText: string
-  textColor?: string
-  fontSize?: number
-  fontWeight?: number
-  textStrokeWidth?: number
-  textStrokeColor?: string
-  font?: any
   template?: SimpleTemplate | null
   layers?: Array<{
     id: string
@@ -163,16 +148,7 @@ interface Props {
   }>
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  textColor: '#ffffff',
-  fontSize: 16,
-  fontWeight: 400,
-  textStrokeWidth: 0,
-  textStrokeColor: '#000000',
-  font: null,
-  template: null,
-  layers: () => []
-})
+const props = defineProps<Props>()
 defineEmits<{
   close: []
 }>()

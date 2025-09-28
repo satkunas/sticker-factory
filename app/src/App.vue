@@ -145,7 +145,7 @@ import { ref, computed, onMounted, provide, defineAsyncComponent } from 'vue'
 import {
   isLoadingFromUrl,
   selectedTemplate as storeSelectedTemplate,
-  formData,
+  mergedFormData,
   computedRenderData,
   updateTemplate,
   updateLayer
@@ -183,6 +183,17 @@ const {
   getSvgImageDisplayName,
   getSvgImageDimensions
 } = useTemplateHelpers()
+
+// Helper to get SVG analysis from render data
+const getRenderDataSvgAnalysis = (layerId: string) => {
+  const renderLayer = layers.value.find(layer => layer.id === layerId)
+  return renderLayer?.svgAnalysis || null
+}
+
+const getRenderDataCentroidAnalysis = (layerId: string) => {
+  const renderLayer = layers.value.find(layer => layer.id === layerId)
+  return renderLayer?.centroidAnalysis || null
+}
 
 // Unified dropdown management system
 const expandedDropdowns = ref(new Set<string>())
@@ -256,49 +267,51 @@ const componentMap = {
   svgImage: 'LayerSvgImageEditor'
 }
 
-// Simplified layers for form rendering using store form data
+// Clean layers for form rendering - store handles all data merging
 const layersForRendering = computed(() => {
-  if (!selectedTemplate.value?.layers || formData.value.length === 0) {
+  if (!selectedTemplate.value?.layers || mergedFormData.value.length === 0) {
     return []
   }
 
   return selectedTemplate.value.layers.map((templateLayer) => {
-    // Find the corresponding form layer from store
-    const formLayer = formData.value.find(l => l.id === templateLayer.id && l.type === templateLayer.type)
+    // Get merged form data from store
+    const mergedLayer = mergedFormData.value.find(l => l.id === templateLayer.id)
 
-    if (!formLayer) {
-      console.warn(`Missing form layer for template layer ${templateLayer.id}:${templateLayer.type}`)
+    if (!mergedLayer) {
+      console.warn(`Missing merged layer for template layer ${templateLayer.id}:${templateLayer.type}`)
       return null
     }
 
     return {
       id: templateLayer.id,
       type: templateLayer.type,
-      templateData: templateLayer,
-      stateData: formLayer,
-      component: componentMap[templateLayer.type]
+      component: componentMap[templateLayer.type],
+      // Store provides fully merged data - no conditional logic needed
+      formLayer: mergedLayer,
+      templateLayer: templateLayer
     }
   }).filter(Boolean) // Remove null entries
 })
 
 
-// Helper functions for dynamic component props and events
+// Pure prop mapping - NO conditional logic or data transformation
 const getLayerProps = (layer: any) => {
-  if (!layer.stateData) return {}
+  const { formLayer } = layer
 
   switch (layer.type) {
     case 'text':
       return {
-        modelValue: layer.stateData.text !== undefined ? layer.stateData.text : (layer.templateData?.textInput?.default || ''),
+        // Direct property access - store handles all merging logic
+        modelValue: formLayer.text,
         placeholder: getTextInputPlaceholder(selectedTemplate.value, layer.id),
-        selectedFont: layer.stateData.font,
-        fontSize: layer.stateData.fontSize !== undefined ? layer.stateData.fontSize : layer.templateData?.textInput?.fontSize,
-        fontWeight: layer.stateData.fontWeight !== undefined ? layer.stateData.fontWeight : layer.templateData?.textInput?.fontWeight,
-        textColor: layer.stateData.textColor !== undefined ? layer.stateData.textColor : layer.templateData?.textInput?.fontColor,
-        textStrokeColor: layer.stateData.strokeColor !== undefined ? layer.stateData.strokeColor : layer.templateData?.textInput?.strokeColor,
-        textStrokeWidth: layer.stateData.strokeWidth !== undefined ? layer.stateData.strokeWidth : layer.templateData?.textInput?.strokeWidth,
-        textStrokeLinejoin: layer.stateData.strokeLinejoin !== undefined ? layer.stateData.strokeLinejoin : layer.templateData?.textInput?.strokeLinejoin,
-        strokeOpacity: layer.stateData.strokeOpacity !== undefined ? layer.stateData.strokeOpacity : layer.templateData?.textInput?.strokeOpacity,
+        selectedFont: formLayer.font,
+        fontSize: formLayer.fontSize,
+        fontWeight: formLayer.fontWeight,
+        textColor: formLayer.textColor,
+        textStrokeColor: formLayer.strokeColor,
+        textStrokeWidth: formLayer.strokeWidth,
+        textStrokeLinejoin: formLayer.strokeLinejoin,
+        strokeOpacity: formLayer.strokeOpacity,
         instanceId: layer.id
       }
     case 'shape':
@@ -307,65 +320,75 @@ const getLayerProps = (layer: any) => {
         shapeDimensions: getShapeDimensions(selectedTemplate.value, layer.id),
         shapeData: getShapeData(selectedTemplate.value, layer.id),
         shapePath: getShapePath(selectedTemplate.value, layer.id),
-        fillColor: layer.stateData.fillColor !== undefined ? layer.stateData.fillColor : layer.templateData?.shape?.fill,
-        strokeColor: layer.stateData.strokeColor !== undefined ? layer.stateData.strokeColor : layer.templateData?.shape?.stroke,
-        strokeWidth: layer.stateData.strokeWidth !== undefined ? layer.stateData.strokeWidth : layer.templateData?.shape?.strokeWidth,
-        strokeLinejoin: layer.stateData.strokeLinejoin !== undefined ? layer.stateData.strokeLinejoin : layer.templateData?.shape?.strokeLinejoin,
+        fillColor: formLayer.fillColor,
+        strokeColor: formLayer.strokeColor,
+        strokeWidth: formLayer.strokeWidth,
+        strokeLinejoin: formLayer.strokeLinejoin,
         instanceId: `shape-${layer.id}`
       }
     case 'svgImage':
       return {
         imageLabel: getSvgImageDisplayName(selectedTemplate.value, layer.id),
         imageDimensions: getSvgImageDimensions(selectedTemplate.value, layer.id),
-        svgContent: layer.stateData.svgContent !== undefined ? layer.stateData.svgContent : (layer.templateData?.svgImage?.svgContent || ''),
-        svgId: layer.stateData.svgImageId !== undefined ? layer.stateData.svgImageId : (layer.templateData?.svgImage?.id || ''),
-        color: layer.stateData.color !== undefined ? layer.stateData.color : layer.templateData?.svgImage?.fill,
-        strokeColor: layer.stateData.strokeColor !== undefined ? layer.stateData.strokeColor : layer.templateData?.svgImage?.stroke,
-        strokeWidth: layer.stateData.strokeWidth !== undefined ? layer.stateData.strokeWidth : layer.templateData?.svgImage?.strokeWidth,
-        strokeLinejoin: layer.stateData.strokeLinejoin !== undefined ? layer.stateData.strokeLinejoin : layer.templateData?.svgImage?.strokeLinejoin,
-        rotation: layer.stateData.rotation !== undefined ? layer.stateData.rotation : (layer.templateData?.rotation || 0),
-        scale: layer.stateData.scale !== undefined ? layer.stateData.scale : (layer.templateData?.scale || 1.0),
-        instanceId: `svgImage-${layer.id}`
+        svgContent: formLayer.svgContent,
+        svgId: formLayer.svgImageId,
+        color: formLayer.color,
+        strokeColor: formLayer.strokeColor,
+        strokeWidth: formLayer.strokeWidth,
+        strokeLinejoin: formLayer.strokeLinejoin,
+        rotation: formLayer.rotation,
+        scale: formLayer.scale,
+        instanceId: `svgImage-${layer.id}`,
+        svgAnalysis: getRenderDataSvgAnalysis(layer.id),
+        centroidAnalysis: getRenderDataCentroidAnalysis(layer.id)
       }
     default:
       return {}
   }
 }
 
-const getLayerEvents = (layer: any) => {
-  switch (layer.type) {
-    case 'text':
-      return {
-        'update:modelValue': (value: string) => updateLayer(layer.id, { text: value }),
-        'update:selectedFont': (value: any) => updateLayer(layer.id, { font: value }),
-        'update:fontSize': (value: number) => updateLayer(layer.id, { fontSize: value }),
-        'update:fontWeight': (value: number) => updateLayer(layer.id, { fontWeight: value }),
-        'update:textColor': (value: string) => updateLayer(layer.id, { textColor: value }),
-        'update:textStrokeColor': (value: string) => updateLayer(layer.id, { strokeColor: value }),
-        'update:textStrokeWidth': (value: number) => updateLayer(layer.id, { strokeWidth: value }),
-        'update:textStrokeLinejoin': (value: string) => updateLayer(layer.id, { strokeLinejoin: value })
-      }
-    case 'shape':
-      return {
-        'update:fillColor': (value: string) => updateLayer(layer.id, { fillColor: value }),
-        'update:strokeColor': (value: string) => updateLayer(layer.id, { strokeColor: value }),
-        'update:strokeWidth': (value: number) => updateLayer(layer.id, { strokeWidth: value }),
-        'update:strokeLinejoin': (value: string) => updateLayer(layer.id, { strokeLinejoin: value })
-      }
-    case 'svgImage':
-      return {
-        'update:svgContent': (value: string) => updateLayer(layer.id, { svgContent: value }),
-        'update:svgId': (value: string) => updateLayer(layer.id, { svgImageId: value }),
-        'update:color': (value: string) => updateLayer(layer.id, { color: value }),
-        'update:strokeColor': (value: string) => updateLayer(layer.id, { strokeColor: value }),
-        'update:strokeWidth': (value: number) => updateLayer(layer.id, { strokeWidth: value }),
-        'update:strokeLinejoin': (value: string) => updateLayer(layer.id, { strokeLinejoin: value }),
-        'update:rotation': (value: number) => updateLayer(layer.id, { rotation: value }),
-        'update:scale': (value: number) => updateLayer(layer.id, { scale: value })
-      }
-    default:
-      return {}
+// Event mapping configurations for each layer type
+const eventMappings = {
+  text: {
+    'update:modelValue': 'text',
+    'update:selectedFont': 'font',
+    'update:fontSize': 'fontSize',
+    'update:fontWeight': 'fontWeight',
+    'update:textColor': 'textColor',
+    'update:textStrokeColor': 'strokeColor',
+    'update:textStrokeWidth': 'strokeWidth',
+    'update:textStrokeLinejoin': 'strokeLinejoin'
+  },
+  shape: {
+    'update:fillColor': 'fillColor',
+    'update:strokeColor': 'strokeColor',
+    'update:strokeWidth': 'strokeWidth',
+    'update:strokeLinejoin': 'strokeLinejoin'
+  },
+  svgImage: {
+    'update:svgContent': 'svgContent',
+    'update:svgId': 'svgImageId',
+    'update:color': 'color',
+    'update:strokeColor': 'strokeColor',
+    'update:strokeWidth': 'strokeWidth',
+    'update:strokeLinejoin': 'strokeLinejoin',
+    'update:rotation': 'rotation',
+    'update:scale': 'scale'
   }
+} as const
+
+// Pure event mapper - no conditional logic
+const getLayerEvents = (layer: any) => {
+  const mapping = eventMappings[layer.type as keyof typeof eventMappings]
+  if (!mapping) return {}
+
+  // Generate event handlers from mapping configuration
+  return Object.fromEntries(
+    Object.entries(mapping).map(([eventName, storeProperty]) => [
+      eventName,
+      (value: any) => updateLayer(layer.id, { [storeProperty]: value })
+    ])
+  )
 }
 
 // SVG viewer ref

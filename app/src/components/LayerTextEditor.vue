@@ -9,9 +9,9 @@
         :class="{ 'border-primary-500': isExpanded }"
         :placeholder="placeholder"
         :style="{
-          fontFamily: selectedFont ? getFontFamily(selectedFont) : 'inherit', // Used in template
-          fontSize: fontSize + 'px',
-          fontWeight: fontWeight
+          fontFamily: selectedFont ? getFontFamily(selectedFont) : undefined,
+          fontSize: fontSize !== undefined ? fontSize + 'px' : undefined,
+          fontWeight: fontWeight !== undefined ? fontWeight : undefined
         }"
         @input="$emit('update:modelValue', $event.target.value)"
         @focus="handleFocus"
@@ -83,17 +83,7 @@ interface Emits {
   'update:textStrokeLinejoin': [value: string]
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  placeholder: '',
-  selectedFont: null,
-  textColor: '#ffffff',
-  fontSize: 16,
-  fontWeight: 400,
-  textStrokeWidth: 0,
-  textStrokeColor: '#000000',
-  textStrokeLinejoin: 'round',
-  instanceId: 'default'
-})
+const props = defineProps<Props>()
 
 defineEmits<Emits>()
 
@@ -108,11 +98,14 @@ const containerRef = ref<HTMLElement>()
 
 // Computed expanded state
 const isExpanded = computed(() => {
+  const id = props.instanceId
+  if (!id) return false
+
   if (dropdownManager) {
-    return dropdownManager.isExpanded(props.instanceId)
+    return dropdownManager.isExpanded(id)
   }
   // Legacy fallback
-  return expandedInstances.value.has(props.instanceId)
+  return expandedInstances.value.has(id)
 })
 
 // Handle focus - expand the options
@@ -124,17 +117,20 @@ const handleFocus = () => {
 
 // Toggle expansion
 const _toggleExpanded = () => {
+  const id = props.instanceId
+  if (!id) return
+
   if (dropdownManager) {
-    dropdownManager.toggle(props.instanceId)
+    dropdownManager.toggle(id)
   } else {
     // Legacy fallback
     if (isExpanded.value) {
-      expandedInstances.value.delete(props.instanceId)
+      expandedInstances.value.delete(id)
     } else {
       // Close all other instances
       expandedInstances.value.clear()
       // Open this instance
-      expandedInstances.value.add(props.instanceId)
+      expandedInstances.value.add(id)
     }
   }
 }

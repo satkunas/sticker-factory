@@ -9,7 +9,7 @@
       :stroke="shape.stroke"
       :stroke-width="shape.strokeWidth"
       :fill="shape.fill"
-      :opacity="shape.opacity || 1"
+      :opacity="shape.opacity"
     />
 
     <!-- Rectangle/Square -->
@@ -19,12 +19,12 @@
       :y="position.y - shape.height / 2"
       :width="shape.width"
       :height="shape.height"
-      :rx="shape.rx || 0"
-      :ry="shape.ry || 0"
+      :rx="shape.rx"
+      :ry="shape.ry"
       :stroke="shape.stroke"
       :stroke-width="shape.strokeWidth"
       :fill="shape.fill"
-      :opacity="shape.opacity || 1"
+      :opacity="shape.opacity"
     />
 
     <!-- Ellipse -->
@@ -37,7 +37,7 @@
       :stroke="shape.stroke"
       :stroke-width="shape.strokeWidth"
       :fill="shape.fill"
-      :opacity="shape.opacity || 1"
+      :opacity="shape.opacity"
     />
 
     <!-- Polygon (for diamonds, triangles, etc.) -->
@@ -47,7 +47,7 @@
       :stroke="shape.stroke"
       :stroke-width="shape.strokeWidth"
       :fill="shape.fill"
-      :opacity="shape.opacity || 1"
+      :opacity="shape.opacity"
     />
 
     <!-- Line -->

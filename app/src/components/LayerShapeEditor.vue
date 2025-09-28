@@ -2,7 +2,7 @@
   <div ref="containerRef" class="w-full">
     <!-- Shape Object Label -->
     <div class="text-sm font-medium text-secondary-700 mb-2">
-      {{ shapeLabel }}
+      {{ layerId }}
     </div>
 
     <!-- Arrow Button -->
@@ -375,17 +375,7 @@ interface Emits {
   'update:strokeLinejoin': [value: string]
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  shapeLabel: 'Shape',
-  shapeDimensions: '',
-  shapeData: null,
-  shapePath: '',
-  fillColor: '#22c55e',
-  strokeColor: '#000000',
-  strokeWidth: 2,
-  strokeLinejoin: 'round',
-  instanceId: 'default'
-})
+const props = defineProps<Props>()
 
 defineEmits<Emits>()
 
@@ -398,39 +388,52 @@ const expandedObjectInstances = inject('expandedObjectSelectors', ref(new Set<st
 // Component container ref for scrolling
 const containerRef = ref<HTMLElement>()
 
+// Extract layer ID from instanceId (removes "shape-" prefix)
+const layerId = computed(() => {
+  if (!props.instanceId) return 'Shape'
+  return props.instanceId.replace(/^shape-/, '')
+})
+
 // Local expansion state
 const isExpanded = computed(() => {
+  const id = props.instanceId
+  if (!id) return false
+
   if (dropdownManager) {
-    return dropdownManager.isExpanded(props.instanceId)
+    return dropdownManager.isExpanded(id)
   }
   // Legacy fallback
-  return expandedObjectInstances.value.has(props.instanceId)
+  return expandedObjectInstances.value.has(id)
 })
 
 const _toggleExpanded = () => {
+  const id = props.instanceId
+  if (!id) return
+
   if (dropdownManager) {
-    dropdownManager.toggle(props.instanceId)
+    dropdownManager.toggle(id)
   } else {
     // Legacy fallback
     if (isExpanded.value) {
-      expandedObjectInstances.value.delete(props.instanceId)
+      expandedObjectInstances.value.delete(id)
     } else {
       // Close all other instances first
       expandedObjectInstances.value.clear()
       // Open this instance
-      expandedObjectInstances.value.add(props.instanceId)
+      expandedObjectInstances.value.add(id)
     }
   }
 }
 
 // Escape key handler
 const handleKeydown = (event: KeyboardEvent) => {
-  if (event.key === 'Escape' && isExpanded.value) {
+  const id = props.instanceId
+  if (event.key === 'Escape' && isExpanded.value && id) {
     if (dropdownManager) {
-      dropdownManager.close(props.instanceId)
+      dropdownManager.close(id)
     } else {
       // Legacy fallback
-      expandedObjectInstances.value.delete(props.instanceId)
+      expandedObjectInstances.value.delete(id)
     }
   }
 }

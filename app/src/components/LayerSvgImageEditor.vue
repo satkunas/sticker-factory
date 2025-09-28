@@ -2,7 +2,7 @@
   <div ref="containerRef" class="w-full">
     <!-- SVG Image Label -->
     <div class="text-sm font-medium text-secondary-700 mb-2">
-      {{ imageLabel }}
+      {{ layerId }}
     </div>
 
     <!-- Arrow Button -->
@@ -69,6 +69,15 @@
         >
         <!-- Transform Controls Section -->
         <div class="p-4">
+          <!-- SVG Centering Warning -->
+          <SvgCenteringWarning
+            v-if="props.svgAnalysis && props.svgAnalysis.severity !== 'none'"
+            :analysis="props.svgAnalysis"
+            :centroidAnalysis="props.centroidAnalysis"
+            :svgContent="props.svgContent"
+            class="mb-4"
+            @dismiss="() => {}"
+          />
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
           <!-- Scale Control -->
           <div class="min-w-0">
@@ -351,7 +360,7 @@
       <ExpandableSvgSelector
         :selectedSvgId="svgId"
         :selectedSvgContent="svgContent"
-        :instanceId="`svg-selector-${instanceId}`"
+        :instanceId="instanceId ? `svg-selector-${instanceId}` : undefined"
         @update:selectedSvgId="$emit('update:svgId', $event)"
         @update:selectedSvgContent="$emit('update:svgContent', $event)"
         @clear="clearSvg"
@@ -366,6 +375,7 @@
 <script setup lang="ts">
 import { inject, computed, ref, onMounted, onUnmounted } from 'vue'
 import ExpandableSvgSelector from './ExpandableSvgSelector.vue'
+import SvgCenteringWarning from './SvgCenteringWarning.vue'
 import {
   injectSvgColors,
   applySvgStrokeProperties,
@@ -373,6 +383,7 @@ import {
   sanitizeColorValue
 } from '../utils/svg-styling'
 import { PRESET_COLORS, STROKE_LINEJOIN_OPTIONS, COLOR_NONE } from '../utils/ui-constants'
+import type { SvgViewBoxFitAnalysis, SvgCentroid } from '../utils/svg-bounds'
 
 interface Props {
   imageLabel?: string
@@ -386,6 +397,8 @@ interface Props {
   rotation?: number
   scale?: number
   instanceId?: string
+  svgAnalysis?: SvgViewBoxFitAnalysis
+  centroidAnalysis?: SvgCentroid
 }
 
 interface Emits {
@@ -399,19 +412,7 @@ interface Emits {
   'update:scale': [value: number]
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  imageLabel: 'SVG Image',
-  imageDimensions: '',
-  svgContent: '',
-  svgId: '',
-  color: '#22c55e',
-  strokeColor: '#000000',
-  strokeWidth: 2,
-  strokeLinejoin: 'round',
-  rotation: 0,
-  scale: 1.0,
-  instanceId: 'default'
-})
+const props = defineProps<Props>()
 
 const emit = defineEmits<Emits>()
 
@@ -424,27 +425,39 @@ const expandedImageInstances = inject('expandedImageSelectors', ref(new Set<stri
 // Component container ref for scrolling
 const containerRef = ref<HTMLElement>()
 
+// Extract layer ID from instanceId (removes "svgImage-" prefix)
+const layerId = computed(() => {
+  if (!props.instanceId) return 'SVG Image'
+  return props.instanceId.replace(/^svgImage-/, '')
+})
+
 // Local expansion state
 const isExpanded = computed(() => {
+  const id = props.instanceId
+  if (!id) return false
+
   if (dropdownManager) {
-    return dropdownManager.isExpanded(props.instanceId)
+    return dropdownManager.isExpanded(id)
   }
   // Legacy fallback
-  return expandedImageInstances.value.has(props.instanceId)
+  return expandedImageInstances.value.has(id)
 })
 
 const _toggleExpanded = () => {
+  const id = props.instanceId
+  if (!id) return
+
   if (dropdownManager) {
-    dropdownManager.toggle(props.instanceId)
+    dropdownManager.toggle(id)
   } else {
     // Legacy fallback
     if (isExpanded.value) {
-      expandedImageInstances.value.delete(props.instanceId)
+      expandedImageInstances.value.delete(id)
     } else {
       // Close all other instances first
       expandedImageInstances.value.clear()
       // Open this instance
-      expandedImageInstances.value.add(props.instanceId)
+      expandedImageInstances.value.add(id)
     }
   }
 }
@@ -458,12 +471,13 @@ const clearSvg = () => {
 
 // Escape key handler
 const handleKeydown = (event: KeyboardEvent) => {
-  if (event.key === 'Escape' && isExpanded.value) {
+  const id = props.instanceId
+  if (event.key === 'Escape' && isExpanded.value && id) {
     if (dropdownManager) {
-      dropdownManager.close(props.instanceId)
+      dropdownManager.close(id)
     } else {
       // Legacy fallback
-      expandedImageInstances.value.delete(props.instanceId)
+      expandedImageInstances.value.delete(id)
     }
   }
 }

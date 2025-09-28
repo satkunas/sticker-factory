@@ -1,24 +1,20 @@
 <template>
-  <div :class="previewMode ? 'w-full h-full' : 'w-full h-full bg-secondary-50 relative'">
+  <div :class="containerClasses">
     <!-- SVG Viewport Container -->
     <div
       ref="svgContainer"
-      :class="[
-        'w-full h-full bg-white overflow-hidden relative',
-        previewMode
-          ? 'rounded border border-secondary-200'
-          : 'rounded-lg border-2 border-dashed border-secondary-300'
-      ]"
+      :class="['relative', svgContainerClasses]"
     >
       <!-- Native SVG Viewport with viewBox-based pan/zoom -->
       <SvgViewport
         ref="svgViewportRef"
         :template="template"
         :previewMode="previewMode"
-        :viewBoxX="previewMode && template ? template.viewBox.x : viewBoxX"
-        :viewBoxY="previewMode && template ? template.viewBox.y : viewBoxY"
-        :viewBoxWidth="previewMode && template ? template.viewBox.width : viewBoxWidth"
-        :view-box-height="previewMode && template ? template.viewBox.height : viewBoxHeight"
+        :viewBoxX="viewBoxX"
+        :viewBoxY="viewBoxY"
+        :viewBoxWidth="viewBoxWidth"
+        :view-box-height="viewBoxHeight"
+        :gridSize="gridSize"
         @mousedown="handleMouseDown"
         @mousemove="handleMouseMove"
         @mouseup="handleMouseUp"
@@ -34,6 +30,8 @@
           :template="template"
           :layers="layers"
           :previewMode="previewMode"
+          :hasClipPaths="hasClipPaths"
+          :clipPathShapes="clipPathShapes"
         />
       </SvgViewport>
 
@@ -75,6 +73,8 @@ import type { FontConfig } from '../config/fonts'
 import type { SimpleTemplate } from '../types/template-types'
 import { useSvgViewBox } from '../composables/useSvgViewBox'
 import { useSvgDragInteraction } from '../composables/useSvgDragInteraction'
+import { SVG_VIEWER_CONSTANTS } from '../config/svg-viewer-constants'
+import { clipPathShapes as storeClipPathShapes, hasClipPaths as storeHasClipPaths } from '../stores/urlDrivenStore'
 import SvgCanvas from './SvgCanvas.vue'
 import SvgViewport from './SvgViewport.vue'
 import ZoomPanControls from './ZoomPanControls.vue'
@@ -97,23 +97,20 @@ interface Props {
     [key: string]: any
   }>
   previewMode?: boolean
+  containerClasses?: string
+  svgContainerClasses?: string
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  stickerText: '',
-  textColor: '#ffffff',
-  font: null,
-  fontSize: 16,
-  fontWeight: 400,
-  strokeColor: '#000000',
-  strokeWidth: 0,
-  strokeOpacity: 1.0,
-  width: 400,
-  height: 120,
-  template: null,
-  layers: () => [],
-  previewMode: false
-})
+const props = defineProps<Props>()
+
+// Direct class access - no conditional logic
+
+// Grid size for background pattern
+const gridSize = SVG_VIEWER_CONSTANTS.GRID_SIZE
+
+// Use clip path data from store
+const hasClipPaths = storeHasClipPaths
+const clipPathShapes = storeClipPathShapes
 
 // Component references
 const svgContainer = ref<HTMLElement | null>(null)

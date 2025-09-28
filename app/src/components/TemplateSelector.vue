@@ -33,8 +33,8 @@
                   />
                   <text
                     v-if="element.type === 'text' && element.textInput"
-                    :x="element.textInput.position.x"
-                    :y="element.textInput.position.y"
+                    :x="resolveCoordinate(element.textInput.position?.x || 0, 200, 0)"
+                    :y="resolveCoordinate(element.textInput.position?.y || 0, 200, 0)"
                     text-anchor="middle"
                     dominant-baseline="central"
                     :font-family="element.textInput.fontFamily"
@@ -105,8 +105,8 @@
                     />
                     <text
                       v-if="element.type === 'text' && element.textInput"
-                      :x="element.textInput.position.x"
-                      :y="element.textInput.position.y"
+                      :x="resolveCoordinate(element.textInput.position?.x || 0, 120, 0)"
+                      :y="resolveCoordinate(element.textInput.position?.y || 0, 120, 0)"
                       text-anchor="middle"
                       dominant-baseline="central"
                       :font-family="element.textInput.fontFamily"
@@ -152,6 +152,7 @@
 /* eslint-disable no-undef */
 import { ref, onMounted, onUnmounted } from 'vue'
 import { loadAllTemplates, getTemplateElements, getDefaultTemplate } from '../config/template-loader'
+import { resolveCoordinate } from '../utils/svg'
 import type { SimpleTemplate } from '../types/template-types'
 
 interface Props {
@@ -162,9 +163,7 @@ interface Emits {
   'update:selectedTemplate': [template: SimpleTemplate]
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  selectedTemplate: null
-})
+const props = defineProps<Props>()
 
 const emit = defineEmits<Emits>()
 

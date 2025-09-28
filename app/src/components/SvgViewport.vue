@@ -5,7 +5,7 @@
     :viewBox="viewBoxString"
     xmlns="http://www.w3.org/2000/svg"
     preserveAspectRatio="xMidYMid meet"
-    :class="previewMode ? '' : 'cursor-move'"
+    :class="cursorClass"
     @mousedown="handleMouseDown"
     @mousemove="handleMouseMove"
     @mouseup="handleMouseUp"
@@ -70,18 +70,10 @@ interface Props {
   viewBoxHeight?: number
   gridSize?: number
   borderWidth?: number
+  cursorClass?: string
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  template: null,
-  previewMode: false,
-  viewBoxX: 0,
-  viewBoxY: 0,
-  viewBoxWidth: 800,
-  viewBoxHeight: 600,
-  gridSize: 20,
-  borderWidth: 6
-})
+const props = defineProps<Props>()
 
 // Event handlers (passed through from parent)
 interface Emits {

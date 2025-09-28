@@ -7,6 +7,7 @@ import {
   sanitizeColorValue
 } from './svg-styling'
 import { resolveCoordinate } from './svg'
+import { getSvgCenterOffset } from './svg-bounds'
 
 /**
  * Enhanced SVG styling with proper color injection and positioning
@@ -47,12 +48,38 @@ export const getStyledSvgContent = (svgImage: any) => {
     // Normalize currentColor for proper inheritance
     styledContent = normalizeSvgCurrentColor(styledContent)
 
-    // CRITICAL FIX: Strip outer <svg> wrapper to prevent nested SVG scaling issues
-    // Extract only the inner content (polyline, polygon, path, etc.) for proper scaling
-    const svgMatch = styledContent.match(/<svg[^>]*>(.*?)<\/svg>/s)
-    if (svgMatch && svgMatch[1]) {
-      // Return only the inner SVG content without the <svg> wrapper
-      return svgMatch[1].trim()
+    // CRITICAL FIX: Extract inner content while preserving coordinate system
+    // Strip outer <svg> wrapper but maintain proper scaling context
+    const svgMatch = styledContent.match(/<svg[^>]*viewBox="([^"]*)"[^>]*>(.*?)<\/svg>/s)
+    if (svgMatch && svgMatch[2]) {
+      const viewBox = svgMatch[1] // e.g., "0 0 24 24"
+      const innerContent = svgMatch[2].trim()
+
+      // Extract viewBox dimensions to ensure proper coordinate system
+      const viewBoxParts = viewBox.split(/\s+/)
+      if (viewBoxParts.length === 4) {
+        const [minX, minY, _width, _height] = viewBoxParts.map(Number)
+
+        // Calculate dynamic offset to center the actual content within the viewBox
+        // Use SVG bounds analysis to find the true center of any SVG content
+        const centerOffset = getSvgCenterOffset(styledContent)
+
+        // Wrap inner content with precise centering compensation
+        return `<g transform="translate(${-minX + centerOffset.x}, ${-minY + centerOffset.y})">
+          <g transform="scale(1, 1)">
+            ${innerContent}
+          </g>
+        </g>`
+      }
+
+      // Fallback: return inner content as-is
+      return innerContent
+    }
+
+    // Fallback: try to extract without viewBox
+    const fallbackMatch = styledContent.match(/<svg[^>]*>(.*?)<\/svg>/s)
+    if (fallbackMatch && fallbackMatch[1]) {
+      return fallbackMatch[1].trim()
     }
 
     return styledContent
@@ -62,52 +89,6 @@ export const getStyledSvgContent = (svgImage: any) => {
   }
 }
 
-/**
- * Calculate proper SVG transform using SAME coordinate system as text elements
- * Pure function that doesn't depend on reactive state
- */
-export const getStyledSvgTransform = (svgImage: any) => {
-  try {
-    // SVG image coordinates are already resolved to absolute values during template loading
-    // Do NOT call resolveCoordinate() again to avoid double coordinate resolution
-    const absoluteX = svgImage.position.x
-    const absoluteY = svgImage.position.y
-
-    // Get target size from template - no hardcoded fallbacks
-    const _targetWidth = svgImage.width
-    const _targetHeight = svgImage.height
-
-    // Get style data for rotation and scale directly from svgImage - no hardcoded fallbacks
-    const rotation = svgImage.rotation
-    const userScale = svgImage.scale
-
-
-    // Build transform string only with defined properties
-    const transforms = []
-
-    // Always translate to position if coordinates exist
-    if (absoluteX !== undefined && absoluteY !== undefined) {
-      transforms.push(`translate(${absoluteX}, ${absoluteY})`)
-    }
-
-    // Add scale if defined
-    if (userScale !== undefined) {
-      transforms.push(`scale(${userScale})`)
-    }
-
-    // Add rotation if defined
-    if (rotation !== undefined) {
-      transforms.push(`rotate(${rotation})`)
-    }
-
-    // Return combined transform or empty string if no transforms
-    return transforms.length > 0 ? transforms.join(' ') : ''
-  } catch (error) {
-    logger.warn('Failed to calculate SVG transform:', error)
-    // Return empty string on error - no hardcoded fallbacks
-    return ''
-  }
-}
 
 /**
  * Mini SVG preview helper for scaled-down previews

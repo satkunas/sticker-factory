@@ -18,10 +18,20 @@ import type { Router } from 'vue-router'
 import { logger, reportCriticalError } from '../utils/logger'
 import { encodeTemplateStateCompact, decodeTemplateStateCompact } from '../utils/url-encoding'
 import { validateImportData, sanitizeTextInput } from '../utils/security'
+import {
+  analyzeSvgViewBoxFit,
+  type SvgViewBoxFitAnalysis,
+  getOptimalTransformOrigin,
+  shouldUseCentroidOrigin,
+  calculateSvgCentroid,
+  type Point,
+  type SvgCentroid
+} from '../utils/svg-bounds'
 import { URL_SYNC_TIMEOUT_MS } from '../config/constants'
 import { loadTemplate } from '../config/template-loader'
 import type { SimpleTemplate } from '../types/template-types'
 import type { FontConfig } from '../config/fonts'
+import { resolveCoordinate } from '../utils/svg'
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -77,6 +87,9 @@ export interface LayerFormData {
   color?: string
   scale?: number
   rotation?: number
+
+  // Computed properties (added by store during merging)
+  transformString?: string
 }
 
 /**
@@ -96,6 +109,15 @@ export interface RenderableLayer {
   textInput?: any
   shape?: any
   svgImage?: any
+  transformString?: string
+  outerTransform?: string  // Positioning and base scaling
+  innerTransform?: string  // User scaling and rotation
+  svgAnalysis?: SvgViewBoxFitAnalysis  // SVG viewBox fit analysis for warnings
+
+  // Enhanced centroid-based transform origin support
+  transformOrigin?: Point      // Optimal transform origin (centroid or bounding box center)
+  useCentroidOrigin?: boolean  // Whether this layer uses centroid-based transforms
+  centroidAnalysis?: SvgCentroid  // Full centroid analysis results
 }
 
 // ============================================================================
@@ -470,6 +492,8 @@ export function updateLayers(updates: Array<{ layerId: string; updates: Partial<
  * Update render data based on current form data and template
  */
 function updateRenderData(): void {
+  logger.debug(`🔄 updateRenderData called - template: ${_state.value.selectedTemplate?.id || 'none'}, layers: ${_state.value.selectedTemplate?.layers?.length || 0}`)
+
   if (!_state.value.selectedTemplate) {
     _state.value.renderData = []
     return
@@ -477,6 +501,8 @@ function updateRenderData(): void {
 
   // Generate render data by merging template with form data
   _state.value.renderData = _state.value.selectedTemplate.layers.map(templateLayer => {
+    logger.debug(`🏗️ Processing template layer: ${templateLayer.id} (type: ${templateLayer.type})`)
+
     const formLayer = _state.value.formData.find(layer => layer.id === templateLayer.id)
 
     const renderLayer: RenderableLayer = {
@@ -515,6 +541,8 @@ function updateRenderData(): void {
         ...(formLayer?.strokeLinejoin !== undefined && { strokeLinejoin: formLayer.strokeLinejoin })
       }
     } else if (templateLayer.type === 'svgImage' && templateLayer.svgImage) {
+      logger.debug(`📊 Processing svgImage layer: ${templateLayer.id}`)
+
       renderLayer.svgImage = {
         ...templateLayer.svgImage,
         // Only override with form data if form data exists
@@ -528,12 +556,50 @@ function updateRenderData(): void {
         ...(formLayer?.scale !== undefined && { scale: formLayer.scale }),
         ...(formLayer?.rotation !== undefined && { rotation: formLayer.rotation })
       }
+
+      // Calculate centroid-based transform origin for this SVG layer
+      const svgContent = renderLayer.svgImage.svgContent || templateLayer.svgImage.svgContent
+      logger.debug(`🔍 SVG content check for ${templateLayer.id}:`, {
+        hasRenderLayerContent: !!renderLayer.svgImage.svgContent,
+        hasTemplateLayerContent: !!templateLayer.svgImage.svgContent,
+        finalSvgContent: !!svgContent,
+        svgContentLength: svgContent?.length || 0
+      })
+
+      if (svgContent) {
+        try {
+          logger.debug(`Calculating centroid for ${templateLayer.id} with SVG content length: ${svgContent.length}`)
+
+          const centroidResult = calculateSvgCentroid(svgContent)
+          const optimalOrigin = getOptimalTransformOrigin(svgContent)
+          const useCentroid = shouldUseCentroidOrigin(svgContent)
+
+          // Add centroid analysis to render layer
+          renderLayer.centroidAnalysis = centroidResult
+          renderLayer.transformOrigin = optimalOrigin
+          renderLayer.useCentroidOrigin = useCentroid
+
+          logger.debug(`Centroid calculated for ${templateLayer.id}:`, {
+            shapeType: centroidResult.shapeType,
+            useCentroid,
+            confidence: centroidResult.confidence,
+            transformOrigin: optimalOrigin,
+            boundingBoxCenter: centroidResult.boundingBoxCenter,
+            centroidCenter: centroidResult.centroidCenter
+          })
+        } catch (error) {
+          logger.warn(`Failed to calculate centroid for ${templateLayer.id}:`, error)
+          // Fallback to center of standard 24x24 viewBox
+          renderLayer.transformOrigin = { x: 12, y: 12 }
+          renderLayer.useCentroidOrigin = false
+        }
+      } else {
+        logger.warn(`No SVG content found for ${templateLayer.id}`)
+      }
     }
 
     return renderLayer
   })
-
-  return renderData
 }
 
 // ============================================================================
@@ -629,6 +695,120 @@ export const selectedTemplate = computed(() => _state.value.selectedTemplate)
 export const formData = computed(() => _state.value.formData)
 export const renderData = computed(() => _state.value.renderData)
 
+// Enhanced form data with template defaults merged
+export const mergedFormData = computed(() => {
+  if (!_state.value.selectedTemplate || !_state.value.formData.length) {
+    return []
+  }
+
+  return _state.value.selectedTemplate.layers.map(templateLayer => {
+    const formLayer = _state.value.formData.find(layer => layer.id === templateLayer.id)
+
+    if (!formLayer) {
+      // Create default form layer from template
+      const defaultLayer: LayerFormData = {
+        id: templateLayer.id,
+        type: templateLayer.type as 'text' | 'shape' | 'svgImage'
+      }
+
+      if (templateLayer.type === 'text' && templateLayer.textInput) {
+        defaultLayer.text = templateLayer.textInput.default
+        defaultLayer.fontSize = templateLayer.textInput.fontSize
+        defaultLayer.fontWeight = templateLayer.textInput.fontWeight
+        defaultLayer.textColor = templateLayer.textInput.fontColor
+        defaultLayer.strokeColor = (templateLayer.textInput as any).strokeColor
+        defaultLayer.strokeWidth = (templateLayer.textInput as any).strokeWidth
+        defaultLayer.strokeLinejoin = (templateLayer.textInput as any).strokeLinejoin
+        defaultLayer.strokeOpacity = (templateLayer.textInput as any).strokeOpacity
+      } else if (templateLayer.type === 'shape' && templateLayer.shape) {
+        defaultLayer.fillColor = templateLayer.shape.fill
+        defaultLayer.strokeColor = templateLayer.shape.stroke
+        defaultLayer.strokeWidth = templateLayer.shape.strokeWidth
+        defaultLayer.strokeLinejoin = (templateLayer.shape as any).strokeLinejoin
+      } else if (templateLayer.type === 'svgImage' && templateLayer.svgImage) {
+        defaultLayer.svgImageId = templateLayer.svgImage.id
+        defaultLayer.svgContent = templateLayer.svgImage.svgContent
+        defaultLayer.color = templateLayer.svgImage.fill
+        defaultLayer.strokeColor = templateLayer.svgImage.stroke
+        defaultLayer.strokeWidth = templateLayer.svgImage.strokeWidth
+        defaultLayer.strokeLinejoin = templateLayer.svgImage.strokeLinejoin
+        defaultLayer.rotation = (templateLayer as any).rotation
+        defaultLayer.scale = (templateLayer as any).scale
+      }
+
+      return defaultLayer
+    }
+
+    // Merge form data with template defaults
+    const mergedLayer: LayerFormData = { ...formLayer }
+
+    if (templateLayer.type === 'text' && templateLayer.textInput) {
+      mergedLayer.text = formLayer.text !== undefined ? formLayer.text : templateLayer.textInput.default
+      mergedLayer.fontSize = formLayer.fontSize !== undefined ? formLayer.fontSize : templateLayer.textInput.fontSize
+      mergedLayer.fontWeight = formLayer.fontWeight !== undefined ? formLayer.fontWeight : templateLayer.textInput.fontWeight
+      mergedLayer.textColor = formLayer.textColor !== undefined ? formLayer.textColor : templateLayer.textInput.fontColor
+      mergedLayer.strokeColor = formLayer.strokeColor !== undefined ? formLayer.strokeColor : (templateLayer.textInput as any).strokeColor
+      mergedLayer.strokeWidth = formLayer.strokeWidth !== undefined ? formLayer.strokeWidth : (templateLayer.textInput as any).strokeWidth
+      mergedLayer.strokeLinejoin = formLayer.strokeLinejoin !== undefined ? formLayer.strokeLinejoin : (templateLayer.textInput as any).strokeLinejoin
+      mergedLayer.strokeOpacity = formLayer.strokeOpacity !== undefined ? formLayer.strokeOpacity : (templateLayer.textInput as any).strokeOpacity
+    } else if (templateLayer.type === 'shape' && templateLayer.shape) {
+      mergedLayer.fillColor = formLayer.fillColor !== undefined ? formLayer.fillColor : templateLayer.shape.fill
+      mergedLayer.strokeColor = formLayer.strokeColor !== undefined ? formLayer.strokeColor : templateLayer.shape.stroke
+      mergedLayer.strokeWidth = formLayer.strokeWidth !== undefined ? formLayer.strokeWidth : templateLayer.shape.strokeWidth
+      mergedLayer.strokeLinejoin = formLayer.strokeLinejoin !== undefined ? formLayer.strokeLinejoin : (templateLayer.shape as any).strokeLinejoin
+    } else if (templateLayer.type === 'svgImage' && templateLayer.svgImage) {
+      mergedLayer.svgImageId = formLayer.svgImageId !== undefined ? formLayer.svgImageId : templateLayer.svgImage.id
+      mergedLayer.svgContent = formLayer.svgContent !== undefined ? formLayer.svgContent : templateLayer.svgImage.svgContent
+      mergedLayer.color = formLayer.color !== undefined ? formLayer.color : templateLayer.svgImage.fill
+      mergedLayer.strokeColor = formLayer.strokeColor !== undefined ? formLayer.strokeColor : templateLayer.svgImage.stroke
+      mergedLayer.strokeWidth = formLayer.strokeWidth !== undefined ? formLayer.strokeWidth : templateLayer.svgImage.strokeWidth
+      mergedLayer.strokeLinejoin = formLayer.strokeLinejoin !== undefined ? formLayer.strokeLinejoin : templateLayer.svgImage.strokeLinejoin
+      mergedLayer.rotation = formLayer.rotation !== undefined ? formLayer.rotation : (templateLayer as any).rotation
+      mergedLayer.scale = formLayer.scale !== undefined ? formLayer.scale : (templateLayer as any).scale
+
+      // Store calculates transform string - no conditional logic in components
+      const transforms = []
+      const absoluteX = templateLayer.svgImage.position?.x
+      const absoluteY = templateLayer.svgImage.position?.y
+      const targetWidth = templateLayer.svgImage.width
+      const targetHeight = templateLayer.svgImage.height
+      const rotation = mergedLayer.rotation
+      const scale = mergedLayer.scale
+
+      // First translate to position if coordinates exist
+      if (absoluteX !== undefined && absoluteY !== undefined) {
+        transforms.push(`translate(${absoluteX}, ${absoluteY})`)
+      }
+
+      // For center-based scale and rotation
+      if ((scale !== undefined && scale !== 1) || (rotation !== undefined && rotation !== 0)) {
+        const centerX = targetWidth ? targetWidth / 2 : 0
+        const centerY = targetHeight ? targetHeight / 2 : 0
+
+        if (centerX !== 0 || centerY !== 0) {
+          transforms.push(`translate(${centerX}, ${centerY})`)
+        }
+
+        if (scale !== undefined && scale !== 1) {
+          transforms.push(`scale(${scale})`)
+        }
+
+        if (rotation !== undefined && rotation !== 0) {
+          transforms.push(`rotate(${rotation})`)
+        }
+
+        if (centerX !== 0 || centerY !== 0) {
+          transforms.push(`translate(${-centerX}, ${-centerY})`)
+        }
+      }
+
+      mergedLayer.transformString = transforms.length > 0 ? transforms.join(' ') : ''
+    }
+
+    return mergedLayer
+  })
+})
+
 // Computed render data that automatically updates when formData or selectedTemplate changes
 export const computedRenderData = computed(() => {
   if (!_state.value.selectedTemplate) {
@@ -682,11 +862,196 @@ export const computedRenderData = computed(() => {
         ...(formLayer?.scale !== undefined && { scale: formLayer.scale }),
         ...(formLayer?.rotation !== undefined && { rotation: formLayer.rotation })
       }
+
+      // Store calculates separate transforms for proper nested g structure
+      const positionX = templateLayer.svgImage.position?.x
+      const positionY = templateLayer.svgImage.position?.y
+      const targetWidth = templateLayer.svgImage.width
+      const targetHeight = templateLayer.svgImage.height
+      const rotation = formLayer?.rotation !== undefined ? formLayer.rotation : (templateLayer as any).rotation
+      const scale = formLayer?.scale !== undefined ? formLayer.scale : (templateLayer as any).scale
+
+      // Calculate separate transforms for proper center-based positioning and scaling
+      let outerTransform = ''
+      let innerTransform = ''
+
+      if (positionX !== undefined && positionY !== undefined && _state.value.selectedTemplate?.viewBox) {
+        // Resolve percentage coordinates to absolute coordinates using template viewBox
+        const viewBox = _state.value.selectedTemplate.viewBox
+        const absoluteX = resolveCoordinate(positionX, viewBox.width, viewBox.x)
+        const absoluteY = resolveCoordinate(positionY, viewBox.height, viewBox.y)
+
+        // CORRECT APPROACH: Separate base positioning from user scaling
+        const svgSize = 24  // Standard SVG viewBox size
+        const svgCenter = svgSize / 2  // 12
+
+        // Base scaling to match declared template dimensions (independent of user scaling)
+        const baseScaleX = targetWidth ? targetWidth / svgSize : 1
+        const baseScaleY = targetHeight ? targetHeight / svgSize : 1
+
+        // Position based ONLY on base scaling (this keeps positioning stable)
+        const baseScaledWidth = svgSize * baseScaleX
+        const baseScaledHeight = svgSize * baseScaleY
+        const finalX = absoluteX - (baseScaledWidth / 2)
+        const finalY = absoluteY - (baseScaledHeight / 2)
+
+        // OUTER TRANSFORM: Position and base scaling only (high precision)
+        outerTransform = `translate(${finalX.toFixed(6)}, ${finalY.toFixed(6)}) scale(${baseScaleX.toFixed(6)}, ${baseScaleY.toFixed(6)})`
+
+        // INNER TRANSFORM: User scaling and rotation around optimal center (high precision)
+        const innerTransforms = []
+        const userScale = scale !== undefined ? scale : 1
+
+        logger.debug(`Transform calculation for ${templateLayer.id}:`, {
+          rotation,
+          scale: userScale,
+          hasRotation: rotation !== undefined && rotation !== 0,
+          hasScale: userScale !== 1,
+          willCalculateTransform: (rotation !== undefined && rotation !== 0) || (userScale !== 1)
+        })
+
+        if ((rotation !== undefined && rotation !== 0) || (userScale !== 1)) {
+          // Determine optimal transform origin (centroid or geometric center)
+          let transformOrigin = { x: svgCenter, y: svgCenter } // Default to geometric center
+
+          if (renderLayer.useCentroidOrigin && renderLayer.transformOrigin) {
+            transformOrigin = renderLayer.transformOrigin
+            logger.debug(`Using centroid origin for ${templateLayer.id}:`, {
+              centroidOrigin: transformOrigin,
+              geometricCenter: { x: svgCenter, y: svgCenter },
+              shapeType: renderLayer.centroidAnalysis?.shapeType
+            })
+          }
+
+          // Move to optimal center of the SVG coordinate system
+          innerTransforms.push(`translate(${transformOrigin.x.toFixed(6)}, ${transformOrigin.y.toFixed(6)})`)
+
+          // Apply user transformations in correct order
+          if (rotation !== undefined && rotation !== 0) {
+            innerTransforms.push(`rotate(${rotation.toFixed(6)})`)
+          }
+
+          if (userScale !== 1) {
+            innerTransforms.push(`scale(${userScale.toFixed(6)})`)
+          }
+
+          // Move back from center
+          innerTransforms.push(`translate(${-transformOrigin.x.toFixed(6)}, ${-transformOrigin.y.toFixed(6)})`)
+
+          innerTransform = innerTransforms.join(' ')
+        }
+      }
+
+      // Analyze SVG viewBox fit for warning system
+      if (renderLayer.svgImage?.svgContent) {
+        try {
+          renderLayer.svgAnalysis = analyzeSvgViewBoxFit(renderLayer.svgImage.svgContent)
+
+          // Log centering issues for development
+          if (renderLayer.svgAnalysis.severity === 'major') {
+            logger.warn(`SVG centering issue detected for ${templateLayer.id}:`, {
+              issues: renderLayer.svgAnalysis.issues,
+              offset: renderLayer.svgAnalysis.offset,
+              recommendedViewBox: renderLayer.svgAnalysis.recommendedViewBox
+            })
+          }
+        } catch (error) {
+          logger.warn(`Failed to analyze SVG viewBox for ${templateLayer.id}:`, error)
+        }
+      }
+
+      // Store both transforms for the component to use
+      renderLayer.outerTransform = outerTransform
+      renderLayer.innerTransform = innerTransform
+      renderLayer.transformString = outerTransform  // Keep for backward compatibility
     }
 
     return renderLayer
   })
 })
+
+// Generate clip path definitions from template shapes
+export const clipPathShapes = computed(() => {
+  if (!_state.value.selectedTemplate?.layers) return []
+
+  const clipShapes: Array<{id: string, path: string}> = []
+
+  // Find all layers that are referenced as clip targets
+  const clipReferences = new Set<string>()
+  _state.value.selectedTemplate.layers.forEach(layer => {
+    if (layer.type === 'text' && layer.textInput?.clip) {
+      clipReferences.add(layer.textInput.clip)
+    }
+    if (layer.type === 'svgImage' && layer.svgImage?.clip) {
+      clipReferences.add(layer.svgImage.clip)
+    }
+  })
+
+  // Generate clip path definitions for referenced shapes
+  clipReferences.forEach(clipId => {
+    const shapeLayer = _state.value.selectedTemplate?.layers.find(layer =>
+      layer.type === 'shape' && layer.id === clipId
+    )
+
+    if (shapeLayer && shapeLayer.shape) {
+      const shape = shapeLayer.shape
+      let path = ''
+
+      // Generate path based on shape type
+      if (shape.subtype === 'rect') {
+        // Resolve percentage coordinates for shape position
+        const viewBox = _state.value.selectedTemplate?.viewBox
+        if (!viewBox) return
+
+        const x = resolveCoordinate(shape.position?.x || 0, viewBox.width, viewBox.x)
+        const y = resolveCoordinate(shape.position?.y || 0, viewBox.height, viewBox.y)
+        const width = shape.width || 100
+        const height = shape.height || 100
+        const rx = shape.rx || 0
+        const ry = shape.ry || 0
+
+        if (rx || ry) {
+          // Rounded rectangle
+          path = `M${x + rx},${y} L${x + width - rx},${y} Q${x + width},${y} ${x + width},${y + ry} L${x + width},${y + height - ry} Q${x + width},${y + height} ${x + width - rx},${y + height} L${x + rx},${y + height} Q${x},${y + height} ${x},${y + height - ry} L${x},${y + ry} Q${x},${y} ${x + rx},${y} Z`
+        } else {
+          // Regular rectangle
+          path = `M${x},${y} L${x + width},${y} L${x + width},${y + height} L${x},${y + height} Z`
+        }
+      } else if (shape.subtype === 'circle') {
+        // Resolve percentage coordinates for circle position
+        const viewBox = _state.value.selectedTemplate?.viewBox
+        if (!viewBox) return
+
+        const cx = resolveCoordinate(shape.position?.x || 0, viewBox.width, viewBox.x)
+        const cy = resolveCoordinate(shape.position?.y || 0, viewBox.height, viewBox.y)
+        const r = (shape.width || 100) / 2
+        path = `M${cx - r},${cy} A${r},${r} 0 1,1 ${cx + r},${cy} A${r},${r} 0 1,1 ${cx - r},${cy} Z`
+      } else if (shape.subtype === 'polygon' && shape.points) {
+        // Polygon with points
+        const points = shape.points.split(' ').map(point => point.split(','))
+        if (points.length > 0) {
+          path = `M${points[0].join(',')} ${  points.slice(1).map(point => `L${point.join(',')}`).join(' ')  } Z`
+        }
+      }
+
+      if (path) {
+        clipShapes.push({ id: clipId, path })
+      }
+    }
+  })
+
+  return clipShapes
+})
+
+// Check if template has any clip paths
+export const hasClipPaths = computed(() => {
+  if (!_state.value.selectedTemplate?.layers) return false
+  return _state.value.selectedTemplate.layers.some(layer =>
+    (layer.type === 'text' && layer.textInput?.clip) ||
+    (layer.type === 'svgImage' && layer.svgImage?.clip)
+  )
+})
+
 
 // ============================================================================
 // EXPORT/IMPORT FUNCTIONALITY
@@ -746,8 +1111,8 @@ export async function importData(data: string | object): Promise<void> {
 
     // Security validation
     const validation = validateImportData(parsedData)
-    if (!validation.isValid) {
-      throw new Error(`Import validation failed: ${validation.errors.join(', ')}`)
+    if (!validation.valid) {
+      throw new Error(`Import validation failed: ${validation.error || 'Unknown validation error'}`)
     }
 
     // Extract and validate template ID

@@ -161,24 +161,7 @@ interface Props {
   }>
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  template: null,
-  previewMode: false,
-  containerDimensions: () => ({ width: 0, height: 0 }),
-
-  // Picture-in-picture defaults
-  stickerText: '',
-  textColor: '#ffffff',
-  font: null,
-  fontSize: 16,
-  fontWeight: 400,
-  strokeColor: '#000000',
-  strokeWidth: 0,
-  strokeOpacity: 1.0,
-  width: 400,
-  height: 120,
-  layers: () => []
-})
+const props = defineProps<Props>()
 
 defineEmits<{
   'zoomIn': []

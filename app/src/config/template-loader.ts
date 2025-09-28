@@ -238,11 +238,9 @@ const convertYamlToSimpleTemplate = async (yamlTemplate: YamlTemplate): Promise<
         }
       })
     } else if (layer.type === 'svgImage') {
-      // Resolve percentage coordinates for SVG images
-      const resolvedPosition = resolvePosition(
-        layer.position as { x: number | string; y: number | string },
-        viewBox
-      )
+      // CRITICAL FIX: Preserve original position strings for SVG images
+      // Don't resolve coordinates here - let the store handle center-based positioning
+      const originalPosition = layer.position as { x: number | string; y: number | string }
 
       // Get SVG content from library or use direct content
       let svgContent = layer.svgContent || ''
@@ -257,7 +255,7 @@ const convertYamlToSimpleTemplate = async (yamlTemplate: YamlTemplate): Promise<
         svgImage: {
           id: layer.id,
           svgContent,
-          position: resolvedPosition,
+          position: originalPosition,  // Keep original strings like "50%", "50%"
           width: layer.width,
           height: layer.height,
           fill: layer.fill,

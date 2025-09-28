@@ -420,17 +420,7 @@ interface Emits {
   'update:textStrokeLinejoin': [value: string]
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  selectedFont: null,
-  textColor: '#ffffff',
-  fontSize: 16,
-  fontWeight: 400,
-  textStrokeWidth: 0,
-  textStrokeColor: '#000000',
-  textStrokeLinejoin: 'round',
-  stickerText: '',
-  instanceId: 'default'
-})
+const props = defineProps<Props>()
 
 const emit = defineEmits<Emits>()
 
@@ -466,11 +456,14 @@ const containerRef = ref<HTMLElement>()
 
 // Computed expanded state
 const isExpanded = computed(() => {
+  const id = props.instanceId
+  if (!id) return false
+
   if (dropdownManager) {
-    return dropdownManager.isExpanded(props.instanceId)
+    return dropdownManager.isExpanded(id)
   }
   // Legacy fallback
-  return expandedInstances.value.has(props.instanceId)
+  return expandedInstances.value.has(id)
 })
 
 
@@ -588,12 +581,13 @@ watch(() => props.selectedFont, async (newFont) => {
 
 // Handle escape key to close
 const handleKeydown = (event: KeyboardEvent) => {
-  if (event.key === 'Escape' && isExpanded.value) {
+  const id = props.instanceId
+  if (event.key === 'Escape' && isExpanded.value && id) {
     if (dropdownManager) {
-      dropdownManager.close(props.instanceId)
+      dropdownManager.close(id)
     } else {
       // Legacy fallback
-      expandedInstances.value.delete(props.instanceId)
+      expandedInstances.value.delete(id)
     }
   }
 }
