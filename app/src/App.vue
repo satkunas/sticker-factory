@@ -37,12 +37,6 @@
             </svg>
             <span>Download</span>
           </button>
-          <button class="text-sm text-secondary-600 hover:text-secondary-900" @click="showExportModal = true">
-            Export
-          </button>
-          <button class="text-sm text-secondary-600 hover:text-secondary-900" @click="showImportModal = true">
-            Import
-          </button>
         </nav>
       </div>
 
@@ -57,18 +51,6 @@
               <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 011 1v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
             </svg>
             <span>Download</span>
-          </button>
-          <button
-            class="w-full text-left px-3 py-2 text-sm text-secondary-600 hover:text-secondary-900 hover:bg-secondary-50 rounded-md transition-colors"
-            @click="showExportModal = true; showMobileMenu = false"
-          >
-            Export
-          </button>
-          <button
-            class="w-full text-left px-3 py-2 text-sm text-secondary-600 hover:text-secondary-900 hover:bg-secondary-50 rounded-md transition-colors"
-            @click="showImportModal = true; showMobileMenu = false"
-          >
-            Import
           </button>
         </div>
       </div>
@@ -120,16 +102,6 @@
     </main>
 
     <!-- Modals -->
-    <ExportModal
-      :show="showExportModal"
-      @close="showExportModal = false"
-    />
-
-    <ImportModal
-      :show="showImportModal"
-      @close="showImportModal = false"
-    />
-
     <DownloadModal
       :show="showDownloadModal"
       :template="selectedTemplate"
@@ -151,8 +123,6 @@ import {
   updateLayer
 } from './stores/urlDrivenStore'
 import { logger } from './utils/logger'
-const ExportModal = defineAsyncComponent(() => import('./components/ExportModal.vue'))
-const ImportModal = defineAsyncComponent(() => import('./components/ImportModal.vue'))
 const DownloadModal = defineAsyncComponent(() => import('./components/DownloadModal.vue'))
 import TemplateSelector from './components/TemplateSelector.vue'
 import SvgViewer from './components/SvgViewer.vue'
@@ -253,8 +223,6 @@ const closeMenuOnOutsideClick = (event: Event) => {
 const selectedTemplate = storeSelectedTemplate
 
 // Modal states
-const showExportModal = ref(false)
-const showImportModal = ref(false)
 const showDownloadModal = ref(false)
 
 // Use computed render data from URL-driven store (maintain reactivity)

@@ -15,9 +15,8 @@
 
 import { ref, computed, readonly } from 'vue'
 import type { Router } from 'vue-router'
-import { logger, reportCriticalError } from '../utils/logger'
+import { logger } from '../utils/logger'
 import { encodeTemplateStateCompact, decodeTemplateStateCompact } from '../utils/url-encoding'
-import { validateImportData, sanitizeTextInput } from '../utils/security'
 import {
   analyzeSvgViewBoxFit,
   type SvgViewBoxFitAnalysis,
@@ -1053,103 +1052,6 @@ export const hasClipPaths = computed(() => {
 })
 
 
-// ============================================================================
-// EXPORT/IMPORT FUNCTIONALITY
-// ============================================================================
-
-const STORAGE_VERSION = '2.0.0'
-
-/**
- * Export current state as JSON string
- * @returns Serialized JSON string containing current template and form data
- */
-export function exportData(): string {
-  const exportData = {
-    selectedTemplateId: _state.value.selectedTemplateId,
-    layers: _state.value.formData,
-    lastModified: Date.now(),
-    exportedAt: new Date().toISOString(),
-    version: STORAGE_VERSION,
-    metadata: {
-      appName: 'Sticker Factory',
-      exportVersion: '2.0.0'
-    }
-  }
-  return JSON.stringify(exportData, null, 2)
-}
-
-/**
- * Export current state to downloadable file
- */
-export function exportToFile(filename?: string): void {
-  try {
-    const data = exportData()
-    const blob = new Blob([data], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-
-    const link = document.createElement('a')
-    link.href = url
-    link.download = filename || `sticker-factory-export-${Date.now()}.json`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-  } catch (error) {
-    reportCriticalError(error as Error, 'Export failed')
-    throw new Error('Failed to export data')
-  }
-}
-
-/**
- * Import data from JSON string or object
- * @param data JSON string or parsed object containing template and layer data
- * @returns Promise that resolves when data is imported and state is updated
- */
-export async function importData(data: string | object): Promise<void> {
-  try {
-    const parsedData = typeof data === 'string' ? JSON.parse(data) : data
-
-    // Security validation
-    const validation = validateImportData(parsedData)
-    if (!validation.valid) {
-      throw new Error(`Import validation failed: ${validation.error || 'Unknown validation error'}`)
-    }
-
-    // Extract and validate template ID
-    const templateId = parsedData.selectedTemplateId
-    if (templateId) {
-      // Load template first
-      const template = await loadTemplate(templateId)
-      if (template) {
-        _state.value.selectedTemplateId = templateId
-        _state.value.selectedTemplate = template
-
-        // Import layer data if present
-        if (parsedData.layers && Array.isArray(parsedData.layers)) {
-          const sanitizedLayers = parsedData.layers.map((layer: any) => ({
-            ...layer,
-            text: layer.text ? sanitizeTextInput(layer.text) : layer.text
-          }))
-
-          _state.value.formData = sanitizedLayers
-          updateRenderData()
-        }
-
-        // Schedule URL sync to reflect imported state
-        scheduleUrlSync()
-
-        logger.info('Data imported successfully')
-      } else {
-        throw new Error(`Template not found: ${templateId}`)
-      }
-    } else {
-      throw new Error('No template ID found in import data')
-    }
-  } catch (error) {
-    logger.error('Import failed:', error)
-    throw error
-  }
-}
 
 // ============================================================================
 // TESTING HELPER FUNCTIONS
