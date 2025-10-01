@@ -782,6 +782,23 @@ export function validateSvgContent(content: string): boolean {
   }
 }
 
+/**
+ * Validate that a value is a finite number (not NaN, Infinity, or non-numeric)
+ *
+ * @param value - Value to validate
+ * @returns True if value is a valid finite number
+ *
+ * @example
+ * isValidNumber(42)        // Returns: true
+ * isValidNumber(NaN)       // Returns: false
+ * isValidNumber(Infinity)  // Returns: false
+ * isValidNumber("42")      // Returns: false
+ * isValidNumber(null)      // Returns: false
+ */
+export function isValidNumber(value: any): value is number {
+  return typeof value === 'number' && !isNaN(value) && isFinite(value)
+}
+
 // ============================================================================
 // GEOMETRY CALCULATIONS
 // ============================================================================

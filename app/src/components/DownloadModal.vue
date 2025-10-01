@@ -7,11 +7,12 @@
           Preview
         </label>
         <div class="h-48 bg-secondary-50 rounded-lg border border-secondary-200 flex items-center justify-center p-4">
-          <SvgViewer
+          <Svg
+            v-if="template"
             ref="templateSvgRef"
             :template="template"
             :layers="layers"
-            :previewMode="true"
+            mode="preview"
             class="max-w-full max-h-full"
           />
         </div>
@@ -132,7 +133,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import Modal from './Modal.vue'
-import SvgViewer from './SvgViewer.vue'
+import Svg from './Svg.vue'
 import { jsPDF } from 'jspdf'
 import type { SimpleTemplate } from '../types/template-types'
 import { AVAILABLE_FONTS } from '../config/fonts'
@@ -179,13 +180,13 @@ const pngResolutions = computed(() => {
 
 const getFileName = () => {
   const timestamp = Date.now()
-  const name = props.stickerText.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'image'
-  return `${name}-${timestamp}`
+  const templateName = props.template?.name?.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'sticker'
+  return `${templateName}-${timestamp}`
 }
 
 const getSvgContent = async (embedFonts = false) => {
-  // Get the SVG element from the template viewer and create clean SVG content
-  const svgElement = templateSvgRef.value?.svgElementRef
+  // Get the SVG element from the content layer and create clean SVG content
+  const svgElement = templateSvgRef.value?.svgContentRef
   if (!svgElement) {
     return ''
   }
@@ -226,9 +227,10 @@ const getSvgContent = async (embedFonts = false) => {
           const currentFont = textEl.getAttribute('font-family')
           if (currentFont && currentFont.includes(fontName)) {
             // Preserve the original font but ensure fallback is included
-            const fallback = fontConfig.fallback || 'sans-serif'
-            const fontWithFallback = `${fontName}, ${fallback}`
-            textEl.setAttribute('font-family', fontWithFallback)
+            if (fontConfig.fallback) {
+              const fontWithFallback = `${fontName}, ${fontConfig.fallback}`
+              textEl.setAttribute('font-family', fontWithFallback)
+            }
           }
         })
       } else {
@@ -403,10 +405,13 @@ const downloadPDF = async () => {
   if (!svgContent) {
     return
   }
-  
-  // Use actual template dimensions instead of hardcoded values
-  const baseWidth = props.template?.viewBox?.width || 200
-  const baseHeight = props.template?.viewBox?.height || 60
+
+  const baseWidth = props.template?.viewBox?.width
+  const baseHeight = props.template?.viewBox?.height
+
+  if (!baseWidth || !baseHeight) {
+    return
+  }
 
   // Create PDF with actual badge dimensions (convert px to mm at 96 DPI)
   const widthMm = (baseWidth * 25.4) / 96

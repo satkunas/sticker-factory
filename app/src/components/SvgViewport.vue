@@ -1,10 +1,7 @@
 <template>
-  <svg
+  <div
     ref="svgViewportRef"
-    class="w-full h-full"
-    :viewBox="viewBoxString"
-    xmlns="http://www.w3.org/2000/svg"
-    preserveAspectRatio="xMidYMid meet"
+    class="w-full h-full relative"
     :class="cursorClass"
     @mousedown="handleMouseDown"
     @mousemove="handleMouseMove"
@@ -15,51 +12,21 @@
     @touchmove="handleTouchMove"
     @touchend="handleTouchEnd"
   >
-    <!-- Background grid pattern definition -->
-    <defs>
-      <pattern
-        id="background-grid"
-        :width="gridSize"
-        :height="gridSize"
-        patternUnits="userSpaceOnUse"
-      >
-        <rect
-          :width="gridSize"
-          :height="gridSize"
-          fill="white"
-        />
-        <path
-          :d="`M ${gridSize} 0 L 0 0 0 ${gridSize}`"
-          fill="none"
-          stroke="rgba(0, 0, 0, 0.15)"
-          stroke-width="1"
-        />
-      </pattern>
-    </defs>
-
-    <!-- Background grid with red border -->
-    <g v-if="!previewMode">
-      <!-- Grid background -->
-      <rect
-        :x="backgroundBounds.x"
-        :y="backgroundBounds.y"
-        :width="backgroundBounds.width"
-        :height="backgroundBounds.height"
-        fill="url(#background-grid)"
-      />
-
-    </g>
-
-    <!-- Template content slot -->
-    <g class="template-content">
-      <slot />
-    </g>
-  </svg>
+    <!-- Template content using Svg.vue singleton -->
+    <Svg
+      v-if="template && layers"
+      :template="template"
+      :layers="layers"
+      mode="viewport"
+      class="absolute inset-0"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { SimpleTemplate } from '../types/template-types'
+import Svg from './Svg.vue'
 
 interface Props {
   template?: SimpleTemplate | null
@@ -69,8 +36,14 @@ interface Props {
   viewBoxWidth?: number
   viewBoxHeight?: number
   gridSize?: number
+  gridScale?: number
   borderWidth?: number
   cursorClass?: string
+  layers?: Array<{
+    id: string
+    type: 'text' | 'shape' | 'svgImage'
+    [key: string]: any
+  }>
 }
 
 const props = defineProps<Props>()
@@ -92,38 +65,15 @@ const emit = defineEmits<Emits>()
 // SVG viewport reference
 const svgViewportRef = ref<SVGElement | null>(null)
 
-// Computed viewBox string
-const viewBoxString = computed(() => {
-  return `${props.viewBoxX} ${props.viewBoxY} ${props.viewBoxWidth} ${props.viewBoxHeight}`
-})
-
-// Background bounds - template size * 2 for grid area
-const backgroundBounds = computed(() => {
+// Content dimensions for BackgroundGrid component
+const contentDimensions = computed(() => {
   if (props.template) {
-    const templateWidth = props.template.viewBox.width
-    const templateHeight = props.template.viewBox.height
-    const gridWidth = templateWidth * 2
-    const gridHeight = templateHeight * 2
-
-    // Center background grid around template center
-    const templateCenterX = props.template.viewBox.x + templateWidth / 2
-    const templateCenterY = props.template.viewBox.y + templateHeight / 2
-
     return {
-      x: templateCenterX - gridWidth / 2,
-      y: templateCenterY - gridHeight / 2,
-      width: gridWidth,
-      height: gridHeight
+      width: props.template.width,
+      height: props.template.height
     }
   }
-
-  // Default background bounds
-  return {
-    x: -400,
-    y: -300,
-    width: 800,
-    height: 600
-  }
+  return undefined
 })
 
 // Event handler pass-through functions
@@ -138,6 +88,7 @@ const handleTouchEnd = (e: TouchEvent) => emit('touchend', e)
 
 // Expose SVG viewport reference for coordinate calculations
 defineExpose({
-  svgViewportRef
+  svgViewportRef,
+  contentDimensions
 })
 </script>

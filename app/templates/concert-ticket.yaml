@@ -2,6 +2,8 @@ name: "Concert Ticket Stub"
 id: "concert-ticket"
 description: "Retro concert ticket with tear-off stub design"
 category: "rectangle"
+width: 380
+height: 180
 layers:
   - id: "ticket-background"
     type: "shape"

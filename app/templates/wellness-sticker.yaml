@@ -2,6 +2,8 @@ name: "Wellness & Health Sticker"
 id: "wellness-sticker"
 description: "Circular wellness sticker with health-themed SVG icons"
 category: "circle"
+width: 180
+height: 180
 viewBox: { x: 0, y: 0, width: 200, height: 200 }
 layers:
   - id: "background"

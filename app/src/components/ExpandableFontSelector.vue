@@ -108,7 +108,7 @@
                   min="8"
                   max="200"
                   class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
-                  @input="$emit('update:fontSize', parseInt($event.target.value) || 16)"
+                  @input="$emit('update:fontSize', parseInt($event.target.value) || undefined)"
                 >
                 <input
                   :value="fontSize"
@@ -116,7 +116,7 @@
                   min="8"
                   max="500"
                   class="w-12 px-1 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
-                  @input="$emit('update:fontSize', parseInt($event.target.value) || 16)"
+                  @input="$emit('update:fontSize', parseInt($event.target.value) || undefined)"
                 >
               </div>
               <div class="grid grid-cols-3 md:grid-cols-6 gap-1">
@@ -257,7 +257,7 @@
                     max="10"
                     step="0.5"
                     class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
-                    @input="$emit('update:textStrokeWidth', parseFloat($event.target.value) || 0)"
+                    @input="$emit('update:textStrokeWidth', parseFloat($event.target.value) || undefined)"
                   >
                   <input
                     :value="textStrokeWidth"
@@ -266,7 +266,7 @@
                     max="20"
                     step="0.5"
                     class="w-14 px-1 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
-                    @input="$emit('update:textStrokeWidth', parseFloat($event.target.value) || 0)"
+                    @input="$emit('update:textStrokeWidth', parseFloat($event.target.value) || undefined)"
                   >
                 </div>
               </div>
@@ -366,7 +366,7 @@
               :ref="el => { if (selectedFont?.name === font.name && el) selectedFontTile = el }"
               :font="font"
               :isSelected="selectedFont?.name === font.name"
-              :stickerText="stickerText || ''"
+              :stickerText="stickerText"
               @select="selectFont"
             />
           </div>

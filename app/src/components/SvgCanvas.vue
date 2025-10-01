@@ -8,20 +8,20 @@
     :class="svgClasses"
     :style="svgStyles"
   >
-    <!-- Template-based rendering with ordered elements -->
+    <!-- FLAT ARCHITECTURE: Pure property rendering with no conditionals -->
     <g v-if="template">
-      <!-- Clip path definitions -->
-      <defs v-if="hasClipPaths">
+      <!-- Simplified clip path definitions -->
+      <defs v-if="flatClipPaths.length > 0">
         <clipPath
-          v-for="clipShape in clipPathShapes"
-          :id="`clip-${clipShape.id}`"
-          :key="`clip-${clipShape.id}`"
+          v-for="clipShape in flatClipPaths"
+          :id="clipShape.id"
+          :key="clipShape.id"
         >
           <path :d="clipShape.path" />
         </clipPath>
       </defs>
 
-      <template v-for="(element, index) in props.layers" :key="`${element.type}-${index}`">
+      <template v-for="(element, index) in svgRenderData" :key="`${element.type}-${index}`">
         <!-- Shape rendering -->
         <path
           v-if="element.type === 'shape' && element.shape"
@@ -37,8 +37,8 @@
         <template v-if="element.type === 'text' && element.textInput">
           <text
             :key="element.textInput.id"
-            :x="resolveTextPositionUtil(element.textInput, 'x', template?.viewBox) ?? 0"
-            :y="resolveTextPositionUtil(element.textInput, 'y', template?.viewBox) ?? 0"
+            :x="resolveTextPositionUtil(element.textInput, 'x', template?.viewBox)"
+            :y="resolveTextPositionUtil(element.textInput, 'y', template?.viewBox)"
             text-anchor="middle"
             dominant-baseline="central"
             :font-family="element.textInput.fontFamily"
@@ -61,10 +61,10 @@
           <g
             :key="element.svgImage.id"
             :clip-path="element.svgImage.clipPath"
-            :transform="element.outerTransform"
+            :transform="validateTransform(element.outerTransform, element.svgImage?.id, 'outer')"
           >
             <!-- Inner g: user scaling and rotation around center -->
-            <g :transform="element.innerTransform">
+            <g :transform="validateTransform(element.innerTransform, element.svgImage?.id, 'inner')">
               <g v-html="getStyledSvgContent(element.svgImage)" />
             </g>
           </g>
@@ -73,15 +73,12 @@
     </g>
 
     <!-- Fallback: Show empty state when no template -->
-    <g v-else>
+    <g v-else-if="viewBoxWidth && viewBoxHeight">
       <text
-        :x="(viewBoxWidth ?? 400) / 2"
-        :y="(viewBoxHeight ?? 300) / 2"
+        :x="viewBoxWidth / 2"
+        :y="viewBoxHeight / 2"
         text-anchor="middle"
         dominant-baseline="central"
-        font-family="Arial, sans-serif"
-        font-size="14"
-        fill="#6b7280"
         class="select-none"
       >
         No template selected
@@ -98,6 +95,10 @@ import {
   getStyledSvgContent,
   resolveTextPosition as resolveTextPositionUtil
 } from '../utils/svg-template'
+import {
+  svgRenderData,
+  flatClipPaths
+} from '../stores/urlDrivenStore'
 
 interface Props {
   stickerText?: string
@@ -129,10 +130,29 @@ interface Props {
   viewBoxHeight?: number
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 
 // SVG element reference
 const svgElementRef = ref<SVGElement | null>(null)
+
+// Transform validation function to catch NaN values before they reach the DOM
+function validateTransform(transform: string | undefined, layerId: string | undefined, transformType: string): string | undefined {
+  if (!transform) return undefined
+
+  // Check for NaN in transform string
+  if (transform.includes('NaN')) {
+    // eslint-disable-next-line no-console
+    console.error(`🚨 CRITICAL: NaN detected in ${transformType} transform for layer ${layerId}:`, {
+      originalTransform: transform,
+      layerId,
+      transformType
+    })
+    // Return empty string to prevent DOM errors
+    return ''
+  }
+
+  return transform
+}
 
 // Expose the SVG element reference
 defineExpose({

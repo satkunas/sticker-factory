@@ -27,14 +27,14 @@
                   <path
                     v-if="element.type === 'shape' && element.shape"
                     :d="element.shape.path"
-                    :fill="element.shape.fill || '#22c55e'"
-                    :stroke="element.shape.stroke || '#16a34a'"
-                    :stroke-width="element.shape.strokeWidth || 2"
+                    :fill="element.shape.fill"
+                    :stroke="element.shape.stroke"
+                    :stroke-width="element.shape.strokeWidth"
                   />
                   <text
                     v-if="element.type === 'text' && element.textInput"
-                    :x="resolveCoordinate(element.textInput.position?.x || 0, 200, 0)"
-                    :y="resolveCoordinate(element.textInput.position?.y || 0, 200, 0)"
+                    :x="element.textInput.position?.x ? resolveCoordinate(element.textInput.position.x, 200, 0) : 0"
+                    :y="element.textInput.position?.y ? resolveCoordinate(element.textInput.position.y, 200, 0) : 0"
                     text-anchor="middle"
                     dominant-baseline="central"
                     :font-family="element.textInput.fontFamily"
@@ -53,7 +53,7 @@
             <!-- Template Info -->
             <div>
               <div class="font-medium text-secondary-900">
-                {{ selectedTemplate?.name || 'Select Template' }}
+                {{ selectedTemplate?.name ? selectedTemplate.name : 'Select Template' }}
               </div>
               <div v-if="selectedTemplate" class="text-xs text-secondary-500">
                 {{ selectedTemplate.description }}
@@ -99,14 +99,14 @@
                     <path
                       v-if="element.type === 'shape' && element.shape"
                       :d="element.shape.path"
-                      :fill="element.shape.fill || '#22c55e'"
-                      :stroke="element.shape.stroke || '#16a34a'"
-                      :stroke-width="element.shape.strokeWidth || 2"
+                      :fill="element.shape.fill"
+                      :stroke="element.shape.stroke"
+                      :stroke-width="element.shape.strokeWidth"
                     />
                     <text
                       v-if="element.type === 'text' && element.textInput"
-                      :x="resolveCoordinate(element.textInput.position?.x || 0, 120, 0)"
-                      :y="resolveCoordinate(element.textInput.position?.y || 0, 120, 0)"
+                      :x="element.textInput.position?.x ? resolveCoordinate(element.textInput.position.x, 120, 0) : 0"
+                      :y="element.textInput.position?.y ? resolveCoordinate(element.textInput.position.y, 120, 0) : 0"
                       text-anchor="middle"
                       dominant-baseline="central"
                       :font-family="element.textInput.fontFamily"

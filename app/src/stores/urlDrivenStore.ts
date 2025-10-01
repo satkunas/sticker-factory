@@ -28,9 +28,39 @@ import {
 } from '../utils/svg-bounds'
 import { URL_SYNC_TIMEOUT_MS } from '../config/constants'
 import { loadTemplate } from '../config/template-loader'
-import type { SimpleTemplate } from '../types/template-types'
+
+// ============================================================================
+// SAFETY UTILITY FUNCTIONS
+// ============================================================================
+
+/**
+ * Validate that a number is finite and not NaN
+ */
+function isValidNumber(value: number): boolean {
+  return typeof value === 'number' && isFinite(value) && !isNaN(value)
+}
+
+/**
+ * Ensure a number is valid, returning fallback if invalid
+ */
+function safeNumber(value: number, fallback = 0): number {
+  return isValidNumber(value) ? value : fallback
+}
+
+/**
+ * Create a safe transform string, filtering out NaN values
+ */
+function safeTransform(transformParts: string[]): string {
+  // Filter out any transform parts that contain NaN
+  const validParts = transformParts.filter(part => !part.includes('NaN'))
+  return validParts.join(' ')
+}
+import type { SimpleTemplate, FlatLayerData, TemplateLayer } from '../types/template-types'
 import type { FontConfig } from '../config/fonts'
 import { resolveCoordinate } from '../utils/svg'
+import { processLayerForRendering, type ProcessedLayer } from '../utils/unified-positioning'
+// Removed unused import: getStyledSvgContent
+import { useSvgViewBox } from '../composables/useSvgViewBox'
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -117,6 +147,90 @@ export interface RenderableLayer {
   transformOrigin?: Point      // Optimal transform origin (centroid or bounding box center)
   useCentroidOrigin?: boolean  // Whether this layer uses centroid-based transforms
   centroidAnalysis?: SvgCentroid  // Full centroid analysis results
+}
+
+// ============================================================================
+// FLAT ARCHITECTURE: New simplified data merging functions
+// ============================================================================
+
+/**
+ * Flatten template layer into flat structure (extract nested properties to root level)
+ */
+function flattenTemplateLayer(templateLayer: TemplateLayer): FlatLayerData {
+  // NEW FLAT ARCHITECTURE: Single destructuring-based flattening
+  // All template layers now have properties directly accessible (no nested objects)
+
+  const {
+    id, type,
+    // Universal properties (all layer types)
+    position, rotation, scale, clip, clipPath, opacity,
+    // Text properties
+    text, label, placeholder, maxLength, fontFamily, fontColor, fontSize, fontWeight,
+    // Shape properties
+    subtype, width, height, rx, ry, points, fill, stroke, strokeWidth, strokeLinejoin, path,
+    // SVG Image properties
+    svgImageId, svgContent, color,
+    // Strip out any legacy nested objects that might still exist
+    textInput: _, shape: __, svgImage: ___,
+    ...otherProps
+  } = templateLayer as any
+
+  // Return flat structure with clean property mapping
+  return {
+    id, type, position, rotation, scale, clip, clipPath, opacity,
+    // Text properties (directly accessible)
+    text, label, placeholder, maxLength, fontFamily, fontColor, fontSize, fontWeight,
+    // Shape properties (directly accessible)
+    subtype, width, height, rx, ry, points, path,
+    fillColor: fill, // Map 'fill' to 'fillColor' for shapes
+    strokeColor: stroke, strokeWidth, strokeLinejoin,
+    // SVG Image properties (directly accessible)
+    svgImageId, svgContent,
+    color, // SVG images use 'color' instead of 'fill' to distinguish from shapes
+    // Include any other properties that might exist
+    ...otherProps
+  }
+}
+
+/**
+ * Merge flat template defaults with flat form overrides (simple object spread)
+ */
+function mergeFlatLayerData(templateDefaults: FlatLayerData, formOverrides: Partial<FlatLayerData> = {}): FlatLayerData {
+  // Simple object spread - no conditionals, no nested property access
+  const merged = {
+    ...templateDefaults,    // All template defaults
+    ...formOverrides,       // User form overrides
+    id: templateDefaults.id, // Always preserve template ID
+    type: templateDefaults.type // Always preserve template type
+  }
+
+  // Calculate transform origin for SVG images if they have content
+  if (merged.type === 'svgImage' && merged.svgContent) {
+    try {
+      merged.transformOrigin = getOptimalTransformOrigin(merged.svgContent)
+    } catch (error) {
+      // Fallback to geometric center of standard 24x24 viewBox
+      merged.transformOrigin = { x: 12, y: 12 }
+    }
+  }
+
+  return merged
+}
+
+/**
+ * Create flat form data for entire template
+ */
+function createFlatFormData(template: SimpleTemplate, urlFormData: Partial<FlatLayerData>[] = []): FlatLayerData[] {
+  return template.layers.map(templateLayer => {
+    // Flatten template layer to get all defaults
+    const templateDefaults = flattenTemplateLayer(templateLayer)
+
+    // Find user overrides for this layer
+    const userOverrides = urlFormData.find(layer => layer.id === templateLayer.id) || {}
+
+    // Simple merge with object spread
+    return mergeFlatLayerData(templateDefaults, userOverrides)
+  })
 }
 
 // ============================================================================
@@ -359,29 +473,32 @@ function mergeTemplateWithUrlData(template: SimpleTemplate, urlLayers: any[]): L
     }
 
     // Apply type-specific merging
-    if (templateLayer.type === 'text' && templateLayer.textInput) {
-      formEntry.text = urlOverride.text !== undefined ? urlOverride.text : templateLayer.textInput.default
-      formEntry.fontSize = urlOverride.fontSize !== undefined ? urlOverride.fontSize : templateLayer.textInput.fontSize
-      formEntry.fontWeight = urlOverride.fontWeight !== undefined ? urlOverride.fontWeight : templateLayer.textInput.fontWeight
-      formEntry.textColor = urlOverride.textColor !== undefined ? urlOverride.textColor : templateLayer.textInput.fontColor
-      formEntry.strokeColor = urlOverride.strokeColor !== undefined ? urlOverride.strokeColor : templateLayer.textInput.strokeColor
-      formEntry.strokeWidth = urlOverride.strokeWidth !== undefined ? urlOverride.strokeWidth : templateLayer.textInput.strokeWidth
-      formEntry.strokeOpacity = urlOverride.strokeOpacity !== undefined ? urlOverride.strokeOpacity : templateLayer.textInput.strokeOpacity
-      formEntry.strokeLinejoin = urlOverride.strokeLinejoin !== undefined ? urlOverride.strokeLinejoin : templateLayer.textInput.strokeLinejoin
-    } else if (templateLayer.type === 'shape' && templateLayer.shape) {
-      formEntry.fillColor = urlOverride.fillColor !== undefined ? urlOverride.fillColor : templateLayer.shape.fill
-      formEntry.strokeColor = urlOverride.strokeColor !== undefined ? urlOverride.strokeColor : templateLayer.shape.stroke
-      formEntry.strokeWidth = urlOverride.strokeWidth !== undefined ? urlOverride.strokeWidth : templateLayer.shape.strokeWidth
-      formEntry.strokeLinejoin = urlOverride.strokeLinejoin !== undefined ? urlOverride.strokeLinejoin : templateLayer.shape.strokeLinejoin
-    } else if (templateLayer.type === 'svgImage' && templateLayer.svgImage) {
-      formEntry.svgImageId = urlOverride.svgImageId !== undefined ? urlOverride.svgImageId : templateLayer.svgImage.id
-      formEntry.color = urlOverride.color !== undefined ? urlOverride.color : templateLayer.svgImage.fill
-      formEntry.strokeColor = urlOverride.strokeColor !== undefined ? urlOverride.strokeColor : templateLayer.svgImage.stroke
-      formEntry.strokeWidth = urlOverride.strokeWidth !== undefined ? urlOverride.strokeWidth : templateLayer.svgImage.strokeWidth
-      formEntry.strokeLinejoin = urlOverride.strokeLinejoin !== undefined ? urlOverride.strokeLinejoin : templateLayer.svgImage.strokeLinejoin
-      formEntry.svgContent = urlOverride.svgContent !== undefined ? urlOverride.svgContent : templateLayer.svgImage.svgContent
-      formEntry.scale = urlOverride.scale !== undefined ? urlOverride.scale : (templateLayer.scale || 1.0)
-      formEntry.rotation = urlOverride.rotation !== undefined ? urlOverride.rotation : (templateLayer.rotation || 0)
+    if (templateLayer.type === 'text') {
+      // Template loader now flattens structure - properties are directly on layer
+      formEntry.text = urlOverride.text !== undefined ? urlOverride.text : (templateLayer as any).text
+      formEntry.fontSize = urlOverride.fontSize !== undefined ? urlOverride.fontSize : (templateLayer as any).fontSize
+      formEntry.fontWeight = urlOverride.fontWeight !== undefined ? urlOverride.fontWeight : (templateLayer as any).fontWeight
+      formEntry.textColor = urlOverride.textColor !== undefined ? urlOverride.textColor : (templateLayer as any).fontColor
+      formEntry.strokeColor = urlOverride.strokeColor !== undefined ? urlOverride.strokeColor : (templateLayer as any).strokeColor
+      formEntry.strokeWidth = urlOverride.strokeWidth !== undefined ? urlOverride.strokeWidth : (templateLayer as any).strokeWidth
+      formEntry.strokeOpacity = urlOverride.strokeOpacity !== undefined ? urlOverride.strokeOpacity : (templateLayer as any).strokeOpacity
+      formEntry.strokeLinejoin = urlOverride.strokeLinejoin !== undefined ? urlOverride.strokeLinejoin : (templateLayer as any).strokeLinejoin
+    } else if (templateLayer.type === 'shape') {
+      // Template loader now flattens structure - properties are directly on layer
+      formEntry.fillColor = urlOverride.fillColor !== undefined ? urlOverride.fillColor : (templateLayer as any).fill
+      formEntry.strokeColor = urlOverride.strokeColor !== undefined ? urlOverride.strokeColor : (templateLayer as any).stroke
+      formEntry.strokeWidth = urlOverride.strokeWidth !== undefined ? urlOverride.strokeWidth : (templateLayer as any).strokeWidth
+      formEntry.strokeLinejoin = urlOverride.strokeLinejoin !== undefined ? urlOverride.strokeLinejoin : (templateLayer as any).strokeLinejoin
+    } else if (templateLayer.type === 'svgImage') {
+      // Template loader now flattens structure - properties are directly on layer
+      formEntry.svgImageId = urlOverride.svgImageId !== undefined ? urlOverride.svgImageId : (templateLayer as any).svgImageId
+      formEntry.color = urlOverride.color !== undefined ? urlOverride.color : (templateLayer as any).color
+      formEntry.strokeColor = urlOverride.strokeColor !== undefined ? urlOverride.strokeColor : (templateLayer as any).stroke
+      formEntry.strokeWidth = urlOverride.strokeWidth !== undefined ? urlOverride.strokeWidth : (templateLayer as any).strokeWidth
+      formEntry.strokeLinejoin = urlOverride.strokeLinejoin !== undefined ? urlOverride.strokeLinejoin : (templateLayer as any).strokeLinejoin
+      formEntry.svgContent = urlOverride.svgContent !== undefined ? urlOverride.svgContent : (templateLayer as any).svgContent
+      formEntry.scale = urlOverride.scale !== undefined ? urlOverride.scale : (templateLayer as any).scale
+      formEntry.rotation = urlOverride.rotation !== undefined ? urlOverride.rotation : (templateLayer as any).rotation
     }
 
     formData.push(formEntry)
@@ -509,10 +626,19 @@ function updateRenderData(): void {
       type: templateLayer.type as 'text' | 'shape' | 'svgImage'
     }
 
-    if (templateLayer.type === 'text' && templateLayer.textInput) {
-
+    if (templateLayer.type === 'text') {
+      // Template loader now flattens structure - reconstruct for compatibility
       renderLayer.textInput = {
-        ...templateLayer.textInput,
+        text: (templateLayer as any).text,
+        fontSize: (templateLayer as any).fontSize,
+        fontWeight: (templateLayer as any).fontWeight,
+        fontColor: (templateLayer as any).fontColor,
+        fontFamily: (templateLayer as any).fontFamily,
+        strokeColor: (templateLayer as any).strokeColor,
+        strokeWidth: (templateLayer as any).strokeWidth,
+        strokeOpacity: (templateLayer as any).strokeOpacity,
+        strokeLinejoin: (templateLayer as any).strokeLinejoin,
+        position: (templateLayer as any).position,
         // Only override with form data if form data exists
         ...(formLayer?.text !== undefined && { text: formLayer.text }),
         ...(formLayer?.fontSize !== undefined && { fontSize: formLayer.fontSize }),
@@ -528,22 +654,38 @@ function updateRenderData(): void {
         // Only include strokeLinejoin if specified
         ...(formLayer?.strokeLinejoin !== undefined && { strokeLinejoin: formLayer.strokeLinejoin }),
         // Normalize clip path
-        ...(templateLayer.textInput.clip && { clipPath: `url(#clip-${templateLayer.textInput.clip})` })
+        ...(((templateLayer as any).clip) && { clipPath: `url(#clip-${(templateLayer as any).clip})` })
       }
-    } else if (templateLayer.type === 'shape' && templateLayer.shape) {
+    } else if (templateLayer.type === 'shape') {
+      // Template loader now flattens structure - reconstruct for compatibility
       renderLayer.shape = {
-        ...templateLayer.shape,
+        id: (templateLayer as any).id,
+        type: 'path',
+        path: (templateLayer as any).path,
+        fill: (templateLayer as any).fill,
+        stroke: (templateLayer as any).stroke,
+        strokeWidth: (templateLayer as any).strokeWidth,
+        strokeLinejoin: (templateLayer as any).strokeLinejoin,
         // Only override with form data if form data exists
         ...(formLayer?.fillColor !== undefined && { fill: formLayer.fillColor }),
         ...(formLayer?.strokeColor !== undefined && { stroke: formLayer.strokeColor }),
         ...(formLayer?.strokeWidth !== undefined && { strokeWidth: formLayer.strokeWidth }),
         ...(formLayer?.strokeLinejoin !== undefined && { strokeLinejoin: formLayer.strokeLinejoin })
       }
-    } else if (templateLayer.type === 'svgImage' && templateLayer.svgImage) {
+    } else if (templateLayer.type === 'svgImage') {
       logger.debug(`📊 Processing svgImage layer: ${templateLayer.id}`)
 
+      // Template loader now flattens structure - reconstruct for compatibility
       renderLayer.svgImage = {
-        ...templateLayer.svgImage,
+        id: (templateLayer as any).svgImageId,
+        svgContent: (templateLayer as any).svgContent,
+        width: (templateLayer as any).width,
+        height: (templateLayer as any).height,
+        fill: (templateLayer as any).color,
+        stroke: (templateLayer as any).stroke,
+        strokeWidth: (templateLayer as any).strokeWidth,
+        strokeLinejoin: (templateLayer as any).strokeLinejoin,
+        position: (templateLayer as any).position,
         // Only override with form data if form data exists
         ...(formLayer?.color !== undefined && { fill: formLayer.color }),
         ...(formLayer?.strokeColor !== undefined && { stroke: formLayer.strokeColor }),
@@ -551,16 +693,16 @@ function updateRenderData(): void {
         ...(formLayer?.strokeLinejoin !== undefined && { strokeLinejoin: formLayer.strokeLinejoin }),
         ...(formLayer?.svgContent !== undefined && { svgContent: formLayer.svgContent }),
         // Normalize clip path
-        ...(templateLayer.svgImage.clip && { clipPath: `url(#clip-${templateLayer.svgImage.clip})` }),
+        ...(((templateLayer as any).clip) && { clipPath: `url(#clip-${(templateLayer as any).clip})` }),
         ...(formLayer?.scale !== undefined && { scale: formLayer.scale }),
         ...(formLayer?.rotation !== undefined && { rotation: formLayer.rotation })
       }
 
       // Calculate centroid-based transform origin for this SVG layer
-      const svgContent = renderLayer.svgImage.svgContent || templateLayer.svgImage.svgContent
+      const svgContent = renderLayer.svgImage.svgContent || (templateLayer as any).svgContent
       logger.debug(`🔍 SVG content check for ${templateLayer.id}:`, {
         hasRenderLayerContent: !!renderLayer.svgImage.svgContent,
-        hasTemplateLayerContent: !!templateLayer.svgImage.svgContent,
+        hasTemplateLayerContent: !!(templateLayer as any).svgContent,
         finalSvgContent: !!svgContent,
         svgContentLength: svgContent?.length || 0
       })
@@ -588,8 +730,8 @@ function updateRenderData(): void {
           })
         } catch (error) {
           logger.warn(`Failed to calculate centroid for ${templateLayer.id}:`, error)
-          // Fallback to center of standard 24x24 viewBox
-          renderLayer.transformOrigin = { x: 12, y: 12 }
+          // Fallback to center of standard 24x24 viewBox (with safety guard)
+          renderLayer.transformOrigin = { x: safeNumber(12), y: safeNumber(12) }
           renderLayer.useCentroidOrigin = false
         }
       } else {
@@ -710,27 +852,30 @@ export const mergedFormData = computed(() => {
         type: templateLayer.type as 'text' | 'shape' | 'svgImage'
       }
 
-      if (templateLayer.type === 'text' && templateLayer.textInput) {
-        defaultLayer.text = templateLayer.textInput.default
-        defaultLayer.fontSize = templateLayer.textInput.fontSize
-        defaultLayer.fontWeight = templateLayer.textInput.fontWeight
-        defaultLayer.textColor = templateLayer.textInput.fontColor
-        defaultLayer.strokeColor = (templateLayer.textInput as any).strokeColor
-        defaultLayer.strokeWidth = (templateLayer.textInput as any).strokeWidth
-        defaultLayer.strokeLinejoin = (templateLayer.textInput as any).strokeLinejoin
-        defaultLayer.strokeOpacity = (templateLayer.textInput as any).strokeOpacity
-      } else if (templateLayer.type === 'shape' && templateLayer.shape) {
-        defaultLayer.fillColor = templateLayer.shape.fill
-        defaultLayer.strokeColor = templateLayer.shape.stroke
-        defaultLayer.strokeWidth = templateLayer.shape.strokeWidth
-        defaultLayer.strokeLinejoin = (templateLayer.shape as any).strokeLinejoin
-      } else if (templateLayer.type === 'svgImage' && templateLayer.svgImage) {
-        defaultLayer.svgImageId = templateLayer.svgImage.id
-        defaultLayer.svgContent = templateLayer.svgImage.svgContent
-        defaultLayer.color = templateLayer.svgImage.fill
-        defaultLayer.strokeColor = templateLayer.svgImage.stroke
-        defaultLayer.strokeWidth = templateLayer.svgImage.strokeWidth
-        defaultLayer.strokeLinejoin = templateLayer.svgImage.strokeLinejoin
+      if (templateLayer.type === 'text') {
+        // Template loader now flattens structure - properties are directly on layer
+        defaultLayer.text = (templateLayer as any).text
+        defaultLayer.fontSize = (templateLayer as any).fontSize
+        defaultLayer.fontWeight = (templateLayer as any).fontWeight
+        defaultLayer.textColor = (templateLayer as any).fontColor
+        defaultLayer.strokeColor = (templateLayer as any).strokeColor
+        defaultLayer.strokeWidth = (templateLayer as any).strokeWidth
+        defaultLayer.strokeLinejoin = (templateLayer as any).strokeLinejoin
+        defaultLayer.strokeOpacity = (templateLayer as any).strokeOpacity
+      } else if (templateLayer.type === 'shape') {
+        // Template loader now flattens structure - properties are directly on layer
+        defaultLayer.fillColor = (templateLayer as any).fill
+        defaultLayer.strokeColor = (templateLayer as any).stroke
+        defaultLayer.strokeWidth = (templateLayer as any).strokeWidth
+        defaultLayer.strokeLinejoin = (templateLayer as any).strokeLinejoin
+      } else if (templateLayer.type === 'svgImage') {
+        // Template loader now flattens structure - properties are directly on layer
+        defaultLayer.svgImageId = (templateLayer as any).svgImageId
+        defaultLayer.svgContent = (templateLayer as any).svgContent
+        defaultLayer.color = (templateLayer as any).color
+        defaultLayer.strokeColor = (templateLayer as any).stroke
+        defaultLayer.strokeWidth = (templateLayer as any).strokeWidth
+        defaultLayer.strokeLinejoin = (templateLayer as any).strokeLinejoin
         defaultLayer.rotation = (templateLayer as any).rotation
         defaultLayer.scale = (templateLayer as any).scale
       }
@@ -741,58 +886,75 @@ export const mergedFormData = computed(() => {
     // Merge form data with template defaults
     const mergedLayer: LayerFormData = { ...formLayer }
 
-    if (templateLayer.type === 'text' && templateLayer.textInput) {
-      mergedLayer.text = formLayer.text !== undefined ? formLayer.text : templateLayer.textInput.default
-      mergedLayer.fontSize = formLayer.fontSize !== undefined ? formLayer.fontSize : templateLayer.textInput.fontSize
-      mergedLayer.fontWeight = formLayer.fontWeight !== undefined ? formLayer.fontWeight : templateLayer.textInput.fontWeight
-      mergedLayer.textColor = formLayer.textColor !== undefined ? formLayer.textColor : templateLayer.textInput.fontColor
-      mergedLayer.strokeColor = formLayer.strokeColor !== undefined ? formLayer.strokeColor : (templateLayer.textInput as any).strokeColor
-      mergedLayer.strokeWidth = formLayer.strokeWidth !== undefined ? formLayer.strokeWidth : (templateLayer.textInput as any).strokeWidth
-      mergedLayer.strokeLinejoin = formLayer.strokeLinejoin !== undefined ? formLayer.strokeLinejoin : (templateLayer.textInput as any).strokeLinejoin
-      mergedLayer.strokeOpacity = formLayer.strokeOpacity !== undefined ? formLayer.strokeOpacity : (templateLayer.textInput as any).strokeOpacity
-    } else if (templateLayer.type === 'shape' && templateLayer.shape) {
-      mergedLayer.fillColor = formLayer.fillColor !== undefined ? formLayer.fillColor : templateLayer.shape.fill
-      mergedLayer.strokeColor = formLayer.strokeColor !== undefined ? formLayer.strokeColor : templateLayer.shape.stroke
-      mergedLayer.strokeWidth = formLayer.strokeWidth !== undefined ? formLayer.strokeWidth : templateLayer.shape.strokeWidth
-      mergedLayer.strokeLinejoin = formLayer.strokeLinejoin !== undefined ? formLayer.strokeLinejoin : (templateLayer.shape as any).strokeLinejoin
-    } else if (templateLayer.type === 'svgImage' && templateLayer.svgImage) {
-      mergedLayer.svgImageId = formLayer.svgImageId !== undefined ? formLayer.svgImageId : templateLayer.svgImage.id
-      mergedLayer.svgContent = formLayer.svgContent !== undefined ? formLayer.svgContent : templateLayer.svgImage.svgContent
-      mergedLayer.color = formLayer.color !== undefined ? formLayer.color : templateLayer.svgImage.fill
-      mergedLayer.strokeColor = formLayer.strokeColor !== undefined ? formLayer.strokeColor : templateLayer.svgImage.stroke
-      mergedLayer.strokeWidth = formLayer.strokeWidth !== undefined ? formLayer.strokeWidth : templateLayer.svgImage.strokeWidth
-      mergedLayer.strokeLinejoin = formLayer.strokeLinejoin !== undefined ? formLayer.strokeLinejoin : templateLayer.svgImage.strokeLinejoin
+    if (templateLayer.type === 'text') {
+      // Template loader now flattens structure - properties are directly on layer
+      mergedLayer.text = formLayer.text !== undefined ? formLayer.text : (templateLayer as any).text
+      mergedLayer.fontSize = formLayer.fontSize !== undefined ? formLayer.fontSize : (templateLayer as any).fontSize
+      mergedLayer.fontWeight = formLayer.fontWeight !== undefined ? formLayer.fontWeight : (templateLayer as any).fontWeight
+      mergedLayer.textColor = formLayer.textColor !== undefined ? formLayer.textColor : (templateLayer as any).fontColor
+      mergedLayer.strokeColor = formLayer.strokeColor !== undefined ? formLayer.strokeColor : (templateLayer as any).strokeColor
+      mergedLayer.strokeWidth = formLayer.strokeWidth !== undefined ? formLayer.strokeWidth : (templateLayer as any).strokeWidth
+      mergedLayer.strokeLinejoin = formLayer.strokeLinejoin !== undefined ? formLayer.strokeLinejoin : (templateLayer as any).strokeLinejoin
+      mergedLayer.strokeOpacity = formLayer.strokeOpacity !== undefined ? formLayer.strokeOpacity : (templateLayer as any).strokeOpacity
+    } else if (templateLayer.type === 'shape') {
+      // Template loader now flattens structure - properties are directly on layer
+      mergedLayer.fillColor = formLayer.fillColor !== undefined ? formLayer.fillColor : (templateLayer as any).fill
+      mergedLayer.strokeColor = formLayer.strokeColor !== undefined ? formLayer.strokeColor : (templateLayer as any).stroke
+      mergedLayer.strokeWidth = formLayer.strokeWidth !== undefined ? formLayer.strokeWidth : (templateLayer as any).strokeWidth
+      mergedLayer.strokeLinejoin = formLayer.strokeLinejoin !== undefined ? formLayer.strokeLinejoin : (templateLayer as any).strokeLinejoin
+    } else if (templateLayer.type === 'svgImage') {
+      // Template loader now flattens structure - properties are directly on layer
+      mergedLayer.svgImageId = formLayer.svgImageId !== undefined ? formLayer.svgImageId : (templateLayer as any).svgImageId
+      mergedLayer.svgContent = formLayer.svgContent !== undefined ? formLayer.svgContent : (templateLayer as any).svgContent
+      mergedLayer.color = formLayer.color !== undefined ? formLayer.color : (templateLayer as any).color
+      mergedLayer.strokeColor = formLayer.strokeColor !== undefined ? formLayer.strokeColor : (templateLayer as any).stroke
+      mergedLayer.strokeWidth = formLayer.strokeWidth !== undefined ? formLayer.strokeWidth : (templateLayer as any).strokeWidth
+      mergedLayer.strokeLinejoin = formLayer.strokeLinejoin !== undefined ? formLayer.strokeLinejoin : (templateLayer as any).strokeLinejoin
       mergedLayer.rotation = formLayer.rotation !== undefined ? formLayer.rotation : (templateLayer as any).rotation
       mergedLayer.scale = formLayer.scale !== undefined ? formLayer.scale : (templateLayer as any).scale
 
+      // Calculate transform origin for proper rotation/scaling around center-of-mass
+      if (mergedLayer.svgContent) {
+        try {
+          const optimalOrigin = getOptimalTransformOrigin(mergedLayer.svgContent)
+          mergedLayer.transformOrigin = optimalOrigin
+        } catch (error) {
+          // Fallback to geometric center of standard 24x24 viewBox
+          mergedLayer.transformOrigin = { x: 12, y: 12 }
+        }
+      } else {
+        // No SVG content available - use default center for standard 24x24 viewBox
+        mergedLayer.transformOrigin = { x: 12, y: 12 }
+      }
+
       // Store calculates transform string - no conditional logic in components
       const transforms = []
-      const absoluteX = templateLayer.svgImage.position?.x
-      const absoluteY = templateLayer.svgImage.position?.y
-      const targetWidth = templateLayer.svgImage.width
-      const targetHeight = templateLayer.svgImage.height
+      const absoluteX = (templateLayer as any).position?.x
+      const absoluteY = (templateLayer as any).position?.y
+      const targetWidth = (templateLayer as any).width
+      const targetHeight = (templateLayer as any).height
       const rotation = mergedLayer.rotation
       const scale = mergedLayer.scale
 
-      // First translate to position if coordinates exist
-      if (absoluteX !== undefined && absoluteY !== undefined) {
+      // First translate to position if coordinates exist (with safety guards)
+      if (absoluteX !== undefined && absoluteY !== undefined && isValidNumber(absoluteX) && isValidNumber(absoluteY)) {
         transforms.push(`translate(${absoluteX}, ${absoluteY})`)
       }
 
       // For center-based scale and rotation
       if ((scale !== undefined && scale !== 1) || (rotation !== undefined && rotation !== 0)) {
-        const centerX = targetWidth ? targetWidth / 2 : 0
-        const centerY = targetHeight ? targetHeight / 2 : 0
+        const centerX = targetWidth ? safeNumber(targetWidth / 2) : 0
+        const centerY = targetHeight ? safeNumber(targetHeight / 2) : 0
 
         if (centerX !== 0 || centerY !== 0) {
           transforms.push(`translate(${centerX}, ${centerY})`)
         }
 
-        if (scale !== undefined && scale !== 1) {
+        if (scale !== undefined && scale !== 1 && isValidNumber(scale)) {
           transforms.push(`scale(${scale})`)
         }
 
-        if (rotation !== undefined && rotation !== 0) {
+        if (rotation !== undefined && rotation !== 0 && isValidNumber(rotation)) {
           transforms.push(`rotate(${rotation})`)
         }
 
@@ -801,7 +963,7 @@ export const mergedFormData = computed(() => {
         }
       }
 
-      mergedLayer.transformString = transforms.length > 0 ? transforms.join(' ') : ''
+      mergedLayer.transformString = safeTransform(transforms)
     }
 
     return mergedLayer
@@ -863,10 +1025,10 @@ export const computedRenderData = computed(() => {
       }
 
       // Store calculates separate transforms for proper nested g structure
-      const positionX = templateLayer.svgImage.position?.x
-      const positionY = templateLayer.svgImage.position?.y
-      const targetWidth = templateLayer.svgImage.width
-      const targetHeight = templateLayer.svgImage.height
+      const positionX = (templateLayer as any).position?.x
+      const positionY = (templateLayer as any).position?.y
+      const targetWidth = (templateLayer as any).width
+      const targetHeight = (templateLayer as any).height
       const rotation = formLayer?.rotation !== undefined ? formLayer.rotation : (templateLayer as any).rotation
       const scale = formLayer?.scale !== undefined ? formLayer.scale : (templateLayer as any).scale
 
@@ -879,6 +1041,19 @@ export const computedRenderData = computed(() => {
         const viewBox = _state.value.selectedTemplate.viewBox
         const absoluteX = resolveCoordinate(positionX, viewBox.width, viewBox.x)
         const absoluteY = resolveCoordinate(positionY, viewBox.height, viewBox.y)
+
+        // Debug logging to find NaN source
+        if (isNaN(absoluteX) || isNaN(absoluteY)) {
+          logger.debug(`NaN detected in transform calculation for ${templateLayer.id}:`, {
+            positionX, positionY,
+            viewBox,
+            absoluteX, absoluteY,
+            resolveCoordinateResult: {
+              x: resolveCoordinate(positionX, viewBox.width, viewBox.x),
+              y: resolveCoordinate(positionY, viewBox.height, viewBox.y)
+            }
+          })
+        }
 
         // CORRECT APPROACH: Separate base positioning from user scaling
         const svgSize = 24  // Standard SVG viewBox size
@@ -894,11 +1069,37 @@ export const computedRenderData = computed(() => {
         const finalX = absoluteX - (baseScaledWidth / 2)
         const finalY = absoluteY - (baseScaledHeight / 2)
 
-        // OUTER TRANSFORM: Position and base scaling only (high precision)
-        outerTransform = `translate(${finalX.toFixed(6)}, ${finalY.toFixed(6)}) scale(${baseScaleX.toFixed(6)}, ${baseScaleY.toFixed(6)})`
+        // Debug logging for NaN in final calculations
+        if (isNaN(finalX) || isNaN(finalY)) {
+          logger.debug(`NaN detected in final position calculation for ${templateLayer.id}:`, {
+            absoluteX, absoluteY,
+            svgSize, baseScaleX, baseScaleY,
+            baseScaledWidth, baseScaledHeight,
+            finalX, finalY,
+            targetWidth, targetHeight
+          })
+        }
+
+        // Debug logging for NaN in outerTransform before generation
+        if (isNaN(finalX) || isNaN(finalY) || isNaN(baseScaleX) || isNaN(baseScaleY)) {
+          logger.debug(`🚨 NaN detected in outerTransform generation for ${templateLayer.id}:`, {
+            finalX, finalY, baseScaleX, baseScaleY,
+            absoluteX, absoluteY,
+            svgSize, targetWidth, targetHeight,
+            baseScaledWidth, baseScaledHeight,
+            transforms: { finalX, finalY, baseScaleX, baseScaleY }
+          })
+        }
+
+        // OUTER TRANSFORM: Position and base scaling only (high precision) - with NaN safety
+        const safeFinalX = isValidNumber(finalX) ? finalX : 0
+        const safeFinalY = isValidNumber(finalY) ? finalY : 0
+        const safeBaseScaleX = isValidNumber(baseScaleX) ? baseScaleX : 1
+        const safeBaseScaleY = isValidNumber(baseScaleY) ? baseScaleY : 1
+
+        outerTransform = `translate(${safeFinalX.toFixed(6)}, ${safeFinalY.toFixed(6)}) scale(${safeBaseScaleX.toFixed(6)}, ${safeBaseScaleY.toFixed(6)})`
 
         // INNER TRANSFORM: User scaling and rotation around optimal center (high precision)
-        const innerTransforms = []
         const userScale = scale !== undefined ? scale : 1
 
         logger.debug(`Transform calculation for ${templateLayer.id}:`, {
@@ -922,22 +1123,44 @@ export const computedRenderData = computed(() => {
             })
           }
 
-          // Move to optimal center of the SVG coordinate system
-          innerTransforms.push(`translate(${transformOrigin.x.toFixed(6)}, ${transformOrigin.y.toFixed(6)})`)
-
-          // Apply user transformations in correct order
-          if (rotation !== undefined && rotation !== 0) {
-            innerTransforms.push(`rotate(${rotation.toFixed(6)})`)
+          // Safety guard: Ensure transform origin values are valid numbers
+          const safeTransformOrigin = {
+            x: safeNumber(transformOrigin.x, svgCenter),
+            y: safeNumber(transformOrigin.y, svgCenter)
           }
 
-          if (userScale !== 1) {
-            innerTransforms.push(`scale(${userScale.toFixed(6)})`)
+          // Debug logging for transform origin issues
+          if (!isValidNumber(transformOrigin.x) || !isValidNumber(transformOrigin.y)) {
+            logger.debug(`Invalid transformOrigin detected for ${templateLayer.id} - using fallback:`, {
+              originalTransformOrigin: transformOrigin,
+              safeTransformOrigin,
+              useCentroidOrigin: renderLayer.useCentroidOrigin,
+              centroidAnalysis: renderLayer.centroidAnalysis,
+              renderLayerTransformOrigin: renderLayer.transformOrigin,
+              svgCenter
+            })
+          }
+
+          // Build transform steps with safety guards
+          const transformSteps: string[] = []
+
+          // Move to optimal center of the SVG coordinate system
+          transformSteps.push(`translate(${safeTransformOrigin.x.toFixed(6)}, ${safeTransformOrigin.y.toFixed(6)})`)
+
+          // Apply user transformations in correct order
+          if (rotation !== undefined && rotation !== 0 && isValidNumber(rotation)) {
+            transformSteps.push(`rotate(${rotation.toFixed(6)})`)
+          }
+
+          if (userScale !== 1 && isValidNumber(userScale)) {
+            transformSteps.push(`scale(${userScale.toFixed(6)})`)
           }
 
           // Move back from center
-          innerTransforms.push(`translate(${-transformOrigin.x.toFixed(6)}, ${-transformOrigin.y.toFixed(6)})`)
+          transformSteps.push(`translate(${(-safeTransformOrigin.x).toFixed(6)}, ${(-safeTransformOrigin.y).toFixed(6)})`)
 
-          innerTransform = innerTransforms.join(' ')
+          // Create safe transform string
+          innerTransform = safeTransform(transformSteps)
         }
       }
 
@@ -977,12 +1200,19 @@ export const clipPathShapes = computed(() => {
 
   // Find all layers that are referenced as clip targets
   const clipReferences = new Set<string>()
+
   _state.value.selectedTemplate.layers.forEach(layer => {
     if (layer.type === 'text' && layer.textInput?.clip) {
       clipReferences.add(layer.textInput.clip)
     }
+    if (layer.type === 'text' && layer.clip) {
+      clipReferences.add(layer.clip)
+    }
     if (layer.type === 'svgImage' && layer.svgImage?.clip) {
       clipReferences.add(layer.svgImage.clip)
+    }
+    if (layer.type === 'svgImage' && layer.clip) {
+      clipReferences.add(layer.clip)
     }
   })
 
@@ -992,8 +1222,8 @@ export const clipPathShapes = computed(() => {
       layer.type === 'shape' && layer.id === clipId
     )
 
-    if (shapeLayer && shapeLayer.shape) {
-      const shape = shapeLayer.shape
+    if (shapeLayer) {
+      const shape = shapeLayer  // The shape properties are directly on the layer
       let path = ''
 
       // Generate path based on shape type
@@ -1046,12 +1276,168 @@ export const clipPathShapes = computed(() => {
 export const hasClipPaths = computed(() => {
   if (!_state.value.selectedTemplate?.layers) return false
   return _state.value.selectedTemplate.layers.some(layer =>
-    (layer.type === 'text' && layer.textInput?.clip) ||
-    (layer.type === 'svgImage' && layer.svgImage?.clip)
+    (layer.type === 'text' && (layer.textInput?.clip || layer.clip)) ||
+    (layer.type === 'svgImage' && (layer.svgImage?.clip || layer.clip))
   )
 })
 
 
+
+// ============================================================================
+// FLAT ARCHITECTURE: New computed properties for simplified data flow
+// ============================================================================
+
+/**
+ * Flat form data computed property - simple object spread merging
+ */
+export const flatFormData = computed(() => {
+  if (!_state.value.selectedTemplate) {
+    return []
+  }
+
+  // Simple flat merging - no conditionals, no nested property access
+  return createFlatFormData(_state.value.selectedTemplate, _state.value.formData as FlatLayerData[])
+})
+
+/**
+ * SVG render data - unified positioning for all layer types
+ * All types now use the same transform-based positioning system
+ */
+export const svgRenderData = computed(() => {
+  const template = _state.value.selectedTemplate
+  if (!template) {
+    return []
+  }
+
+  return flatFormData.value.map(flatLayer => {
+    const templateLayer = template.layers.find(t => t.id === flatLayer.id)
+    if (!templateLayer) return null
+
+    // Calculate content dimensions (1.5x viewBox size)
+    const contentDimensions = template.viewBox ? {
+      width: template.viewBox.width * 1.5,
+      height: template.viewBox.height * 1.5
+    } : undefined
+
+    // Use unified processing for all layer types
+    const processed = processLayerForRendering(flatLayer, template.viewBox, contentDimensions)
+
+    // Add any additional properties needed for specific types
+    if (flatLayer.clip) {
+      (processed as any).clipPath = `url(#clip-${flatLayer.clip})`
+    }
+
+    // Keep additional properties for compatibility
+    (processed as any).position = flatLayer.position
+
+    // For SVG images, add the styled content
+    // TODO: Fix svgContent handling - temporarily disabled to test unified positioning
+    if (processed.type === 'svgImage') {
+      // Just pass through the svgContent without styling for now
+      if (flatLayer.svgContent) {
+        (processed as any).svgContent = flatLayer.svgContent
+        // Skip getStyledSvgContent for now due to runtime error
+        ;(processed as any).styledContent = flatLayer.svgContent
+      }
+    }
+
+    return processed
+  }).filter((item): item is ProcessedLayer => item !== null)
+})
+
+/**
+ * Simplified clip paths computed property using flat layer references
+ */
+export const flatClipPaths = computed(() => {
+  const template = _state.value.selectedTemplate
+  if (!template) return []
+
+  // Collect all clip references from flat data
+  const clipIds = new Set(
+    flatFormData.value
+      .filter(layer => layer.clip)
+      .map(layer => layer.clip!)
+  )
+
+  // Generate clip paths for referenced clip IDs
+  return Array.from(clipIds).map(clipId => {
+    const shapeLayer = flatFormData.value.find(layer => layer.id === clipId)
+    if (!shapeLayer) return null
+
+    return {
+      id: `clip-${clipId}`,
+      path: generateShapePath(shapeLayer)
+    }
+  }).filter(Boolean)
+})
+
+/**
+ * Helper: Generate SVG path from flat shape properties
+ */
+function generateShapePath(shapeData: FlatLayerData): string {
+  if (!shapeData.subtype) return ''
+
+  const { subtype, width = 0, height = 0, points } = shapeData
+
+  switch (subtype) {
+    case 'circle': {
+      const radius = Math.min(width, height) / 2
+      // Generate circle path centered at origin (for clipping)
+      return `M-${radius},0 A${radius},${radius} 0 1,1 ${radius},0 A${radius},${radius} 0 1,1 -${radius},0 Z`
+    }
+    case 'rect': {
+      const halfWidth = width / 2
+      const halfHeight = height / 2
+      // Generate rectangle path centered at origin (for clipping)
+      return `M-${halfWidth},-${halfHeight} L${halfWidth},-${halfHeight} L${halfWidth},${halfHeight} L-${halfWidth},${halfHeight} Z`
+    }
+    case 'polygon': {
+      if (points) return points
+      return ''
+    }
+    default:
+      return ''
+  }
+}
+
+// ============================================================================
+// SVG VIEWPORT CALCULATIONS
+// ============================================================================
+
+// Create reactive refs for the composable
+const _containerElement = ref<HTMLElement | null>(null)
+const _previewMode = computed(() => false) // Default to non-preview mode
+const _templateRef = computed(() => _state.value.selectedTemplate)
+
+// Initialize SVG viewBox composable for calculations
+const svgViewBox = useSvgViewBox(_previewMode, _templateRef, _containerElement)
+
+// Export computed SVG viewport properties for components
+export const svgViewBoxX = computed(() => svgViewBox.viewBoxX.value)
+export const svgViewBoxY = computed(() => svgViewBox.viewBoxY.value)
+export const svgViewBoxWidth = computed(() => svgViewBox.viewBoxWidth.value)
+export const svgViewBoxHeight = computed(() => svgViewBox.viewBoxHeight.value)
+
+// Export SVG controls for components
+export const svgViewBoxControls = readonly({
+  zoomIn: svgViewBox.zoomIn,
+  zoomOut: svgViewBox.zoomOut,
+  resetZoom: svgViewBox.resetZoom,
+  setZoom: svgViewBox.setZoom,
+  setPan: svgViewBox.setPan,
+  resetPan: svgViewBox.resetPan,
+  handleWheel: svgViewBox.handleWheel,
+  autoFitTemplate: svgViewBox.autoFitTemplate,
+  getZoomLevel: svgViewBox.getZoomLevel,
+  getMinZoomLevel: svgViewBox.getMinZoomLevel,
+  canZoomIn: svgViewBox.canZoomIn,
+  canZoomOut: svgViewBox.canZoomOut
+})
+
+// Function to set container element for viewBox calculations
+export function setSvgContainer(element: HTMLElement | null) {
+  _containerElement.value = element
+}
 
 // ============================================================================
 // TESTING HELPER FUNCTIONS

@@ -2,6 +2,8 @@ name: "Express Shipping Label"
 id: "shipping-label"
 description: "Priority shipping label with tracking info"
 category: "rectangle"
+width: 400
+height: 250
 layers:
   - id: "background"
     type: "shape"

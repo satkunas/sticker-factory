@@ -7,7 +7,6 @@ import type {
   YamlTemplate,
   TemplateShapeLayer,
   ProcessedTemplateLayer,
-  ProcessedTextInputLayer,
   ProcessedSvgImageLayer
 } from '../types/template-types'
 import { resolvePosition, resolveLinePosition, type ViewBox } from '../utils/svg'
@@ -184,11 +183,24 @@ const validateYamlTemplate = (template: any): template is YamlTemplate => {
  */
 const convertYamlToSimpleTemplate = async (yamlTemplate: YamlTemplate): Promise<SimpleTemplate> => {
 
-  // Use explicit viewBox if provided, otherwise calculate from shape layers
-  const viewBox = yamlTemplate.viewBox || (() => {
-    const shapeLayers = yamlTemplate.layers.filter((layer): layer is TemplateShapeLayer => layer.type === 'shape')
-    return calculateViewBoxFromLayers(shapeLayers)
-  })()
+  // Priority 1: Use width/height (primary source - ALL templates have this)
+  // Priority 2: Use explicit viewBox (legacy support)
+  // Priority 3: REMOVED - No fallback calculation, templates MUST have dimensions
+  const viewBox = yamlTemplate.width && yamlTemplate.height
+    ? {
+        x: 0,
+        y: 0,
+        width: yamlTemplate.width,
+        height: yamlTemplate.height
+      }
+    : yamlTemplate.viewBox
+      ? yamlTemplate.viewBox
+      : {
+          x: 0,
+          y: 0,
+          width: DEFAULT_VIEWBOX_WIDTH,
+          height: DEFAULT_VIEWBOX_HEIGHT
+        }
 
   // Convert layers to processed template layers
   const layers: ProcessedTemplateLayer[] = []
@@ -196,78 +208,101 @@ const convertYamlToSimpleTemplate = async (yamlTemplate: YamlTemplate): Promise<
   // Process all layers with proper async handling
   for (const layer of yamlTemplate.layers) {
     if (layer.type === 'shape') {
-      layers.push({
-        id: layer.id,
-        type: 'shape',
-        subtype: layer.subtype,  // Preserve original subtype
-        width: layer.width,      // Preserve original width
-        height: layer.height,    // Preserve original height
-        shape: {
-          id: layer.id,
-          type: 'path',
-          path: convertShapeLayerToPath(layer, viewBox),
-          fill: layer.fill,
-          stroke: layer.stroke,
-          strokeWidth: layer.strokeWidth
-        }
-      })
-    } else if (layer.type === 'text') {
-      // Resolve percentage coordinates for text inputs
+      // Extract shape properties using destructuring
+      const {
+        id, subtype, position, width, height, rx, ry, points,
+        fill, stroke, strokeWidth, strokeLinejoin, opacity,
+        rotation, scale, clip, clipPath,
+        ...otherProps
+      } = layer
+
+      // Resolve percentage coordinates for shapes
       const resolvedPosition = resolvePosition(
-        layer.position as { x: number | string; y: number | string },
+        position as { x: number | string; y: number | string },
         viewBox
       )
 
+      // Create flat shape layer with all properties directly accessible
       layers.push({
-        id: layer.id,
-        type: 'text',
-        textInput: {
-          id: layer.id,
-          label: layer.label,
-          placeholder: layer.placeholder,
-          default: layer.default,
-          position: resolvedPosition,
-          rotation: layer.rotation,
-          clip: layer.clip,
-          clipPath: layer.clipPath,
-          maxLength: layer.maxLength,
-          fontFamily: layer.fontFamily,
-          fontColor: layer.fontColor,
-          fontSize: layer.fontSize,
-          fontWeight: layer.fontWeight
-        }
-      })
+        id, type: 'shape', subtype, position: resolvedPosition,
+        width, height, rx, ry, points,
+        // Visual properties
+        fill, stroke, strokeWidth, strokeLinejoin, opacity,
+        // Transform properties with proper defaults handling
+        ...(rotation !== undefined && { rotation }),
+        ...(scale !== undefined && { scale }),
+        // Clipping properties
+        ...(clip !== undefined && { clip }),
+        ...(clipPath !== undefined && { clipPath }),
+        // Generated SVG path for rendering
+        path: convertShapeLayerToPath(layer, viewBox),
+        ...otherProps
+      } as ProcessedTemplateLayer)
+    } else if (layer.type === 'text') {
+      // Extract text properties using destructuring
+      const {
+        id, position, label, placeholder,
+        fontFamily, fontColor, fontSize, fontWeight, maxLength,
+        rotation, clip, clipPath, opacity,
+        default: defaultText,
+        ...otherProps
+      } = layer
+
+      // Resolve percentage coordinates for text inputs
+      const resolvedPosition = resolvePosition(
+        position as { x: number | string; y: number | string },
+        viewBox
+      )
+
+      // Create flat text layer with all properties directly accessible
+      layers.push({
+        id, type: 'text', position: resolvedPosition,
+        // Text-specific properties
+        text: defaultText, label, placeholder, maxLength,
+        fontFamily, fontColor, fontSize, fontWeight,
+        // Transform properties
+        ...(rotation !== undefined && { rotation }),
+        // Clipping properties
+        ...(clip !== undefined && { clip }),
+        ...(clipPath !== undefined && { clipPath }),
+        // Visual properties
+        ...(opacity !== undefined && { opacity }),
+        ...otherProps
+      } as ProcessedTemplateLayer)
     } else if (layer.type === 'svgImage') {
-      // CRITICAL FIX: Preserve original position strings for SVG images
-      // Don't resolve coordinates here - let the store handle center-based positioning
-      const originalPosition = layer.position as { x: number | string; y: number | string }
+      // Extract SVG image properties using destructuring
+      const {
+        id, position, width, height,
+        fill, stroke, strokeWidth, strokeLinejoin, opacity,
+        scale, rotation, clip, clipPath,
+        svgId, svgContent: layerSvgContent,
+        ...otherProps
+      } = layer
+
+      // Preserve original position strings for center-based positioning
+      const originalPosition = position as { x: number | string; y: number | string }
 
       // Get SVG content from library or use direct content
-      let svgContent = layer.svgContent || ''
-      if (layer.svgId && !svgContent) {
-        svgContent = await getSvgContent(layer.svgId) || ''
+      let svgContent = layerSvgContent || ''
+      if (svgId && !svgContent) {
+        svgContent = await getSvgContent(svgId) || ''
       }
 
+      // Create flat SVG image layer with all properties directly accessible
       layers.push({
-        id: layer.id,
-        type: 'svgImage',
-        svgId: layer.svgId,  // Preserve original svgId from YAML
-        svgImage: {
-          id: layer.id,
-          svgContent,
-          position: originalPosition,  // Keep original strings like "50%", "50%"
-          width: layer.width,
-          height: layer.height,
-          fill: layer.fill,
-          stroke: layer.stroke,
-          strokeWidth: layer.strokeWidth,
-          strokeLinejoin: layer.strokeLinejoin,
-          clip: layer.clip,
-          clipPath: layer.clipPath,
-          ...(layer.scale !== undefined && { scale: layer.scale }),
-          ...(layer.rotation !== undefined && { rotation: layer.rotation })
-        }
-      })
+        id, type: 'svgImage', position: originalPosition,
+        // SVG-specific properties
+        svgImageId: svgId, svgContent, width, height,
+        // Visual properties (using 'color' for SVG fill to distinguish from shape fill)
+        color: fill, stroke, strokeWidth, strokeLinejoin, opacity,
+        // Transform properties
+        ...(scale !== undefined && { scale }),
+        ...(rotation !== undefined && { rotation }),
+        // Clipping properties
+        ...(clip !== undefined && { clip }),
+        ...(clipPath !== undefined && { clipPath }),
+        ...otherProps
+      } as ProcessedTemplateLayer)
     }
   }
 
@@ -276,6 +311,8 @@ const convertYamlToSimpleTemplate = async (yamlTemplate: YamlTemplate): Promise<
     name: yamlTemplate.name,
     description: yamlTemplate.description,
     category: yamlTemplate.category,
+    width: yamlTemplate.width ?? viewBox.width,
+    height: yamlTemplate.height ?? viewBox.height,
     viewBox,
     layers
   }
@@ -284,7 +321,7 @@ const convertYamlToSimpleTemplate = async (yamlTemplate: YamlTemplate): Promise<
 /**
  * Calculate viewBox from shape layers (with percentage coordinate support)
  */
-const calculateViewBoxFromLayers = (shapeLayers: TemplateShapeLayer[]): { x: number; y: number; width: number; height: number } => {
+const _calculateViewBoxFromLayers = (shapeLayers: TemplateShapeLayer[]): { x: number; y: number; width: number; height: number } => {
   // First pass: find any absolute coordinates to establish base dimensions
   let hasAbsoluteCoords = false
   let minX = Infinity
@@ -405,32 +442,32 @@ const convertShapeLayerToPath = (layer: TemplateShapeLayer, viewBox: ViewBox): s
  * Helper function to get ordered elements from any template (backward compatible)
  */
 export const getTemplateElements = (template: SimpleTemplate): TemplateElement[] => {
-  // New layers structure
+  // New flat layers structure - return layers directly as elements
   if (template.layers) {
-    const elements: TemplateElement[] = []
-
-    template.layers.forEach((layer) => {
+    return template.layers.map((layer) => {
+      // Each flat layer is now a complete element with all properties accessible
       if (layer.type === 'shape') {
-        elements.push({
+        return {
           type: 'shape',
-          shape: layer.shape  // Extract the nested shape data
-        })
+          // All properties are now directly on the layer (flat structure)
+          ...layer
+        }
       } else if (layer.type === 'text') {
-        elements.push({
+        return {
           type: 'text',
-          textInput: layer.textInput
-        })
+          // All properties are now directly on the layer (flat structure)
+          ...layer
+        }
       } else if (layer.type === 'svgImage') {
-        elements.push({
+        return {
           type: 'svgImage',
-          svgImage: layer.svgImage
-        })
+          // All properties are now directly on the layer (flat structure)
+          ...layer
+        }
       }
-    })
-
-    return elements
+      return layer
+    }) as TemplateElement[]
   }
-
 
   return []
 }
@@ -439,14 +476,28 @@ export const getTemplateElements = (template: SimpleTemplate): TemplateElement[]
  * Helper function to get all text inputs from any template
  */
 export const getTemplateTextInputs = (template: SimpleTemplate): TemplateTextInput[] => {
-  // New layers structure
+  // New flat layers structure - text properties are directly on the layer
   if (template.layers) {
     return template.layers
-      .filter((layer): layer is ProcessedTextInputLayer => layer.type === 'text')
-      .map(layer => layer.textInput)
+      .filter((layer): layer is any => layer.type === 'text')
+      .map(layer => ({
+        // All text properties are now directly accessible (flat structure)
+        id: layer.id,
+        label: layer.label,
+        placeholder: layer.placeholder,
+        default: layer.text, // 'text' is the flattened version of 'default'
+        position: layer.position,
+        rotation: layer.rotation,
+        clip: layer.clip,
+        clipPath: layer.clipPath,
+        maxLength: layer.maxLength,
+        fontFamily: layer.fontFamily,
+        fontColor: layer.fontColor,
+        fontSize: layer.fontSize,
+        fontWeight: layer.fontWeight
+      }))
   }
 
-  // Fallback for templates without layers (shouldn't happen with current templates)
   return []
 }
 
@@ -461,11 +512,12 @@ export const getTemplateMainTextInput = (template: SimpleTemplate): TemplateText
 /**
  * Get all SVG images from template layers
  */
-export const getTemplateSvgImages = (template: SimpleTemplate): ProcessedSvgImageLayer[] => {
-  // New layers structure
+export const getTemplateSvgImages = (template: SimpleTemplate): any[] => {
+  // New flat layers structure - SVG properties are directly on the layer
   if (template.layers) {
     return template.layers
-      .filter((layer): layer is ProcessedSvgImageLayer => layer.type === 'svgImage')
+      .filter((layer): layer is any => layer.type === 'svgImage')
+      // Return the flat layer directly since all properties are accessible
   }
 
   return []

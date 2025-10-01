@@ -2,6 +2,8 @@ name: "Social Media Post"
 id: "social-media-post"
 description: "Square social media post template for Instagram/Facebook"
 category: "square"
+width: 300
+height: 300
 layers:
   - id: "post-background"
     type: "shape"

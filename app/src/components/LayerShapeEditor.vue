@@ -462,22 +462,28 @@ const calculatedViewBox = computed(() => {
 
   switch (shape.subtype) {
     case 'rect': {
-      const width = shape.width || 100
-      const height = shape.height || 100
+      const width = shape.width
+      const height = shape.height
+      if (!width || !height) return '0 0 100 100'
       const totalWidth = width + strokePadding * 2
       const totalHeight = height + strokePadding * 2
       return `${-strokePadding} ${-strokePadding} ${totalWidth} ${totalHeight}`
     }
 
     case 'circle': {
-      const radius = (shape.width || 100) / 2
+      const width = shape.width
+      if (!width) return '0 0 100 100'
+      const radius = width / 2
       const totalSize = (radius + strokePadding) * 2
       return `${-(radius + strokePadding)} ${-(radius + strokePadding)} ${totalSize} ${totalSize}`
     }
 
     case 'ellipse': {
-      const rWidth = (shape.width || 100) / 2
-      const rHeight = (shape.height || 50) / 2
+      const width = shape.width
+      const height = shape.height
+      if (!width || !height) return '0 0 100 100'
+      const rWidth = width / 2
+      const rHeight = height / 2
       const totalWidth = (rWidth + strokePadding) * 2
       const totalHeight = (rHeight + strokePadding) * 2
       return `${-(rWidth + strokePadding)} ${-(rHeight + strokePadding)} ${totalWidth} ${totalHeight}`
@@ -506,7 +512,10 @@ const calculatedViewBox = computed(() => {
         }
       }
       // Fallback for complex shapes
-      const size = Math.max(shape.width || 100, shape.height || 100)
+      const width = shape.width || 0
+      const height = shape.height || 0
+      if (!width && !height) return '0 0 100 100'
+      const size = Math.max(width, height)
       const totalSize = size + strokePadding * 2
       return `${-totalSize/2} ${-totalSize/2} ${totalSize} ${totalSize}`
     }
@@ -528,21 +537,24 @@ const adjustedStrokeWidth = computed(() => {
 // Shape-specific coordinate calculations
 const rectCoords = computed(() => {
   if (!props.shapeData || props.shapeData.subtype !== 'rect') return null
-  const width = props.shapeData.width || 100
-  const height = props.shapeData.height || 100
+  const width = props.shapeData.width
+  const height = props.shapeData.height
+  if (!width || !height) return null
   return {
     x: -width / 2,
     y: -height / 2,
     width,
     height,
-    rx: props.shapeData.rx || 0,
-    ry: props.shapeData.ry || 0
+    rx: props.shapeData.rx,
+    ry: props.shapeData.ry
   }
 })
 
 const circleCoords = computed(() => {
   if (!props.shapeData || props.shapeData.subtype !== 'circle') return null
-  const radius = (props.shapeData.width || 100) / 2
+  const width = props.shapeData.width
+  if (!width) return null
+  const radius = width / 2
   return {
     cx: 0,
     cy: 0,
@@ -552,11 +564,14 @@ const circleCoords = computed(() => {
 
 const ellipseCoords = computed(() => {
   if (!props.shapeData || props.shapeData.subtype !== 'ellipse') return null
+  const width = props.shapeData.width
+  const height = props.shapeData.height
+  if (!width || !height) return null
   return {
     cx: 0,
     cy: 0,
-    rx: (props.shapeData.width || 100) / 2,
-    ry: (props.shapeData.height || 50) / 2
+    rx: width / 2,
+    ry: height / 2
   }
 })
 

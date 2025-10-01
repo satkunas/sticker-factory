@@ -667,28 +667,40 @@ function decompressText(bytes: Uint8Array): string {
  * // Input: Complex template state
  * // Output: "Ab4X2Y9P1Q" (11 characters)
  */
+/**
+ * FLAT ARCHITECTURE: Encode flat layer data for URL
+ * Uses simple JSON encoding with Base32 for URL safety and readability
+ */
 export function encodeTemplateStateCompact(state: AppState): string {
-  // TEMPORARY FIX: Use simple JSON encoding to preserve string IDs
   try {
     const stateData = {
       selectedTemplateId: state.selectedTemplateId,
-      layers: Array.isArray(state.layers) ? state.layers.map(layer => ({
-        id: layer.id, // Preserve actual string ID
-        type: layer.type,
-        text: layer.text,
-        fontSize: layer.fontSize,
-        fontWeight: layer.fontWeight,
-        textColor: layer.textColor,
-        fillColor: layer.fillColor,
-        strokeColor: layer.strokeColor,
-        strokeWidth: layer.strokeWidth,
-        strokeOpacity: layer.strokeOpacity,
-        strokeLinejoin: layer.strokeLinejoin,
-        svgImageId: layer.svgImageId,
-        rotation: layer.rotation,
-        scale: layer.scale,
-        font: layer.font
-      })) : []
+      layers: Array.isArray(state.layers) ? state.layers.map(layer => {
+        // FLAT ARCHITECTURE: Only include defined properties
+        const flatLayer: Record<string, any> = {
+          id: layer.id,
+          type: layer.type
+        }
+
+        // Conditionally include flat properties - omit undefined values
+        if (layer.text !== undefined) flatLayer.text = layer.text
+        if (layer.fontSize !== undefined) flatLayer.fontSize = layer.fontSize
+        if (layer.fontWeight !== undefined) flatLayer.fontWeight = layer.fontWeight
+        if (layer.textColor !== undefined) flatLayer.fontColor = layer.textColor  // Note: using fontColor for flat architecture
+        if (layer.fillColor !== undefined) flatLayer.fillColor = layer.fillColor
+        if (layer.strokeColor !== undefined) flatLayer.strokeColor = layer.strokeColor
+        if (layer.strokeWidth !== undefined) flatLayer.strokeWidth = layer.strokeWidth
+        if (layer.strokeOpacity !== undefined) flatLayer.strokeOpacity = layer.strokeOpacity
+        if (layer.strokeLinejoin !== undefined) flatLayer.strokeLinejoin = layer.strokeLinejoin
+        if (layer.svgImageId !== undefined) flatLayer.svgImageId = layer.svgImageId
+        if (layer.svgContent !== undefined) flatLayer.svgContent = layer.svgContent
+        if (layer.color !== undefined) flatLayer.color = layer.color
+        if (layer.rotation !== undefined) flatLayer.rotation = layer.rotation
+        if (layer.scale !== undefined) flatLayer.scale = layer.scale
+        if (layer.font !== undefined) flatLayer.font = layer.font
+
+        return flatLayer
+      }) : []
     }
 
     const jsonString = JSON.stringify(stateData)
@@ -896,12 +908,15 @@ export function encodeTemplateStateCompactLegacy(state: AppState): string {
  * // Input: "Ab4X2Y9P1Q"
  * // Output: { selectedTemplateId: 'vinyl-record-label', textInputs: [...], ... }
  */
+/**
+ * FLAT ARCHITECTURE: Decode flat layer data from URL
+ * Handles both new flat JSON format and legacy binary format
+ */
 export function decodeTemplateStateCompact(encoded: string): Partial<AppState> | null {
   try {
     if (!encoded || encoded.length < 1) return null
 
-    // TEMPORARY FIX: Check if this is the new JSON format (no template character prefix)
-    // Try to decode as URL-safe Base64 first
+    // FLAT ARCHITECTURE: Try to decode as flat JSON format first
     try {
       const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
       // Add padding if needed
@@ -910,16 +925,42 @@ export function decodeTemplateStateCompact(encoded: string): Partial<AppState> |
       const stateData = JSON.parse(jsonString);
 
       if (stateData.selectedTemplateId && Array.isArray(stateData.layers)) {
+        // Flat architecture layers - direct property access
         return {
           selectedTemplateId: stateData.selectedTemplateId,
-          layers: stateData.layers
+          layers: stateData.layers.map((layer: any) => {
+            // FLAT ARCHITECTURE: Map flat properties to store format
+            const mappedLayer: any = {
+              id: layer.id,
+              type: layer.type
+            }
+
+            // Map flat properties with correct naming
+            if (layer.text !== undefined) mappedLayer.text = layer.text
+            if (layer.fontSize !== undefined) mappedLayer.fontSize = layer.fontSize
+            if (layer.fontWeight !== undefined) mappedLayer.fontWeight = layer.fontWeight
+            if (layer.fontColor !== undefined) mappedLayer.textColor = layer.fontColor  // Map fontColor -> textColor
+            if (layer.fillColor !== undefined) mappedLayer.fillColor = layer.fillColor
+            if (layer.strokeColor !== undefined) mappedLayer.strokeColor = layer.strokeColor
+            if (layer.strokeWidth !== undefined) mappedLayer.strokeWidth = layer.strokeWidth
+            if (layer.strokeOpacity !== undefined) mappedLayer.strokeOpacity = layer.strokeOpacity
+            if (layer.strokeLinejoin !== undefined) mappedLayer.strokeLinejoin = layer.strokeLinejoin
+            if (layer.svgImageId !== undefined) mappedLayer.svgImageId = layer.svgImageId
+            if (layer.svgContent !== undefined) mappedLayer.svgContent = layer.svgContent
+            if (layer.color !== undefined) mappedLayer.color = layer.color
+            if (layer.rotation !== undefined) mappedLayer.rotation = layer.rotation
+            if (layer.scale !== undefined) mappedLayer.scale = layer.scale
+            if (layer.font !== undefined) mappedLayer.font = layer.font
+
+            return mappedLayer
+          })
         };
       }
     } catch (jsonError) {
-      logger.debug('Not JSON format, trying legacy format');
+      logger.debug('Not flat JSON format, trying legacy format');
     }
 
-    // Fall back to legacy format
+    // LEGACY SUPPORT: Fall back to legacy binary format
     const templateChar = encoded[0]
     const templateId = REVERSE_TEMPLATE_MAP[templateChar]
     if (!templateId) return null
@@ -1034,6 +1075,7 @@ export function decodeTemplateStateCompact(encoded: string): Partial<AppState> |
       const text = decompressText(textBytes)
 
       // Create text layer
+      // FLAT ARCHITECTURE: Create flat layer for text
       layers.push({
         id: layerId,
         type: 'text',
@@ -1041,7 +1083,7 @@ export function decodeTemplateStateCompact(encoded: string): Partial<AppState> |
         font: { family: fontData.fontFamily } as any, // Simplified font object
         fontSize: sizeColorData.fontSize,
         fontWeight: fontData.fontWeight,
-        textColor,
+        textColor,  // Keep as textColor for AppState compatibility
         strokeWidth,
         strokeColor,
         strokeOpacity
@@ -1091,6 +1133,7 @@ export function decodeTemplateStateCompact(encoded: string): Partial<AppState> |
       const lineJoinOptions = ['round', 'miter', 'bevel', 'arcs']
       const strokeLinejoin = lineJoinOptions[lineJoinIndex] || 'round'
 
+      // FLAT ARCHITECTURE: Create flat layer for shape
       layers.push({
         id: layerId,
         type: 'shape',
@@ -1150,10 +1193,11 @@ export function decodeTemplateStateCompact(encoded: string): Partial<AppState> |
       if (offset >= binary.length) break
       const _contentHash = binary[offset++]
 
+      // FLAT ARCHITECTURE: Create flat layer for SVG image
       layers.push({
         id: layerId,
         type: 'svgImage',
-        fillColor, // Store color in fillColor for consistency
+        color: fillColor, // Use color property for SVG images
         strokeColor,
         strokeWidth,
         strokeLinejoin,

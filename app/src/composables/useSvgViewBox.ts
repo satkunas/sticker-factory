@@ -5,9 +5,10 @@
  * Provides pixel-perfect control and simplified coordinate calculations
  */
 
-import { ref, nextTick, type Ref } from 'vue'
+import { ref, nextTick, watch, type Ref } from 'vue'
 import { SVG_VIEWER_CONSTANTS } from '../config/svg-viewer-constants'
 import type { SimpleTemplate } from '../types/template-types'
+import { calculateContentBounds, calculateGridBounds } from '../utils/svg-centering'
 
 export interface SvgViewBoxState {
   viewBoxX: Ref<number>
@@ -62,6 +63,38 @@ export function useSvgViewBox(
     viewBoxHeight.value = baseViewBoxHeight.value
   }
 
+  // Watch for container element changes and initialize dimensions
+  if (containerElement) {
+    watch(containerElement, (newContainer) => {
+      if (newContainer) {
+        initializeBaseDimensions(newContainer)
+
+        // Trigger auto-centering when container becomes available
+        if (template?.value) {
+          nextTick(() => {
+            autoFitTemplate(template.value!, newContainer, null as any)
+          })
+        }
+      }
+    }, { immediate: true })
+  }
+
+  // Add window resize listener for automatic re-centering
+  if (typeof window !== 'undefined') {
+    const handleResize = () => {
+      if (containerElement?.value && template?.value) {
+        // Debounce resize events to avoid excessive re-centering
+        setTimeout(() => {
+          autoFitTemplate(template.value!, containerElement.value!, null as any)
+        }, 150)
+      }
+    }
+
+    window.addEventListener('resize', handleResize)
+
+    // Cleanup function would need to be handled by the component using this composable
+  }
+
   // Computed properties
   const getZoomLevel = (): number => {
     // Zoom is inverse of viewBox size relative to base size
@@ -87,15 +120,13 @@ export function useSvgViewBox(
     const containerWidth = containerRect.width
     const containerHeight = containerRect.height
 
-    // Calculate background grid dimensions
-    const templateWidth = template.value.viewBox.width
-    const templateHeight = template.value.viewBox.height
-    const gridWidth = templateWidth * 2
-    const gridHeight = templateHeight * 2
+    // Use centering utils to calculate grid dimensions
+    const contentDimensions = calculateContentBounds(template.value.viewBox, 1.5)
+    const gridBounds = calculateGridBounds(contentDimensions, 2.0)
 
     // Calculate minimum zoom needed to fill viewport with background grid
-    const minZoomX = containerWidth / gridWidth
-    const minZoomY = containerHeight / gridHeight
+    const minZoomX = containerWidth / gridBounds.width
+    const minZoomY = containerHeight / gridBounds.height
 
     // Use the larger zoom to ensure grid fills entire viewport
     const calculatedMinZoom = Math.max(minZoomX, minZoomY)
@@ -218,7 +249,7 @@ export function useSvgViewBox(
   }
 
 
-  // Auto-fit template to viewport
+  // Auto-center template with perfect visual centering and optimal spacing
   const autoFitTemplate = async (
     template: SimpleTemplate,
     containerElement: HTMLElement,
@@ -231,50 +262,61 @@ export function useSvgViewBox(
     // Initialize base dimensions from container
     initializeBaseDimensions(containerElement)
 
-    // Calculate optimal zoom to fit template
+    // Calculate template content dimensions for accurate centering
     const templateWidth = template.viewBox.width
     const templateHeight = template.viewBox.height
 
-    const scaleX = baseViewBoxWidth.value / templateWidth
-    const scaleY = baseViewBoxHeight.value / templateHeight
-    const optimalZoom = Math.min(scaleX, scaleY)
+    // Get container dimensions for optimal zoom calculation
+    const containerRect = containerElement.getBoundingClientRect()
+    const availableWidth = containerRect.width - SVG_VIEWER_CONSTANTS.CONTAINER_PADDING
+    const availableHeight = containerRect.height - SVG_VIEWER_CONSTANTS.CONTAINER_PADDING
 
-    // Apply zoom and center template
+    // Calculate optimal zoom that ensures template is fully visible with consistent spacing
+    const marginSize = SVG_VIEWER_CONSTANTS.AUTO_FIT.MIN_MARGIN
+    const scaleX = (availableWidth - marginSize * 2) / templateWidth
+    const scaleY = (availableHeight - marginSize * 2) / templateHeight
+
+    // Use the smaller scale to ensure template fits completely, with constraint limits
+    const calculatedZoom = Math.min(scaleX, scaleY)
+    const optimalZoom = Math.max(
+      SVG_VIEWER_CONSTANTS.AUTO_FIT.MIN_SCALE,
+      Math.min(calculatedZoom, SVG_VIEWER_CONSTANTS.AUTO_FIT.MAX_SCALE)
+    )
+
+    // Set base viewBox dimensions based on container, not template
+    // This ensures proper aspect ratio matching the container for perfect centering
+    baseViewBoxWidth.value = availableWidth
+    baseViewBoxHeight.value = availableHeight
+
+    // Apply optimal zoom level
     setZoom(optimalZoom)
 
-    // Center on template - position viewBox so template center is at viewport center
-    // Template center in SVG coordinates
-    const templateCenterX = template.viewBox.x + templateWidth / 2
-    const templateCenterY = template.viewBox.y + templateHeight / 2
+    // Perfect centering: position viewBox so template content is exactly centered
+    // Template content is centered at (0,0) by the content layer centering system
+    // So we center the viewBox on origin (0,0) to achieve perfect visual centering
+    viewBoxX.value = -viewBoxWidth.value / 2
+    viewBoxY.value = -viewBoxHeight.value / 2
 
-    // Position viewBox so template center appears in viewport center
-    viewBoxX.value = templateCenterX - viewBoxWidth.value / 2
-    viewBoxY.value = templateCenterY - viewBoxHeight.value / 2
+    // Ensure the centered view respects pan boundaries
+    constrainViewBox()
   }
 
   // Calculate constraint bounds for the current viewBox state
   const getConstraintBounds = () => {
     if (!template?.value) return null
 
-    // Calculate background grid bounds with reasonable limits
-    const templateWidth = template.value.viewBox.width
-    const templateHeight = template.value.viewBox.height
+    // Use centering utils to calculate content and grid bounds
+    const contentDimensions = calculateContentBounds(template.value.viewBox, 1.5)
+    const gridBounds = calculateGridBounds(contentDimensions, 2.0)
 
-    // Limit background grid to reasonable size (2x template but with maximum bounds)
-    const maxGridSize = Math.max(templateWidth, templateHeight) * 3
-    const gridWidth = Math.min(templateWidth * 2, maxGridSize)
-    const gridHeight = Math.min(templateHeight * 2, maxGridSize)
+    // Calculate maximum pan bounds (grid edges - allow panning to edges but no whitespace)
+    // Grid is centered at (0,0) in content coordinate system
+    const gridMinX = gridBounds.x
+    const gridMinY = gridBounds.y
+    const gridMaxX = gridBounds.x + gridBounds.width
+    const gridMaxY = gridBounds.y + gridBounds.height
 
-    // Center background grid around template center
-    const templateCenterX = template.value.viewBox.x + templateWidth / 2
-    const templateCenterY = template.value.viewBox.y + templateHeight / 2
-
-    const gridMinX = templateCenterX - gridWidth / 2
-    const gridMinY = templateCenterY - gridHeight / 2
-    const gridMaxX = templateCenterX + gridWidth / 2
-    const gridMaxY = templateCenterY + gridHeight / 2
-
-    // Calculate maximum pan bounds (grid edges minus viewBox size)
+    // Ensure viewBox can access grid edges but not beyond (prevents whitespace)
     return {
       minX: gridMinX,
       maxX: gridMaxX - viewBoxWidth.value,

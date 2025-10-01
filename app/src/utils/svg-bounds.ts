@@ -858,12 +858,26 @@ export function hasSvgCenteringIssues(svgContent: string): boolean {
 export function getOptimalTransformOrigin(svgContent: string): Point {
   const centroidAnalysis = calculateSvgCentroid(svgContent)
 
+  let result: Point
   if (centroidAnalysis.useCentroid && centroidAnalysis.confidence > 0.7) {
-    return centroidAnalysis.centroidCenter
+    result = centroidAnalysis.centroidCenter
+  } else {
+    // Fallback to bounding box center for low-confidence cases
+    result = centroidAnalysis.boundingBoxCenter
   }
 
-  // Fallback to bounding box center for low-confidence cases
-  return centroidAnalysis.boundingBoxCenter
+  // Debug logging for NaN detection
+  if (isNaN(result.x) || isNaN(result.y)) {
+    // eslint-disable-next-line no-console
+    console.error('NaN detected in getOptimalTransformOrigin:', {
+      result,
+      centroidAnalysis,
+      svgContentLength: svgContent.length,
+      svgContentPreview: svgContent.substring(0, 100)
+    })
+  }
+
+  return result
 }
 
 /**
@@ -891,36 +905,6 @@ export function calculateSvgCentroid(svgContent: string): SvgCentroid {
   let confidence = 0
 
   switch (shapeType) {
-    case 'star': {
-      const starResult = calculateStarCentroid(svgContent)
-      if (starResult) {
-        centroidCenter = starResult.centroid
-        useCentroid = true
-        confidence = starResult.confidence
-      }
-      break
-    }
-
-    case 'triangle': {
-      const triangleResult = calculateTriangleCentroid(svgContent)
-      if (triangleResult) {
-        centroidCenter = triangleResult.centroid
-        useCentroid = true
-        confidence = triangleResult.confidence
-      }
-      break
-    }
-
-    case 'arrow': {
-      const arrowResult = calculateArrowCentroid(svgContent)
-      if (arrowResult) {
-        centroidCenter = arrowResult.centroid
-        useCentroid = true
-        confidence = arrowResult.confidence
-      }
-      break
-    }
-
     case 'polygon': {
       const polygonResult = calculatePolygonCentroid(svgContent)
       if (polygonResult) {
@@ -932,6 +916,8 @@ export function calculateSvgCentroid(svgContent: string): SvgCentroid {
     }
 
     case 'complex-path': {
+      // Use general-purpose path centroid calculation for all <path> elements
+      // This handles curves, stars, triangles, arrows, and all other path types
       const pathResult = calculatePathCentroid(svgContent)
       if (pathResult) {
         centroidCenter = pathResult.centroid
@@ -942,7 +928,7 @@ export function calculateSvgCentroid(svgContent: string): SvgCentroid {
     }
 
     default: {
-      // For circles, rectangles, and unknown shapes, use bounding box center
+      // For circles, rectangles, lines, and unknown shapes, use bounding box center
       confidence = 0.9 // High confidence in bounding box for regular shapes
       break
     }
@@ -959,33 +945,18 @@ export function calculateSvgCentroid(svgContent: string): SvgCentroid {
 
 /**
  * Detect the primary shape type of an SVG for centroid calculation
+ *
+ * Uses strict detection for basic shapes only, falling back to 'complex-path'
+ * for all <path> elements which use the robust general-purpose centroid algorithm.
  */
 export function detectShapeType(svgContent: string): ShapeType {
-  // Check for specific shape patterns in path data
+  // Check for <path> elements - use general-purpose algorithm for all paths
   const pathMatch = svgContent.match(/<path[^>]*d\s*=\s*["']([^"']+)["']/i)
-
   if (pathMatch) {
-    const pathData = pathMatch[1].toLowerCase()
-
-    // Star detection: Look for multiple sharp directional changes
-    if (isStarPattern(pathData)) {
-      return 'star'
-    }
-
-    // Triangle detection: Look for three main directional segments
-    if (isTrianglePattern(pathData)) {
-      return 'triangle'
-    }
-
-    // Arrow detection: Look for line + directional ending
-    if (isArrowPattern(pathData)) {
-      return 'arrow'
-    }
-
     return 'complex-path'
   }
 
-  // Check for basic shapes
+  // Check for basic geometric shapes
   if (svgContent.includes('<circle') || svgContent.includes('<ellipse')) {
     return 'circle'
   }
@@ -1005,108 +976,7 @@ export function detectShapeType(svgContent: string): ShapeType {
   return 'unknown'
 }
 
-/**
- * Calculate centroid for star-shaped polygons
- */
-function calculateStarCentroid(svgContent: string): { centroid: Point; confidence: number } | null {
-  const pathMatch = svgContent.match(/<path[^>]*d\s*=\s*["']([^"']+)["']/i)
-  if (!pathMatch) return null
-
-  const pathData = pathMatch[1]
-  const points = extractPathPoints(pathData)
-
-  if (points.length < 6) return null // Need at least 5 points for a star
-
-  // For star shapes, calculate the centroid of the inner polygon
-  // formed by connecting every other point (the "valley" points)
-  const innerPoints: Point[] = []
-  const outerPoints: Point[] = []
-
-  // Separate inner and outer points based on distance from center
-  const roughCenter = {
-    x: points.reduce((sum, p) => sum + p.x, 0) / points.length,
-    y: points.reduce((sum, p) => sum + p.y, 0) / points.length
-  }
-
-  points.forEach(point => {
-    const distance = Math.sqrt(
-      Math.pow(point.x - roughCenter.x, 2) +
-      Math.pow(point.y - roughCenter.y, 2)
-    )
-
-    if (distance < getAverageDistanceFromCenter(points, roughCenter) * 0.8) {
-      innerPoints.push(point)
-    } else {
-      outerPoints.push(point)
-    }
-  })
-
-  // Calculate centroid of the effective shape (weighted toward inner points)
-  const allPoints = [...innerPoints, ...outerPoints]
-  const centroid = calculatePolygonCentroidFromPoints(allPoints)
-
-  return {
-    centroid,
-    confidence: 0.85 // High confidence for star detection
-  }
-}
-
-/**
- * Calculate centroid for triangular shapes
- */
-function calculateTriangleCentroid(svgContent: string): { centroid: Point; confidence: number } | null {
-  const pathMatch = svgContent.match(/<path[^>]*d\s*=\s*["']([^"']+)["']/i)
-  if (!pathMatch) return null
-
-  const pathData = pathMatch[1]
-  const points = extractPathPoints(pathData)
-
-  if (points.length < 3) return null
-
-  // For triangles, use the geometric centroid formula
-  const centroid = calculatePolygonCentroidFromPoints(points.slice(0, 3))
-
-  return {
-    centroid,
-    confidence: 0.9 // High confidence for triangles
-  }
-}
-
-/**
- * Calculate centroid for arrow shapes (accounting for visual weight)
- */
-function calculateArrowCentroid(svgContent: string): { centroid: Point; confidence: number } | null {
-  const pathMatch = svgContent.match(/<path[^>]*d\s*=\s*["']([^"']+)["']/i)
-  if (!pathMatch) return null
-
-  const pathData = pathMatch[1]
-  const points = extractPathPoints(pathData)
-
-  if (points.length < 4) return null
-
-  // For arrows, the visual center is typically closer to the shaft
-  // rather than the arrowhead
-  const bounds = calculateBoundsFromPoints(points)
-
-  // Detect arrow direction and adjust centroid accordingly
-  const isHorizontal = bounds.width > bounds.height
-
-  if (isHorizontal) {
-    // Horizontal arrow - shift centroid toward shaft (opposite of arrowhead)
-    const shaftCenterX = bounds.xMin + bounds.width * 0.3 // 30% from left
-    return {
-      centroid: { x: shaftCenterX, y: bounds.yMin + bounds.height / 2 },
-      confidence: 0.75
-    }
-  } else {
-    // Vertical arrow - shift centroid toward shaft
-    const shaftCenterY = bounds.yMin + bounds.height * 0.3 // 30% from top
-    return {
-      centroid: { x: bounds.xMin + bounds.width / 2, y: shaftCenterY },
-      confidence: 0.75
-    }
-  }
-}
+// Shape-specific centroid functions removed - using general-purpose calculatePathCentroid() for all paths
 
 /**
  * Calculate centroid for general polygons
@@ -1145,23 +1015,30 @@ function calculatePolygonCentroid(svgContent: string): { centroid: Point; confid
 
 /**
  * Calculate centroid for complex path elements
+ *
+ * Uses proper SVG path parsing that converts curves (A, C, Q commands) to line segments
+ * by sampling points along the curves, enabling accurate centroid calculation for all path types.
  */
 function calculatePathCentroid(svgContent: string): { centroid: Point; confidence: number } | null {
   const pathMatch = svgContent.match(/<path[^>]*d\s*=\s*["']([^"']+)["']/i)
   if (!pathMatch) return null
 
   const pathData = pathMatch[1]
+
+  // Use proper path parser that handles curves by converting to line segments
   const points = extractPathPoints(pathData)
 
-  if (points.length < 2) return null
+  if (points.length < 2) {
+    // Not enough points to determine center reliably
+    return null
+  }
 
-  // For complex paths, use a sampling-based approach
-  const sampledPoints = samplePathPoints(pathData, 20) // Sample 20 points along the path
-  const centroid = calculatePolygonCentroidFromPoints(sampledPoints)
+  // Use polygon centroid calculation for all path types
+  const centroid = calculatePolygonCentroidFromPoints(points)
 
   return {
     centroid,
-    confidence: 0.6 // Lower confidence for complex paths
+    confidence: 0.8 // High confidence since we now properly parse curves
   }
 }
 
@@ -1169,53 +1046,226 @@ function calculatePathCentroid(svgContent: string): { centroid: Point; confidenc
 // HELPER FUNCTIONS
 // =============================================================================
 
-/**
- * Check if a path represents a star pattern
- */
-function isStarPattern(pathData: string): boolean {
-  // Count directional changes that suggest star points
-  const segments = pathData.split(/[mlhvcsqtaz]/i).filter(s => s.trim())
-
-  // Stars typically have 5+ directional changes and return to start
-  return segments.length >= 5 && pathData.includes('z')
-}
-
-/**
- * Check if a path represents a triangle pattern
- */
-function isTrianglePattern(pathData: string): boolean {
-  // Look for 3-4 main directional segments (3 sides + close)
-  const commands = pathData.match(/[mlhvcsqtaz]/gi) || []
-
-  // Simple heuristic: triangles have 3-4 main commands
-  return commands.length >= 3 && commands.length <= 6 && pathData.includes('z')
-}
-
-/**
- * Check if a path represents an arrow pattern
- */
-function isArrowPattern(pathData: string): boolean {
-  // Look for line elements followed by directional elements
-  const hasLine = pathData.includes('l') || pathData.includes('L')
-  const hasAngles = pathData.includes('l') && pathData.split('l').length > 2
-
-  return hasLine && hasAngles
-}
+// Shape detection helper functions removed - using general-purpose centroid calculation for all paths
 
 /**
  * Extract coordinate points from path data
  */
+/**
+ * Parse SVG path data and extract points, converting curves to line segments
+ * Handles M, L, H, V, C, S, Q, T, A commands (absolute and relative)
+ */
 function extractPathPoints(pathData: string): Point[] {
   const points: Point[] = []
+  let currentX = 0
+  let currentY = 0
+  let startX = 0
+  let startY = 0
 
-  // Simple extraction of coordinate pairs from path data
-  const numbers = pathData.match(/-?\d+(?:\.\d+)?/g) || []
+  // Parse path commands with their parameters
+  const commandRegex = /([MmLlHhVvCcSsQqTtAaZz])([^MmLlHhVvCcSsQqTtAaZz]*)/g
+  let match
 
-  for (let i = 0; i < numbers.length - 1; i += 2) {
-    points.push({
-      x: parseFloat(numbers[i]),
-      y: parseFloat(numbers[i + 1])
-    })
+  while ((match = commandRegex.exec(pathData)) !== null) {
+    const command = match[1]
+    const paramsStr = match[2].trim()
+    // Match numbers including those starting with decimal point (e.g., .5, .224, -.433)
+    const params = paramsStr.match(/-?(?:\d+\.?\d*|\.\d+)/g)?.map(Number) || []
+
+    switch (command) {
+      case 'M': // Move to (absolute)
+        if (params.length >= 2) {
+          currentX = params[0]
+          currentY = params[1]
+          startX = currentX
+          startY = currentY
+          points.push({ x: currentX, y: currentY })
+        }
+        break
+
+      case 'm': // Move to (relative)
+        if (params.length >= 2) {
+          currentX += params[0]
+          currentY += params[1]
+          startX = currentX
+          startY = currentY
+          points.push({ x: currentX, y: currentY })
+        }
+        break
+
+      case 'L': // Line to (absolute)
+        for (let i = 0; i < params.length; i += 2) {
+          currentX = params[i]
+          currentY = params[i + 1]
+          points.push({ x: currentX, y: currentY })
+        }
+        break
+
+      case 'l': // Line to (relative)
+        for (let i = 0; i < params.length; i += 2) {
+          currentX += params[i]
+          currentY += params[i + 1]
+          points.push({ x: currentX, y: currentY })
+        }
+        break
+
+      case 'H': // Horizontal line (absolute)
+        for (const x of params) {
+          currentX = x
+          points.push({ x: currentX, y: currentY })
+        }
+        break
+
+      case 'h': // Horizontal line (relative)
+        for (const dx of params) {
+          currentX += dx
+          points.push({ x: currentX, y: currentY })
+        }
+        break
+
+      case 'V': // Vertical line (absolute)
+        for (const y of params) {
+          currentY = y
+          points.push({ x: currentX, y: currentY })
+        }
+        break
+
+      case 'v': // Vertical line (relative)
+        for (const dy of params) {
+          currentY += dy
+          points.push({ x: currentX, y: currentY })
+        }
+        break
+
+      case 'C': // Cubic bezier (absolute)
+        for (let i = 0; i < params.length; i += 6) {
+          const cp1x = params[i]
+          const cp1y = params[i + 1]
+          const cp2x = params[i + 2]
+          const cp2y = params[i + 3]
+          const x = params[i + 4]
+          const y = params[i + 5]
+
+          // Sample the curve with 10 points
+          for (let t = 0.1; t <= 1; t += 0.1) {
+            const mt = 1 - t
+            const px = mt * mt * mt * currentX + 3 * mt * mt * t * cp1x + 3 * mt * t * t * cp2x + t * t * t * x
+            const py = mt * mt * mt * currentY + 3 * mt * mt * t * cp1y + 3 * mt * t * t * cp2y + t * t * t * y
+            points.push({ x: px, y: py })
+          }
+
+          currentX = x
+          currentY = y
+        }
+        break
+
+      case 'c': // Cubic bezier (relative)
+        for (let i = 0; i < params.length; i += 6) {
+          const cp1x = currentX + params[i]
+          const cp1y = currentY + params[i + 1]
+          const cp2x = currentX + params[i + 2]
+          const cp2y = currentY + params[i + 3]
+          const x = currentX + params[i + 4]
+          const y = currentY + params[i + 5]
+
+          // Sample the curve with 10 points
+          for (let t = 0.1; t <= 1; t += 0.1) {
+            const mt = 1 - t
+            const px = mt * mt * mt * currentX + 3 * mt * mt * t * cp1x + 3 * mt * t * t * cp2x + t * t * t * x
+            const py = mt * mt * mt * currentY + 3 * mt * mt * t * cp1y + 3 * mt * t * t * cp2y + t * t * t * y
+            points.push({ x: px, y: py })
+          }
+
+          currentX = x
+          currentY = y
+        }
+        break
+
+      case 'Q': // Quadratic bezier (absolute)
+        for (let i = 0; i < params.length; i += 4) {
+          const cpx = params[i]
+          const cpy = params[i + 1]
+          const x = params[i + 2]
+          const y = params[i + 3]
+
+          // Sample the curve with 8 points
+          for (let t = 0.125; t <= 1; t += 0.125) {
+            const mt = 1 - t
+            const px = mt * mt * currentX + 2 * mt * t * cpx + t * t * x
+            const py = mt * mt * currentY + 2 * mt * t * cpy + t * t * y
+            points.push({ x: px, y: py })
+          }
+
+          currentX = x
+          currentY = y
+        }
+        break
+
+      case 'q': // Quadratic bezier (relative)
+        for (let i = 0; i < params.length; i += 4) {
+          const cpx = currentX + params[i]
+          const cpy = currentY + params[i + 1]
+          const x = currentX + params[i + 2]
+          const y = currentY + params[i + 3]
+
+          // Sample the curve with 8 points
+          for (let t = 0.125; t <= 1; t += 0.125) {
+            const mt = 1 - t
+            const px = mt * mt * currentX + 2 * mt * t * cpx + t * t * x
+            const py = mt * mt * currentY + 2 * mt * t * cpy + t * t * y
+            points.push({ x: px, y: py })
+          }
+
+          currentX = x
+          currentY = y
+        }
+        break
+
+      case 'A': // Arc (absolute) - Approximate with line segments
+        for (let i = 0; i < params.length; i += 7) {
+          const x = params[i + 5]
+          const y = params[i + 6]
+
+          // Simple approximation: create 8 intermediate points
+          for (let j = 1; j <= 8; j++) {
+            const t = j / 8
+            const px = currentX + (x - currentX) * t
+            const py = currentY + (y - currentY) * t
+            points.push({ x: px, y: py })
+          }
+
+          currentX = x
+          currentY = y
+        }
+        break
+
+      case 'a': // Arc (relative) - Approximate with line segments
+        for (let i = 0; i < params.length; i += 7) {
+          const x = currentX + params[i + 5]
+          const y = currentY + params[i + 6]
+
+          // Simple approximation: create 8 intermediate points
+          for (let j = 1; j <= 8; j++) {
+            const t = j / 8
+            const px = currentX + (x - currentX) * t
+            const py = currentY + (y - currentY) * t
+            points.push({ x: px, y: py })
+          }
+
+          currentX = x
+          currentY = y
+        }
+        break
+
+      case 'Z':
+      case 'z': // Close path
+        if (currentX !== startX || currentY !== startY) {
+          points.push({ x: startX, y: startY })
+          currentX = startX
+          currentY = startY
+        }
+        break
+    }
   }
 
   return points
@@ -1224,7 +1274,7 @@ function extractPathPoints(pathData: string): Point[] {
 /**
  * Sample points along a path for centroid calculation
  */
-function samplePathPoints(pathData: string, numSamples: number): Point[] {
+function _samplePathPoints(pathData: string, numSamples: number): Point[] {
   // For now, return the extracted points (can be enhanced with actual path sampling)
   const extractedPoints = extractPathPoints(pathData)
 
@@ -1272,22 +1322,28 @@ function calculatePolygonCentroidFromPoints(points: Point[]): Point {
 
   if (Math.abs(area) < 0.000001) {
     // Degenerate case - return average of points
+    const avgX = points.reduce((sum, p) => sum + p.x, 0) / points.length
+    const avgY = points.reduce((sum, p) => sum + p.y, 0) / points.length
     return {
-      x: points.reduce((sum, p) => sum + p.x, 0) / points.length,
-      y: points.reduce((sum, p) => sum + p.y, 0) / points.length
+      x: isFinite(avgX) ? avgX : 0,
+      y: isFinite(avgY) ? avgY : 0
     }
   }
 
   centroidX = centroidX / (6 * area)
   centroidY = centroidY / (6 * area)
 
-  return { x: centroidX, y: centroidY }
+  // Safety guard against NaN/infinite values
+  const safeX = isFinite(centroidX) ? centroidX : 0
+  const safeY = isFinite(centroidY) ? centroidY : 0
+
+  return { x: safeX, y: safeY }
 }
 
 /**
  * Calculate bounds from an array of points
  */
-function calculateBoundsFromPoints(points: Point[]): { xMin: number; xMax: number; yMin: number; yMax: number; width: number; height: number } {
+function _calculateBoundsFromPoints(points: Point[]): { xMin: number; xMax: number; yMin: number; yMax: number; width: number; height: number } {
   if (points.length === 0) {
     return { xMin: 0, xMax: 0, yMin: 0, yMax: 0, width: 0, height: 0 }
   }
@@ -1314,19 +1370,4 @@ function calculateBoundsFromPoints(points: Point[]): { xMin: number; xMax: numbe
   }
 }
 
-/**
- * Calculate average distance of points from a center point
- */
-function getAverageDistanceFromCenter(points: Point[], center: Point): number {
-  if (points.length === 0) return 0
-
-  const totalDistance = points.reduce((sum, point) => {
-    const distance = Math.sqrt(
-      Math.pow(point.x - center.x, 2) +
-      Math.pow(point.y - center.y, 2)
-    )
-    return sum + distance
-  }, 0)
-
-  return totalDistance / points.length
-}
+// Helper functions removed - using general-purpose calculatePathCentroid() for all paths

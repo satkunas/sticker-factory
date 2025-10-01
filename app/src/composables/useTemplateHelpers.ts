@@ -122,7 +122,7 @@ export function useTemplateHelpers() {
     return `SVG ${originalLayer.id.charAt(0).toUpperCase() + originalLayer.id.slice(1)}`
   }
 
-  const getSvgImageDisplayName = (template: SimpleTemplate | null, svgImageStyleId: string): string => {
+  const getSvgImageDisplayName = (template: SimpleTemplate | null, svgImageStyleId: string, currentSvgId?: string): string => {
     if (!template || !template.layers) return 'No SVG Selected'
 
     const originalLayer = template.layers.find(layer =>
@@ -131,8 +131,8 @@ export function useTemplateHelpers() {
 
     if (!originalLayer || originalLayer.type !== 'svgImage') return 'No SVG Selected'
 
-    // Get the actual SVG name from the store
-    const svgId = originalLayer.svgId || (originalLayer.svgImage?.svgContent ? 'custom' : '')
+    // Get the actual SVG name from the store - prioritize current svgId from form data
+    const svgId = currentSvgId || originalLayer.svgId || (originalLayer.svgImage?.svgContent ? 'custom' : '')
 
     if (svgId && svgId !== 'custom') {
       const svgStore = useSvgStore()

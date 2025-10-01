@@ -115,7 +115,9 @@ export interface YamlTemplate {
   id: string
   description: string
   category: 'circle' | 'square' | 'rectangle' | 'diamond' | 'hexagon'
-  viewBox?: { x: number; y: number; width: number; height: number }
+  width: number   // Template width - primary dimension source
+  height: number  // Template height - primary dimension source
+  viewBox?: { x: number; y: number; width: number; height: number }  // Optional: legacy support
   layers: TemplateLayer[]
 }
 
@@ -160,7 +162,9 @@ export interface SimpleTemplate {
   name: string
   description: string
   category: 'circle' | 'square' | 'rectangle' | 'diamond' | 'hexagon'
-  viewBox: { x: number; y: number; width: number; height: number }
+  width: number   // Template width - used for viewBox and positioning calculations
+  height: number  // Template height - used for viewBox and positioning calculations
+  viewBox: { x: number; y: number; width: number; height: number }  // Derived from width/height
   layers: ProcessedTemplateLayer[]
 }
 
@@ -235,6 +239,66 @@ export interface ProcessedSvgImageLayer extends ProcessedLayerBase {
 }
 
 export type ProcessedTemplateLayer = ProcessedShapeLayer | ProcessedTextInputLayer | ProcessedSvgImageLayer
+
+// FLAT ARCHITECTURE: New simplified flat layer data structure
+// This replaces the complex nested approach with a single flat structure
+export interface FlatLayerData {
+  id: string
+  type?: 'text' | 'shape' | 'svgImage'  // Type is derived from template, not stored in form
+
+  // Text properties
+  text?: string
+  label?: string
+  placeholder?: string
+  default?: string
+  fontSize?: number
+  fontWeight?: number
+  fontColor?: string
+  fontFamily?: string
+
+  // Shape properties
+  fillColor?: string
+  fill?: string  // Template uses 'fill', form uses 'fillColor' - both supported
+
+  // SVG Image properties
+  svgImageId?: string
+  svgContent?: string
+  color?: string
+  scale?: number
+  rotation?: number
+  transformOrigin?: { x: number; y: number }  // Optimal center point for rotation/scale
+
+  // Universal properties
+  strokeColor?: string
+  stroke?: string  // Template uses 'stroke', form uses 'strokeColor' - both supported
+  strokeWidth?: number
+  strokeOpacity?: number
+  strokeLinejoin?: string
+  clip?: string
+  clipPath?: string
+
+  // Position and dimensions (from template)
+  position?: { x: number | string; y: number | string }
+  width?: number
+  height?: number
+  opacity?: number
+
+  // Shape-specific template properties
+  subtype?: 'rect' | 'circle' | 'polygon' | 'ellipse' | 'line'
+  rx?: number
+  ry?: number
+  points?: string
+
+  // Computed/derived properties
+  transformString?: string
+  font?: any  // FontConfig object for compatibility
+}
+
+// URL structure for flat architecture
+export interface FlatUrlState {
+  selectedTemplateId: string | null
+  layers: FlatLayerData[]
+}
 
 // Legacy interface for backward compatibility
 export interface TemplateElement {

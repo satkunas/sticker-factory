@@ -2,6 +2,8 @@ name: "Tech Company Sticker"
 id: "tech-company-sticker"
 description: "Modern tech company sticker with SVG icons and clean typography"
 category: "rectangle"
+width: 320
+height: 200
 viewBox: { x: 0, y: 0, width: 340, height: 220 }
 layers:
   - id: "background"

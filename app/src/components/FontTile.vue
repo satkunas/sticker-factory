@@ -112,7 +112,7 @@ const getCategoryColor = (category: string): string => {
     'handwriting': 'bg-pink-400',
     'dingbats': 'bg-red-400'
   }
-  return colorMap[category] || 'bg-gray-400'
+  return colorMap[category] || 'bg-gray-400'  // Keep this fallback for UI robustness
 }
 
 // Load font when tile becomes visible

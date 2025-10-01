@@ -2,6 +2,8 @@ name: "Conference Sticker"
 id: "conference-sticker"
 description: "Professional conference attendee sticker"
 category: "rectangle"
+width: 300
+height: 180
 layers:
   - id: "sticker-background"
     type: "shape"

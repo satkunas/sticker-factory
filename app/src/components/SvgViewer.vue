@@ -3,17 +3,18 @@
     <!-- SVG Viewport Container -->
     <div
       ref="svgContainer"
-      :class="['relative', svgContainerClasses]"
+      :class="['relative', 'h-full', svgContainerClasses]"
     >
       <!-- Native SVG Viewport with viewBox-based pan/zoom -->
       <SvgViewport
         ref="svgViewportRef"
         :template="template"
+        :layers="layers"
         :previewMode="previewMode"
         :viewBoxX="viewBoxX"
         :viewBoxY="viewBoxY"
         :viewBoxWidth="viewBoxWidth"
-        :view-box-height="viewBoxHeight"
+        :viewBoxHeight="viewBoxHeight"
         :gridSize="gridSize"
         @mousedown="handleMouseDown"
         @mousemove="handleMouseMove"
@@ -23,17 +24,7 @@
         @touchstart="handleTouchStart"
         @touchmove="handleTouchMove"
         @touchend="handleTouchEnd"
-      >
-        <!-- Template content rendered inside SVG viewport -->
-        <SvgCanvas
-          ref="svgElementRef"
-          :template="template"
-          :layers="layers"
-          :previewMode="previewMode"
-          :hasClipPaths="hasClipPaths"
-          :clipPathShapes="clipPathShapes"
-        />
-      </SvgViewport>
+      />
 
       <ZoomPanControls
         :zoomLevel="zoomLevel"
@@ -60,22 +51,25 @@
         @zoomIn="zoomIn"
         @zoomOut="zoomOut"
         @zoomChange="setZoom"
-        @autoFit="handleAutoFit"
-        @resetZoom="resetZoom"
       ></ZoomPanControls>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { computed, ref, watch, nextTick, onMounted, onUnmounted, watchEffect } from 'vue'
 import type { FontConfig } from '../config/fonts'
 import type { SimpleTemplate } from '../types/template-types'
-import { useSvgViewBox } from '../composables/useSvgViewBox'
 import { useSvgDragInteraction } from '../composables/useSvgDragInteraction'
 import { SVG_VIEWER_CONSTANTS } from '../config/svg-viewer-constants'
-import { clipPathShapes as storeClipPathShapes, hasClipPaths as storeHasClipPaths } from '../stores/urlDrivenStore'
-import SvgCanvas from './SvgCanvas.vue'
+import {
+  svgViewBoxX,
+  svgViewBoxY,
+  svgViewBoxWidth,
+  svgViewBoxHeight,
+  svgViewBoxControls,
+  setSvgContainer
+} from '../stores/urlDrivenStore'
 import SvgViewport from './SvgViewport.vue'
 import ZoomPanControls from './ZoomPanControls.vue'
 
@@ -108,14 +102,11 @@ const props = defineProps<Props>()
 // Grid size for background pattern
 const gridSize = SVG_VIEWER_CONSTANTS.GRID_SIZE
 
-// Use clip path data from store
-const hasClipPaths = storeHasClipPaths
-const clipPathShapes = storeClipPathShapes
+// Clip path data available from store if needed in future
 
 // Component references
 const svgContainer = ref<HTMLElement | null>(null)
 const svgViewportRef = ref<InstanceType<typeof SvgViewport> | null>(null)
-const svgElementRef = ref<InstanceType<typeof SvgCanvas> | null>(null)
 
 // Reactive container dimensions for viewport calculation
 const containerDimensions = ref({ width: 0, height: 0 })
@@ -131,35 +122,53 @@ const updateContainerDimensions = () => {
   }
 }
 
-// Convert props to refs for composable
-const previewModeRef = computed(() => props.previewMode)
-const templateRef = computed(() => props.template)
+// Preview mode available if needed for future enhancements
 
-// Initialize SVG viewBox composable - replaces CSS transform system
-const svgViewBox = useSvgViewBox(previewModeRef, templateRef, svgContainer)
+// Use SVG viewBox calculations from store (composable is handled there)
+const viewBoxX = svgViewBoxX
+const viewBoxY = svgViewBoxY
+const viewBoxWidth = svgViewBoxWidth
+const viewBoxHeight = svgViewBoxHeight
 
-// Extract state and controls from composable
+// Set container element for store calculations and initialize viewBox
+watchEffect(() => {
+  setSvgContainer(svgContainer.value)
+
+  // Force viewBox initialization when container becomes available
+  if (svgContainer.value && props.template) {
+    nextTick(async () => {
+      // TEMPORARY FIX: Force proper viewBox dimensions if they are too small
+      const currentWidth = viewBoxWidth.value
+      const currentHeight = viewBoxHeight.value
+
+      // console.log('🔍 VIEWBOX CHECK:', {
+      //   width: currentWidth,
+      //   height: currentHeight,
+      //   needsFix: currentWidth <= 50 || currentHeight <= 50
+      // })
+
+      if (currentWidth <= 50 || currentHeight <= 50) {
+        // console.log('🚨 FIXING TINY VIEWBOX:', {
+        //   before: { width: currentWidth, height: currentHeight },
+        //   message: 'Auto-centering will be handled by the store automatically'
+        // })
+      }
+    })
+  }
+})
+
+// Extract controls from store
 const {
-  // ViewBox state (replaces panX/panY/zoomLevel)
-  viewBoxX,
-  viewBoxY,
-  viewBoxWidth,
-  viewBoxHeight,
-
-  // Controls
   zoomIn,
   zoomOut,
-  resetZoom,
   setZoom,
   setPan,
   handleWheel: handleViewBoxWheel,
-  autoFitTemplate,
   getZoomLevel,
   getMinZoomLevel,
   canZoomIn,
   canZoomOut,
-  constrainViewBox
-} = svgViewBox
+} = svgViewBoxControls
 
 // Computed properties for compatibility with existing components
 const zoomLevel = computed(() => getZoomLevel())
@@ -167,11 +176,11 @@ const panX = computed(() => viewBoxX.value)
 const panY = computed(() => viewBoxY.value)
 
 // SVG drag interaction - replaces CSS coordinate drag system
+const previewModeRef = computed(() => props.previewMode)
 const { handleMouseDown: handleSvgMouseDown, handleMouseMove: handleSvgMouseMove, handleMouseUp: handleSvgMouseUp, handleMouseLeave: handleSvgMouseLeave } = useSvgDragInteraction(
   previewModeRef,
   setPan,
-  getZoomLevel,
-  constrainViewBox
+  getZoomLevel
 )
 
 // Event handler wrappers that pass SVG element to drag handlers
@@ -211,24 +220,15 @@ const handleTouchEnd = () => {
   // Touch events for future enhancement
 }
 
-// Handle auto-fit events from ZoomPanControls
-const handleAutoFit = async () => {
-  if (props.template && svgContainer.value) {
-    const svgCanvas = svgElementRef.value
-    if (svgCanvas && (svgCanvas as any).svgElementRef) {
-      await autoFitTemplate(props.template, svgContainer.value, (svgCanvas as any).svgElementRef)
-    }
-  }
-}
 
 // Download function
 const downloadSvg = () => {
-  const svgCanvas = svgElementRef.value
-  if (!svgCanvas || !(svgCanvas as any).svgElementRef) return
+  const svgElement = svgViewportRef.value?.svgViewportRef
+  if (!svgElement) return
 
   try {
-    // Clone the SVG element from the SvgCanvas component
-    const svgClone = (svgCanvas as any).svgElementRef.cloneNode(true) as SVGElement
+    // Clone the SVG element from the SvgViewport component
+    const svgClone = svgElement.cloneNode(true) as SVGElement
 
     // Create SVG string
     const svgString = new XMLSerializer().serializeToString(svgClone)
@@ -251,18 +251,7 @@ const downloadSvg = () => {
   }
 }
 
-// Watch for template changes and auto-fit
-watch(() => props.template, (newTemplate) => {
-  if (newTemplate && svgContainer.value) {
-    // Use auto-fit with current container and SVG references
-    nextTick(async () => {
-      const svgCanvas = svgElementRef.value
-      if (svgCanvas && (svgCanvas as any).svgElementRef) {
-        await autoFitTemplate(newTemplate, svgContainer.value!, (svgCanvas as any).svgElementRef)
-      }
-    })
-  }
-}, { immediate: true })
+// Template changes are handled automatically by the store's auto-centering system
 
 // Watch for container ref changes and update dimensions
 watch(svgContainer, () => {
@@ -279,15 +268,7 @@ onMounted(() => {
   // Add window resize listener
   window.addEventListener('resize', updateContainerDimensions)
 
-  // Always auto-fit on mount if we have a template
-  if (props.template && svgContainer.value) {
-    nextTick(async () => {
-      const svgCanvas = svgElementRef.value
-      if (svgCanvas && (svgCanvas as any).svgElementRef) {
-        await autoFitTemplate(props.template!, svgContainer.value!, (svgCanvas as any).svgElementRef)
-      }
-    })
-  }
+  // Auto-centering on mount is handled automatically by the store
 })
 
 // Clean up resize listener
@@ -298,17 +279,8 @@ onUnmounted(() => {
 // Expose download function and SVG ref for parent component
 defineExpose({
   downloadSvg,
-  autoFitTemplate: async () => {
-    if (props.template && svgContainer.value) {
-      const svgCanvas = svgElementRef.value
-      if (svgCanvas && (svgCanvas as any).svgElementRef) {
-        await autoFitTemplate(props.template, svgContainer.value, (svgCanvas as any).svgElementRef)
-      }
-    }
-  },
   svgElementRef: computed(() => {
-    const svgCanvas = svgElementRef.value
-    return svgCanvas ? (svgCanvas as any).svgElementRef || null : null
+    return svgViewportRef.value?.svgViewportRef || null
   })
 })
 </script>

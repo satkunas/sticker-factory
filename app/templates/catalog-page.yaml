@@ -2,6 +2,8 @@ name: "Product Catalog Page"
 id: "catalog-page"
 description: "Single product showcase for catalogs and brochures"
 category: "rectangle"
+width: 400
+height: 300
 layers:
   - id: "page-background"
     type: "shape"

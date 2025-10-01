@@ -58,11 +58,12 @@
     <!-- Main Content -->
     <main class="flex-1 flex flex-col lg:flex-row lg:overflow-hidden">
       <!-- SVG Viewer Pane (Now on Left) -->
-      <div class="flex-shrink-0 h-64 lg:h-auto lg:w-1/2">
+      <div class="flex-1 lg:w-1/2">
         <SvgViewer
           ref="svgViewerRef"
           :template="selectedTemplate"
           :layers="layers"
+          containerClasses="h-full"
         />
       </div>
 
@@ -117,8 +118,7 @@ import { ref, computed, onMounted, provide, defineAsyncComponent } from 'vue'
 import {
   isLoadingFromUrl,
   selectedTemplate as storeSelectedTemplate,
-  mergedFormData,
-  computedRenderData,
+  flatFormData,
   updateTemplate,
   updateLayer
 } from './stores/urlDrivenStore'
@@ -154,15 +154,15 @@ const {
   getSvgImageDimensions
 } = useTemplateHelpers()
 
-// Helper to get SVG analysis from render data
+// FLAT ARCHITECTURE: Get SVG analysis from render data
 const getRenderDataSvgAnalysis = (layerId: string) => {
   const renderLayer = layers.value.find(layer => layer.id === layerId)
-  return renderLayer?.svgAnalysis || null
+  return (renderLayer as any)?.svgAnalysis || null
 }
 
 const getRenderDataCentroidAnalysis = (layerId: string) => {
   const renderLayer = layers.value.find(layer => layer.id === layerId)
-  return renderLayer?.centroidAnalysis || null
+  return (renderLayer as any)?.centroidAnalysis || null
 }
 
 // Unified dropdown management system
@@ -225,8 +225,8 @@ const selectedTemplate = storeSelectedTemplate
 // Modal states
 const showDownloadModal = ref(false)
 
-// Use computed render data from URL-driven store (maintain reactivity)
-const layers = computed(() => computedRenderData.value)
+// Use flat form data for Svg.vue component (FlatLayerData[])
+const layers = computed(() => flatFormData.value)
 
 // Component mapping for dynamic rendering
 const componentMap = {
@@ -235,18 +235,18 @@ const componentMap = {
   svgImage: 'LayerSvgImageEditor'
 }
 
-// Clean layers for form rendering - store handles all data merging
+// FLAT ARCHITECTURE: Clean layers for form rendering using flat data
 const layersForRendering = computed(() => {
-  if (!selectedTemplate.value?.layers || mergedFormData.value.length === 0) {
+  if (!selectedTemplate.value?.layers || flatFormData.value.length === 0) {
     return []
   }
 
   return selectedTemplate.value.layers.map((templateLayer) => {
-    // Get merged form data from store
-    const mergedLayer = mergedFormData.value.find(l => l.id === templateLayer.id)
+    // Get flat form data from store
+    const flatLayer = flatFormData.value.find(l => l.id === templateLayer.id)
 
-    if (!mergedLayer) {
-      console.warn(`Missing merged layer for template layer ${templateLayer.id}:${templateLayer.type}`)
+    if (!flatLayer) {
+      console.warn(`Missing flat layer data for template layer ${templateLayer.id}:${templateLayer.type}`)
       return null
     }
 
@@ -254,32 +254,31 @@ const layersForRendering = computed(() => {
       id: templateLayer.id,
       type: templateLayer.type,
       component: componentMap[templateLayer.type],
-      // Store provides fully merged data - no conditional logic needed
-      formLayer: mergedLayer,
-      templateLayer: templateLayer
+      // Store provides flat merged data - direct property access
+      flatLayer: flatLayer
     }
-  }).filter(Boolean) // Remove null entries
+  }).filter((layer): layer is NonNullable<typeof layer> => layer !== null) // Remove null entries with type guard
 })
 
 
-// Pure prop mapping - NO conditional logic or data transformation
+// FLAT ARCHITECTURE: Pure prop mapping with flat data access
 const getLayerProps = (layer: any) => {
-  const { formLayer } = layer
+  const { flatLayer } = layer
 
   switch (layer.type) {
     case 'text':
       return {
-        // Direct property access - store handles all merging logic
-        modelValue: formLayer.text,
+        // Direct flat property access - no nested objects
+        modelValue: flatLayer.text,
         placeholder: getTextInputPlaceholder(selectedTemplate.value, layer.id),
-        selectedFont: formLayer.font,
-        fontSize: formLayer.fontSize,
-        fontWeight: formLayer.fontWeight,
-        textColor: formLayer.textColor,
-        textStrokeColor: formLayer.strokeColor,
-        textStrokeWidth: formLayer.strokeWidth,
-        textStrokeLinejoin: formLayer.strokeLinejoin,
-        strokeOpacity: formLayer.strokeOpacity,
+        selectedFont: flatLayer.font,
+        fontSize: flatLayer.fontSize,
+        fontWeight: flatLayer.fontWeight,
+        textColor: flatLayer.fontColor,
+        textStrokeColor: flatLayer.strokeColor,
+        textStrokeWidth: flatLayer.strokeWidth,
+        textStrokeLinejoin: flatLayer.strokeLinejoin,
+        strokeOpacity: flatLayer.strokeOpacity,
         instanceId: layer.id
       }
     case 'shape':
@@ -288,24 +287,24 @@ const getLayerProps = (layer: any) => {
         shapeDimensions: getShapeDimensions(selectedTemplate.value, layer.id),
         shapeData: getShapeData(selectedTemplate.value, layer.id),
         shapePath: getShapePath(selectedTemplate.value, layer.id),
-        fillColor: formLayer.fillColor,
-        strokeColor: formLayer.strokeColor,
-        strokeWidth: formLayer.strokeWidth,
-        strokeLinejoin: formLayer.strokeLinejoin,
+        fillColor: flatLayer.fillColor,
+        strokeColor: flatLayer.strokeColor,
+        strokeWidth: flatLayer.strokeWidth,
+        strokeLinejoin: flatLayer.strokeLinejoin,
         instanceId: `shape-${layer.id}`
       }
     case 'svgImage':
       return {
-        imageLabel: getSvgImageDisplayName(selectedTemplate.value, layer.id),
+        imageLabel: getSvgImageDisplayName(selectedTemplate.value, layer.id, flatLayer.svgImageId),
         imageDimensions: getSvgImageDimensions(selectedTemplate.value, layer.id),
-        svgContent: formLayer.svgContent,
-        svgId: formLayer.svgImageId,
-        color: formLayer.color,
-        strokeColor: formLayer.strokeColor,
-        strokeWidth: formLayer.strokeWidth,
-        strokeLinejoin: formLayer.strokeLinejoin,
-        rotation: formLayer.rotation,
-        scale: formLayer.scale,
+        svgContent: flatLayer.svgContent,
+        svgId: flatLayer.svgImageId,
+        color: flatLayer.color,
+        strokeColor: flatLayer.strokeColor,
+        strokeWidth: flatLayer.strokeWidth,
+        strokeLinejoin: flatLayer.strokeLinejoin,
+        rotation: flatLayer.rotation,
+        scale: flatLayer.scale,
         instanceId: `svgImage-${layer.id}`,
         svgAnalysis: getRenderDataSvgAnalysis(layer.id),
         centroidAnalysis: getRenderDataCentroidAnalysis(layer.id)
@@ -315,14 +314,14 @@ const getLayerProps = (layer: any) => {
   }
 }
 
-// Event mapping configurations for each layer type
+// FLAT ARCHITECTURE: Event mapping for flat property names
 const eventMappings = {
   text: {
     'update:modelValue': 'text',
     'update:selectedFont': 'font',
     'update:fontSize': 'fontSize',
     'update:fontWeight': 'fontWeight',
-    'update:textColor': 'textColor',
+    'update:textColor': 'fontColor',
     'update:textStrokeColor': 'strokeColor',
     'update:textStrokeWidth': 'strokeWidth',
     'update:textStrokeLinejoin': 'strokeLinejoin'

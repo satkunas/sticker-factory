@@ -2,6 +2,8 @@ name: "Vinyl Record Label"
 id: "vinyl-record-label"
 description: "Classic vinyl record center label design"
 category: "circle"
+width: 300
+height: 300
 layers:
   - id: "outer-label"
     type: "shape"
