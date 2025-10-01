@@ -18,18 +18,9 @@
     <!-- PHASE 2: LAYER RENDERING (preserves YAML order) -->
     <template v-for="{ templateLayer, layerData } in renderedLayers" :key="templateLayer.id">
       <!-- SHAPE LAYERS -->
-      <g
-        v-if="templateLayer.type === 'shape'"
-        :transform="`translate(${
-          resolveLayerPosition(templateLayer.position?.x, template.width)
-        }, ${
-          resolveLayerPosition(templateLayer.position?.y, template.height)
-        }) translate(${
-          -templateLayer.width / 2
-        }, ${
-          -templateLayer.height / 2
-        })`"
-      >
+      <!-- Shape paths are already positioned and centered during template loading -->
+      <!-- No additional transforms needed - path coordinates are final -->
+      <g v-if="templateLayer.type === 'shape'">
         <path
           :d="templateLayer.path"
           :fill="layerData?.fillColor ?? layerData?.fill ?? templateLayer.fill"
