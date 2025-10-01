@@ -75,31 +75,71 @@
           resolveLayerPosition(templateLayer.position.x, template.width)
         }, ${
           resolveLayerPosition(templateLayer.position.y, template.height)
+        }) translate(${
+          -templateLayer.width / 2
+        }, ${
+          -templateLayer.height / 2
         })`"
         :clip-path="templateLayer.clip ? `url(#${templateLayer.clip})` : undefined"
       >
-        <!-- Scale and rotate around transform origin using single transform -->
+        <!-- Scale and rotate around transform origin using nested g elements -->
         <g
           v-if="layerData?.transformOrigin && layerData?.scale !== undefined"
           :transform="`translate(${
-            -layerData.transformOrigin.x * (layerData.scale - 1)
+            getScaledCentroid(
+              layerData?.svgContent || templateLayer.svgContent,
+              templateLayer.width,
+              templateLayer.height,
+              layerData.transformOrigin
+            ).x
           }, ${
-            -layerData.transformOrigin.y * (layerData.scale - 1)
-          })${layerData?.rotation !== undefined ? ` rotate(${layerData.rotation})` : ''} scale(${layerData.scale})`"
-          v-html="processSvgContent(
-            layerData?.svgContent || templateLayer.svgContent,
-            undefined,
-            layerData?.color,
-            layerData?.strokeColor,
-            layerData?.strokeWidth
-          )"
-        />
+            getScaledCentroid(
+              layerData?.svgContent || templateLayer.svgContent,
+              templateLayer.width,
+              templateLayer.height,
+              layerData.transformOrigin
+            ).y
+          })`"
+        >
+          <!-- Apply scale and rotation at origin -->
+          <g :transform="`scale(${layerData.scale})${layerData?.rotation !== undefined ? ` rotate(${layerData.rotation})` : ''}`">
+            <!-- Translate back from centroid -->
+            <g
+              :transform="`translate(${
+                -getScaledCentroid(
+                  layerData?.svgContent || templateLayer.svgContent,
+                  templateLayer.width,
+                  templateLayer.height,
+                  layerData.transformOrigin
+                ).x
+              }, ${
+                -getScaledCentroid(
+                  layerData?.svgContent || templateLayer.svgContent,
+                  templateLayer.width,
+                  templateLayer.height,
+                  layerData.transformOrigin
+                ).y
+              })`"
+              v-html="processSvgContent(
+                layerData?.svgContent || templateLayer.svgContent,
+                templateLayer.width,
+                templateLayer.height,
+                undefined,
+                layerData?.color,
+                layerData?.strokeColor,
+                layerData?.strokeWidth
+              )"
+            />
+          </g>
+        </g>
         <!-- Rotation only (no scale) -->
         <g
           v-else-if="layerData?.rotation !== undefined"
           :transform="`rotate(${layerData.rotation})`"
           v-html="processSvgContent(
             layerData?.svgContent || templateLayer.svgContent,
+            templateLayer.width,
+            templateLayer.height,
             undefined,
             layerData?.color,
             layerData?.strokeColor,
@@ -111,6 +151,8 @@
           v-else
           v-html="processSvgContent(
             layerData?.svgContent || templateLayer.svgContent,
+            templateLayer.width,
+            templateLayer.height,
             undefined,
             layerData?.color,
             layerData?.strokeColor,
@@ -205,11 +247,47 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 /**
+ * Calculate scaled centroid coordinates for SVG images
+ * Converts transform origin from viewBox space to template space
+ */
+function getScaledCentroid(
+  svgContent: string,
+  templateWidth: number,
+  templateHeight: number,
+  transformOrigin: { x: number; y: number }
+): { x: number; y: number } {
+  // Extract viewBox from SVG content
+  const viewBoxMatch = svgContent.match(/viewBox\s*=\s*["']([^"']*)["']/i)
+
+  let scaledOriginX = transformOrigin.x
+  let scaledOriginY = transformOrigin.y
+
+  if (viewBoxMatch) {
+    const viewBoxValues = viewBoxMatch[1].split(/\s+/).map(Number)
+    if (viewBoxValues.length === 4) {
+      const [, , viewBoxWidth, viewBoxHeight] = viewBoxValues
+
+      // Calculate scale ratio from viewBox to template dimensions
+      const scaleX = templateWidth / viewBoxWidth
+      const scaleY = templateHeight / viewBoxHeight
+
+      // Scale transform origin coordinates to template space
+      scaledOriginX = transformOrigin.x * scaleX
+      scaledOriginY = transformOrigin.y * scaleY
+    }
+  }
+
+  return { x: scaledOriginX, y: scaledOriginY }
+}
+
+/**
  * Process SVG content to ensure it respects parent transforms
- * Removes width/height constraints, adds overflow="visible", styling, and centers content in viewBox space
+ * Adds width/height, overflow="visible", and styling attributes
  */
 function processSvgContent(
   svgContent: string,
+  templateWidth?: number,
+  templateHeight?: number,
   clipPath?: string,
   color?: string,
   strokeColor?: string,
@@ -217,23 +295,17 @@ function processSvgContent(
 ): string {
   if (!svgContent) return ''
 
-  // Extract viewBox to calculate centering offset
-  const viewBoxMatch = svgContent.match(/viewBox\s*=\s*["']([^"']*)["']/i)
-  let centeringTransform = ''
-
-  if (viewBoxMatch) {
-    const viewBoxValues = viewBoxMatch[1].split(/\s+/).map(Number)
-    if (viewBoxValues.length === 4) {
-      const [, , viewBoxWidth, viewBoxHeight] = viewBoxValues
-      const centerX = viewBoxWidth / 2
-      const centerY = viewBoxHeight / 2
-      centeringTransform = `translate(${-centerX}, ${-centerY})`
-    }
-  }
-
   // Build style attributes to add/replace
   const attributesToSet: Record<string, string> = {
     overflow: 'visible'
+  }
+
+  // Add width and height to force scaling to template dimensions
+  if (templateWidth !== undefined) {
+    attributesToSet.width = templateWidth.toString()
+  }
+  if (templateHeight !== undefined) {
+    attributesToSet.height = templateHeight.toString()
   }
 
   if (clipPath) {
@@ -250,12 +322,12 @@ function processSvgContent(
   }
 
   // Process the SVG element
-  let processed = svgContent.replace(
+  const processed = svgContent.replace(
     /<svg([^>]*)>/i,
     (match, attrs) => {
       let updatedAttrs = attrs
 
-      // Remove width and height attributes to prevent viewport constraints
+      // Remove existing width and height attributes
       updatedAttrs = updatedAttrs.replace(/\s+width\s*=\s*["'][^"']*["']/gi, '')
       updatedAttrs = updatedAttrs.replace(/\s+height\s*=\s*["'][^"']*["']/gi, '')
 
@@ -271,14 +343,6 @@ function processSvgContent(
       return `<svg${updatedAttrs}>`
     }
   )
-
-  // Inject centering transform by wrapping all content in a <g> element
-  if (centeringTransform) {
-    processed = processed.replace(
-      /(<svg[^>]*>)([\s\S]*?)(<\/svg>)/i,
-      `$1<g transform="${centeringTransform}">$2</g>$3`
-    )
-  }
 
   return processed
 }
