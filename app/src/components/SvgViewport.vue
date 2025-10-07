@@ -17,7 +17,7 @@
       v-if="template && layers"
       :template="template"
       :layers="layers"
-      mode="viewport"
+      mode="debug"
       class="absolute inset-0"
     />
   </div>

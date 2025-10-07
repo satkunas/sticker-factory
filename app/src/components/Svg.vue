@@ -11,9 +11,33 @@
         :id="clip.id"
         :key="clip.id"
       >
-        <path :d="clip.path" :transform="clip.transform" />
+        <path :d="clip.path" />
       </clipPath>
     </defs>
+
+    <!-- DEBUG: Clip path boundaries (absolute coordinates like shapes) -->
+    <g v-if="mode === 'debug'">
+      <!-- Show clip region with semi-transparent fill -->
+      <path
+        v-for="clip in clipPathDefinitions"
+        :key="`debug-fill-${clip.id}`"
+        :d="clip.path"
+        fill="red"
+        stroke="none"
+        opacity="0.15"
+      />
+      <!-- Show clip boundary with thick dashed stroke -->
+      <path
+        v-for="clip in clipPathDefinitions"
+        :key="`debug-stroke-${clip.id}`"
+        :d="clip.path"
+        fill="none"
+        stroke="red"
+        stroke-width="4"
+        stroke-dasharray="8,4"
+        opacity="0.8"
+      />
+    </g>
 
     <!-- PHASE 2: LAYER RENDERING (preserves YAML order) -->
     <template v-for="{ templateLayer, layerData } in renderedLayers" :key="templateLayer.id">
@@ -34,34 +58,41 @@
       <g
         v-else-if="templateLayer.type === 'text'"
         :clip-path="templateLayer.clip ? `url(#${templateLayer.clip})` : undefined"
+        :transform="`translate(${
+          resolveLayerPosition(templateLayer.position.x, template.width)
+        }, ${
+          resolveLayerPosition(templateLayer.position.y, template.height)
+        })${templateLayer.rotation !== undefined ? ` rotate(${templateLayer.rotation})` : ''}`"
       >
-        <g
-          :transform="`translate(${
-            resolveLayerPosition(templateLayer.position.x, template.width)
-          }, ${
-            resolveLayerPosition(templateLayer.position.y, template.height)
-          })${templateLayer.rotation !== undefined ? ` rotate(${templateLayer.rotation})` : ''}`"
+        <!-- DEBUG: Layer center point (blue) -->
+        <circle
+          v-if="mode === 'debug'"
+          cx="0"
+          cy="0"
+          r="5"
+          fill="blue"
+          opacity="0.7"
+        />
+        <text
+          text-anchor="middle"
+          dominant-baseline="central"
+          :font-family="getFontFamilyString(layerData) ?? templateLayer.fontFamily"
+          :font-size="layerData?.fontSize ?? templateLayer.fontSize"
+          :font-weight="layerData?.fontWeight ?? templateLayer.fontWeight"
+          :fill="layerData?.fontColor ?? layerData?.textColor ?? templateLayer.fontColor"
+          :stroke="layerData?.strokeWidth !== undefined && layerData.strokeWidth > 0 ? (layerData?.strokeColor ?? templateLayer.strokeColor) : undefined"
+          :stroke-width="layerData?.strokeWidth !== undefined && layerData.strokeWidth > 0 ? layerData.strokeWidth : undefined"
+          :stroke-opacity="layerData?.strokeOpacity"
+          :stroke-linejoin="layerData?.strokeLinejoin"
         >
-          <text
-            text-anchor="middle"
-            dominant-baseline="central"
-            :font-family="layerData?.fontFamily ?? templateLayer.fontFamily"
-            :font-size="layerData?.fontSize ?? templateLayer.fontSize"
-            :font-weight="layerData?.fontWeight ?? templateLayer.fontWeight"
-            :fill="layerData?.fontColor ?? layerData?.textColor ?? templateLayer.fontColor"
-            :stroke="layerData?.strokeWidth !== undefined && layerData.strokeWidth > 0 ? (layerData?.strokeColor ?? templateLayer.strokeColor) : undefined"
-            :stroke-width="layerData?.strokeWidth !== undefined && layerData.strokeWidth > 0 ? layerData.strokeWidth : undefined"
-            :stroke-opacity="layerData?.strokeOpacity"
-            :stroke-linejoin="layerData?.strokeLinejoin"
-          >
-            {{ layerData?.text ?? templateLayer.text }}
-          </text>
-        </g>
+          {{ layerData?.text ?? templateLayer.text }}
+        </text>
       </g>
 
       <!-- SVG IMAGE LAYERS -->
       <g
         v-else-if="templateLayer.type === 'svgImage'"
+        :clip-path="templateLayer.clip ? `url(#${templateLayer.clip})` : undefined"
         :transform="`translate(${
           resolveLayerPosition(templateLayer.position.x, template.width)
         }, ${
@@ -71,12 +102,24 @@
         }, ${
           -templateLayer.height / 2
         })`"
-        :clip-path="templateLayer.clip ? `url(#${templateLayer.clip})` : undefined"
       >
-        <!-- Scale and rotate around transform origin using nested g elements -->
-        <g
-          v-if="layerData?.transformOrigin && layerData?.scale !== undefined"
-          :transform="`translate(${
+          <!-- DEBUG: Layer boundary (green rectangle) -->
+          <rect
+            v-if="mode === 'debug'"
+            x="0"
+            y="0"
+            :width="templateLayer.width"
+            :height="templateLayer.height"
+            fill="none"
+            stroke="green"
+            stroke-width="2"
+            stroke-dasharray="3,3"
+            opacity="0.7"
+          />
+          <!-- Scale and rotate around transform origin using nested g elements -->
+          <g
+            v-if="layerData?.transformOrigin && layerData?.scale !== undefined"
+            :transform="`translate(${
             getScaledCentroid(
               layerData?.svgContent || templateLayer.svgContent,
               templateLayer.width,
@@ -128,96 +171,30 @@
           v-else-if="layerData?.rotation !== undefined"
           :transform="`rotate(${layerData.rotation})`"
           v-html="processSvgContent(
-            layerData?.svgContent || templateLayer.svgContent,
-            templateLayer.width,
-            templateLayer.height,
-            undefined,
-            layerData?.color,
-            layerData?.strokeColor,
-            layerData?.strokeWidth
-          )"
-        />
+              layerData?.svgContent || templateLayer.svgContent,
+              templateLayer.width,
+              templateLayer.height,
+              undefined,
+              layerData?.color,
+              layerData?.strokeColor,
+              layerData?.strokeWidth
+            )"
+          />
         <!-- Fallback for no transform origin -->
         <g
           v-else
           v-html="processSvgContent(
-            layerData?.svgContent || templateLayer.svgContent,
-            templateLayer.width,
-            templateLayer.height,
-            undefined,
-            layerData?.color,
-            layerData?.strokeColor,
-            layerData?.strokeWidth
-          )"
-        />
+              layerData?.svgContent || templateLayer.svgContent,
+              templateLayer.width,
+              templateLayer.height,
+              undefined,
+              layerData?.color,
+              layerData?.strokeColor,
+              layerData?.strokeWidth
+            )"
+          />
       </g>
     </template>
-
-    <!-- DEBUG: Crosshair at template center (50%, 50%) -->
-    <g class="debug-crosshair">
-      <!-- Vertical line at 50% width -->
-      <line
-        :x1="template.width / 2"
-        y1="0"
-        :x2="template.width / 2"
-        :y2="template.height"
-        stroke="red"
-        stroke-width="1"
-        stroke-dasharray="5,5"
-        opacity="0.5"
-      />
-      <!-- Horizontal line at 50% height -->
-      <line
-        x1="0"
-        :y1="template.height / 2"
-        :x2="template.width"
-        :y2="template.height / 2"
-        stroke="red"
-        stroke-width="1"
-        stroke-dasharray="5,5"
-        opacity="0.5"
-      />
-      <!-- Center circle -->
-      <circle
-        :cx="template.width / 2"
-        :cy="template.height / 2"
-        r="3"
-        fill="red"
-        opacity="0.7"
-      />
-      <!-- Center label -->
-      <text
-        :x="template.width / 2 + 5"
-        :y="template.height / 2 - 5"
-        fill="red"
-        font-size="8"
-        opacity="0.7"
-      >
-        50%,50%
-      </text>
-    </g>
-
-    <!-- DEBUG: Position markers for each layer -->
-    <g class="debug-markers">
-      <template v-for="{ templateLayer } in renderedLayers" :key="`marker-${templateLayer.id}`">
-        <circle
-          :cx="resolveLayerPosition(templateLayer.position?.x, template.width)"
-          :cy="resolveLayerPosition(templateLayer.position?.y, template.height)"
-          r="2"
-          :fill="templateLayer.type === 'text' ? 'blue' : templateLayer.type === 'shape' ? 'green' : 'orange'"
-          opacity="0.8"
-        />
-        <text
-          :x="resolveLayerPosition(templateLayer.position?.x, template.width) + 5"
-          :y="resolveLayerPosition(templateLayer.position?.y, template.height) - 5"
-          :fill="templateLayer.type === 'text' ? 'blue' : templateLayer.type === 'shape' ? 'green' : 'orange'"
-          font-size="7"
-          opacity="0.8"
-        >
-          {{ templateLayer.id }}
-        </text>
-      </template>
-    </g>
   </svg>
 </template>
 
@@ -226,6 +203,7 @@ import { computed } from 'vue'
 import type { SimpleTemplate, FlatLayerData } from '../types/template-types'
 import { resolveLayerPosition } from '../utils/layer-positioning'
 import { generateClipPathDefinitions } from '../utils/clip-path-helpers'
+import type { FontConfig } from '../config/fonts'
 
 interface Props {
   template: SimpleTemplate
@@ -236,6 +214,27 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   mode: 'viewport'
 })
+
+/**
+ * Extract font family string from layer data
+ * Handles both FontConfig objects and direct fontFamily strings
+ */
+function getFontFamilyString(layerData: FlatLayerData | undefined): string | undefined {
+  if (!layerData) return undefined
+
+  // If layerData has a 'font' property with a FontConfig object
+  if ((layerData as any).font && typeof (layerData as any).font === 'object') {
+    const fontConfig = (layerData as any).font as FontConfig
+    return fontConfig.family
+  }
+
+  // If layerData has a direct 'fontFamily' string property
+  if (layerData.fontFamily) {
+    return layerData.fontFamily
+  }
+
+  return undefined
+}
 
 /**
  * Calculate scaled centroid coordinates for SVG images
