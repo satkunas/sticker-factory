@@ -4,33 +4,34 @@
     xmlns="http://www.w3.org/2000/svg"
     class="svg-content"
   >
-    <!-- PHASE 1: CLIP PATH DEFINITIONS -->
-    <defs v-if="clipPathDefinitions.length > 0">
-      <clipPath
-        v-for="clip in clipPathDefinitions"
-        :id="clip.id"
-        :key="clip.id"
+    <!-- PHASE 1: MASK DEFINITIONS -->
+    <defs v-if="maskDefinitions.length > 0">
+      <!-- Simple mask definitions from shape layers -->
+      <mask
+        v-for="mask in maskDefinitions"
+        :id="mask.id"
+        :key="mask.id"
       >
-        <path :d="clip.path" />
-      </clipPath>
+        <path :d="mask.path" fill="white" />
+      </mask>
     </defs>
 
-    <!-- DEBUG: Clip path boundaries (absolute coordinates like shapes) -->
+    <!-- DEBUG: Mask boundaries (absolute coordinates like shapes) -->
     <g v-if="mode === 'debug'">
-      <!-- Show clip region with semi-transparent fill -->
+      <!-- Show mask region with semi-transparent fill -->
       <path
-        v-for="clip in clipPathDefinitions"
-        :key="`debug-fill-${clip.id}`"
-        :d="clip.path"
+        v-for="mask in maskDefinitions"
+        :key="`debug-fill-${mask.id}`"
+        :d="mask.path"
         fill="red"
         stroke="none"
         opacity="0.15"
       />
-      <!-- Show clip boundary with thick dashed stroke -->
+      <!-- Show mask boundary with thick dashed stroke -->
       <path
-        v-for="clip in clipPathDefinitions"
-        :key="`debug-stroke-${clip.id}`"
-        :d="clip.path"
+        v-for="mask in maskDefinitions"
+        :key="`debug-stroke-${mask.id}`"
+        :d="mask.path"
         fill="none"
         stroke="red"
         stroke-width="4"
@@ -57,52 +58,57 @@
       <!-- TEXT LAYERS -->
       <g
         v-else-if="templateLayer.type === 'text'"
-        :clip-path="templateLayer.clip ? `url(#${templateLayer.clip})` : undefined"
-        :transform="`translate(${
-          resolveLayerPosition(templateLayer.position.x, template.width)
-        }, ${
-          resolveLayerPosition(templateLayer.position.y, template.height)
-        })${templateLayer.rotation !== undefined ? ` rotate(${templateLayer.rotation})` : ''}`"
+        :mask="templateLayer.clip ? `url(#${templateLayer.clip})` : undefined"
       >
-        <!-- DEBUG: Layer center point (blue) -->
-        <circle
-          v-if="mode === 'debug'"
-          cx="0"
-          cy="0"
-          r="5"
-          fill="blue"
-          opacity="0.7"
-        />
-        <text
-          text-anchor="middle"
-          dominant-baseline="central"
-          :font-family="getFontFamilyString(layerData) ?? templateLayer.fontFamily"
-          :font-size="layerData?.fontSize ?? templateLayer.fontSize"
-          :font-weight="layerData?.fontWeight ?? templateLayer.fontWeight"
-          :fill="layerData?.fontColor ?? layerData?.textColor ?? templateLayer.fontColor"
-          :stroke="layerData?.strokeWidth !== undefined && layerData.strokeWidth > 0 ? (layerData?.strokeColor ?? templateLayer.strokeColor) : undefined"
-          :stroke-width="layerData?.strokeWidth !== undefined && layerData.strokeWidth > 0 ? layerData.strokeWidth : undefined"
-          :stroke-opacity="layerData?.strokeOpacity"
-          :stroke-linejoin="layerData?.strokeLinejoin"
+        <g
+          :transform="`translate(${
+            resolveLayerPosition(templateLayer.position.x, template.width)
+          }, ${
+            resolveLayerPosition(templateLayer.position.y, template.height)
+          })${templateLayer.rotation !== undefined ? ` rotate(${templateLayer.rotation})` : ''}`"
         >
-          {{ layerData?.text ?? templateLayer.text }}
-        </text>
+          <!-- DEBUG: Layer center point (blue) -->
+          <circle
+            v-if="mode === 'debug'"
+            cx="0"
+            cy="0"
+            r="5"
+            fill="blue"
+            opacity="0.7"
+          />
+          <text
+            text-anchor="middle"
+            dominant-baseline="central"
+            :font-family="getFontFamilyString(layerData) ?? templateLayer.fontFamily"
+            :font-size="layerData?.fontSize ?? templateLayer.fontSize"
+            :font-weight="layerData?.fontWeight ?? templateLayer.fontWeight"
+            :fill="layerData?.fontColor ?? layerData?.textColor ?? templateLayer.fontColor"
+            :stroke="layerData?.strokeWidth !== undefined && layerData.strokeWidth > 0 ? (layerData?.strokeColor ?? templateLayer.strokeColor) : undefined"
+            :stroke-width="layerData?.strokeWidth !== undefined && layerData.strokeWidth > 0 ? layerData.strokeWidth : undefined"
+            :stroke-opacity="layerData?.strokeOpacity"
+            :stroke-linejoin="layerData?.strokeLinejoin"
+          >
+            {{ layerData?.text ?? templateLayer.text }}
+          </text>
+        </g>
       </g>
 
       <!-- SVG IMAGE LAYERS -->
       <g
         v-else-if="templateLayer.type === 'svgImage'"
-        :clip-path="templateLayer.clip ? `url(#${templateLayer.clip})` : undefined"
-        :transform="`translate(${
-          resolveLayerPosition(templateLayer.position.x, template.width)
-        }, ${
-          resolveLayerPosition(templateLayer.position.y, template.height)
-        }) translate(${
-          -templateLayer.width / 2
-        }, ${
-          -templateLayer.height / 2
-        })`"
+        :mask="templateLayer.clip ? `url(#${templateLayer.clip})` : undefined"
       >
+        <g
+          :transform="`translate(${
+            resolveLayerPosition(templateLayer.position.x, template.width)
+          }, ${
+            resolveLayerPosition(templateLayer.position.y, template.height)
+          }) translate(${
+            -templateLayer.width / 2
+          }, ${
+            -templateLayer.height / 2
+          })`"
+        >
           <!-- DEBUG: Layer boundary (green rectangle) -->
           <rect
             v-if="mode === 'debug'"
@@ -193,6 +199,7 @@
               layerData?.strokeWidth
             )"
           />
+        </g>
       </g>
     </template>
   </svg>
@@ -202,7 +209,7 @@
 import { computed } from 'vue'
 import type { SimpleTemplate, FlatLayerData } from '../types/template-types'
 import { resolveLayerPosition } from '../utils/layer-positioning'
-import { generateClipPathDefinitions } from '../utils/clip-path-helpers'
+import { generateMaskDefinitions } from '../utils/clip-path-helpers'
 import type { FontConfig } from '../config/fonts'
 
 interface Props {
@@ -338,11 +345,11 @@ function processSvgContent(
 }
 
 /**
- * Extract clip path definitions from shape layers
+ * Extract mask definitions from shape layers
  * These need to be in <defs> before usage
  */
-const clipPathDefinitions = computed(() => {
-  return generateClipPathDefinitions(
+const maskDefinitions = computed(() => {
+  return generateMaskDefinitions(
     props.template.layers,
     props.template.width,
     props.template.height

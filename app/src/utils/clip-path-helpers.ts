@@ -1,27 +1,27 @@
 /**
- * Clip Path Helpers
+ * Mask Helpers
  *
- * Extract and generate clip path definitions from template layers
+ * Extract and generate mask definitions from template layers
  */
 
 import type { ProcessedTemplateLayer } from '../types/template-types'
 
-export interface ClipPathDefinition {
+export interface MaskDefinition {
   id: string
   path: string
 }
 
 /**
- * Generate clip path definitions from shape layers
+ * Generate mask definitions from shape layers
  * These go in the <defs> section of the SVG
- * Note: Clip paths use the same coordinate space as shapes (already positioned)
+ * Note: Masks use the same coordinate space as shapes (already positioned)
  */
-export function generateClipPathDefinitions(
+export function generateMaskDefinitions(
   layers: ProcessedTemplateLayer[],
   _templateWidth: number,
   _templateHeight: number
-): ClipPathDefinition[] {
-  const definitions: ClipPathDefinition[] = []
+): MaskDefinition[] {
+  const definitions: MaskDefinition[] = []
 
   for (const layer of layers) {
     if (layer.type === 'shape') {
