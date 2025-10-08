@@ -9,9 +9,7 @@
         :class="{ 'border-primary-500': isExpanded }"
         :placeholder="placeholder"
         :style="{
-          fontFamily: selectedFont ? getFontFamily(selectedFont) : undefined,
-          fontSize: fontSize !== undefined ? fontSize + 'px' : undefined,
-          fontWeight: fontWeight !== undefined ? fontWeight : undefined
+          fontFamily: selectedFont ? getFontFamily(selectedFont) : undefined
         }"
         @input="$emit('update:modelValue', $event.target.value)"
         @focus="handleFocus"
