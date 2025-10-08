@@ -7,6 +7,30 @@ import type { FontConfig } from '../config/fonts'
 import { ALL_FONT_WEIGHTS, FONT_CATEGORY_COLORS } from './ui-constants'
 
 /**
+ * Extract font family string from layer data
+ * Handles both FontConfig objects and direct fontFamily strings
+ *
+ * @param layerData - Layer data that may contain font information
+ * @returns Font family string or undefined if not present
+ */
+export function extractFontFamily(layerData: any): string | undefined {
+  if (!layerData) return undefined
+
+  // If layerData has a 'font' property with a FontConfig object
+  if (layerData.font && typeof layerData.font === 'object') {
+    const fontConfig = layerData.font as FontConfig
+    return fontConfig.family
+  }
+
+  // If layerData has a direct 'fontFamily' string property
+  if (layerData.fontFamily) {
+    return layerData.fontFamily
+  }
+
+  return undefined
+}
+
+/**
  * Get available font weights based on selected font
  */
 export function getAvailableFontWeights(selectedFont: FontConfig | null | undefined) {

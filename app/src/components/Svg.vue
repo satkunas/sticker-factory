@@ -79,7 +79,7 @@
           <text
             text-anchor="middle"
             dominant-baseline="central"
-            :font-family="getFontFamilyString(layerData) ?? templateLayer.fontFamily"
+            :font-family="extractFontFamily(layerData) ?? templateLayer.fontFamily"
             :font-size="layerData?.fontSize ?? templateLayer.fontSize"
             :font-weight="layerData?.fontWeight ?? templateLayer.fontWeight"
             :fill="layerData?.fontColor ?? layerData?.textColor ?? templateLayer.fontColor"
@@ -126,14 +126,14 @@
           <g
             v-if="layerData?.transformOrigin && layerData?.scale !== undefined"
             :transform="`translate(${
-            getScaledCentroid(
+            calculateScaledTransformOrigin(
               layerData?.svgContent || templateLayer.svgContent,
               templateLayer.width,
               templateLayer.height,
               layerData.transformOrigin
             ).x
           }, ${
-            getScaledCentroid(
+            calculateScaledTransformOrigin(
               layerData?.svgContent || templateLayer.svgContent,
               templateLayer.width,
               templateLayer.height,
@@ -146,21 +146,21 @@
             <!-- Translate back from centroid -->
             <g
               :transform="`translate(${
-                -getScaledCentroid(
+                -calculateScaledTransformOrigin(
                   layerData?.svgContent || templateLayer.svgContent,
                   templateLayer.width,
                   templateLayer.height,
                   layerData.transformOrigin
                 ).x
               }, ${
-                -getScaledCentroid(
+                -calculateScaledTransformOrigin(
                   layerData?.svgContent || templateLayer.svgContent,
                   templateLayer.width,
                   templateLayer.height,
                   layerData.transformOrigin
                 ).y
               })`"
-              v-html="processSvgContent(
+              v-html="applySvgRenderingAttributes(
                 layerData?.svgContent || templateLayer.svgContent,
                 templateLayer.width,
                 templateLayer.height,
@@ -176,7 +176,7 @@
         <g
           v-else-if="layerData?.rotation !== undefined"
           :transform="`rotate(${layerData.rotation})`"
-          v-html="processSvgContent(
+          v-html="applySvgRenderingAttributes(
               layerData?.svgContent || templateLayer.svgContent,
               templateLayer.width,
               templateLayer.height,
@@ -189,7 +189,7 @@
         <!-- Fallback for no transform origin -->
         <g
           v-else
-          v-html="processSvgContent(
+          v-html="applySvgRenderingAttributes(
               layerData?.svgContent || templateLayer.svgContent,
               templateLayer.width,
               templateLayer.height,
@@ -210,7 +210,8 @@ import { computed } from 'vue'
 import type { SimpleTemplate, FlatLayerData } from '../types/template-types'
 import { resolveLayerPosition } from '../utils/layer-positioning'
 import { generateMaskDefinitions } from '../utils/clip-path-helpers'
-import type { FontConfig } from '../config/fonts'
+import { calculateScaledTransformOrigin, applySvgRenderingAttributes } from '../utils/svg-transforms'
+import { extractFontFamily } from '../utils/font-utils'
 
 interface Props {
   template: SimpleTemplate
@@ -221,128 +222,6 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   mode: 'viewport'
 })
-
-/**
- * Extract font family string from layer data
- * Handles both FontConfig objects and direct fontFamily strings
- */
-function getFontFamilyString(layerData: FlatLayerData | undefined): string | undefined {
-  if (!layerData) return undefined
-
-  // If layerData has a 'font' property with a FontConfig object
-  if ((layerData as any).font && typeof (layerData as any).font === 'object') {
-    const fontConfig = (layerData as any).font as FontConfig
-    return fontConfig.family
-  }
-
-  // If layerData has a direct 'fontFamily' string property
-  if (layerData.fontFamily) {
-    return layerData.fontFamily
-  }
-
-  return undefined
-}
-
-/**
- * Calculate scaled centroid coordinates for SVG images
- * Converts transform origin from viewBox space to template space
- */
-function getScaledCentroid(
-  svgContent: string,
-  templateWidth: number,
-  templateHeight: number,
-  transformOrigin: { x: number; y: number }
-): { x: number; y: number } {
-  // Extract viewBox from SVG content
-  const viewBoxMatch = svgContent.match(/viewBox\s*=\s*["']([^"']*)["']/i)
-
-  let scaledOriginX = transformOrigin.x
-  let scaledOriginY = transformOrigin.y
-
-  if (viewBoxMatch) {
-    const viewBoxValues = viewBoxMatch[1].split(/\s+/).map(Number)
-    if (viewBoxValues.length === 4) {
-      const [, , viewBoxWidth, viewBoxHeight] = viewBoxValues
-
-      // Calculate scale ratio from viewBox to template dimensions
-      const scaleX = templateWidth / viewBoxWidth
-      const scaleY = templateHeight / viewBoxHeight
-
-      // Scale transform origin coordinates to template space
-      scaledOriginX = transformOrigin.x * scaleX
-      scaledOriginY = transformOrigin.y * scaleY
-    }
-  }
-
-  return { x: scaledOriginX, y: scaledOriginY }
-}
-
-/**
- * Process SVG content to ensure it respects parent transforms
- * Adds width/height, overflow="visible", and styling attributes
- */
-function processSvgContent(
-  svgContent: string,
-  templateWidth?: number,
-  templateHeight?: number,
-  clipPath?: string,
-  color?: string,
-  strokeColor?: string,
-  strokeWidth?: number
-): string {
-  if (!svgContent) return ''
-
-  // Build style attributes to add/replace
-  const attributesToSet: Record<string, string> = {
-    overflow: 'visible'
-  }
-
-  // Add width and height to force scaling to template dimensions
-  if (templateWidth !== undefined) {
-    attributesToSet.width = templateWidth.toString()
-  }
-  if (templateHeight !== undefined) {
-    attributesToSet.height = templateHeight.toString()
-  }
-
-  if (clipPath) {
-    attributesToSet['clip-path'] = clipPath
-  }
-  if (color !== undefined) {
-    attributesToSet.fill = color
-  }
-  if (strokeColor !== undefined) {
-    attributesToSet.stroke = strokeColor
-  }
-  if (strokeWidth !== undefined && strokeWidth > 0) {
-    attributesToSet['stroke-width'] = strokeWidth.toString()
-  }
-
-  // Process the SVG element
-  const processed = svgContent.replace(
-    /<svg([^>]*)>/i,
-    (match, attrs) => {
-      let updatedAttrs = attrs
-
-      // Remove existing width and height attributes
-      updatedAttrs = updatedAttrs.replace(/\s+width\s*=\s*["'][^"']*["']/gi, '')
-      updatedAttrs = updatedAttrs.replace(/\s+height\s*=\s*["'][^"']*["']/gi, '')
-
-      // Add/replace our attributes
-      Object.entries(attributesToSet).forEach(([key, value]) => {
-        // Remove existing attribute if present
-        const attrRegex = new RegExp(`\\s+${key}\\s*=\\s*["'][^"']*["']`, 'gi')
-        updatedAttrs = updatedAttrs.replace(attrRegex, '')
-        // Add new attribute
-        updatedAttrs += ` ${key}="${value}"`
-      })
-
-      return `<svg${updatedAttrs}>`
-    }
-  )
-
-  return processed
-}
 
 /**
  * Extract mask definitions from shape layers
