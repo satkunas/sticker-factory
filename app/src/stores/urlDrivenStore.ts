@@ -55,7 +55,7 @@ function safeTransform(transformParts: string[]): string {
   const validParts = transformParts.filter(part => !part.includes('NaN'))
   return validParts.join(' ')
 }
-import type { SimpleTemplate, FlatLayerData, TemplateLayer } from '../types/template-types'
+import type { SimpleTemplate, FlatLayerData, TemplateLayer, TemplateTextInput, TemplateShape } from '../types/template-types'
 import type { FontConfig } from '../config/fonts'
 import { resolveCoordinate } from '../utils/svg'
 import { processLayerForRendering, type ProcessedLayer } from '../utils/unified-positioning'
@@ -135,9 +135,18 @@ export interface UrlDecodedState {
 export interface RenderableLayer {
   id: string
   type: 'text' | 'shape' | 'svgImage'
-  textInput?: any
-  shape?: any
-  svgImage?: any
+  textInput?: TemplateTextInput
+  shape?: TemplateShape
+  svgImage?: {
+    position: { x: string | number; y: number }
+    width: number
+    height: number
+    svgContent: string
+    fill?: string
+    stroke?: string
+    strokeWidth?: number
+    clip?: string
+  }
   transformString?: string
   outerTransform?: string  // Positioning and base scaling
   innerTransform?: string  // User scaling and rotation

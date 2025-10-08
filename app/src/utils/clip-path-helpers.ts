@@ -25,7 +25,7 @@ export function generateMaskDefinitions(
 
   for (const layer of layers) {
     if (layer.type === 'shape') {
-      const path = (layer as any).path
+      const path = layer.shape.path
       if (!path) continue
 
       definitions.push({
