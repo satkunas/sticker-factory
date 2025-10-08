@@ -149,8 +149,10 @@ export function encodeTemplateStateCompact(state: AppState): string {
         if (layer.text !== undefined) flatLayer.text = layer.text
         if (layer.fontSize !== undefined) flatLayer.fontSize = layer.fontSize
         if (layer.fontWeight !== undefined) flatLayer.fontWeight = layer.fontWeight
-        if (layer.textColor !== undefined) flatLayer.fontColor = layer.textColor  // Note: using fontColor for flat architecture
-        if (layer.fillColor !== undefined) flatLayer.fillColor = layer.fillColor
+        if (layer.fontColor !== undefined) flatLayer.fontColor = layer.fontColor
+        if (layer.font?.family !== undefined) flatLayer.fontFamily = layer.font.family  // Store font family name
+        if (layer.fill !== undefined) flatLayer.fill = layer.fill
+        if (layer.stroke !== undefined) flatLayer.stroke = layer.stroke
         if (layer.strokeColor !== undefined) flatLayer.strokeColor = layer.strokeColor
         if (layer.strokeWidth !== undefined) flatLayer.strokeWidth = layer.strokeWidth
         if (layer.strokeOpacity !== undefined) flatLayer.strokeOpacity = layer.strokeOpacity
@@ -160,7 +162,6 @@ export function encodeTemplateStateCompact(state: AppState): string {
         if (layer.color !== undefined) flatLayer.color = layer.color
         if (layer.rotation !== undefined) flatLayer.rotation = layer.rotation
         if (layer.scale !== undefined) flatLayer.scale = layer.scale
-        if (layer.font !== undefined) flatLayer.font = layer.font
 
         return flatLayer
       }) : []
@@ -209,8 +210,10 @@ export function decodeTemplateStateCompact(encoded: string): Partial<AppState> |
         if (layer.text !== undefined) mappedLayer.text = layer.text
         if (layer.fontSize !== undefined) mappedLayer.fontSize = layer.fontSize
         if (layer.fontWeight !== undefined) mappedLayer.fontWeight = layer.fontWeight
-        if (layer.fontColor !== undefined) mappedLayer.textColor = layer.fontColor  // Map fontColor -> textColor
-        if (layer.fillColor !== undefined) mappedLayer.fillColor = layer.fillColor
+        if (layer.fontColor !== undefined) mappedLayer.fontColor = layer.fontColor
+        if (layer.fontFamily !== undefined) mappedLayer.fontFamily = layer.fontFamily  // Font family string
+        if (layer.fill !== undefined) mappedLayer.fill = layer.fill
+        if (layer.stroke !== undefined) mappedLayer.stroke = layer.stroke
         if (layer.strokeColor !== undefined) mappedLayer.strokeColor = layer.strokeColor
         if (layer.strokeWidth !== undefined) mappedLayer.strokeWidth = layer.strokeWidth
         if (layer.strokeOpacity !== undefined) mappedLayer.strokeOpacity = layer.strokeOpacity
@@ -220,7 +223,6 @@ export function decodeTemplateStateCompact(encoded: string): Partial<AppState> |
         if (layer.color !== undefined) mappedLayer.color = layer.color
         if (layer.rotation !== undefined) mappedLayer.rotation = layer.rotation
         if (layer.scale !== undefined) mappedLayer.scale = layer.scale
-        if (layer.font !== undefined) mappedLayer.font = layer.font
 
         return mappedLayer
       })

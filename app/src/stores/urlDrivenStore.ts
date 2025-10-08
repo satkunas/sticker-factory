@@ -57,7 +57,7 @@ function safeTransform(transformParts: string[]): string {
   return validParts.join(' ')
 }
 import type { SimpleTemplate, FlatLayerData, TemplateLayer, TemplateTextInput, TemplateShape } from '../types/template-types'
-import type { FontConfig } from '../config/fonts'
+import { AVAILABLE_FONTS, type FontConfig } from '../config/fonts'
 import { resolveCoordinate } from '../utils/svg'
 import { processLayerForRendering, type ProcessedLayer } from '../utils/unified-positioning'
 // Removed unused import: getStyledSvgContent
@@ -498,6 +498,14 @@ function mergeTemplateWithUrlData(template: SimpleTemplate, urlLayers: Array<{ i
       formEntry.strokeWidth = urlOverride.strokeWidth !== undefined ? urlOverride.strokeWidth : flatLayer.strokeWidth
       formEntry.strokeOpacity = urlOverride.strokeOpacity !== undefined ? urlOverride.strokeOpacity : flatLayer.strokeOpacity
       formEntry.strokeLinejoin = urlOverride.strokeLinejoin !== undefined ? urlOverride.strokeLinejoin : flatLayer.strokeLinejoin
+
+      // Handle fontFamily from URL - convert to font object
+      if (urlOverride.fontFamily !== undefined) {
+        const fontConfig = AVAILABLE_FONTS.find(f => f.family === urlOverride.fontFamily || f.name === urlOverride.fontFamily)
+        if (fontConfig) {
+          formEntry.font = fontConfig
+        }
+      }
     } else if (templateLayer.type === 'shape') {
       // Template loader now flattens structure - properties are directly on layer
       formEntry.fill = urlOverride.fill !== undefined ? urlOverride.fill : flatLayer.fill
