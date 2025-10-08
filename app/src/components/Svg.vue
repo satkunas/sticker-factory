@@ -209,7 +209,7 @@
 import { computed } from 'vue'
 import type { SimpleTemplate, FlatLayerData } from '../types/template-types'
 import { resolveLayerPosition } from '../utils/layer-positioning'
-import { generateMaskDefinitions } from '../utils/clip-path-helpers'
+import { generateMaskDefinitions } from '../utils/mask-utils'
 import { calculateScaledTransformOrigin, applySvgRenderingAttributes } from '../utils/svg-transforms'
 import { extractFontFamily } from '../utils/font-utils'
 
