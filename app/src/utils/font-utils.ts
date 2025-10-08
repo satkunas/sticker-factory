@@ -13,18 +13,20 @@ import { ALL_FONT_WEIGHTS, FONT_CATEGORY_COLORS } from './ui-constants'
  * @param layerData - Layer data that may contain font information
  * @returns Font family string or undefined if not present
  */
-export function extractFontFamily(layerData: any): string | undefined {
-  if (!layerData) return undefined
+export function extractFontFamily(layerData: unknown): string | undefined {
+  if (!layerData || typeof layerData !== 'object') return undefined
+
+  const data = layerData as Record<string, unknown>
 
   // If layerData has a 'font' property with a FontConfig object
-  if (layerData.font && typeof layerData.font === 'object') {
-    const fontConfig = layerData.font as FontConfig
+  if (data.font && typeof data.font === 'object') {
+    const fontConfig = data.font as FontConfig
     return fontConfig.family
   }
 
   // If layerData has a direct 'fontFamily' string property
-  if (layerData.fontFamily) {
-    return layerData.fontFamily
+  if (typeof data.fontFamily === 'string') {
+    return data.fontFamily
   }
 
   return undefined
