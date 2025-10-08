@@ -102,7 +102,7 @@ export function shouldLoadMoreFonts(
 /**
  * Calculate next visible count for lazy loading
  */
-export function getNextVisibleCount(
+export function calculateNextVisibleCount(
   currentCount: number,
   increment: number,
   maxCount: number

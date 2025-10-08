@@ -21,7 +21,7 @@ import type { AppState } from '../types/app-state'
 import {
   analyzeSvgViewBoxFit,
   type SvgViewBoxFitAnalysis,
-  getOptimalTransformOrigin,
+  calculateOptimalTransformOrigin,
   shouldUseCentroidOrigin,
   calculateSvgCentroid,
   type Point,
@@ -217,7 +217,7 @@ function mergeFlatLayerData(templateDefaults: FlatLayerData, formOverrides: Part
   // Calculate transform origin for SVG images if they have content
   if (merged.type === 'svgImage' && merged.svgContent) {
     try {
-      merged.transformOrigin = getOptimalTransformOrigin(merged.svgContent)
+      merged.transformOrigin = calculateOptimalTransformOrigin(merged.svgContent)
     } catch (error) {
       // Fallback to geometric center of standard 24x24 viewBox
       merged.transformOrigin = { x: 12, y: 12 }
@@ -728,7 +728,7 @@ function updateRenderData(): void {
           logger.debug(`Calculating centroid for ${templateLayer.id} with SVG content length: ${svgContent.length}`)
 
           const centroidResult = calculateSvgCentroid(svgContent)
-          const optimalOrigin = getOptimalTransformOrigin(svgContent)
+          const optimalOrigin = calculateOptimalTransformOrigin(svgContent)
           const useCentroid = shouldUseCentroidOrigin(svgContent)
 
           // Add centroid analysis to render layer
@@ -938,7 +938,7 @@ export const mergedFormData = computed(() => {
       // Calculate transform origin for proper rotation/scaling around center-of-mass
       if (mergedLayer.svgContent) {
         try {
-          const optimalOrigin = getOptimalTransformOrigin(mergedLayer.svgContent)
+          const optimalOrigin = calculateOptimalTransformOrigin(mergedLayer.svgContent)
           mergedLayer.transformOrigin = optimalOrigin
         } catch (error) {
           // Fallback to geometric center of standard 24x24 viewBox

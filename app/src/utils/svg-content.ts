@@ -420,7 +420,7 @@ export function removeExplicitDimensions(svgContent: string): string {
  * @param metadata - SVG metadata
  * @returns Aspect ratio (width / height)
  */
-export function getSvgAspectRatio(metadata: SvgMetadata): number {
+export function calculateSvgAspectRatio(metadata: SvgMetadata): number {
   if (!metadata || metadata.viewBox.height === 0) return 1
   return metadata.viewBox.width / metadata.viewBox.height
 }
@@ -433,7 +433,7 @@ export function getSvgAspectRatio(metadata: SvgMetadata): number {
  * @returns True if SVG is approximately square
  */
 export function isSvgSquare(metadata: SvgMetadata, tolerance = 0.1): boolean {
-  const aspectRatio = getSvgAspectRatio(metadata)
+  const aspectRatio = calculateSvgAspectRatio(metadata)
   return Math.abs(aspectRatio - 1) <= tolerance
 }
 
@@ -452,7 +452,7 @@ export function calculateOptimalSvgSize(
 ): { width: number; height: number } {
   if (!metadata) return { width: maxWidth, height: maxHeight }
 
-  const aspectRatio = getSvgAspectRatio(metadata)
+  const aspectRatio = calculateSvgAspectRatio(metadata)
 
   let width = maxWidth
   let height = width / aspectRatio

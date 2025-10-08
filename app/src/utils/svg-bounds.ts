@@ -634,15 +634,15 @@ function parsePointsAttribute(points: string): { x: number; y: number }[] {
 /**
  * Get the actual center offset for an SVG relative to its viewBox center
  */
-export function getSvgCenterOffset(svgContent: string): { x: number; y: number } {
+export function calculateSvgCenterOffset(svgContent: string): { x: number; y: number } {
   const analysis = analyzeSvgBounds(svgContent)
   return analysis.offset
 }
 
 /**
- * Get the actual content center of an SVG
+ * Calculate the actual content center of an SVG
  */
-export function getSvgContentCenter(svgContent: string): { x: number; y: number } {
+export function calculateSvgContentCenter(svgContent: string): { x: number; y: number } {
   const analysis = analyzeSvgBounds(svgContent)
   return analysis.contentCenter
 }
@@ -848,7 +848,7 @@ export function hasSvgCenteringIssues(svgContent: string): boolean {
 /**
  * Calculate the optimal transform origin for an SVG using center-of-mass analysis
  */
-export function getOptimalTransformOrigin(svgContent: string): Point {
+export function calculateOptimalTransformOrigin(svgContent: string): Point {
   const centroidAnalysis = calculateSvgCentroid(svgContent)
 
   let result: Point
@@ -862,7 +862,7 @@ export function getOptimalTransformOrigin(svgContent: string): Point {
   // Debug logging for NaN detection
   if (isNaN(result.x) || isNaN(result.y)) {
     // eslint-disable-next-line no-console
-    console.error('NaN detected in getOptimalTransformOrigin:', {
+    console.error('NaN detected in calculateOptimalTransformOrigin:', {
       result,
       centroidAnalysis,
       svgContentLength: svgContent.length,

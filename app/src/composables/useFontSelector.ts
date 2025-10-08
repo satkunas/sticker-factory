@@ -9,7 +9,7 @@ import {
   filterFonts,
   getVisibleFonts,
   shouldLoadMoreFonts,
-  getNextVisibleCount,
+  calculateNextVisibleCount,
   getAvailableFontWeights
 } from '../utils/font-utils'
 import { FONT_LOADING_CONFIG } from '../utils/ui-constants'
@@ -54,7 +54,7 @@ export function useFontSelector(selectedFont: Ref<FontConfig | null | undefined>
 
       // Add more fonts after a short delay
       setTimeout(() => {
-        visibleFontCount.value = getNextVisibleCount(
+        visibleFontCount.value = calculateNextVisibleCount(
           visibleFontCount.value,
           FONT_LOADING_CONFIG.LOAD_MORE_INCREMENT,
           filteredFonts.value.length

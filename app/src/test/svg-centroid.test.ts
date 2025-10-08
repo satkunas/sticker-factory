@@ -7,12 +7,12 @@
 import { describe, it, expect } from 'vitest'
 import {
   calculateSvgCentroid,
-  getOptimalTransformOrigin,
+  calculateOptimalTransformOrigin,
   shouldUseCentroidOrigin,
   detectShapeType,
   analyzeSvgViewBoxFit,
-  getSvgCenterOffset,
-  getSvgContentCenter,
+  calculateSvgCenterOffset,
+  calculateSvgContentCenter,
   type SvgCentroid as _SvgCentroid,
   type ShapeType as _ShapeType,
   type Point as _Point
@@ -261,21 +261,21 @@ describe('SVG Centroid Calculations', () => {
 
 describe('Optimal Transform Origin', () => {
   it('should return centroid for high-confidence star shapes', () => {
-    const origin = getOptimalTransformOrigin(TEST_SVGS.star)
+    const origin = calculateOptimalTransformOrigin(TEST_SVGS.star)
     const centroidResult = calculateSvgCentroid(TEST_SVGS.star)
 
     expect(origin).toEqual(centroidResult.centroidCenter)
   })
 
   it('should return centroid for triangular shapes', () => {
-    const origin = getOptimalTransformOrigin(TEST_SVGS.triangle)
+    const origin = calculateOptimalTransformOrigin(TEST_SVGS.triangle)
     const centroidResult = calculateSvgCentroid(TEST_SVGS.triangle)
 
     expect(origin).toEqual(centroidResult.centroidCenter)
   })
 
   it('should return bounding box center for circles', () => {
-    const origin = getOptimalTransformOrigin(TEST_SVGS.circle)
+    const origin = calculateOptimalTransformOrigin(TEST_SVGS.circle)
     const centroidResult = calculateSvgCentroid(TEST_SVGS.circle)
 
     expect(origin).toEqual(centroidResult.boundingBoxCenter)
@@ -283,7 +283,7 @@ describe('Optimal Transform Origin', () => {
 
   it('should handle low-confidence cases gracefully', () => {
     const lowConfidenceSvg = '<svg><path d="M1 1"/></svg>' // Minimal path
-    const origin = getOptimalTransformOrigin(lowConfidenceSvg)
+    const origin = calculateOptimalTransformOrigin(lowConfidenceSvg)
 
     expect(origin).toHaveProperty('x')
     expect(origin).toHaveProperty('y')
@@ -394,24 +394,24 @@ describe('SVG ViewBox Fit Analysis', () => {
 // ============================================================================
 
 describe('SVG Utility Functions', () => {
-  describe('getSvgCenterOffset', () => {
+  describe('calculateSvgCenterOffset', () => {
     it('should return zero offset for centered content', () => {
-      const offset = getSvgCenterOffset(TEST_SVGS.circle)
+      const offset = calculateSvgCenterOffset(TEST_SVGS.circle)
 
       expect(Math.abs(offset.x)).toBeLessThan(0.1)
       expect(Math.abs(offset.y)).toBeLessThan(0.1)
     })
 
     it('should return non-zero offset for off-center content', () => {
-      const offset = getSvgCenterOffset(TEST_SVGS.offCenter)
+      const offset = calculateSvgCenterOffset(TEST_SVGS.offCenter)
 
       expect(Math.abs(offset.x) + Math.abs(offset.y)).toBeGreaterThan(0)
     })
   })
 
-  describe('getSvgContentCenter', () => {
+  describe('calculateSvgContentCenter', () => {
     it('should return content center coordinates', () => {
-      const center = getSvgContentCenter(TEST_SVGS.circle)
+      const center = calculateSvgContentCenter(TEST_SVGS.circle)
 
       expect(center).toHaveProperty('x')
       expect(center).toHaveProperty('y')
@@ -420,8 +420,8 @@ describe('SVG Utility Functions', () => {
     })
 
     it('should return different centers for different content', () => {
-      const circleCenter = getSvgContentCenter(TEST_SVGS.circle)
-      const offCenterContent = getSvgContentCenter(TEST_SVGS.offCenter)
+      const circleCenter = calculateSvgContentCenter(TEST_SVGS.circle)
+      const offCenterContent = calculateSvgContentCenter(TEST_SVGS.offCenter)
 
       // Off-center content should have different center coordinates
       const distance = Math.sqrt(

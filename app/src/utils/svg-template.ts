@@ -7,7 +7,7 @@ import {
   sanitizeColorValue
 } from './svg-styling'
 import { resolveCoordinate } from './svg'
-import { getSvgCenterOffset } from './svg-bounds'
+import { calculateSvgCenterOffset } from './svg-bounds'
 
 /**
  * Enhanced SVG styling with proper color injection and positioning
@@ -62,7 +62,7 @@ export const getStyledSvgContent = (svgImage: any) => {
 
         // Calculate dynamic offset to center the actual content within the viewBox
         // Use SVG bounds analysis to find the true center of any SVG content
-        const centerOffset = getSvgCenterOffset(styledContent)
+        const centerOffset = calculateSvgCenterOffset(styledContent)
 
         // Apply safety validation to prevent NaN in transforms
         const safeOffsetX = isFinite(centerOffset.x) ? centerOffset.x : 0
