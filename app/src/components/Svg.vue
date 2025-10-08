@@ -199,7 +199,7 @@
               layerData?.strokeWidth
             )"
           />
-        </g>
+      </g>
       </g>
     </template>
   </svg>
