@@ -617,7 +617,8 @@ function compressText(text: string): Uint8Array {
   })
 
   // Step 3: Convert to UTF-8 byte array
-  return (globalThis.TextEncoder ? new globalThis.TextEncoder() : new (window as any).TextEncoder()).encode(compressed)
+  const EncoderConstructor = globalThis.TextEncoder || (window as unknown as typeof globalThis).TextEncoder
+  return new EncoderConstructor().encode(compressed)
 }
 
 /**
@@ -629,7 +630,8 @@ function decompressText(bytes: Uint8Array): string {
   if (bytes.length === 0) return ''
 
   // Step 1: Convert from UTF-8 byte array
-  let text = (globalThis.TextDecoder ? new globalThis.TextDecoder() : new (window as any).TextDecoder()).decode(bytes)
+  const DecoderConstructor = globalThis.TextDecoder || (window as unknown as typeof globalThis).TextDecoder
+  let text = new DecoderConstructor().decode(bytes)
 
   // Step 2: Reverse dictionary replacement with word boundary protection
   // Only replace dictionary codes that are standalone, not part of larger numeric sequences
@@ -677,7 +679,7 @@ export function encodeTemplateStateCompact(state: AppState): string {
       selectedTemplateId: state.selectedTemplateId,
       layers: Array.isArray(state.layers) ? state.layers.map(layer => {
         // FLAT ARCHITECTURE: Only include defined properties
-        const flatLayer: Record<string, any> = {
+        const flatLayer: Record<string, unknown> = {
           id: layer.id,
           type: layer.type
         }
@@ -928,9 +930,9 @@ export function decodeTemplateStateCompact(encoded: string): Partial<AppState> |
         // Flat architecture layers - direct property access
         return {
           selectedTemplateId: stateData.selectedTemplateId,
-          layers: stateData.layers.map((layer: any) => {
+          layers: stateData.layers.map((layer: Record<string, unknown>) => {
             // FLAT ARCHITECTURE: Map flat properties to store format
-            const mappedLayer: any = {
+            const mappedLayer: Record<string, unknown> = {
               id: layer.id,
               type: layer.type
             }
@@ -981,7 +983,7 @@ export function decodeTemplateStateCompact(encoded: string): Partial<AppState> |
       } catch (base32Error) {
         logger.warn('Base32 decoding failed, trying Base64 fallback:', base32Error)
         // Fall through to Base64 decoding
-        binary = undefined as any
+        binary = null
       }
     }
 
@@ -1080,7 +1082,7 @@ export function decodeTemplateStateCompact(encoded: string): Partial<AppState> |
         id: layerId,
         type: 'text',
         text: text || '',
-        font: { family: fontData.fontFamily } as any, // Simplified font object
+        font: { family: fontData.fontFamily } as { family: string }, // Simplified font object
         fontSize: sizeColorData.fontSize,
         fontWeight: fontData.fontWeight,
         textColor,  // Keep as textColor for AppState compatibility

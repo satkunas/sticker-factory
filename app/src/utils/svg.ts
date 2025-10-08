@@ -795,7 +795,7 @@ export function validateSvgContent(content: string): boolean {
  * isValidNumber("42")      // Returns: false
  * isValidNumber(null)      // Returns: false
  */
-export function isValidNumber(value: any): value is number {
+export function isValidNumber(value: unknown): value is number {
   return typeof value === 'number' && !isNaN(value) && isFinite(value)
 }
 

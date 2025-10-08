@@ -4,6 +4,7 @@
  */
 
 import { resolveCoordinate } from './svg'
+import type { FlatLayerData } from '../types/template-types'
 
 /**
  * Layer position data structure
@@ -180,7 +181,7 @@ export interface ProcessedLayer {
  * Process a layer for rendering with unified positioning
  */
 export function processLayerForRendering(
-  layer: any,
+  layer: FlatLayerData,
   viewBox: ViewBox | undefined,
   contentDimensions?: { width: number; height: number }
 ): ProcessedLayer {
@@ -254,7 +255,7 @@ export function processLayerForRendering(
 /**
  * Check if all required positioning data is available
  */
-export function hasValidPosition(layer: any, viewBox: ViewBox | undefined): boolean {
+export function hasValidPosition(layer: FlatLayerData, viewBox: ViewBox | undefined): boolean {
   return !!(
     layer &&
     layer.position &&
