@@ -397,6 +397,7 @@ import FontTile from './FontTile.vue'
 import { useFontSelector } from '../composables/useFontSelector'
 import { getFontCategoryColor } from '../utils/font-utils'
 import { PRESET_COLORS, COMMON_FONT_SIZES, STROKE_LINEJOIN_OPTIONS, COLOR_NONE } from '../utils/ui-constants'
+import { logger } from '../utils/logger'
 
 interface Props {
   selectedFont?: FontConfig | null
@@ -573,8 +574,7 @@ watch(() => props.selectedFont, async (newFont) => {
       loadedFonts.value.add(newFont.name)
     } catch (error) {
       // Font loading failed, continue without error
-      // eslint-disable-next-line no-console
-      console.warn('Failed to load font:', newFont.name, error)
+      logger.warn('Failed to load font:', newFont.name, error)
     }
   }
 }, { immediate: true })

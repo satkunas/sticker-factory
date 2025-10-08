@@ -99,6 +99,7 @@ import {
   svgRenderData,
   flatClipPaths
 } from '../stores/urlDrivenStore'
+import { logger } from '../utils/logger'
 
 interface Props {
   stickerText?: string
@@ -141,8 +142,7 @@ function validateTransform(transform: string | undefined, layerId: string | unde
 
   // Check for NaN in transform string
   if (transform.includes('NaN')) {
-    // eslint-disable-next-line no-console
-    console.error(`🚨 CRITICAL: NaN detected in ${transformType} transform for layer ${layerId}:`, {
+    logger.error(`🚨 CRITICAL: NaN detected in ${transformType} transform for layer ${layerId}:`, {
       originalTransform: transform,
       layerId,
       transformType

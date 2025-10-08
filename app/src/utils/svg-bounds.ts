@@ -9,6 +9,7 @@
  */
 
 import type { Point, ViewBox } from '../types/svg-types'
+import { logger } from './logger'
 
 export interface SvgBounds {
   xMin: number
@@ -861,8 +862,7 @@ export function calculateOptimalTransformOrigin(svgContent: string): Point {
 
   // Debug logging for NaN detection
   if (isNaN(result.x) || isNaN(result.y)) {
-    // eslint-disable-next-line no-console
-    console.error('NaN detected in calculateOptimalTransformOrigin:', {
+    logger.error('NaN detected in calculateOptimalTransformOrigin:', {
       result,
       centroidAnalysis,
       svgContentLength: svgContent.length,

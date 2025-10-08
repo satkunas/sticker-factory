@@ -41,42 +41,37 @@ vi.mock('../config/template-loader', () => ({
           {
             id: 'company-name',
             type: 'text',
-            textInput: {
-              default: 'Your Company',
-              fontSize: 18,
-              fontWeight: 600,
-              fontColor: '#1a365d',
-              strokeColor: '#ffffff',
-              strokeWidth: 0,
-              strokeOpacity: 1,
-              strokeLinejoin: 'round'
-            },
+            text: 'Your Company',
+            fontSize: 18,
+            fontWeight: 600,
+            fontColor: '#1a365d',
+            strokeColor: '#ffffff',
+            strokeWidth: 0,
+            strokeOpacity: 1,
+            strokeLinejoin: 'round',
             position: { x: '50%', y: '30%' }
           },
           {
             id: 'contact-info',
             type: 'text',
-            textInput: {
-              default: 'contact@company.com',
-              fontSize: 14,
-              fontWeight: 400,
-              fontColor: '#4a5568',
-              strokeColor: '#ffffff',
-              strokeWidth: 0,
-              strokeOpacity: 1,
-              strokeLinejoin: 'round'
-            },
+            text: 'contact@company.com',
+            fontSize: 14,
+            fontWeight: 400,
+            fontColor: '#4a5568',
+            strokeColor: '#ffffff',
+            strokeWidth: 0,
+            strokeOpacity: 1,
+            strokeLinejoin: 'round',
             position: { x: '50%', y: '70%' }
           },
           {
             id: 'background',
             type: 'shape',
-            shape: {
-              fill: '#ffffff',
-              stroke: '#e2e8f0',
-              strokeWidth: 2,
-              strokeLinejoin: 'round'
-            }
+            fill: '#ffffff',
+            stroke: '#e2e8f0',
+            strokeWidth: 2,
+            strokeLinejoin: 'round',
+            position: { x: 0, y: 0 }
           }
         ]
       }
@@ -97,7 +92,7 @@ vi.mock('../utils/url-encoding', () => ({
             type: 'text',
             text: 'Acme Corporation',
             fontSize: 20,
-            textColor: '#2d3748'
+            fontColor: '#2d3748'
           },
           {
             id: 'contact-info',
@@ -108,7 +103,7 @@ vi.mock('../utils/url-encoding', () => ({
           {
             id: 'background',
             type: 'shape',
-            fillColor: '#f7fafc'
+            fill: '#f7fafc'
           }
         ]
       }
@@ -178,7 +173,7 @@ describe('Phase 5: Integration Testing', () => {
       expect(companyNameForm).toBeDefined()
       expect(companyNameForm?.text).toBe('Your Company') // Template default
       expect(companyNameForm?.fontSize).toBe(18)
-      expect(companyNameForm?.textColor).toBe('#1a365d')
+      expect(companyNameForm?.fontColor).toBe('#1a365d')
 
       const contactInfoForm = state.formData.find(layer => layer.id === 'contact-info')
       expect(contactInfoForm).toBeDefined()
@@ -188,8 +183,8 @@ describe('Phase 5: Integration Testing', () => {
       // Check shape layer form data
       const backgroundForm = state.formData.find(layer => layer.id === 'background')
       expect(backgroundForm).toBeDefined()
-      expect(backgroundForm?.fillColor).toBe('#ffffff') // Template default
-      expect(backgroundForm?.strokeColor).toBe('#e2e8f0')
+      expect(backgroundForm?.fill).toBe('#ffffff') // Template default
+      expect(backgroundForm?.stroke).toBe('#e2e8f0')
       expect(backgroundForm?.strokeWidth).toBe(2)
     })
 
@@ -204,7 +199,7 @@ describe('Phase 5: Integration Testing', () => {
       await updateLayer('company-name', {
         text: 'Acme Corporation',
         fontSize: 20,
-        textColor: '#2d3748'
+        fontColor: '#2d3748'
       })
 
       await updateLayer('contact-info', {
@@ -212,14 +207,14 @@ describe('Phase 5: Integration Testing', () => {
       })
 
       await updateLayer('background', {
-        fillColor: '#f7fafc'
+        fill: '#f7fafc'
       })
 
       // Verify URL overrides took precedence
       const companyNameForm = state.formData.find(layer => layer.id === 'company-name')
       expect(companyNameForm?.text).toBe('Acme Corporation') // URL override
       expect(companyNameForm?.fontSize).toBe(20) // URL override
-      expect(companyNameForm?.textColor).toBe('#2d3748') // URL override
+      expect(companyNameForm?.fontColor).toBe('#2d3748') // URL override
       expect(companyNameForm?.fontWeight).toBe(600) // Template default preserved
 
       const contactInfoForm = state.formData.find(layer => layer.id === 'contact-info')
@@ -227,8 +222,8 @@ describe('Phase 5: Integration Testing', () => {
       expect(contactInfoForm?.fontSize).toBe(14) // Template default preserved
 
       const backgroundForm = state.formData.find(layer => layer.id === 'background')
-      expect(backgroundForm?.fillColor).toBe('#f7fafc') // URL override
-      expect(backgroundForm?.strokeColor).toBe('#e2e8f0') // Template default preserved
+      expect(backgroundForm?.fill).toBe('#f7fafc') // URL override
+      expect(backgroundForm?.stroke).toBe('#e2e8f0') // Template default preserved
     })
 
     it('should generate correct render data from merged form data', async () => {

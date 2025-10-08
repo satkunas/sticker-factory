@@ -16,6 +16,7 @@ describe('useTemplateHelpers', () => {
         id: 'test-shape',
         type: 'shape',
         subtype: 'rect',
+        position: { x: 0, y: 0 },
         shape: {
           id: 'test-shape',
           type: 'path',
@@ -25,20 +26,14 @@ describe('useTemplateHelpers', () => {
       {
         id: 'test-text',
         type: 'text',
-        textInput: {
-          id: 'test-text',
-          label: 'Test Label',
-          position: { x: 50, y: 50 }
-        }
+        label: 'Test Label',
+        position: { x: 50, y: 50 }
       },
       {
         id: 'test-svg',
         type: 'svgImage',
-        svgImage: {
-          id: 'test-svg',
-          svgContent: '<svg></svg>',
-          position: { x: 100, y: 100 }
-        }
+        svgContent: '<svg></svg>',
+        position: { x: 100, y: 100 }
       }
     ]
   }

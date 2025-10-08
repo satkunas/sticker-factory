@@ -113,7 +113,6 @@
 </template>
 
 <script setup lang="ts">
-/* eslint-disable no-console */
 import { ref, computed, onMounted, provide, defineAsyncComponent } from 'vue'
 import {
   isLoadingFromUrl,
@@ -246,7 +245,7 @@ const layersForRendering = computed(() => {
     const flatLayer = flatFormData.value.find(l => l.id === templateLayer.id)
 
     if (!flatLayer) {
-      console.warn(`Missing flat layer data for template layer ${templateLayer.id}:${templateLayer.type}`)
+      logger.warn(`Missing flat layer data for template layer ${templateLayer.id}:${templateLayer.type}`)
       return null
     }
 
@@ -394,7 +393,7 @@ onMounted(async () => {
 
 // Template selection using URL-driven store
 const handleTemplateSelection = async (template: SimpleTemplate) => {
-  console.log('🎯 handleTemplateSelection called with template:', template.id)
+  logger.debug('🎯 handleTemplateSelection called with template:', template.id)
   await updateTemplate(template.id)
 }
 

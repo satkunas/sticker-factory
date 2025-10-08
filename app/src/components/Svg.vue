@@ -16,30 +16,6 @@
       </mask>
     </defs>
 
-    <!-- DEBUG: Mask boundaries (absolute coordinates like shapes) -->
-    <g v-if="mode === 'debug'">
-      <!-- Show mask region with semi-transparent fill -->
-      <path
-        v-for="mask in maskDefinitions"
-        :key="`debug-fill-${mask.id}`"
-        :d="mask.path"
-        fill="red"
-        stroke="none"
-        opacity="0.15"
-      />
-      <!-- Show mask boundary with thick dashed stroke -->
-      <path
-        v-for="mask in maskDefinitions"
-        :key="`debug-stroke-${mask.id}`"
-        :d="mask.path"
-        fill="none"
-        stroke="red"
-        stroke-width="4"
-        stroke-dasharray="8,4"
-        opacity="0.8"
-      />
-    </g>
-
     <!-- PHASE 2: LAYER RENDERING (preserves YAML order) -->
     <template v-for="{ templateLayer, layerData } in renderedLayers" :key="templateLayer.id">
       <!-- SHAPE LAYERS -->
@@ -67,15 +43,6 @@
             resolveLayerPosition(templateLayer.position.y, template.height)
           })${templateLayer.rotation !== undefined ? ` rotate(${templateLayer.rotation})` : ''}`"
         >
-          <!-- DEBUG: Layer center point (blue) -->
-          <circle
-            v-if="mode === 'debug'"
-            cx="0"
-            cy="0"
-            r="5"
-            fill="blue"
-            opacity="0.7"
-          />
           <text
             text-anchor="middle"
             dominant-baseline="central"
@@ -109,19 +76,6 @@
             -templateLayer.height / 2
           })`"
         >
-          <!-- DEBUG: Layer boundary (green rectangle) -->
-          <rect
-            v-if="mode === 'debug'"
-            x="0"
-            y="0"
-            :width="templateLayer.width"
-            :height="templateLayer.height"
-            fill="none"
-            stroke="green"
-            stroke-width="2"
-            stroke-dasharray="3,3"
-            opacity="0.7"
-          />
           <!-- Scale and rotate around transform origin using nested g elements -->
           <g
             v-if="layerData?.transformOrigin && layerData?.scale !== undefined"

@@ -141,17 +141,8 @@ watchEffect(() => {
       const currentWidth = viewBoxWidth.value
       const currentHeight = viewBoxHeight.value
 
-      // console.log('🔍 VIEWBOX CHECK:', {
-      //   width: currentWidth,
-      //   height: currentHeight,
-      //   needsFix: currentWidth <= 50 || currentHeight <= 50
-      // })
-
       if (currentWidth <= 50 || currentHeight <= 50) {
-        // console.log('🚨 FIXING TINY VIEWBOX:', {
-        //   before: { width: currentWidth, height: currentHeight },
-        //   message: 'Auto-centering will be handled by the store automatically'
-        // })
+        // Auto-centering will be handled by the store automatically
       }
     })
   }
