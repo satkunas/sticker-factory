@@ -6,24 +6,9 @@
  */
 
 import { isValidNumber } from './svg'
+import type { Point, ViewBox, Dimensions } from '../types/svg-types'
 
 // Type definitions
-export interface Point {
-  x: number
-  y: number
-}
-
-export interface Dimensions {
-  width: number
-  height: number
-}
-
-export interface ViewBox {
-  x: number
-  y: number
-  width: number
-  height: number
-}
 
 export interface CenteringTransform {
   translateX: number

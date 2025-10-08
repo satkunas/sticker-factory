@@ -9,22 +9,14 @@
  */
 
 import type { SvgMetadata } from './svg-content'
+import type { Point, Dimensions } from '../types/svg-types'
 
 // ============================================================================
 // TYPE DEFINITIONS
 // ============================================================================
 
-/** 2D point coordinates */
-export interface Point {
-  x: number
-  y: number
-}
-
-/** Size dimensions */
-export interface Size {
-  width: number
-  height: number
-}
+/** Size dimensions (alias for Dimensions for backwards compatibility) */
+export type Size = Dimensions
 
 /** Template positioning data */
 export interface TemplatePosition {

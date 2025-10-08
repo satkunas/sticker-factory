@@ -8,27 +8,20 @@
  * @version 1.0.0
  */
 
+// ============================================================================
+// IMPORTS
+// ============================================================================
+
+// Import and re-export common SVG types from central location
+import type { Point, ViewBox } from '../types/svg-types'
+export type { Point, ViewBox }
 
 // ============================================================================
 // TYPE DEFINITIONS
 // ============================================================================
 
-/** 2D point with x and y coordinates */
-export interface Point {
-  x: number
-  y: number
-}
-
 /** Size dimensions with width and height */
 export interface Size {
-  width: number
-  height: number
-}
-
-/** ViewBox definition for SVG coordinate system */
-export interface ViewBox {
-  x: number
-  y: number
   width: number
   height: number
 }

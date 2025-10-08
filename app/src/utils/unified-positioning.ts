@@ -5,6 +5,7 @@
 
 import { resolveCoordinate } from './svg'
 import type { FlatLayerData } from '../types/template-types'
+import type { ViewBox } from '../types/svg-types'
 
 /**
  * Layer position data structure
@@ -12,16 +13,6 @@ import type { FlatLayerData } from '../types/template-types'
 export interface LayerPosition {
   x: number | string
   y: number | string
-}
-
-/**
- * ViewBox dimensions for coordinate resolution
- */
-export interface ViewBox {
-  x: number
-  y: number
-  width: number
-  height: number
 }
 
 /**

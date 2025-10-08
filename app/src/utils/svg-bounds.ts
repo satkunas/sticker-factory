@@ -8,6 +8,8 @@
  * visual centering of complex shapes like stars, triangles, and arrows.
  */
 
+import type { Point, ViewBox } from '../types/svg-types'
+
 export interface SvgBounds {
   xMin: number
   xMax: number
@@ -20,27 +22,22 @@ export interface SvgBounds {
 }
 
 export interface SvgAnalysis {
-  viewBox: { x: number; y: number; width: number; height: number } | null
+  viewBox: ViewBox | null
   contentBounds: SvgBounds
-  viewBoxCenter: { x: number; y: number } | null
-  contentCenter: { x: number; y: number }
-  offset: { x: number; y: number }
+  viewBoxCenter: Point | null
+  contentCenter: Point
+  offset: Point
 }
 
 export interface SvgViewBoxFitAnalysis {
   isProperlyFitted: boolean
   isCentered: boolean
   recommendedViewBox: string
-  offset: { x: number; y: number }
+  offset: Point
   severity: 'none' | 'minor' | 'major'
   issues: string[]
   contentBounds: SvgBounds
-  currentViewBox: { x: number; y: number; width: number; height: number } | null
-}
-
-export interface Point {
-  x: number
-  y: number
+  currentViewBox: ViewBox | null
 }
 
 export interface SvgCentroid {
