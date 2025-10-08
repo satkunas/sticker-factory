@@ -30,7 +30,7 @@ export interface SvgViewBoxControls {
   autoFitTemplate: (
     template: SimpleTemplate,
     containerElement: HTMLElement,
-    svgElement: SVGElement
+    svgElement: SVGElement | null
   ) => Promise<void>
   getZoomLevel: () => number
   getMinZoomLevel: () => number
@@ -72,7 +72,7 @@ export function useSvgViewBox(
         // Trigger auto-centering when container becomes available
         if (template?.value) {
           nextTick(() => {
-            autoFitTemplate(template.value!, newContainer, null as any)
+            autoFitTemplate(template.value!, newContainer, null)
           })
         }
       }
@@ -85,7 +85,7 @@ export function useSvgViewBox(
       if (containerElement?.value && template?.value) {
         // Debounce resize events to avoid excessive re-centering
         setTimeout(() => {
-          autoFitTemplate(template.value!, containerElement.value!, null as any)
+          autoFitTemplate(template.value!, containerElement.value!, null)
         }, 150)
       }
     }
@@ -253,7 +253,7 @@ export function useSvgViewBox(
   const autoFitTemplate = async (
     template: SimpleTemplate,
     containerElement: HTMLElement,
-    _svgElement: SVGElement
+    _svgElement: SVGElement | null
   ) => {
     if (previewMode.value || !containerElement || !template) return
 
