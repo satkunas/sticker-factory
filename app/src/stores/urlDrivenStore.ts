@@ -14,9 +14,10 @@
  */
 
 import { ref, computed, readonly } from 'vue'
-import type { Router } from 'vue-router'
+import type { Router, RouteLocationNormalized } from 'vue-router'
 import { logger } from '../utils/logger'
 import { encodeTemplateStateCompact, decodeTemplateStateCompact } from '../utils/url-encoding'
+import type { AppState, LayerState } from '../types/app-state'
 import {
   analyzeSvgViewBoxFit,
   type SvgViewBoxFitAnalysis,
@@ -349,7 +350,7 @@ function setupBrowserNavigationHandling(_router: Router): void {
 /**
  * Determine the type of navigation for debugging and analytics
  */
-function getNavigationType(to: any, from: any): string {
+function getNavigationType(to: RouteLocationNormalized, from: RouteLocationNormalized): string {
   if (!from.path || from.path === '/') {
     return 'initial_load'
   }
@@ -423,7 +424,7 @@ async function handleUrlDecode(urlPath: string): Promise<void> {
 /**
  * Apply decoded state from URL to store
  */
-async function applyDecodedState(decodedState: any): Promise<void> {
+async function applyDecodedState(decodedState: Partial<AppState>): Promise<void> {
   // Set template ID
   if (decodedState.selectedTemplateId) {
     _state.value.selectedTemplateId = decodedState.selectedTemplateId
@@ -462,11 +463,11 @@ async function loadDefaultState(): Promise<void> {
 /**
  * Merge template defaults with URL overrides to create mutable form data
  */
-function mergeTemplateWithUrlData(template: SimpleTemplate, urlLayers: any[]): LayerFormData[] {
+function mergeTemplateWithUrlData(template: SimpleTemplate, urlLayers: Array<{ id: string; [key: string]: unknown }>): LayerFormData[] {
   const formData: LayerFormData[] = []
 
   // Create URL override lookup
-  const urlOverrides: Record<string, any> = {}
+  const urlOverrides: Record<string, { id: string; [key: string]: unknown }> = {}
   urlLayers.forEach(layer => {
     urlOverrides[layer.id] = layer
   })
