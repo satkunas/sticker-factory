@@ -735,23 +735,19 @@ export function analyzeSvgViewBoxFit(svgContent: string, padding = 2): SvgViewBo
 
   // Only proceed with centering analysis if we have reasonable confidence
   if (confidence < 0.5) {
+    // Use actual calculated contentBounds instead of fabricating with hardcoded defaults
+    const fallbackViewBox = viewBox
+      ? `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`
+      : `${contentBounds.xMin} ${contentBounds.yMin} ${contentBounds.width} ${contentBounds.height}`
+
     return {
       isProperlyFitted: true,
       isCentered: true,
-      recommendedViewBox: viewBox ? `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}` : '0 0 24 24',
+      recommendedViewBox: fallbackViewBox,
       offset: { x: 0, y: 0 },
       severity: 'none',
       issues: [`Path parsing confidence too low (${Math.round(confidence * 100)}%) - skipping analysis`],
-      contentBounds: {
-        xMin: viewBox?.x || 0,
-        xMax: (viewBox?.x || 0) + (viewBox?.width || 24),
-        yMin: viewBox?.y || 0,
-        yMax: (viewBox?.y || 0) + (viewBox?.height || 24),
-        width: viewBox?.width || 24,
-        height: viewBox?.height || 24,
-        centerX: (viewBox?.x || 0) + (viewBox?.width || 24) / 2,
-        centerY: (viewBox?.y || 0) + (viewBox?.height || 24) / 2
-      },
+      contentBounds, // Use actual calculated bounds - NO hardcoded defaults
       currentViewBox: viewBox
     }
   }
