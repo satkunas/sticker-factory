@@ -122,9 +122,10 @@ export function generateCenteredShapePath(
       const halfHeight = height / 2
 
       // Rectangle with optional rounded corners, centered at origin
-      if (rx || ry) {
-        const radiusX = rx || 0
-        const radiusY = ry || 0
+      if (rx !== undefined || ry !== undefined) {
+        // SVG spec: if one radius is missing, use the other one's value (no hardcoded fallbacks)
+        const radiusX = rx !== undefined ? rx : ry as number
+        const radiusY = ry !== undefined ? ry : rx as number
         return `M${-halfWidth + radiusX},-${halfHeight} L${halfWidth - radiusX},-${halfHeight} Q${halfWidth},-${halfHeight} ${halfWidth},${-halfHeight + radiusY} L${halfWidth},${halfHeight - radiusY} Q${halfWidth},${halfHeight} ${halfWidth - radiusX},${halfHeight} L${-halfWidth + radiusX},${halfHeight} Q-${halfWidth},${halfHeight} -${halfWidth},${halfHeight - radiusY} L-${halfWidth},${-halfHeight + radiusY} Q-${halfWidth},-${halfHeight} ${-halfWidth + radiusX},-${halfHeight} Z`
       }
 
@@ -213,14 +214,19 @@ export function processLayerForRendering(
   switch (layer.type) {
     case 'shape':
       // Generate path centered at origin for transform-based positioning
-      processed.path = generateCenteredShapePath(
-        layer.subtype,
-        layer.width || 0,
-        layer.height || 0,
-        layer.rx,
-        layer.ry,
-        layer.points
-      )
+      // Only generate path if width and height are defined (no hardcoded fallbacks)
+      if (layer.width !== undefined && layer.height !== undefined) {
+        processed.path = generateCenteredShapePath(
+          layer.subtype,
+          layer.width,
+          layer.height,
+          layer.rx,
+          layer.ry,
+          layer.points
+        )
+      } else {
+        processed.path = ''
+      }
       processed.fill = layer.fill || layer.fillColor
       processed.stroke = layer.stroke || layer.strokeColor
       processed.strokeWidth = layer.strokeWidth
