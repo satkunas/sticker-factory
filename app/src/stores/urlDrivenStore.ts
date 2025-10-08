@@ -17,7 +17,7 @@ import { ref, computed, readonly } from 'vue'
 import type { Router, RouteLocationNormalized } from 'vue-router'
 import { logger } from '../utils/logger'
 import { encodeTemplateStateCompact, decodeTemplateStateCompact } from '../utils/url-encoding'
-import type { AppState, LayerState } from '../types/app-state'
+import type { AppState } from '../types/app-state'
 import {
   analyzeSvgViewBoxFit,
   type SvgViewBoxFitAnalysis,

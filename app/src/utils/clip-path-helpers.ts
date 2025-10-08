@@ -25,7 +25,8 @@ export function generateMaskDefinitions(
 
   for (const layer of layers) {
     if (layer.type === 'shape') {
-      const path = layer.shape.path
+      // Access path directly on layer (runtime structure differs from TypeScript interface)
+      const path = (layer as any).path
       if (!path) continue
 
       definitions.push({
