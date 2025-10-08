@@ -1,22 +1,20 @@
 # Sticker Factory
 
-> Professional SVG badge and sticker generator with multiple templates and advanced typography
+> Professional SVG badge and sticker generator with 18 templates and advanced typography
 
-A modern Vue 3 application for creating custom SVG badges, stickers, and labels with professional templates and comprehensive font styling options.
+Create custom SVG badges, stickers, and labels with professional templates, 600+ Google Fonts, and 100+ icons.
 
 ## ✨ Features
 
-- **18 Professional Templates** across 4 categories (Circle, Rectangle, Square, Diamond)
-- **SVG Image Library** with 100+ royalty-free icons and graphics
-- **600+ Google Fonts** with real-time preview
-- **Multi-text Input Support** with individual styling per text field
-- **Shape Styling System** with fill, stroke, and line join controls
-- **SVG Image Styling** with full color and stroke customization
-- **Advanced Typography Controls** (size, weight, color, stroke)
-- **Tiled SVG Selection Interface** for easy icon browsing
-- **Export Options** (SVG, PNG, JSON configuration)
-- **Template Persistence** - your work saves automatically
-- **Responsive Design** for desktop and mobile
+- **18 Professional Templates** - Circle, Rectangle, Square, Diamond shapes
+- **100+ SVG Icons** - Royalty-free graphics with full styling control
+- **600+ Google Fonts** - Real-time preview with dynamic loading
+- **Multi-text Support** - Individual font styling per text field
+- **Shape Styling** - Fill, stroke, width, and linejoin controls
+- **Advanced Typography** - Size, weight, color, and stroke customization
+- **URL-Based State** - Share designs via URL, state persists automatically
+- **Export Options** - Download as SVG, PNG, or JSON configuration
+- **Responsive Design** - Works on desktop and mobile
 
 ## 🚀 Quick Start
 
@@ -33,49 +31,250 @@ make dev-open
 
 Visit http://localhost:3000 to start creating!
 
-## 📋 Template Categories
+## 📋 Available Templates
 
-**18 Professional Templates** organized across 4 shape categories:
+### Circle Templates (5)
+- Quality Sticker - Premium quality badges
+- Vinyl Record Label - Retro record designs
+- Event Promo Sticker - Event announcements
+- Wellness Sticker - Health and wellness badges
+- Organic Product Seal - Certified organic labels
 
-- **Circle Templates (5)**: Quality stickers, record labels, promotional badges, wellness stickers
-- **Rectangle Templates (9)**: Business cards, conference badges, shipping labels, tickets, tech company badges
-- **Square Templates (2)**: Social media posts and announcements
-- **Diamond Templates (2)**: Safety warnings, safety alerts, caution labels
+### Rectangle Templates (9)
+- Business Card - Professional contact cards
+- Conference Badge - Event identification
+- Shipping Label - Package labels with details
+- Food Packaging Label - Product nutrition info
+- Concert Ticket - Event admission tickets
+- YouTube Thumbnail - Video preview graphics
+- Booklet Cover - Publication covers
+- Catalog Page - Product catalog layouts
+- Tech Company Sticker - Modern tech badges
 
-Each template supports multi-text input with individual font styling, shape customization, and SVG image integration.
+### Square Templates (2)
+- Social Media Post - Instagram-ready graphics
+- Announcement Card - General announcements
 
-## 🎨 Styling System
+### Diamond Templates (2)
+- Safety Warning Diamond - Caution labels
+- Safety Alert Diamond - Alert signage
 
-### Typography Controls
-- **Font Categories**: Sans-serif, Serif, Monospace, Display, Handwriting, Dingbats
-- **Font Size**: 8-500px with slider and number input
-- **Font Weight**: 100-900 (only available weights shown per font)
-- **Text Color**: Color picker with preset palette
-- **Text Stroke**: Width (0-12px) and color customization
-- **Real-time Preview**: Text inputs show selected font styling
+## 🎨 Creating Templates
 
-### Shape Styling Controls
-- **Fill Color**: Background color with 24 preset colors + custom picker
-- **Stroke Color**: Border color with same palette system
-- **Stroke Width**: 0-12px with slider and number input
-- **Stroke Linejoin**: Corner styles (round, miter, bevel, arcs, clip)
-- **Visual Previews**: Shape thumbnails show current styling
-- **Expandable Interface**: Click shapes to expand styling controls
+Templates are YAML files in `app/templates/` that define shapes, text, and icons.
 
-### SVG Image System
-- **Comprehensive Icon Library**: 100+ royalty-free SVG icons organized by category
-- **Tiled Selection Interface**: Grid-based browser with search and category filtering
-- **Real-time Preview**: Icons display with current styling applied
-- **Full Styling Control**: Fill color, stroke color, width, and line join options
-- **Seamless Integration**: SVG images work alongside text and shapes in templates
-- **Dynamic Loading**: Icons loaded on-demand with efficient caching
-- **Template Integration**: Pre-configured SVG icons in new template designs
+### Basic Template Structure
+
+```yaml
+name: "My Custom Template"
+id: "my-template"
+description: "Short description of the template"
+category: "circle"  # circle | rectangle | square | diamond
+width: 400
+height: 400
+layers:
+  # Layers render in order (first = back, last = front)
+  - id: "background"
+    type: "shape"
+    # ... shape configuration
+
+  - id: "title"
+    type: "text"
+    # ... text configuration
+
+  - id: "icon"
+    type: "svgImage"
+    # ... SVG icon configuration
+```
+
+### Shape Layers
+
+```yaml
+- id: "background"
+  type: "shape"
+  subtype: "rect"              # rect | circle | polygon
+  position: { x: "50%", y: "50%" }
+  width: 400
+  height: 400
+  rx: 20                       # corner radius (rect only)
+  ry: 20
+  fill: "#3b82f6"             # background color
+  stroke: "#1e40af"           # border color
+  strokeWidth: 2              # border width
+```
+
+**Polygon Example:**
+```yaml
+- id: "diamond-shape"
+  type: "shape"
+  subtype: "polygon"
+  position: { x: "50%", y: "50%" }
+  points: "100,10 190,100 100,190 10,100"  # SVG path coordinates
+  fill: "#fef2f2"
+  stroke: "#dc2626"
+  strokeWidth: 4
+```
+
+### Text Layers
+
+```yaml
+- id: "title"
+  type: "text"
+  label: "Title"              # Form label shown to user
+  default: "Your Text Here"   # Default text content
+  position: { x: "50%", y: "30%" }
+  clip: "background"          # Optional: clip to shape ID
+  maxLength: 25               # Character limit
+  fontFamily: "Roboto"
+  fontSize: 24
+  fontWeight: 700             # 100-900
+  fontColor: "#1f2937"
+```
+
+### SVG Icon Layers
+
+```yaml
+- id: "icon"
+  type: "svgImage"
+  svgId: "ui-security-shield"  # Filename without .svg extension
+  position: { x: "75%", y: "25%" }
+  width: 32
+  height: 32
+  fill: "#10b981"
+  stroke: "#059669"
+  strokeWidth: 2
+  strokeLinejoin: "round"      # round | miter | bevel
+```
+
+**Available Icons:** 100+ icons in `app/images/`
+- UI: `ui-*` (alerts, shields, checkmarks, stars)
+- Tech: `tech-*` (code, devices, cloud, database)
+- Business: `business-*` (charts, documents, communication)
+- Nature: `nature-*` (animals, weather, plants)
+- Objects: `objects-*` (tools, food, transportation)
+
+### Position System
+
+**Percentage Coordinates** (recommended):
+- `x: "50%"` - Horizontal center
+- `x: "0%"` - Left edge
+- `x: "100%"` - Right edge
+- `y: "50%"` - Vertical center
+- `y: "0%"` - Top edge
+- `y: "100%"` - Bottom edge
+
+**Absolute Coordinates:**
+- `x: 200` - 200 pixels from left
+- `y: 100` - 100 pixels from top
+
+**Mixed:**
+- `{ x: "50%", y: 100 }` - Centered horizontally, 100px from top
+
+**Important:** Text positions represent the **center** of the text, not top-left corner.
+
+### Clipping Text to Shapes
+
+Use the `clip` property to constrain text within a shape:
+
+```yaml
+layers:
+  - id: "title-box"
+    type: "shape"
+    subtype: "rect"
+    position: { x: "50%", y: "30%" }
+    width: 360
+    height: 60
+    fill: "rgba(0, 0, 0, 0.7)"
+
+  - id: "title-text"
+    type: "text"
+    position: { x: "50%", y: "30%" }
+    clip: "title-box"           # Clips to shape above
+    default: "Clipped Text"
+```
+
+### Complete Example
+
+```yaml
+name: "Custom Badge"
+id: "custom-badge"
+description: "A simple badge with icon, title, and subtitle"
+category: "rectangle"
+width: 320
+height: 200
+layers:
+  # Background rectangle
+  - id: "background"
+    type: "shape"
+    subtype: "rect"
+    position: { x: "50%", y: "50%" }
+    width: 320
+    height: 200
+    rx: 12
+    ry: 12
+    fill: "#ffffff"
+    stroke: "#3b82f6"
+    strokeWidth: 2
+
+  # Header bar
+  - id: "header"
+    type: "shape"
+    subtype: "rect"
+    position: { x: "50%", y: "20%" }
+    width: 320
+    height: 40
+    fill: "#3b82f6"
+
+  # Icon
+  - id: "badge-icon"
+    type: "svgImage"
+    svgId: "ui-security-shield"
+    position: { x: "20%", y: "20%" }
+    width: 24
+    height: 24
+    fill: "#ffffff"
+    clip: "background"
+
+  # Title text
+  - id: "title"
+    type: "text"
+    label: "Title"
+    default: "Badge Title"
+    position: { x: "60%", y: "20%" }
+    clip: "background"
+    maxLength: 20
+    fontFamily: "Roboto"
+    fontSize: 18
+    fontWeight: 700
+    fontColor: "#ffffff"
+
+  # Subtitle text
+  - id: "subtitle"
+    type: "text"
+    label: "Subtitle"
+    default: "Subtitle text"
+    position: { x: "50%", y: "60%" }
+    clip: "background"
+    maxLength: 30
+    fontFamily: "Inter"
+    fontSize: 16
+    fontWeight: 400
+    fontColor: "#1f2937"
+```
+
+### Testing Your Template
+
+1. Save YAML file in `app/templates/`
+2. Restart dev server (`make dev`)
+3. Template appears in dropdown automatically
+4. Test all text inputs, shapes, and icons
+5. Verify clipping and positioning at different zoom levels
 
 ## 🔧 Development Commands
 
 ```bash
 # Development
-make dev              # Start development server
+make dev              # Start dev server
 make dev-open         # Start dev server + open browser
 
 # Production
@@ -87,40 +286,14 @@ make start-open       # Start prod server + open browser
 make lint             # Run ESLint
 make lint-fix         # Auto-fix linting issues
 
-# Maintenance
-make clean            # Clean all artifacts
-make install          # Install dependencies
-
 # Testing
 make test-quick       # Run fast tests
 make test-full        # Run comprehensive tests
+
+# Maintenance
+make clean            # Clean all artifacts
+make install          # Install dependencies
 ```
-
-## 🔒 Security & Performance
-
-### Security Features
-- **Input Validation**: Comprehensive sanitization at all entry points
-- **File Upload Security**: MIME type validation and size limits
-- **XSS Protection**: HTML encoding and script tag removal
-- **Font URL Validation**: HTTPS-only with trusted domain whitelist
-- **SVG Sanitization**: Dangerous elements and event handlers removed
-
-See [SECURITY.md](./SECURITY.md) for detailed security information.
-
-### Performance Optimizations
-- **Code Splitting**: Separate chunks for templates, fonts, and components
-- **Lazy Loading**: Components and fonts loaded on demand
-- **Font Preloading**: Popular fonts cached for better UX
-- **Bundle Optimization**: Main bundle reduced from 683KB to 75KB
-- **Template Caching**: Templates cached after initial load
-- **Memory Management**: Automatic cleanup with garbage collection
-
-### Performance Metrics
-- **Main Bundle**: 75KB (89% reduction)
-- **Font Chunk**: 138KB (separated)
-- **Template Chunks**: 1-3KB each (dynamically loaded)
-- **Initial Load**: ~200KB total
-- **Cache Hit Rate**: 95%+ for fonts and templates
 
 ## 🏗️ Project Structure
 
@@ -130,16 +303,10 @@ sticker-factory/
 │   ├── src/
 │   │   ├── stores/           # Pinia state management
 │   │   ├── components/       # Vue components
-│   │   │   ├── TextInputWithFontSelector.vue
-│   │   │   ├── TemplateObjectStyler.vue
-│   │   │   ├── TemplateImageStyler.vue      # SVG image styling
-│   │   │   ├── SvgLibrarySelector.vue       # SVG library browser
-│   │   │   └── TemplateAwareSvgViewer.vue
-│   │   ├── config/           # Fonts, templates & SVG config
-│   │   │   ├── svg-library-loader.ts        # SVG library management
-│   │   │   └── template-loader.ts           # Template processing
+│   │   ├── config/           # Fonts, templates, SVG library
+│   │   ├── utils/            # Utility functions
 │   │   └── types/            # TypeScript definitions
-│   ├── templates/            # YAML template definitions (18 files)
+│   ├── templates/            # YAML template definitions
 │   ├── images/               # SVG icon library (100+ icons)
 │   └── dist/                 # Production build
 ├── server.js                 # Express static server
@@ -150,71 +317,39 @@ sticker-factory/
 
 - **Frontend**: Vue 3, TypeScript, Vite, Pinia, Tailwind CSS
 - **Fonts**: Google Fonts with dynamic loading
-- **Backend**: Express.js static file server
+- **State**: URL-driven (shareable links, automatic persistence)
 - **Build**: Vite with hot module replacement
-- **Styling**: Tailwind CSS with custom design system
+- **Testing**: Vitest with 50+ SVG utility tests
 
-## 📱 User Experience
+## 🔒 Security & Performance
 
-- **Accordion Interface** - Expandable font controls for each text field
-- **Auto-save** - Your work persists across browser sessions
-- **Template Switching** - Seamlessly switch between designs
-- **Export/Import** - Save and share badge configurations
-- **Mobile Responsive** - Works great on all devices
+### Security
+- Input validation and sanitization
+- XSS protection with HTML encoding
+- SVG sanitization (dangerous elements removed)
+- HTTPS-only font loading
+- MIME type validation for uploads
 
-## 🔄 Data Persistence
+See [SECURITY.md](./SECURITY.md) for details.
 
-Your badges automatically save to browser localStorage:
-- Selected template and all text content
-- Font choices and styling for each text field
-- Background colors and preferences
-- Export/import configurations as JSON
-
-## 🎨 Template Parameters
-
-Templates are YAML files supporting these layer types and parameters:
-
-### Shape Layer Parameters
-- **id**: Unique identifier for the shape
-- **type**: "shape" (indicates this is a shape layer)
-- **subtype**: "rect", "circle", "polygon", or "path"
-- **position**: `{ x: "50%", y: "50%" }` (percentage or absolute coordinates)
-- **width/height**: Shape dimensions in pixels
-- **fill**: Default fill color (#hex)
-- **stroke**: Default stroke color (#hex)
-- **strokeWidth**: Default stroke width (pixels)
-- **points**: For polygons - SVG path coordinates
-
-### Text Layer Parameters
-- **id**: Unique identifier for the text input
-- **type**: "text" (indicates this is a text input layer)
-- **label**: Form label shown to user
-- **default**: Default text content
-- **placeholder**: Input placeholder text
-- **position**: `{ x: "50%", y: "50%" }` (text center coordinates)
-- **maxLength**: Maximum character limit
-- **fontFamily**: Default font family
-- **fontSize**: Default font size (pixels)
-- **fontWeight**: Default font weight (100-900)
-- **fontColor**: Default text color (#hex)
-- **clip**: Optional clipping shape ID
-
-### Coordinate System
-- **Percentage**: `"50%"` = center, `"0%"` = left/top, `"100%"` = right/bottom
-- **Absolute**: Pixel values (e.g., `200` for 200px from origin)
-- **Mixed**: `{ x: "50%", y: 30 }` combines both systems
-- **Text Positioning**: Uses center coordinates (not top-left)
+### Performance
+- **Code Splitting**: Separate chunks for templates, fonts, components
+- **Lazy Loading**: On-demand component and font loading
+- **Bundle Size**: 75KB main bundle (89% reduction)
+- **Font Chunk**: 138KB (separated)
+- **Template Chunks**: 1-3KB each (dynamically loaded)
+- **Cache Hit Rate**: 95%+ for fonts and templates
 
 ## 🌐 Browser Support
 
 - Modern browsers with ES6+ support
 - SVG rendering capability required
-- LocalStorage support for persistence
+- LocalStorage for temporary data
 
 ## 📄 License
 
-MIT License - feel free to use in your projects!
+MIT License - free to use in your projects!
 
 ---
 
-**Ready to create professional badges and stickers?** Run `make dev-open` to get started! 🎨
+**Ready to create?** Run `make dev-open` and start designing! 🎨
