@@ -47,6 +47,185 @@ const svgRenderData = computed(() => {
 <text :font-family="element.fontFamily">
 ```
 
+## ⚡ Development Discipline
+
+### Code Reuse - Search Before Creating
+**ALWAYS search the codebase exhaustively before writing new code. Creating duplicates is a critical failure.**
+
+```typescript
+// ❌ FORBIDDEN - Creating duplicate logging
+console.log('Debug message')
+console.error('Error occurred')
+
+// ✅ CORRECT - Use existing logger utility
+import { logger } from './utils/logger'
+logger.info('Debug message')
+logger.error('Error occurred')
+
+// ❌ FORBIDDEN - Recreating transform calculations
+const transform = `translate(${x}, ${y}) scale(${scale})`
+
+// ✅ CORRECT - Use existing svg-transforms.ts utilities
+import { createTransformString } from './utils/svg-transforms'
+const transform = createTransformString({ translateX: x, translateY: y, scale })
+```
+
+**Search checklist before writing new code:**
+1. Check `utils/` for existing calculations/utilities
+2. Check `composables/` for existing reactive patterns
+3. Reference similar features in codebase
+4. Break down complex functions for cross-cutting reuse
+5. **Example**: `useSvgCentering.ts` wraps pure functions from `svg-centering.ts`
+
+### Testing is Mandatory
+**Tests are production code. New features without tests will not be accepted.**
+
+```bash
+# Tests live in src/test/ with matching names
+src/utils/svg-transforms.ts → src/test/svg-transforms.test.ts
+src/composables/useSvgCentering.ts → src/test/useSvgCentering.test.ts
+
+# Coverage expectations
+Utils: 100% coverage (pure functions, easy to test)
+Composables: 80%+ coverage (reactive logic)
+Components: 60%+ coverage (integration tests)
+```
+
+**After creating ANY new utility or feature:**
+1. Write comprehensive unit tests IMMEDIATELY
+2. Test happy paths AND edge cases
+3. Test error handling and validation
+4. Add tests to same commit as feature code
+
+### Never Disable Tests
+**Disabled tests = broken code. If tests fail, FIX THEM.**
+
+```typescript
+// ❌ FORBIDDEN - Disabling failing tests
+it.skip('should calculate transform correctly', () => { ... })
+
+// ✅ CORRECT - Fix the test or ask for help
+it('should calculate transform correctly', () => {
+  // If stuck: Ask for help debugging
+  // Never commit with .skip() or .only()
+})
+```
+
+**If blocked on failing tests:**
+- Debug the root cause first
+- Check if feature requirements changed
+- Ask for help if truly stuck
+- NEVER use `.skip()` or `.only()` in commits
+
+### No Scattered Defaults or Fallbacks
+**All constants and defaults live in centralized locations. No inline fallbacks.**
+
+```typescript
+// ❌ FORBIDDEN - Inline defaults littered everywhere
+const color = userColor || '#000000'
+const fontSize = userSize ?? 16
+const padding = data.padding || 10
+
+// ✅ CORRECT - Define in utils/ui-constants.ts
+export const DEFAULT_TEXT_COLOR = '#1f2937'
+export const DEFAULT_FONT_SIZE = 16
+export const DEFAULT_PADDING = { top: 10, right: 10, bottom: 10, left: 10 }
+
+// Then import and use
+import { DEFAULT_TEXT_COLOR } from './utils/ui-constants'
+const color = userColor || DEFAULT_TEXT_COLOR
+```
+
+**See `utils/ui-constants.ts` for examples:**
+- `PRESET_COLORS` - Color palette
+- `FONT_LOADING_CONFIG` - Lazy loading settings
+- `STROKE_LINEJOIN_OPTIONS` - SVG stroke options
+
+**When you need a default value:**
+1. Check if it already exists in `ui-constants.ts`
+2. If not, add it there with clear naming
+3. Reuse across codebase - no duplication
+4. Values should be computed from measurements, not guessed
+
+### Vue Reactivity Separation
+**Pure functions in utils/, Vue reactivity in composables/. NEVER mix.**
+
+```typescript
+// ❌ FORBIDDEN - Vue reactivity in utils/
+// File: utils/svg-helper.ts
+import { ref, computed } from 'vue'
+export function useHelper() {
+  const value = ref(0)  // NO! This is a util file
+  return { value }
+}
+
+// ✅ CORRECT - Pure function in utils/
+// File: utils/svg-helper.ts
+export function calculateValue(input: number): number {
+  return input * 2  // Pure calculation, no Vue
+}
+
+// ✅ CORRECT - Vue reactivity in composables/
+// File: composables/useSvgHelper.ts
+import { ref, computed } from 'vue'
+import { calculateValue } from '../utils/svg-helper'
+
+export function useSvgHelper() {
+  const input = ref(0)
+  const output = computed(() => calculateValue(input.value))
+  return { input, output }
+}
+```
+
+**Pattern: Composables wrap utils with reactivity**
+- **utils/svg-centering.ts**: Pure functions (calculateCenteringTransform, calculateGridBounds)
+- **composables/useSvgCentering.ts**: Wraps with Vue reactivity (ref, computed, watch)
+- Benefits: Utils work everywhere (browser, Node.js, Service Workers)
+
+### Component Architecture - Composition Over Fat Components
+**Keep components lean. Logic belongs in composables.**
+
+```vue
+<!-- ❌ FORBIDDEN - Fat component with embedded logic -->
+<script setup>
+const transform = ref('')
+const scale = ref(1)
+const rotation = ref(0)
+
+watch([scale, rotation], () => {
+  const s = scale.value
+  const r = rotation.value
+  transform.value = `scale(${s}) rotate(${r})`
+})
+</script>
+
+<!-- ✅ CORRECT - Lean component using composable -->
+<script setup>
+import { useSvgTransform } from '@/composables/useSvgTransform'
+
+const { transform, scale, rotation } = useSvgTransform()
+</script>
+```
+
+**Architecture:**
+- **Components (.vue)**: Presentation, template, minimal script
+- **Composables (use*.ts)**: Business logic, state management, watchers
+- **Utils (*-utils.ts)**: Pure calculations, transformations
+- **Stores (*Store.ts)**: Global state (Pinia)
+
+**Use composition for complex behaviors:**
+```typescript
+// Compose multiple composables
+export function useComplexFeature() {
+  const { transform } = useSvgTransform()
+  const { bounds } = useSvgBounds()
+  const { center } = useSvgCentering()
+
+  // Combine behaviors
+  return { transform, bounds, center }
+}
+```
+
 ## 🏗️ Architecture
 
 ### URL-Driven State Management
@@ -175,20 +354,61 @@ Reference by `svgId` matching filename without extension.
 
 ## 🎯 Naming Conventions
 
-### Function Naming
-- `calculate*()` - Mathematical computations
-- `resolve*()` - Coordinate/percentage resolution
-- `extract*()` - Data extraction from objects
-- `generate*()` - Creation of new data structures
-- `analyze*()` - Analysis returning metadata
-- `filter*()` - Array filtering
-- `should*()` - Boolean checks
+**Consistency is critical. Similar functions must use the same verbs/nouns across the codebase.**
 
-### File Naming
-- `*-utils.ts` - Pure utility functions
-- `*-types.ts` - TypeScript type definitions
-- `use*.ts` - Vue composables
-- `*Store.ts` - Pinia stores
+### Function Naming - Standard Verbs
+| Verb | Purpose | Examples | Return |
+|------|---------|----------|--------|
+| `calculate*()` | Math/geometry computations | `calculateBounds()`, `calculateTransform()` | Computed value |
+| `resolve*()` | Convert/normalize data | `resolveCoordinate()`, `resolvePercentage()` | Resolved value |
+| `extract*()` | Pull data from structures | `extractViewBox()`, `extractFontUrls()` | Extracted data |
+| `generate*()` | Create new structures | `generateSvgString()`, `generateTransform()` | New object/string |
+| `create*()` | Factory/constructor | `createTransformString()`, `createElement()` | New instance |
+| `analyze*()` | Inspect/measure | `analyzeSvgBounds()`, `analyzeContent()` | Metadata object |
+| `validate*()` | Check correctness | `validateViewBox()`, `validateInput()` | Boolean |
+| `should*()` / `is*()` / `has*()` | Boolean checks | `shouldRender()`, `isValid()`, `hasContent()` | Boolean |
+| `apply*()` | Modify/transform | `applyTransform()`, `applyStyles()` | Modified value |
+| `combine*()` | Merge/join | `combineTransforms()`, `combineStyles()` | Combined result |
+| `format*()` | String formatting | `formatColor()`, `formatNumber()` | Formatted string |
+| `parse*()` | String to data | `parseViewBox()`, `parseSvg()` | Parsed object |
+
+**Standardize similar operations across domains:**
+```typescript
+// ✅ CORRECT - Consistent naming pattern
+calculateSvgBounds()      // SVG domain
+calculateTextBounds()     // Text domain
+calculateImageBounds()    // Image domain
+
+// ❌ WRONG - Inconsistent verbs for same concept
+getSvgBounds()            // Different verb
+computeTextBounds()       // Different verb
+findImageBounds()         // Different verb
+```
+
+### Noun Standardization
+**Use the same nouns for the same concepts:**
+- **Transform/Transformation**: Use "transform" (not "xform", "tx", "transformation")
+- **Coordinate/Position**: Use "position" for {x, y} (not "coord", "pos", "point" for compound)
+- **Dimensions/Size**: Use "dimensions" for {width, height} (not "size", "bounds" for size-only)
+- **Bounds/BBox**: Use "bounds" for {x, y, width, height} (not "bbox", "rect")
+- **ViewBox**: Always "viewBox" (not "vb", "viewport")
+
+### Component/File Naming
+| Pattern | Purpose | Examples |
+|---------|---------|----------|
+| `use*.ts` | Vue composables | `useSvgCentering.ts`, `useFontSelector.ts` |
+| `*-utils.ts` | Pure utilities | `svg-utils.ts`, `font-utils.ts` |
+| `*-types.ts` | Type definitions | `svg-types.ts`, `template-types.ts` |
+| `*Store.ts` | Pinia stores | `urlDrivenStore.ts`, `fontStore.ts` |
+| `*Modal.vue` | Modal components | `DownloadModal.vue`, `SettingsModal.vue` |
+| `*Selector.vue` | Selector components | `FontSelector.vue`, `ColorSelector.vue` |
+
+### Consistency Rules
+1. **Same feature = same prefix**: All SVG-related → `svg-*`, all font-related → `font-*`
+2. **Same verb for same operation**: Calculating bounds always uses `calculate`, never `get`/`find`/`compute`
+3. **No abbreviations**: Write `transform` not `xform`, `coordinate` not `coord`
+4. **CamelCase for functions**: `calculateBounds()` not `calculate_bounds()`
+5. **kebab-case for files**: `svg-transforms.ts` not `svgTransforms.ts` or `svg_transforms.ts`
 
 ## 🧪 Testing & Quality
 
