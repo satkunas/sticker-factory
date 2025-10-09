@@ -269,6 +269,10 @@ const getSvgContent = async (embedFonts = false) => {
       }
     })
 
+    // Remove existing style elements (from Service Worker) to avoid duplicate @import statements
+    const existingStyles = svgClone.querySelectorAll('style')
+    existingStyles.forEach(style => style.remove())
+
     // Add CSS styles to SVG if we have font imports
     if (fontCSS) {
       // If font embedding is requested, convert @import to embedded @font-face
@@ -295,7 +299,7 @@ const getSvgContent = async (embedFonts = false) => {
 }
 
 const viewInNewTab = async () => {
-  const svgContent = await getSvgContent() // Don't embed fonts for view (faster loading)
+  const svgContent = await getSvgContent(true) // Enable font embedding for offline viewing
   if (!svgContent) {
     return
   }
@@ -309,7 +313,7 @@ const viewInNewTab = async () => {
 const copyToClipboard = async () => {
   try {
     const content = selectedFormat.value === 'svg'
-      ? await getSvgContent() // Don't embed fonts for copy (faster)
+      ? await getSvgContent(true) // Enable font embedding for offline use
       : 'Copy not available for this format'
       
     await navigator.clipboard.writeText(content)
@@ -349,7 +353,7 @@ const svgToCanvas = (svgContent, width, height) => {
 }
 
 const downloadSVG = async () => {
-  const svgContent = await getSvgContent() // Don't embed fonts for SVG (smaller file size)
+  const svgContent = await getSvgContent(true) // Enable font embedding for offline/printer use
   if (!svgContent) {
     return
   }
