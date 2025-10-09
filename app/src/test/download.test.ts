@@ -5,7 +5,7 @@ import type { SimpleTemplate, TextInputState, ShapeStyleState } from '../types/t
 // Mock dependencies
 vi.mock('../utils/logger')
 vi.mock('../utils/fontEmbedding', () => ({
-  embedGoogleFonts: vi.fn().mockResolvedValue('@font-face { font-family: "Mock"; src: url("data:font/woff2;base64,mock"); }')
+  embedWebFonts: vi.fn().mockResolvedValue('@font-face { font-family: "Mock"; src: url("data:font/woff2;base64,mock"); }')
 }))
 
 describe('Download Output Tests', () => {
@@ -414,16 +414,16 @@ describe('Download Output Tests', () => {
 
   describe('Font Embedding Integration', () => {
     it('should import font embedding utility correctly', async () => {
-      const { embedGoogleFonts } = await import('../utils/fontEmbedding')
-      expect(embedGoogleFonts).toBeDefined()
-      expect(typeof embedGoogleFonts).toBe('function')
+      const { embedWebFonts } = await import('../utils/fontEmbedding')
+      expect(embedWebFonts).toBeDefined()
+      expect(typeof embedWebFonts).toBe('function')
     })
 
     it('should mock font embedding behavior for testing', async () => {
-      const { embedGoogleFonts } = await import('../utils/fontEmbedding')
+      const { embedWebFonts } = await import('../utils/fontEmbedding')
 
       const mockCss = '@import url("https://fonts.googleapis.com/css2?family=Test");'
-      const result = await embedGoogleFonts(mockCss)
+      const result = await embedWebFonts(mockCss)
 
       expect(result).toContain('@font-face')
       expect(result).toContain('font-family: "Mock"')

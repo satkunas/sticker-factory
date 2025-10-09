@@ -11,10 +11,12 @@ interface FontEmbedCache {
 const fontCache: FontEmbedCache = {}
 
 /**
- * Extract Google Font URLs from CSS @import statements
+ * Extract web font URLs from CSS @import statements
+ * Works with Google Fonts, Adobe Fonts, and any other web font service
  */
-export function extractGoogleFontUrls(cssContent: string): string[] {
-  const importRegex = /@import\s+url\(['"]([^'"]*googleapis[^'"]*)['"]\);?/g
+export function extractWebFontUrls(cssContent: string): string[] {
+  // Match ANY @import url(), not just specific font services
+  const importRegex = /@import\s+url\(['"]([^'"]+)['"]\);?/g
   const urls: string[] = []
   let match
 
@@ -26,12 +28,13 @@ export function extractGoogleFontUrls(cssContent: string): string[] {
 }
 
 /**
- * Convert Google Fonts CSS URL to actual font file URLs
- * Google Fonts CSS contains @font-face rules with font file URLs
+ * Fetch web font CSS from any font service URL
+ * Works with Google Fonts, Adobe Fonts, and other web font services
+ * Returns CSS containing @font-face rules with font file URLs
  */
-async function fetchGoogleFontsCss(googleFontUrl: string): Promise<string> {
+async function fetchWebFontCss(webFontUrl: string): Promise<string> {
   try {
-    const response = await fetch(googleFontUrl, {
+    const response = await fetch(webFontUrl, {
       headers: {
         // Request WOFF2 format (best compression, wide support)
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -39,18 +42,19 @@ async function fetchGoogleFontsCss(googleFontUrl: string): Promise<string> {
     })
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch Google Fonts CSS: ${response.status}`)
+      throw new Error(`Failed to fetch web font CSS: ${response.status}`)
     }
 
     return await response.text()
   } catch (error) {
-    // Error fetching Google Fonts CSS - fail silently in production
+    // Error fetching web font CSS - fail silently in production
     return ''
   }
 }
 
 /**
- * Extract font file URLs from Google Fonts CSS
+ * Extract font file URLs from web font CSS @font-face rules
+ * Works with CSS from Google Fonts, Adobe Fonts, and other web font services
  */
 function extractFontFileUrls(css: string): Array<{ family: string; url: string; format: string }> {
   const fontFaceRegex = /@font-face\s*\{[^}]*\}/g
@@ -109,29 +113,31 @@ async function fetchAndEncodeFont(fontUrl: string): Promise<string> {
 }
 
 /**
- * Convert Google Fonts @import to embedded @font-face declarations
+ * Convert web font @import statements to embedded @font-face declarations
+ * Works with Google Fonts, Adobe Fonts, and any web font service that provides CSS with @font-face rules
+ * Downloads font files and converts them to base64 data URIs for offline use
  */
-export async function embedGoogleFonts(cssContent: string): Promise<string> {
-  const googleFontUrls = extractGoogleFontUrls(cssContent)
+export async function embedWebFonts(cssContent: string): Promise<string> {
+  const webFontUrls = extractWebFontUrls(cssContent)
 
-  if (googleFontUrls.length === 0) {
+  if (webFontUrls.length === 0) {
     return cssContent
   }
 
   let embeddedCss = cssContent
 
   try {
-    // Process each Google Font URL
-    for (const googleFontUrl of googleFontUrls) {
-      // Fetch the Google Fonts CSS
-      const googleCss = await fetchGoogleFontsCss(googleFontUrl)
+    // Process each web font URL
+    for (const webFontUrl of webFontUrls) {
+      // Fetch the web font CSS (contains @font-face rules)
+      const webFontCss = await fetchWebFontCss(webFontUrl)
 
-      if (!googleCss) {
+      if (!webFontCss) {
         continue
       }
 
       // Extract font file URLs from the CSS
-      const fontFiles = extractFontFileUrls(googleCss)
+      const fontFiles = extractFontFileUrls(webFontCss)
 
       // Download and embed each font file
       const embeddedFontFaces: string[] = []
@@ -151,12 +157,12 @@ export async function embedGoogleFonts(cssContent: string): Promise<string> {
 
       // Replace the @import with embedded @font-face rules
       if (embeddedFontFaces.length > 0) {
-        const importPattern = new RegExp(`@import\\s+url\\(['"]${googleFontUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}['"]\\);?`, 'g')
+        const importPattern = new RegExp(`@import\\s+url\\(['"]${webFontUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}['"]\\);?`, 'g')
         embeddedCss = embeddedCss.replace(importPattern, embeddedFontFaces.join('\n'))
       }
     }
   } catch (error) {
-    // Error embedding Google Fonts - fail silently and return original CSS
+    // Error embedding web fonts - fail silently and return original CSS
     return cssContent
   }
 

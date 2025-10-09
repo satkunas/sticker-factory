@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
-  extractGoogleFontUrls,
-  embedGoogleFonts,
+  extractWebFontUrls,
+  embedWebFonts,
   clearFontCache,
   getFontCacheSize,
   getFontCacheMemoryUsage
@@ -23,7 +23,7 @@ describe('Font Embedding System', () => {
     vi.clearAllMocks()
   })
 
-  describe('extractGoogleFontUrls', () => {
+  describe('extractWebFontUrls', () => {
     it('should extract Google Font URLs from CSS @import statements', () => {
       const cssContent = `
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;600;700&display=swap');
@@ -31,7 +31,7 @@ describe('Font Embedding System', () => {
         body { font-family: 'Roboto', sans-serif; }
       `
 
-      const urls = extractGoogleFontUrls(cssContent)
+      const urls = extractWebFontUrls(cssContent)
 
       expect(urls).toHaveLength(2)
       expect(urls[0]).toContain('Roboto')
@@ -45,7 +45,7 @@ describe('Font Embedding System', () => {
         .title { font-size: 24px; }
       `
 
-      const urls = extractGoogleFontUrls(cssContent)
+      const urls = extractWebFontUrls(cssContent)
       expect(urls).toHaveLength(0)
     })
 
@@ -56,9 +56,10 @@ describe('Font Embedding System', () => {
         @import url('https://fonts.googleapis.com/css2?family=Valid:wght@400');
       `
 
-      const urls = extractGoogleFontUrls(cssContent)
-      expect(urls).toHaveLength(1)
-      expect(urls[0]).toContain('Valid')
+      const urls = extractWebFontUrls(cssContent)
+      expect(urls).toHaveLength(2) // Now extracts ALL @import url() - both Google Fonts and other services
+      expect(urls[0]).toBe('not-a-google-font.com/css')
+      expect(urls[1]).toContain('Valid')
     })
 
     it('should extract URLs with different quote styles', () => {
@@ -67,14 +68,14 @@ describe('Font Embedding System', () => {
         @import url('https://fonts.googleapis.com/css2?family=Single');
       `
 
-      const urls = extractGoogleFontUrls(cssContent)
+      const urls = extractWebFontUrls(cssContent)
       expect(urls).toHaveLength(2)
       expect(urls.some(url => url.includes('Double'))).toBe(true)
       expect(urls.some(url => url.includes('Single'))).toBe(true)
     })
   })
 
-  describe('embedGoogleFonts', () => {
+  describe('embedWebFonts', () => {
     it('should embed Google Fonts CSS successfully', async () => {
       const cssContent = `
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;600&display=swap');
@@ -122,7 +123,7 @@ describe('Font Embedding System', () => {
         return Promise.reject(new Error('Unknown URL'))
       })
 
-      const result = await embedGoogleFonts(cssContent)
+      const result = await embedWebFonts(cssContent)
 
       expect(result).not.toBe(cssContent) // Should be modified
       expect(result).toContain('@font-face')
@@ -137,7 +138,7 @@ describe('Font Embedding System', () => {
         .title { font-size: 24px; }
       `
 
-      const result = await embedGoogleFonts(cssContent)
+      const result = await embedWebFonts(cssContent)
       expect(result).toBe(cssContent) // Should be unchanged
       expect(fetch).not.toHaveBeenCalled()
     })
@@ -151,7 +152,7 @@ describe('Font Embedding System', () => {
       // Mock network failure
       vi.mocked(fetch).mockRejectedValue(new Error('Network error'))
 
-      const result = await embedGoogleFonts(cssContent)
+      const result = await embedWebFonts(cssContent)
       expect(result).toBe(cssContent) // Should fallback to original
     })
 
@@ -165,7 +166,7 @@ describe('Font Embedding System', () => {
         status: 404
       } as any)
 
-      const result = await embedGoogleFonts(cssContent)
+      const result = await embedWebFonts(cssContent)
       expect(result).toBe(cssContent) // Should fallback to original
     })
 
@@ -212,7 +213,7 @@ describe('Font Embedding System', () => {
         return Promise.reject(new Error('Unknown URL'))
       })
 
-      const result = await embedGoogleFonts(cssContent)
+      const result = await embedWebFonts(cssContent)
 
       expect(result).toContain('font-family: \'Roboto\'')
       expect(result).toContain('font-family: \'Open Sans\'')
@@ -257,12 +258,12 @@ describe('Font Embedding System', () => {
       })
 
       // First request should cache the font
-      await embedGoogleFonts(cssContent)
+      await embedWebFonts(cssContent)
       expect(getFontCacheSize()).toBeGreaterThan(0)
 
       // Second request should use cache (no additional fetch calls)
       const fetchCallsBefore = vi.mocked(fetch).mock.calls.length
-      await embedGoogleFonts(cssContent)
+      await embedWebFonts(cssContent)
       const fetchCallsAfter = vi.mocked(fetch).mock.calls.length
 
       // Should have made additional CSS request but reused cached font
@@ -298,7 +299,7 @@ describe('Font Embedding System', () => {
       })
 
       // Add something to cache
-      await embedGoogleFonts(cssContent)
+      await embedWebFonts(cssContent)
       expect(getFontCacheSize()).toBeGreaterThan(0)
 
       // Clear cache
@@ -337,7 +338,7 @@ describe('Font Embedding System', () => {
         return Promise.reject(new Error('Unknown URL'))
       })
 
-      await embedGoogleFonts(cssContent)
+      await embedWebFonts(cssContent)
 
       const memoryUsage = getFontCacheMemoryUsage()
       expect(memoryUsage).toBeGreaterThan(0)
@@ -356,7 +357,7 @@ describe('Font Embedding System', () => {
         text: () => Promise.resolve('invalid css content {{{')
       } as any)
 
-      const result = await embedGoogleFonts(malformedCss)
+      const result = await embedWebFonts(malformedCss)
       expect(result).toBe(malformedCss) // Should fallback to original
     })
 
@@ -394,7 +395,7 @@ describe('Font Embedding System', () => {
         return Promise.reject(new Error('Unknown URL'))
       })
 
-      const result = await embedGoogleFonts(cssContent)
+      const result = await embedWebFonts(cssContent)
 
       expect(result).toContain('@font-face')
       expect(result).toContain('data:font/woff2;base64')
@@ -436,9 +437,9 @@ describe('Font Embedding System', () => {
 
       // Run multiple concurrent requests
       const promises = [
-        embedGoogleFonts(cssContent),
-        embedGoogleFonts(cssContent),
-        embedGoogleFonts(cssContent)
+        embedWebFonts(cssContent),
+        embedWebFonts(cssContent),
+        embedWebFonts(cssContent)
       ]
 
       const results = await Promise.all(promises)

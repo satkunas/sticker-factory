@@ -134,7 +134,7 @@ import Modal from './Modal.vue'
 import { jsPDF } from 'jspdf'
 import type { SimpleTemplate, FlatLayerData, AppState } from '../types/template-types'
 import { AVAILABLE_FONTS } from '../config/fonts'
-import { embedGoogleFonts } from '../utils/fontEmbedding'
+import { embedWebFonts } from '../utils/fontEmbedding'
 import { encodeTemplateStateCompact } from '../utils/url-encoding'
 
 interface Props {
@@ -269,17 +269,17 @@ const getSvgContent = async (embedFonts = false) => {
       }
     })
 
-    // Remove existing style elements (from Service Worker) to avoid duplicate @import statements
-    const existingStyles = svgClone.querySelectorAll('style')
-    existingStyles.forEach(style => style.remove())
-
     // Add CSS styles to SVG if we have font imports
     if (fontCSS) {
+      // Remove existing style elements (from Service Worker) to avoid duplicate @import statements
+      const existingStyles = svgClone.querySelectorAll('style')
+      existingStyles.forEach(style => style.remove())
+
       // If font embedding is requested, convert @import to embedded @font-face
       let finalCSS = fontCSS
       if (embedFonts) {
         try {
-          finalCSS = await embedGoogleFonts(fontCSS)
+          finalCSS = await embedWebFonts(fontCSS)
         } catch (error) {
           // Keep original CSS as fallback
         }
