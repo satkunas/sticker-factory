@@ -1,7 +1,10 @@
 // Environment-based logging utility
 // Only logs in development mode, silent in production
 
-const IS_DEVELOPMENT = import.meta.env.DEV || import.meta.env.MODE === 'development'
+const IS_DEVELOPMENT = typeof import.meta.env !== 'undefined'
+  ? (import.meta.env.DEV || import.meta.env.MODE === 'development')
+  // eslint-disable-next-line no-undef
+  : (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') || true // Default to true in Node.js context
 
 interface Logger {
   info: (message: string, ...args: any[]) => void

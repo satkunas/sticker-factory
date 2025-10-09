@@ -41,6 +41,7 @@ export default [
         navigator: 'readonly',
         localStorage: 'readonly',
         sessionStorage: 'readonly',
+        fetch: 'readonly',
         URL: 'readonly',
         Blob: 'readonly',
         setTimeout: 'readonly',

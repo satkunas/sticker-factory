@@ -7,13 +7,11 @@
           Preview
         </label>
         <div class="h-48 bg-secondary-50 rounded-lg border border-secondary-200 flex items-center justify-center p-4">
-          <Svg
-            v-if="template"
-            ref="templateSvgRef"
-            :template="template"
-            :layers="layers"
-            mode="preview"
-            class="max-w-full max-h-full"
+          <img
+            v-if="template && previewSvgUrl"
+            :src="previewSvgUrl"
+            :alt="`${template.name} preview`"
+            class="max-w-full max-h-full object-contain drop-shadow-sm"
           />
         </div>
       </div>
@@ -133,20 +131,16 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import Modal from './Modal.vue'
-import Svg from './Svg.vue'
 import { jsPDF } from 'jspdf'
-import type { SimpleTemplate } from '../types/template-types'
+import type { SimpleTemplate, FlatLayerData, AppState } from '../types/template-types'
 import { AVAILABLE_FONTS } from '../config/fonts'
 import { embedGoogleFonts } from '../utils/fontEmbedding'
+import { encodeTemplateStateCompact } from '../utils/url-encoding'
 
 interface Props {
   show: boolean
   template?: SimpleTemplate | null
-  layers?: Array<{
-    id: string
-    type: 'text' | 'shape' | 'svgImage'
-    [key: string]: any
-  }>
+  layers?: FlatLayerData[]
 }
 
 const props = defineProps<Props>()
@@ -154,10 +148,25 @@ defineEmits<{
   close: []
 }>()
 
-const templateSvgRef = ref(null)
 const selectedFormat = ref('svg')
 const selectedResolution = ref(2)
 const copyButtonText = ref('Copy')
+
+// Generate .svg URL for preview
+const previewSvgUrl = computed(() => {
+  if (!props.template || !props.layers) {
+    return ''
+  }
+
+  const state: AppState = {
+    selectedTemplateId: props.template.id,
+    layers: props.layers,
+    lastModified: Date.now()
+  }
+
+  const encoded = encodeTemplateStateCompact(state)
+  return `/${encoded}.svg`
+})
 
 const formats = [
   { type: 'svg', name: 'SVG', description: 'Vector (scalable)' },
@@ -185,15 +194,24 @@ const getFileName = () => {
 }
 
 const getSvgContent = async (embedFonts = false) => {
-  // Get the SVG element from the content layer and create clean SVG content
-  const svgElement = templateSvgRef.value?.svgContentRef
-  if (!svgElement) {
+  // Fetch SVG content from .svg URL (uses same rendering logic as preview)
+  if (!previewSvgUrl.value) {
     return ''
   }
 
   try {
-    // Clone the SVG and create a clean version without transforms
-    const svgClone = svgElement.cloneNode(true) as SVGElement
+    // Fetch the SVG content from the Service Worker / middleware
+    const response = await fetch(previewSvgUrl.value)
+    if (!response.ok) {
+      return ''
+    }
+
+    const svgText = await response.text()
+
+    // Parse the SVG to process it
+    const parser = new DOMParser()
+    const svgDoc = parser.parseFromString(svgText, 'image/svg+xml')
+    const svgClone = svgDoc.documentElement as unknown as SVGElement
 
     // Collect unique fonts used in the SVG
     const usedFonts = new Set<string>()
