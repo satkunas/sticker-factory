@@ -3,6 +3,9 @@ import vue from '@vitejs/plugin-vue'
 import * as esbuild from 'esbuild'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { readFile } from 'fs/promises'
+import yaml from 'js-yaml'
+import type { YamlTemplate, SimpleTemplate, FlatLayerData } from './src/types/template-types'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -36,6 +39,91 @@ async function buildServiceWorker(isDev = false) {
   console.log(`Service Worker built: ${swDistPath}`)
 }
 
+// Template loading for Vite middleware (Node.js context)
+async function loadTemplateForMiddleware(templateId: string): Promise<SimpleTemplate | null> {
+  try {
+    const templatePath = path.resolve(__dirname, `templates/${templateId}.yaml`)
+    const yamlContent = await readFile(templatePath, 'utf-8')
+    const yamlTemplate = yaml.load(yamlContent) as YamlTemplate
+
+    // Calculate viewBox (matches main template-loader.ts logic)
+    const viewBox = yamlTemplate.width && yamlTemplate.height
+      ? {
+          x: 0,
+          y: 0,
+          width: yamlTemplate.width,
+          height: yamlTemplate.height
+        }
+      : yamlTemplate.viewBox || { x: 0, y: 0, width: 400, height: 400 }
+
+    // Use dynamic import to load template-processing utilities
+    const { processTemplateLayers } = await import('./src/utils/template-processing.js')
+    const layers = await processTemplateLayers(yamlTemplate)
+
+    return {
+      id: yamlTemplate.id,
+      name: yamlTemplate.name,
+      description: yamlTemplate.description,
+      category: yamlTemplate.category,
+      width: yamlTemplate.width ?? viewBox.width,
+      height: yamlTemplate.height ?? viewBox.height,
+      viewBox,
+      layers
+    }
+  } catch (error) {
+    console.error('Failed to load template:', templateId, error)
+    return null
+  }
+}
+
+// Generate SVG content from encoded state (for middleware fallback)
+async function generateSvgFromState(encodedState: string): Promise<string | null> {
+  try {
+    // Use dynamic imports to load utilities (they use ES modules)
+    const { decodeTemplateStateCompact } = await import('./src/utils/url-encoding.js')
+    const { generateSvgString } = await import('./src/utils/svg-string-generator.js')
+    const { calculateOptimalTransformOrigin } = await import('./src/utils/svg-bounds.js')
+
+    // Decode state from URL
+    const state = decodeTemplateStateCompact(encodedState)
+
+    if (!state || !state.selectedTemplateId) {
+      return null
+    }
+
+    // Load template
+    const template = await loadTemplateForMiddleware(state.selectedTemplateId)
+
+    if (!template) {
+      return null
+    }
+
+    // CRITICAL: Compute transformOrigin for svgImage layers (same as Service Worker)
+    const enhancedLayers = (state.layers || []).map((layer: FlatLayerData) => {
+      // Only compute for svgImage layers that have content but no transformOrigin
+      if (layer.type === 'svgImage' && layer.svgContent && !layer.transformOrigin) {
+        try {
+          const transformOrigin = calculateOptimalTransformOrigin(layer.svgContent)
+          return { ...layer, transformOrigin }
+        } catch (error) {
+          // Fallback to geometric center of standard 24x24 viewBox
+          console.warn('Failed to calculate transformOrigin, using fallback:', error)
+          return { ...layer, transformOrigin: { x: 12, y: 12 } }
+        }
+      }
+      return layer
+    })
+
+    // Generate SVG string using unified generator
+    const svgContent = generateSvgString(template, enhancedLayers)
+
+    return svgContent
+  } catch (error) {
+    console.error('SVG generation failed:', error)
+    return null
+  }
+}
+
 // Service Worker build plugin
 function serviceWorkerPlugin() {
   return {
@@ -45,15 +133,35 @@ function serviceWorkerPlugin() {
       await buildServiceWorker(true)
 
       // Add middleware BEFORE other middleware to intercept .svg URLs
-      server.middlewares.use((req, res, next) => {
+      server.middlewares.use(async (req, res, next) => {
         // Match pattern: /{encodedState}.svg (not /images/*.svg or other paths)
         if (req.url && /^\/[A-Za-z0-9_-]+\.svg$/.test(req.url)) {
-          // Return placeholder - Service Worker will intercept and provide real content
+          // Extract encoded state from URL (remove leading / and trailing .svg)
+          const encodedState = req.url.slice(1, -4)
+
+          try {
+            // Generate actual SVG content (same logic as Service Worker)
+            const svgContent = await generateSvgFromState(encodedState)
+
+            if (svgContent) {
+              res.writeHead(200, {
+                'Content-Type': 'image/svg+xml; charset=utf-8',
+                'Cache-Control': 'no-cache', // Dev mode: no cache
+                'X-Vite-Middleware': 'true'
+              })
+              res.end(svgContent)
+              return
+            }
+          } catch (error) {
+            console.error('Middleware SVG generation error:', error)
+          }
+
+          // Fallback: return error SVG if generation failed
           res.writeHead(200, {
             'Content-Type': 'image/svg+xml; charset=utf-8',
-            'X-SW-Fallback': 'true'
+            'X-SW-Fallback': 'error'
           })
-          res.end('<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50" y="50" text-anchor="middle" font-size="10">Loading...</text></svg>')
+          res.end('<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200"><rect width="400" height="200" fill="#fee" /><text x="200" y="100" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#c00">Invalid state encoding</text></svg>')
           return
         }
         next()

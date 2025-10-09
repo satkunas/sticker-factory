@@ -12,7 +12,8 @@ export default [
       'node_modules/**',
       '**/*.d.ts',
       'coverage/**',
-      '.vite/**'
+      '.vite/**',
+      'public/sw-bundle.js' // Generated Service Worker bundle
     ]
   },
 

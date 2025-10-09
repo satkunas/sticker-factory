@@ -1,0 +1,9 @@
+# Build outputs
+dist/
+public/sw-bundle.js
+
+# Dependencies
+node_modules/
+
+# Other
+.vite/

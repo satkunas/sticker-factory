@@ -1,6 +1,8 @@
 .playwright-mcp
 node_modules
 app/dist
+app/public/sw-bundle.js
+app/public/sw-bundle.js.map
 *.md
 !CLAUDE.md
 !README.md
