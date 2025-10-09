@@ -162,6 +162,7 @@ export function encodeTemplateStateCompact(state: AppState): string {
         if (layer.color !== undefined) flatLayer.color = layer.color
         if (layer.rotation !== undefined) flatLayer.rotation = layer.rotation
         if (layer.scale !== undefined) flatLayer.scale = layer.scale
+        if (layer.transformOrigin !== undefined) flatLayer.transformOrigin = layer.transformOrigin
 
         return flatLayer
       }) : []
@@ -223,6 +224,7 @@ export function decodeTemplateStateCompact(encoded: string): Partial<AppState> |
         if (layer.color !== undefined) mappedLayer.color = layer.color
         if (layer.rotation !== undefined) mappedLayer.rotation = layer.rotation
         if (layer.scale !== undefined) mappedLayer.scale = layer.scale
+        if (layer.transformOrigin !== undefined) mappedLayer.transformOrigin = layer.transformOrigin
 
         return mappedLayer
       })

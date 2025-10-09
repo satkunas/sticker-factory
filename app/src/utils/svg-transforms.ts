@@ -7,6 +7,8 @@
  */
 
 import type { Point } from '../types/svg-types'
+import type { ProcessedTemplateLayer, FlatLayerData, SimpleTemplate } from '../types/template-types'
+import { resolveLayerPosition } from './layer-positioning'
 
 /**
  * Calculate scaled centroid coordinates for SVG images
@@ -122,4 +124,144 @@ export function applySvgRenderingAttributes(
   )
 
   return processed
+}
+
+/**
+ * Calculate transform structure for svgImage layers
+ * Centralizes the decision logic for which transform case to use
+ * Returns a structure that both Svg.vue and svg-string-generator.ts can use
+ *
+ * @param layerData - User-provided layer data (overrides)
+ * @returns Transform case identifier and relevant data
+ */
+export function getSvgImageTransformCase(layerData: FlatLayerData | undefined): {
+  case: 'scale-with-origin' | 'scale-only' | 'rotation-only' | 'none'
+  scale?: number
+  rotation?: number
+  transformOrigin?: Point
+} {
+  // Complex transforms: scale + rotation with transform origin
+  if (layerData?.transformOrigin && layerData?.scale !== undefined) {
+    return {
+      case: 'scale-with-origin',
+      scale: layerData.scale,
+      rotation: layerData.rotation,
+      transformOrigin: layerData.transformOrigin
+    }
+  }
+
+  // Scale only (without transform origin)
+  if (layerData?.scale !== undefined) {
+    return {
+      case: 'scale-only',
+      scale: layerData.scale
+    }
+  }
+
+  // Rotation only (no scale)
+  if (layerData?.rotation !== undefined) {
+    return {
+      case: 'rotation-only',
+      rotation: layerData.rotation
+    }
+  }
+
+  // No transforms
+  return { case: 'none' }
+}
+
+/**
+ * Generate complete svgImage layer HTML with transforms
+ * Used by svg-string-generator.ts for .svg URL generation
+ * Ensures visual parity with Svg.vue component
+ *
+ * @param templateLayer - Template layer definition
+ * @param layerData - User-provided layer data (overrides)
+ * @param template - Template definition (for dimensions)
+ * @returns Complete HTML string for svgImage layer with mask and transforms
+ */
+export function generateSvgImageHtml(
+  templateLayer: ProcessedTemplateLayer,
+  layerData: FlatLayerData | undefined,
+  template: SimpleTemplate
+): string {
+  const x = resolveLayerPosition(templateLayer.position?.x, template.width)
+  const y = resolveLayerPosition(templateLayer.position?.y, template.height)
+
+  const svgContent = layerData?.svgContent || templateLayer.svgContent
+  if (!svgContent) return ''
+
+  const width = templateLayer.width
+  const height = templateLayer.height
+
+  // Apply rendering attributes to SVG content
+  const processedSvg = applySvgRenderingAttributes(
+    svgContent,
+    width,
+    height,
+    undefined,
+    layerData?.color,
+    layerData?.strokeColor,
+    layerData?.strokeWidth
+  )
+
+  // Check if layer has clip mask
+  const maskAttr = templateLayer.clip ? ` mask="url(#${templateLayer.clip})"` : ''
+
+  // Base transform: translate to position, then center the SVG
+  const baseTransform = `translate(${x}, ${y}) translate(${-width / 2}, ${-height / 2})`
+
+  // Get transform case using shared logic
+  const transformCase = getSvgImageTransformCase(layerData)
+
+  switch (transformCase.case) {
+    case 'scale-with-origin': {
+      const origin = calculateScaledTransformOrigin(
+        svgContent,
+        width,
+        height,
+        transformCase.transformOrigin!
+      )
+
+      const rotation = transformCase.rotation !== undefined ? ` rotate(${transformCase.rotation})` : ''
+
+      return `<g${maskAttr}>
+    <g transform="${baseTransform}">
+      <g transform="translate(${origin.x}, ${origin.y})">
+        <g transform="scale(${transformCase.scale})${rotation}">
+          <g transform="translate(${-origin.x}, ${-origin.y})">
+            ${processedSvg}
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>`
+    }
+
+    case 'scale-only':
+      return `<g${maskAttr}>
+    <g transform="${baseTransform}">
+      <g transform="scale(${transformCase.scale})">
+        ${processedSvg}
+      </g>
+    </g>
+  </g>`
+
+    case 'rotation-only':
+      return `<g${maskAttr}>
+    <g transform="${baseTransform}">
+      <g transform="rotate(${transformCase.rotation})">
+        ${processedSvg}
+      </g>
+    </g>
+  </g>`
+
+    case 'none':
+    default:
+      return `<g${maskAttr}>
+    <g transform="${baseTransform}">
+      ${processedSvg}
+    </g>
+  </g>`
+  }
 }

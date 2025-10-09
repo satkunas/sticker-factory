@@ -17,7 +17,7 @@
     </defs>
 
     <!-- PHASE 2: LAYER RENDERING (preserves YAML order) -->
-    <template v-for="{ templateLayer, layerData } in renderedLayers" :key="templateLayer.id">
+    <template v-for="{ templateLayer, layerData, transformCase } in renderedLayers" :key="templateLayer.id">
       <!-- SHAPE LAYERS -->
       <!-- Shape paths are already positioned and centered during template loading -->
       <!-- No additional transforms needed - path coordinates are final -->
@@ -61,6 +61,7 @@
       </g>
 
       <!-- SVG IMAGE LAYERS -->
+      <!-- Uses shared transform case logic from svg-transforms.ts to ensure visual parity -->
       <g
         v-else-if="templateLayer.type === 'svgImage'"
         :mask="templateLayer.clip ? `url(#${templateLayer.clip})` : undefined"
@@ -76,44 +77,93 @@
             -templateLayer.height / 2
           })`"
         >
-          <!-- Scale and rotate around transform origin using nested g elements -->
-          <g
-            v-if="layerData?.transformOrigin && layerData?.scale !== undefined"
-            :transform="`translate(${
-            calculateScaledTransformOrigin(
-              layerData?.svgContent || templateLayer.svgContent,
-              templateLayer.width,
-              templateLayer.height,
-              layerData.transformOrigin
-            ).x
-          }, ${
-            calculateScaledTransformOrigin(
-              layerData?.svgContent || templateLayer.svgContent,
-              templateLayer.width,
-              templateLayer.height,
-              layerData.transformOrigin
-            ).y
-          })`"
-        >
-          <!-- Apply scale and rotation at origin -->
-          <g :transform="`scale(${layerData.scale})${layerData?.rotation !== undefined ? ` rotate(${layerData.rotation})` : ''}`">
-            <!-- Translate back from centroid -->
+          <!-- Scale and rotate around transform origin -->
+          <template v-if="transformCase?.case === 'scale-with-origin'">
             <g
               :transform="`translate(${
-                -calculateScaledTransformOrigin(
+                calculateScaledTransformOrigin(
                   layerData?.svgContent || templateLayer.svgContent,
                   templateLayer.width,
                   templateLayer.height,
-                  layerData.transformOrigin
+                  transformCase.transformOrigin
                 ).x
               }, ${
-                -calculateScaledTransformOrigin(
+                calculateScaledTransformOrigin(
                   layerData?.svgContent || templateLayer.svgContent,
                   templateLayer.width,
                   templateLayer.height,
-                  layerData.transformOrigin
+                  transformCase.transformOrigin
                 ).y
               })`"
+            >
+              <g :transform="`scale(${transformCase.scale})${transformCase.rotation !== undefined ? ` rotate(${transformCase.rotation})` : ''}`">
+                <g
+                  :transform="`translate(${
+                    -calculateScaledTransformOrigin(
+                      layerData?.svgContent || templateLayer.svgContent,
+                      templateLayer.width,
+                      templateLayer.height,
+                      transformCase.transformOrigin
+                    ).x
+                  }, ${
+                    -calculateScaledTransformOrigin(
+                      layerData?.svgContent || templateLayer.svgContent,
+                      templateLayer.width,
+                      templateLayer.height,
+                      transformCase.transformOrigin
+                    ).y
+                  })`"
+                  v-html="applySvgRenderingAttributes(
+                    layerData?.svgContent || templateLayer.svgContent,
+                    templateLayer.width,
+                    templateLayer.height,
+                    undefined,
+                    layerData?.color,
+                    layerData?.strokeColor,
+                    layerData?.strokeWidth
+                  )"
+                />
+              </g>
+            </g>
+          </template>
+
+          <!-- Scale only (without transform origin) -->
+          <template v-else-if="transformCase?.case === 'scale-only'">
+            <g :transform="`scale(${transformCase.scale})`">
+              <g
+                v-html="applySvgRenderingAttributes(
+                  layerData?.svgContent || templateLayer.svgContent,
+                  templateLayer.width,
+                  templateLayer.height,
+                  undefined,
+                  layerData?.color,
+                  layerData?.strokeColor,
+                  layerData?.strokeWidth
+                )"
+              />
+            </g>
+          </template>
+
+          <!-- Rotation only (no scale) -->
+          <template v-else-if="transformCase?.case === 'rotation-only'">
+            <g :transform="`rotate(${transformCase.rotation})`">
+              <g
+                v-html="applySvgRenderingAttributes(
+                  layerData?.svgContent || templateLayer.svgContent,
+                  templateLayer.width,
+                  templateLayer.height,
+                  undefined,
+                  layerData?.color,
+                  layerData?.strokeColor,
+                  layerData?.strokeWidth
+                )"
+              />
+            </g>
+          </template>
+
+          <!-- No transforms -->
+          <template v-else>
+            <g
               v-html="applySvgRenderingAttributes(
                 layerData?.svgContent || templateLayer.svgContent,
                 templateLayer.width,
@@ -124,36 +174,8 @@
                 layerData?.strokeWidth
               )"
             />
-          </g>
+          </template>
         </g>
-        <!-- Rotation only (no scale) -->
-        <g
-          v-else-if="layerData?.rotation !== undefined"
-          :transform="`rotate(${layerData.rotation})`"
-          v-html="applySvgRenderingAttributes(
-              layerData?.svgContent || templateLayer.svgContent,
-              templateLayer.width,
-              templateLayer.height,
-              undefined,
-              layerData?.color,
-              layerData?.strokeColor,
-              layerData?.strokeWidth
-            )"
-          />
-        <!-- Fallback for no transform origin -->
-        <g
-          v-else
-          v-html="applySvgRenderingAttributes(
-              layerData?.svgContent || templateLayer.svgContent,
-              templateLayer.width,
-              templateLayer.height,
-              undefined,
-              layerData?.color,
-              layerData?.strokeColor,
-              layerData?.strokeWidth
-            )"
-          />
-      </g>
       </g>
     </template>
   </svg>
@@ -164,7 +186,7 @@ import { computed } from 'vue'
 import type { SimpleTemplate, FlatLayerData } from '../types/template-types'
 import { resolveLayerPosition } from '../utils/layer-positioning'
 import { generateMaskDefinitions } from '../utils/mask-utils'
-import { calculateScaledTransformOrigin, applySvgRenderingAttributes } from '../utils/svg-transforms'
+import { getSvgImageTransformCase, calculateScaledTransformOrigin, applySvgRenderingAttributes } from '../utils/svg-transforms'
 import { extractFontFamily } from '../utils/font-utils'
 
 interface Props {
@@ -192,6 +214,7 @@ const maskDefinitions = computed(() => {
 /**
  * Render layers with proper center-based positioning
  * Preserves YAML order (first = back, last = front)
+ * Computes transform case once per svgImage layer for efficiency
  */
 const renderedLayers = computed(() => {
   if (!props.template?.layers) return []
@@ -199,9 +222,15 @@ const renderedLayers = computed(() => {
   return props.template.layers.map(templateLayer => {
     const layerData = props.layers.find(l => l.id === templateLayer.id)
 
+    // For svgImage layers, compute transform case once
+    const transformCase = templateLayer.type === 'svgImage'
+      ? getSvgImageTransformCase(layerData)
+      : undefined
+
     return {
       templateLayer,
-      layerData
+      layerData,
+      transformCase
     }
   })
 })

@@ -16,37 +16,12 @@
           <div class="flex items-center space-x-3">
             <!-- Template Preview Icon -->
             <div class="w-8 h-6 bg-secondary-100 rounded border flex items-center justify-center overflow-hidden">
-              <svg
+              <img
                 v-if="selectedTemplate"
-                :width="32"
-                :height="24"
-                :viewBox="getOptimalViewBox(selectedTemplate, 32, 24)"
-                class="drop-shadow-sm"
-              >
-                <template v-for="element in getTemplateElements(selectedTemplate)" :key="element.zIndex">
-                  <path
-                    v-if="element.type === 'shape' && element.shape"
-                    :d="element.shape.path"
-                    :fill="element.shape.fill"
-                    :stroke="element.shape.stroke"
-                    :stroke-width="element.shape.strokeWidth"
-                  />
-                  <text
-                    v-if="element.type === 'text' && element.textInput"
-                    :x="element.textInput.position?.x ? resolveCoordinate(element.textInput.position.x, 200, 0) : 0"
-                    :y="element.textInput.position?.y ? resolveCoordinate(element.textInput.position.y, 200, 0) : 0"
-                    text-anchor="middle"
-                    dominant-baseline="central"
-                    :font-family="element.textInput.fontFamily"
-                    :font-size="Math.max(8, element.textInput.fontSize * 0.6)"
-                    :font-weight="element.textInput.fontWeight"
-                    :fill="element.textInput.fontColor"
-                    class="select-none"
-                  >
-                    {{ element.textInput.default }}
-                  </text>
-                </template>
-              </svg>
+                :src="getTemplateSvgUrl(selectedTemplate)"
+                :alt="selectedTemplate.name"
+                class="w-full h-full object-contain drop-shadow-sm"
+              />
               <div v-else class="w-4 h-4 bg-secondary-300 rounded" />
             </div>
 
@@ -89,36 +64,11 @@
             <div class="flex items-center space-x-3">
               <!-- Template Preview -->
               <div class="w-12 h-8 bg-secondary-50 border border-secondary-200 rounded flex items-center justify-center overflow-hidden flex-shrink-0">
-                <svg
-                  :width="48"
-                  :height="32"
-                  :viewBox="getOptimalViewBox(template, 48, 32)"
-                  class="drop-shadow-sm"
-                >
-                  <template v-for="element in getTemplateElements(template)" :key="element.zIndex">
-                    <path
-                      v-if="element.type === 'shape' && element.shape"
-                      :d="element.shape.path"
-                      :fill="element.shape.fill"
-                      :stroke="element.shape.stroke"
-                      :stroke-width="element.shape.strokeWidth"
-                    />
-                    <text
-                      v-if="element.type === 'text' && element.textInput"
-                      :x="element.textInput.position?.x ? resolveCoordinate(element.textInput.position.x, 120, 0) : 0"
-                      :y="element.textInput.position?.y ? resolveCoordinate(element.textInput.position.y, 120, 0) : 0"
-                      text-anchor="middle"
-                      dominant-baseline="central"
-                      :font-family="element.textInput.fontFamily"
-                      :font-size="Math.max(6, element.textInput.fontSize * 0.4)"
-                      :font-weight="element.textInput.fontWeight"
-                      :fill="element.textInput.fontColor"
-                      class="select-none"
-                    >
-                      {{ element.textInput.default }}
-                    </text>
-                  </template>
-                </svg>
+                <img
+                  :src="getTemplateSvgUrl(template)"
+                  :alt="template.name"
+                  class="w-full h-full object-contain drop-shadow-sm"
+                />
               </div>
 
               <!-- Template Details -->
@@ -151,9 +101,10 @@
 <script setup lang="ts">
 /* eslint-disable no-undef */
 import { ref, onMounted, onUnmounted } from 'vue'
-import { loadAllTemplates, getTemplateElements, getDefaultTemplate } from '../config/template-loader'
-import { resolveCoordinate } from '../utils/svg'
+import { loadAllTemplates, getDefaultTemplate } from '../config/template-loader'
+import { encodeTemplateStateCompact } from '../utils/url-encoding'
 import type { SimpleTemplate } from '../types/template-types'
+import type { AppState } from '../types/app-state'
 
 interface Props {
   selectedTemplate?: SimpleTemplate | null
@@ -179,29 +130,17 @@ const selectTemplate = (template: SimpleTemplate) => {
   isOpen.value = false
 }
 
-// Calculate optimal viewBox for content-aware fit
-const getOptimalViewBox = (template: SimpleTemplate, targetWidth: number, targetHeight: number): string => {
-  if (!template?.viewBox) return `0 0 ${targetWidth} ${targetHeight}`
+// Generate .svg URL for template preview with default values
+const getTemplateSvgUrl = (template: SimpleTemplate): string => {
+  // Create minimal state with just template defaults (no user overrides)
+  const state: AppState = {
+    selectedTemplateId: template.id,
+    layers: [], // Empty layers = use all template defaults
+    lastModified: Date.now()
+  }
 
-  // Use the template's actual viewBox but scale to fit the target dimensions
-  const { x, y, width, height } = template.viewBox
-
-  // Calculate scale to fit target dimensions while maintaining aspect ratio
-  const scaleX = targetWidth / width
-  const scaleY = targetHeight / height
-  const scale = Math.min(scaleX, scaleY) * 0.9 // 90% to leave some margin
-
-  // Calculate the viewBox dimensions that will fit in the target size
-  const viewBoxWidth = targetWidth / scale
-  const viewBoxHeight = targetHeight / scale
-
-  // Center the content in the viewBox
-  const centerX = x + width / 2
-  const centerY = y + height / 2
-  const viewBoxX = centerX - viewBoxWidth / 2
-  const viewBoxY = centerY - viewBoxHeight / 2
-
-  return `${viewBoxX} ${viewBoxY} ${viewBoxWidth} ${viewBoxHeight}`
+  const encoded = encodeTemplateStateCompact(state)
+  return `/${encoded}.svg`
 }
 
 // Close dropdown when clicking outside

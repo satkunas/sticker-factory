@@ -6,12 +6,11 @@ import type {
   TemplateTextInput,
   YamlTemplate,
   TemplateShapeLayer,
-  ProcessedTemplateLayer,
   ProcessedSvgImageLayer
 } from '../types/template-types'
-import { resolvePosition, resolveLinePosition, type ViewBox } from '../utils/svg'
 import { getSvgContent } from './svg-library-loader'
 import { logger, reportCriticalError, createPerformanceTimer } from '../utils/logger'
+import { processTemplateLayers } from '../utils/template-processing'
 import {
   TEMPLATE_PADDING,
   DEFAULT_VIEWBOX_WIDTH,
@@ -180,12 +179,10 @@ const validateYamlTemplate = (template: any): template is YamlTemplate => {
 
 /**
  * Convert YAML template to SimpleTemplate format
+ * Uses shared processing logic from template-processing.ts
  */
 const convertYamlToSimpleTemplate = async (yamlTemplate: YamlTemplate): Promise<SimpleTemplate> => {
-
-  // Priority 1: Use width/height (primary source - ALL templates have this)
-  // Priority 2: Use explicit viewBox (legacy support)
-  // Priority 3: REMOVED - No fallback calculation, templates MUST have dimensions
+  // Calculate viewBox
   const viewBox = yamlTemplate.width && yamlTemplate.height
     ? {
         x: 0,
@@ -202,109 +199,8 @@ const convertYamlToSimpleTemplate = async (yamlTemplate: YamlTemplate): Promise<
           height: DEFAULT_VIEWBOX_HEIGHT
         }
 
-  // Convert layers to processed template layers
-  const layers: ProcessedTemplateLayer[] = []
-
-  // Process all layers with proper async handling
-  for (const layer of yamlTemplate.layers) {
-    if (layer.type === 'shape') {
-      // Extract shape properties using destructuring
-      const {
-        id, subtype, position, width, height, rx, ry, points,
-        fill, stroke, strokeWidth, strokeLinejoin, opacity,
-        rotation, scale, clip, clipPath,
-        ...otherProps
-      } = layer
-
-      // Resolve percentage coordinates for shapes
-      const resolvedPosition = resolvePosition(
-        position as { x: number | string; y: number | string },
-        viewBox
-      )
-
-      // Create flat shape layer with all properties directly accessible
-      layers.push({
-        id, type: 'shape', subtype, position: resolvedPosition,
-        width, height, rx, ry, points,
-        // Visual properties
-        fill, stroke, strokeWidth, strokeLinejoin, opacity,
-        // Transform properties with proper defaults handling
-        ...(rotation !== undefined && { rotation }),
-        ...(scale !== undefined && { scale }),
-        // Clipping properties
-        ...(clip !== undefined && { clip }),
-        ...(clipPath !== undefined && { clipPath }),
-        // Generated SVG path for rendering
-        path: convertShapeLayerToPath(layer, viewBox),
-        ...otherProps
-      } as ProcessedTemplateLayer)
-    } else if (layer.type === 'text') {
-      // Extract text properties using destructuring
-      const {
-        id, position, label, placeholder,
-        fontFamily, fontColor, fontSize, fontWeight, maxLength,
-        rotation, clip, clipPath, opacity,
-        default: defaultText,
-        ...otherProps
-      } = layer
-
-      // Resolve percentage coordinates for text inputs
-      const resolvedPosition = resolvePosition(
-        position as { x: number | string; y: number | string },
-        viewBox
-      )
-
-      // Create flat text layer with all properties directly accessible
-      layers.push({
-        id, type: 'text', position: resolvedPosition,
-        // Text-specific properties
-        text: defaultText, label, placeholder, maxLength,
-        fontFamily, fontColor, fontSize, fontWeight,
-        // Transform properties
-        ...(rotation !== undefined && { rotation }),
-        // Clipping properties
-        ...(clip !== undefined && { clip }),
-        ...(clipPath !== undefined && { clipPath }),
-        // Visual properties
-        ...(opacity !== undefined && { opacity }),
-        ...otherProps
-      } as ProcessedTemplateLayer)
-    } else if (layer.type === 'svgImage') {
-      // Extract SVG image properties using destructuring
-      const {
-        id, position, width, height,
-        fill, stroke, strokeWidth, strokeLinejoin, opacity,
-        scale, rotation, clip, clipPath,
-        svgId, svgContent: layerSvgContent,
-        ...otherProps
-      } = layer
-
-      // Preserve original position strings for center-based positioning
-      const originalPosition = position as { x: number | string; y: number | string }
-
-      // Get SVG content from library or use direct content
-      let svgContent = layerSvgContent || ''
-      if (svgId && !svgContent) {
-        svgContent = await getSvgContent(svgId) || ''
-      }
-
-      // Create flat SVG image layer with all properties directly accessible
-      layers.push({
-        id, type: 'svgImage', position: originalPosition,
-        // SVG-specific properties
-        svgImageId: svgId, svgContent, width, height,
-        // Visual properties (using 'color' for SVG fill to distinguish from shape fill)
-        color: fill, stroke, strokeWidth, strokeLinejoin, opacity,
-        // Transform properties
-        ...(scale !== undefined && { scale }),
-        ...(rotation !== undefined && { rotation }),
-        // Clipping properties
-        ...(clip !== undefined && { clip }),
-        ...(clipPath !== undefined && { clipPath }),
-        ...otherProps
-      } as ProcessedTemplateLayer)
-    }
-  }
+  // Process layers using shared utility (with SVG content loader)
+  const layers = await processTemplateLayers(yamlTemplate, getSvgContent)
 
   return {
     id: yamlTemplate.id,
@@ -371,72 +267,6 @@ const _calculateViewBoxFromLayers = (shapeLayers: TemplateShapeLayer[]): { x: nu
 
   return { x, y, width, height }
 }
-
-/**
- * Convert shape layer to SVG path (with percentage coordinate support)
- */
-const convertShapeLayerToPath = (layer: TemplateShapeLayer, viewBox: ViewBox): string => {
-  if (layer.subtype === 'line') {
-    const linePos = layer.position as { x1: number | string; y1: number | string; x2: number | string; y2: number | string }
-    const resolvedPos = resolveLinePosition(linePos, viewBox)
-    return `M${resolvedPos.x1},${resolvedPos.y1} L${resolvedPos.x2},${resolvedPos.y2}`
-  }
-
-  const pos = resolvePosition(layer.position as { x: number | string; y: number | string }, viewBox)
-
-  switch (layer.subtype) {
-    case 'rect': {
-      const width = layer.width || 100
-      const height = layer.height || 100
-      const rx = layer.rx || 0
-      const ry = layer.ry || 0
-      const x = pos.x - width/2
-      const y = pos.y - height/2
-
-      if (rx > 0 || ry > 0) {
-        return `M${x + rx},${y} L${x + width - rx},${y} Q${x + width},${y} ${x + width},${y + ry} L${x + width},${y + height - ry} Q${x + width},${y + height} ${x + width - rx},${y + height} L${x + rx},${y + height} Q${x},${y + height} ${x},${y + height - ry} L${x},${y + ry} Q${x},${y} ${x + rx},${y} Z`
-      } else {
-        return `M${x},${y} L${x + width},${y} L${x + width},${y + height} L${x},${y + height} Z`
-      }
-    }
-
-    case 'circle': {
-      const radius = (layer.width || 100) / 2
-      return `M${pos.x - radius},${pos.y} A${radius},${radius} 0 1,0 ${pos.x + radius},${pos.y} A${radius},${radius} 0 1,0 ${pos.x - radius},${pos.y} Z`
-    }
-
-    case 'ellipse': {
-      const rWidth = (layer.width || 100) / 2
-      const rHeight = (layer.height || 50) / 2
-      return `M${pos.x - rWidth},${pos.y} A${rWidth},${rHeight} 0 1,0 ${pos.x + rWidth},${pos.y} A${rWidth},${rHeight} 0 1,0 ${pos.x - rWidth},${pos.y} Z`
-    }
-
-    case 'polygon': {
-      if (layer.points) {
-        // For polygon, points are always absolute coordinates within the viewBox
-        // The position parameter is ignored for polygons - points define the shape directly
-        const pointPairs = layer.points.split(' ')
-        const absolutePoints = pointPairs.map(pair => {
-          const [x, y] = pair.split(',').map(Number)
-          return `${x},${y}`
-        })
-        return `M${absolutePoints.join(' L')} Z`
-      }
-      // Default triangle if no points specified
-      return `M${pos.x},${pos.y - 50} L${pos.x + 50},${pos.y + 25} L${pos.x - 50},${pos.y + 25} Z`
-    }
-
-    default: {
-      // Default to rectangle
-      const defWidth = layer.width || 100
-      const defHeight = layer.height || 100
-      const defX = pos.x - defWidth/2
-      const defY = pos.y - defHeight/2
-      return `M${defX},${defY} L${defX + defWidth},${defY} L${defX + defWidth},${defY + defHeight} L${defX},${defY + defHeight} Z`
-    }
-  }
-}
-
 
 /**
  * Helper function to get ordered elements from any template (backward compatible)
