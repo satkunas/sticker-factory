@@ -215,7 +215,7 @@ export function calculateElementCenter(
       const percent = parseFloat(pos) / 100
       return dimension * percent
     }
-    return typeof pos === 'number' ? pos : parseFloat(pos) || 0
+    return typeof pos === 'number' ? pos : (parseFloat(pos) || 0)  // Invalid strings default to 0
   }
 
   const x = resolvePosition(element.position.x, templateViewBox.width)

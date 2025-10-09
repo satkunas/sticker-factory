@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url'
 import { readFile } from 'fs/promises'
 import yaml from 'js-yaml'
 import type { YamlTemplate, SimpleTemplate, FlatLayerData } from './src/types/template-types'
+import { logger } from './src/utils/logger.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -16,7 +17,7 @@ async function buildServiceWorker(isDev = false) {
     ? path.resolve(__dirname, 'public/sw-bundle.js')
     : path.resolve(__dirname, 'dist/sw-bundle.js')
 
-  console.log(`Building Service Worker (${isDev ? 'dev' : 'prod'})...`)
+  logger.info(`Building Service Worker (${isDev ? 'dev' : 'prod'})...`)
 
   await esbuild.build({
     entryPoints: [swSrcPath],
@@ -36,7 +37,7 @@ async function buildServiceWorker(isDev = false) {
     }
   })
 
-  console.log(`Service Worker built: ${swDistPath}`)
+  logger.info(`Service Worker built: ${swDistPath}`)
 }
 
 // Template loading for Vite middleware (Node.js context)
@@ -71,7 +72,7 @@ async function loadTemplateForMiddleware(templateId: string): Promise<SimpleTemp
       layers
     }
   } catch (error) {
-    console.error('Failed to load template:', templateId, error)
+    logger.error('Failed to load template:', templateId, error)
     return null
   }
 }
@@ -107,7 +108,7 @@ async function generateSvgFromState(encodedState: string): Promise<string | null
           return { ...layer, transformOrigin }
         } catch (error) {
           // Fallback to geometric center of standard 24x24 viewBox
-          console.warn('Failed to calculate transformOrigin, using fallback:', error)
+          logger.warn('Failed to calculate transformOrigin, using fallback:', error)
           return { ...layer, transformOrigin: { x: 12, y: 12 } }
         }
       }
@@ -119,7 +120,7 @@ async function generateSvgFromState(encodedState: string): Promise<string | null
 
     return svgContent
   } catch (error) {
-    console.error('SVG generation failed:', error)
+    logger.error('SVG generation failed:', error)
     return null
   }
 }
@@ -153,7 +154,7 @@ function serviceWorkerPlugin() {
               return
             }
           } catch (error) {
-            console.error('Middleware SVG generation error:', error)
+            logger.error('Middleware SVG generation error:', error)
           }
 
           // Fallback: return error SVG if generation failed

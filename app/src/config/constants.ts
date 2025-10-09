@@ -12,6 +12,12 @@ export const DEFAULT_VIEWBOX_HEIGHT = 400
 export const MIN_VIEWBOX_WIDTH = 400
 export const MIN_VIEWBOX_HEIGHT = 400
 
+// Shape defaults (fallback for legacy/malformed templates)
+export const DEFAULT_SHAPE_WIDTH = 100
+export const DEFAULT_SHAPE_HEIGHT = 100
+export const DEFAULT_ELLIPSE_HEIGHT = 50
+export const DEFAULT_POLYGON_SIZE = 50
+
 // Font loading and display
 export const FONT_INITIAL_VISIBLE_COUNT = 20
 export const FONT_SCROLL_THRESHOLD = 100

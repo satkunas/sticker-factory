@@ -581,8 +581,8 @@ export function calculateCenterPoint(width: number, height: number): Point {
  * // Returns: { deltaX: 0, deltaY: -100, isTrackpad: false, scaleFactor: 1.1 }
  */
 export function extractWheelData(event: WheelEvent): WheelData {
-  const deltaX = event.deltaX || 0
-  const deltaY = event.deltaY || 0
+  const deltaX = event.deltaX ?? 0  // May be undefined on non-touch devices
+  const deltaY = event.deltaY ?? 0  // May be undefined on non-touch devices
 
   // Detect trackpad by checking for ctrl key (pinch gesture) or fine-grained deltas
   const isTrackpad = event.ctrlKey || (Math.abs(deltaY) < 50 && deltaY % 1 !== 0)
@@ -646,8 +646,8 @@ export function extractTouchData(touches: TouchList): TouchData {
  */
 export function extractGestureData(event: Event & { scale?: number; rotation?: number }): GestureData {
   return {
-    scale: event.scale || 1,
-    rotation: event.rotation || 0
+    scale: event.scale ?? 1,  // May be undefined on non-gesture events
+    rotation: event.rotation ?? 0  // May be undefined on non-gesture events
   }
 }
 

@@ -14,7 +14,11 @@ import type {
 } from '../types/template-types'
 import {
   DEFAULT_VIEWBOX_WIDTH,
-  DEFAULT_VIEWBOX_HEIGHT
+  DEFAULT_VIEWBOX_HEIGHT,
+  DEFAULT_SHAPE_WIDTH,
+  DEFAULT_SHAPE_HEIGHT,
+  DEFAULT_ELLIPSE_HEIGHT,
+  DEFAULT_POLYGON_SIZE
 } from '../config/constants'
 
 /**
@@ -216,10 +220,10 @@ export function convertShapeLayerToPath(
 
   switch (layer.subtype) {
     case 'rect': {
-      const width = layer.width || 100
-      const height = layer.height || 100
-      const rx = layer.rx || 0
-      const ry = layer.ry || 0
+      const width = layer.width ?? DEFAULT_SHAPE_WIDTH
+      const height = layer.height ?? DEFAULT_SHAPE_HEIGHT
+      const rx = layer.rx ?? 0  // No rounding if undefined
+      const ry = layer.ry ?? 0  // No rounding if undefined
       const x = pos.x - width/2
       const y = pos.y - height/2
 
@@ -231,13 +235,13 @@ export function convertShapeLayerToPath(
     }
 
     case 'circle': {
-      const radius = (layer.width || 100) / 2
+      const radius = (layer.width ?? DEFAULT_SHAPE_WIDTH) / 2
       return `M${pos.x - radius},${pos.y} A${radius},${radius} 0 1,0 ${pos.x + radius},${pos.y} A${radius},${radius} 0 1,0 ${pos.x - radius},${pos.y} Z`
     }
 
     case 'ellipse': {
-      const rWidth = (layer.width || 100) / 2
-      const rHeight = (layer.height || 50) / 2
+      const rWidth = (layer.width ?? DEFAULT_SHAPE_WIDTH) / 2
+      const rHeight = (layer.height ?? DEFAULT_ELLIPSE_HEIGHT) / 2
       return `M${pos.x - rWidth},${pos.y} A${rWidth},${rHeight} 0 1,0 ${pos.x + rWidth},${pos.y} A${rWidth},${rHeight} 0 1,0 ${pos.x - rWidth},${pos.y} Z`
     }
 
@@ -252,13 +256,13 @@ export function convertShapeLayerToPath(
         return `M${absolutePoints.join(' L')} Z`
       }
       // Default triangle if no points specified
-      return `M${pos.x},${pos.y - 50} L${pos.x + 50},${pos.y + 25} L${pos.x - 50},${pos.y + 25} Z`
+      return `M${pos.x},${pos.y - DEFAULT_POLYGON_SIZE} L${pos.x + DEFAULT_POLYGON_SIZE},${pos.y + DEFAULT_POLYGON_SIZE/2} L${pos.x - DEFAULT_POLYGON_SIZE},${pos.y + DEFAULT_POLYGON_SIZE/2} Z`
     }
 
     default: {
       // Default to rectangle
-      const defWidth = layer.width || 100
-      const defHeight = layer.height || 100
+      const defWidth = layer.width ?? DEFAULT_SHAPE_WIDTH
+      const defHeight = layer.height ?? DEFAULT_SHAPE_HEIGHT
       const defX = pos.x - defWidth/2
       const defY = pos.y - defHeight/2
       return `M${defX},${defY} L${defX + defWidth},${defY} L${defX + defWidth},${defY + defHeight} L${defX},${defY + defHeight} Z`
