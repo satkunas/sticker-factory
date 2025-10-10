@@ -1,6 +1,5 @@
 <template>
   <div
-    ref="svgViewportRef"
     class="w-full h-full relative"
     :class="cursorClass"
     @mousedown="handleMouseDown"
@@ -12,21 +11,29 @@
     @touchmove="handleTouchMove"
     @touchend="handleTouchEnd"
   >
-    <!-- Template content using Svg.vue singleton -->
-    <Svg
+    <!-- Wrapper SVG with dynamic viewBox for zoom/pan -->
+    <svg
       v-if="template && layers"
-      :template="template"
-      :layers="layers"
-      mode="debug"
-      class="absolute inset-0"
-    />
+      ref="svgViewportRef"
+      :viewBox="viewBoxString"
+      xmlns="http://www.w3.org/2000/svg"
+      class="w-full h-full"
+      preserveAspectRatio="xMidYMid meet"
+    >
+      <!-- Template content without nested SVG wrapper -->
+      <SvgContent
+        :template="template"
+        :layers="layers"
+        mode="viewport"
+      />
+    </svg>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { SimpleTemplate } from '../types/template-types'
-import Svg from './Svg.vue'
+import SvgContent from './SvgContent.vue'
 
 interface Props {
   template?: SimpleTemplate | null
@@ -47,6 +54,26 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
+// Computed viewBox string with fallback to template viewBox
+const viewBoxString = computed(() => {
+  // Use props viewBox if provided (for zoom/pan) and validate they're finite numbers
+  if (props.viewBoxX !== undefined && props.viewBoxY !== undefined &&
+      props.viewBoxWidth !== undefined && props.viewBoxHeight !== undefined &&
+      isFinite(props.viewBoxX) && isFinite(props.viewBoxY) &&
+      isFinite(props.viewBoxWidth) && isFinite(props.viewBoxHeight)) {
+    return `${props.viewBoxX} ${props.viewBoxY} ${props.viewBoxWidth} ${props.viewBoxHeight}`
+  }
+
+  // Fallback to template viewBox
+  if (props.template?.viewBox) {
+    const vb = props.template.viewBox
+    return `${vb.x} ${vb.y} ${vb.width} ${vb.height}`
+  }
+
+  // Default viewBox
+  return '0 0 400 400'
+})
 
 // Event handlers (passed through from parent)
 interface Emits {

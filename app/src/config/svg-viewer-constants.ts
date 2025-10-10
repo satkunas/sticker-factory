@@ -29,6 +29,14 @@ export const SVG_VIEWER_CONSTANTS = {
     MIN_SCALE: 0.1
   },
 
+  // Mini overview configuration
+  MINI_OVERVIEW: {
+    BASE_WIDTH: 128,
+    MIN_HEIGHT: 24,
+    MAX_HEIGHT: 80,
+    SCALE_FACTOR: 1.1 // Show template with minimal margins (1.1 = 10% extra space)
+  },
+
   // Touch/gesture sensitivity
   TOUCH: {
     MIN_PINCH_THRESHOLD: 0.1,

@@ -9,33 +9,17 @@
         :class="miniOverviewClasses"
         :style="miniOverviewStyle"
       >
-        <SvgViewport
+        <svg
           v-if="template"
-          :template="template"
-          :previewMode="false"
-          :viewBoxX="miniViewBoxX"
-          :viewBoxY="miniViewBoxY"
-          :viewBoxWidth="miniViewBoxWidth"
-          :view-box-height="miniViewBoxHeight"
-          :gridSize="miniGridSize"
-          :borderWidth="1"
+          :viewBox="`${miniViewBoxX} ${miniViewBoxY} ${miniViewBoxWidth} ${miniViewBoxHeight}`"
+          xmlns="http://www.w3.org/2000/svg"
           class="w-full h-full opacity-40"
         >
-          <!-- Template content -->
-          <SvgCanvas
-            :stickerText="stickerText"
-            :textColor="textColor"
-            :font="font"
-            :fontSize="fontSize"
-            :fontWeight="fontWeight"
-            :strokeColor="strokeColor"
-            :strokeWidth="strokeWidth"
-            :strokeOpacity="strokeOpacity"
-            :width="width"
-            :height="height"
+          <!-- Template content using SvgContent component (inner content only, no nested SVG) -->
+          <SvgContent
             :template="template"
             :layers="layers"
-            :previewMode="true"
+            mode="preview"
           />
 
           <!-- Viewport Rectangle -->
@@ -49,7 +33,7 @@
             stroke-width="1"
             vector-effect="non-scaling-stroke"
           />
-        </SvgViewport>
+        </svg>
 
         <!-- Fallback for no template -->
         <div
@@ -105,9 +89,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { SimpleTemplate } from '../types/template-types'
-import type { FontConfig } from '../config/fonts'
-import SvgCanvas from './SvgCanvas.vue'
-import SvgViewport from './SvgViewport.vue'
+import SvgContent from './SvgContent.vue'
 import { useMiniOverview } from '../composables/useMiniOverview'
 
 interface Props {
@@ -121,18 +103,6 @@ interface Props {
   template?: SimpleTemplate | null
   previewMode?: boolean
   containerDimensions?: { width: number; height: number }
-
-  // Picture-in-picture data (all the same props as SvgCanvas)
-  stickerText?: string
-  textColor?: string
-  font?: FontConfig | null
-  fontSize?: number
-  fontWeight?: number
-  strokeColor?: string
-  strokeWidth?: number
-  strokeOpacity?: number
-  width?: number
-  height?: number
   layers?: Array<{
     id: string
     type: 'text' | 'shape' | 'svgImage'
@@ -152,7 +122,6 @@ defineEmits<{
 const {
   miniOverviewClasses,
   miniOverviewStyle,
-  miniGridSize,
   miniViewBoxX,
   miniViewBoxY,
   miniViewBoxWidth,

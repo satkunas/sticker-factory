@@ -37,21 +37,11 @@
         :template="template"
         :previewMode="previewMode"
         :containerDimensions="containerDimensions"
-        :stickerText="stickerText"
-        :textColor="textColor"
-        :font="font"
-        :fontSize="fontSize"
-        :fontWeight="fontWeight"
-        :strokeColor="strokeColor"
-        :strokeWidth="strokeWidth"
-        :strokeOpacity="strokeOpacity"
-        :width="width"
-        :height="height"
         :layers="layers"
         @zoomIn="zoomIn"
         @zoomOut="zoomOut"
         @zoomChange="setZoom"
-      ></ZoomPanControls>
+      />
     </div>
   </div>
 </template>
@@ -242,7 +232,18 @@ const downloadSvg = () => {
   }
 }
 
-// Template changes are handled automatically by the store's auto-centering system
+// Watch for template changes and auto-fit
+watch(() => props.template, (newTemplate) => {
+  if (newTemplate && svgContainer.value) {
+    // Use setTimeout to ensure DOM is fully updated and dimensions are available
+    setTimeout(() => {
+      if (svgContainer.value && svgViewportRef.value?.svgViewportRef) {
+        const { autoFitTemplate } = svgViewBoxControls
+        autoFitTemplate(newTemplate, svgContainer.value!, svgViewportRef.value!.svgViewportRef)
+      }
+    }, 100)
+  }
+})
 
 // Watch for container ref changes and update dimensions
 watch(svgContainer, () => {
@@ -259,7 +260,15 @@ onMounted(() => {
   // Add window resize listener
   window.addEventListener('resize', updateContainerDimensions)
 
-  // Auto-centering on mount is handled automatically by the store
+  // Auto-fit template if already loaded - use setTimeout to ensure DOM is ready
+  if (props.template && svgContainer.value) {
+    setTimeout(() => {
+      if (svgContainer.value && svgViewportRef.value?.svgViewportRef) {
+        const { autoFitTemplate } = svgViewBoxControls
+        autoFitTemplate(props.template!, svgContainer.value!, svgViewportRef.value!.svgViewportRef)
+      }
+    }, 100)
+  }
 })
 
 // Clean up resize listener
