@@ -14,20 +14,23 @@ import {
   generateSvgImageHtml
 } from './svg-transforms'
 import { extractFontFamily } from './font-utils'
+import { embedWebFonts } from './fontEmbedding'
 
 /**
  * Generate complete SVG string from template and layer data
  * Matches the exact rendering logic of Svg.vue component
- * Includes Google Fonts imports for standalone SVG viewing
+ * Optionally embeds web fonts for offline viewing
  *
  * @param template - Template definition with layers
  * @param layers - Layer data to render
+ * @param embedFonts - Whether to embed web fonts as base64 (default: true for offline capability)
  * @returns Complete SVG string
  */
-export function generateSvgString(
+export async function generateSvgString(
   template: SimpleTemplate,
-  layers: FlatLayerData[]
-): string {
+  layers: FlatLayerData[],
+  embedFonts = true
+): Promise<string> {
   const { width, height } = template
 
   // PHASE 1: Collect unique font families from all text layers
@@ -42,18 +45,34 @@ export function generateSvgString(
     }
   }
 
-  // PHASE 2: Generate font imports for Google Fonts
-  const fontImports = Array.from(fontFamilies).map(family => {
-    const encodedFamily = family.replace(/ /g, '+')
-    return `@import url('https://fonts.googleapis.com/css2?family=${encodedFamily}:wght@400;600;700&amp;display=swap');`
-  }).join('\n    ')
+  // PHASE 2: Generate font CSS (with or without embedding)
+  let fontCSS = ''
+  if (fontFamilies.size > 0) {
+    // Generate @import statements for web fonts
+    const fontImports = Array.from(fontFamilies).map(family => {
+      const encodedFamily = family.replace(/ /g, '+')
+      return `@import url('https://fonts.googleapis.com/css2?family=${encodedFamily}:wght@400;600;700&display=swap');`
+    }).join('\n      ')
+
+    // Optionally embed fonts for offline capability
+    if (embedFonts) {
+      try {
+        fontCSS = await embedWebFonts(fontImports)
+      } catch (error) {
+        // Fallback to @import if embedding fails
+        fontCSS = fontImports
+      }
+    } else {
+      fontCSS = fontImports
+    }
+  }
 
   // PHASE 3: Generate mask definitions
   const maskDefs = generateMaskDefinitions(template.layers, width, height)
 
   // PHASE 4: Build defs section with fonts and masks
-  const defsSection = (fontImports || maskDefs.length > 0)
-    ? `  <defs>\n${fontImports ? `    <style>\n      ${fontImports}\n    </style>\n` : ''}${maskDefs.length > 0 ? `${maskDefs.map(mask =>
+  const defsSection = (fontCSS || maskDefs.length > 0)
+    ? `  <defs>\n${fontCSS ? `    <style>\n      ${fontCSS}\n    </style>\n` : ''}${maskDefs.length > 0 ? `${maskDefs.map(mask =>
       `    <mask id="${mask.id}">
       <path d="${mask.path}" fill="white" />
     </mask>`
