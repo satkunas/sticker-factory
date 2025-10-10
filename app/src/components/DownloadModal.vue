@@ -129,7 +129,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import Modal from './Modal.vue'
 import { jsPDF } from 'jspdf'
 import type { SimpleTemplate, FlatLayerData, AppState } from '../types/template-types'
@@ -152,8 +152,8 @@ const selectedFormat = ref('svg')
 const selectedResolution = ref(2)
 const copyButtonText = ref('Copy')
 
-// Generate .svg URL (for fetching content)
-const svgUrl = computed(() => {
+// Generate .svg URL for preview and content fetching
+const previewSvgUrl = computed(() => {
   if (!props.template || !props.layers) {
     return ''
   }
@@ -167,36 +167,6 @@ const svgUrl = computed(() => {
   const encoded = encodeTemplateStateCompact(state)
   return `/${encoded}.svg`
 })
-
-// Generate embedded preview URL with fonts
-const previewSvgUrl = ref('')
-
-// Update preview when modal opens or data changes
-watch([() => props.show, svgUrl], async () => {
-  if (!props.show || !svgUrl.value) {
-    previewSvgUrl.value = ''
-    return
-  }
-
-  try {
-    // Generate SVG with embedded fonts for preview
-    const svgContent = await getSvgContent(true)
-    if (svgContent) {
-      const blob = new Blob([svgContent], { type: 'image/svg+xml' })
-      const url = URL.createObjectURL(blob)
-
-      // Clean up previous blob URL
-      if (previewSvgUrl.value) {
-        URL.revokeObjectURL(previewSvgUrl.value)
-      }
-
-      previewSvgUrl.value = url
-    }
-  } catch (error) {
-    // Fallback to regular URL if embedding fails
-    previewSvgUrl.value = svgUrl.value
-  }
-}, { immediate: true })
 
 const formats = [
   { type: 'svg', name: 'SVG', description: 'Vector (scalable)' },
@@ -225,13 +195,13 @@ const getFileName = () => {
 
 const getSvgContent = async (embedFonts = false) => {
   // Fetch SVG content from .svg URL (uses same rendering logic as preview)
-  if (!svgUrl.value) {
+  if (!previewSvgUrl.value) {
     return ''
   }
 
   try {
     // Fetch the SVG content from the Service Worker / middleware
-    const response = await fetch(svgUrl.value)
+    const response = await fetch(previewSvgUrl.value)
     if (!response.ok) {
       return ''
     }

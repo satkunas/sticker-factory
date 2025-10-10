@@ -68,8 +68,8 @@ export async function handleSvgRequest(url: URL, request: Request): Promise<Resp
       return layer
     })
 
-    // Generate SVG string using unified generator with embedded fonts for offline capability
-    const svgContent = await generateSvgString(template, enhancedLayers, true)
+    // Generate SVG string using unified generator
+    const svgContent = generateSvgString(template, enhancedLayers)
 
     // Create response
     const response = new Response(svgContent, {
