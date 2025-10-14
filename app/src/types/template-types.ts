@@ -114,7 +114,6 @@ export interface YamlTemplate {
   name: string
   id: string
   description: string
-  category: 'circle' | 'square' | 'rectangle' | 'diamond' | 'hexagon'
   width: number   // Template width - primary dimension source
   height: number  // Template height - primary dimension source
   viewBox?: { x: number; y: number; width: number; height: number }  // Optional: legacy support
@@ -161,7 +160,6 @@ export interface SimpleTemplate {
   id: string
   name: string
   description: string
-  category: 'circle' | 'square' | 'rectangle' | 'diamond' | 'hexagon'
   width: number   // Template width - used for viewBox and positioning calculations
   height: number  // Template height - used for viewBox and positioning calculations
   viewBox: { x: number; y: number; width: number; height: number }  // Derived from width/height

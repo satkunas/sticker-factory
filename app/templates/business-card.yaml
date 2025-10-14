@@ -1,7 +1,6 @@
 name: "Professional Business Card"
 id: "business-card"
 description: "Standard business card with company logo area and contact info"
-category: "rectangle"
 width: 350
 height: 200
 viewBox: { x: 0, y: 0, width: 370, height: 220 }

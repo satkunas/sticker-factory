@@ -1,7 +1,6 @@
 name: "Booklet Cover Design"
 id: "booklet-cover"
 description: "Professional booklet or manual cover layout"
-category: "rectangle"
 width: 320
 height: 400
 layers:

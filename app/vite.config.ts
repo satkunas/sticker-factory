@@ -65,7 +65,6 @@ async function loadTemplateForMiddleware(templateId: string): Promise<SimpleTemp
       id: yamlTemplate.id,
       name: yamlTemplate.name,
       description: yamlTemplate.description,
-      category: yamlTemplate.category,
       width: yamlTemplate.width ?? viewBox.width,
       height: yamlTemplate.height ?? viewBox.height,
       viewBox,

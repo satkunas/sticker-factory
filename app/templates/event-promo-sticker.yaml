@@ -1,7 +1,6 @@
 name: "Event Promotion Sticker"
 id: "event-promo-sticker"
 description: "Bold promotional sticker for events and sales"
-category: "circle"
 width: 144
 height: 144
 viewBox: { x: 0, y: 0, width: 200, height: 200 }

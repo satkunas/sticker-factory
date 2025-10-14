@@ -1,7 +1,6 @@
 name: "YouTube Thumbnail"
 id: "youtube-thumbnail"
 description: "Eye-catching YouTube video thumbnail design"
-category: "rectangle"
 width: 400
 height: 225
 layers:

@@ -1,7 +1,6 @@
 name: "Product Quality Sticker"
 id: "quality-sticker"
 description: "Circular quality assurance sticker for products"
-category: "circle"
 width: 180
 height: 180
 viewBox: { x: 0, y: 0, width: 200, height: 200 }

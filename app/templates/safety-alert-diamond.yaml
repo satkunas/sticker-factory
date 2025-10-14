@@ -1,7 +1,6 @@
 name: "Safety Alert Diamond"
 id: "safety-alert-diamond"
 description: "Diamond-shaped safety alert with warning icons and safety messaging"
-category: "diamond"
 width: 190
 height: 190
 viewBox: { x: 0, y: 0, width: 200, height: 200 }

@@ -119,13 +119,8 @@ export const loadAllTemplates = async (): Promise<SimpleTemplate[]> => {
       }
     }
 
-    // Sort by category and name
-    templates.sort((a, b) => {
-      if (a.category !== b.category) {
-        return a.category.localeCompare(b.category)
-      }
-      return a.name.localeCompare(b.name)
-    })
+    // Sort by name
+    templates.sort((a, b) => a.name.localeCompare(b.name))
 
     logger.info(`Successfully loaded ${templates.length}/${templateIds.length} templates`)
     return templates
@@ -159,7 +154,7 @@ const validateYamlTemplate = (template: any): template is YamlTemplate => {
     return false
   }
 
-  const required = ['id', 'name', 'description', 'category']
+  const required = ['id', 'name', 'description']
   for (const field of required) {
     if (!(field in template)) {
       logger.error(`Template missing required field: ${field}`)
@@ -206,7 +201,6 @@ const convertYamlToSimpleTemplate = async (yamlTemplate: YamlTemplate): Promise<
     id: yamlTemplate.id,
     name: yamlTemplate.name,
     description: yamlTemplate.description,
-    category: yamlTemplate.category,
     width: yamlTemplate.width ?? viewBox.width,
     height: yamlTemplate.height ?? viewBox.height,
     viewBox,
