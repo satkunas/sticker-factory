@@ -16,7 +16,12 @@
     <!-- SHAPE LAYERS -->
     <!-- Shape paths are already positioned and centered during template loading -->
     <!-- No additional transforms needed - path coordinates are final -->
-    <g v-if="templateLayer.type === 'shape'">
+    <g
+      v-if="templateLayer.type === 'shape'"
+      :data-layer-id="templateLayer.id"
+      :data-layer-type="templateLayer.type"
+      class="layer-clickable"
+    >
       <path
         :d="templateLayer.path"
         :fill="layerData?.fillColor ?? layerData?.fill ?? templateLayer.fill"
@@ -29,6 +34,9 @@
     <!-- TEXT LAYERS -->
     <g
       v-else-if="templateLayer.type === 'text'"
+      :data-layer-id="templateLayer.id"
+      :data-layer-type="templateLayer.type"
+      class="layer-clickable"
       :mask="templateLayer.clip ? `url(#${templateLayer.clip})` : undefined"
     >
       <g
@@ -59,6 +67,9 @@
     <!-- Uses shared transform case logic from svg-transforms.ts to ensure visual parity -->
     <g
       v-else-if="templateLayer.type === 'svgImage'"
+      :data-layer-id="templateLayer.id"
+      :data-layer-type="templateLayer.type"
+      class="layer-clickable"
       :mask="templateLayer.clip ? `url(#${templateLayer.clip})` : undefined"
     >
       <g

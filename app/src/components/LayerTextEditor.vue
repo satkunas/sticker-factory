@@ -1,12 +1,12 @@
 <template>
-  <div ref="containerRef" class="w-full">
+  <div ref="containerRef" class="w-full" :data-instance-id="instanceId">
     <!-- Text Input with Arrow Icon -->
-    <div class="relative rounded-lg overflow-hidden transition-all duration-300 ease-in-out" :class="{ 'ring-2 ring-primary-500': isExpanded }">
+    <div class="relative rounded-lg transition-all duration-300 ease-in-out" :class="{ 'ring-2 ring-primary-500': isExpanded }">
       <input
         :value="modelValue"
         type="text"
-        class="input-field w-full pr-10"
-        :class="{ 'border-primary-500': isExpanded }"
+        class="input-field w-full pr-10 rounded-t-lg"
+        :class="{ 'border-primary-500': isExpanded, 'rounded-b-lg': !isExpanded }"
         :placeholder="placeholder"
         :style="{
           fontFamily: selectedFont ? getFontFamily(selectedFont) : undefined

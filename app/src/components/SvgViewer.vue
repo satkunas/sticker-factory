@@ -24,6 +24,7 @@
         @touchstart="handleTouchStart"
         @touchmove="handleTouchMove"
         @touchend="handleTouchEnd"
+        @layerClick="handleLayerClick"
       />
 
       <ZoomPanControls
@@ -86,6 +87,11 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
+// Define emits for layer click events
+const emit = defineEmits<{
+  layerClick: [layerId: string]
+}>()
 
 // Direct class access - no conditional logic
 
@@ -199,6 +205,11 @@ const handleTouchMove = () => {
 
 const handleTouchEnd = () => {
   // Touch events for future enhancement
+}
+
+// Layer click handler - emit event to parent
+const handleLayerClick = (layerId: string) => {
+  emit('layerClick', layerId)
 }
 
 

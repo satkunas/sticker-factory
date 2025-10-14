@@ -85,6 +85,7 @@ interface Emits {
   touchstart: [event: TouchEvent]
   touchmove: [event: TouchEvent]
   touchend: [event: TouchEvent]
+  layerClick: [layerId: string]
 }
 
 const emit = defineEmits<Emits>()
@@ -103,8 +104,35 @@ const contentDimensions = computed(() => {
   return undefined
 })
 
+// Helper function to find layer ID from clicked element
+// eslint-disable-next-line no-undef
+const findLayerId = (target: EventTarget | null): string | null => {
+  // eslint-disable-next-line no-undef
+  if (!(target instanceof Element)) return null
+
+  // Traverse up the DOM tree to find an element with data-layer-id
+  // eslint-disable-next-line no-undef
+  let element: Element | null = target
+  while (element && element !== svgViewportRef.value) {
+    if (element.hasAttribute && element.hasAttribute('data-layer-id')) {
+      return element.getAttribute('data-layer-id')
+    }
+    element = element.parentElement
+  }
+
+  return null
+}
+
 // Event handler pass-through functions
-const handleMouseDown = (e: MouseEvent) => emit('mousedown', e)
+const handleMouseDown = (e: MouseEvent) => {
+  // Check if a layer was clicked
+  const layerId = findLayerId(e.target)
+  if (layerId) {
+    emit('layerClick', layerId)
+  }
+
+  emit('mousedown', e)
+}
 const handleMouseMove = (e: MouseEvent) => emit('mousemove', e)
 const handleMouseUp = (e: MouseEvent) => emit('mouseup', e)
 const handleMouseLeave = (e: MouseEvent) => emit('mouseleave', e)

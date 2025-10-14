@@ -1,5 +1,5 @@
 <template>
-  <div ref="containerRef" class="w-full">
+  <div ref="containerRef" class="w-full" :data-instance-id="instanceId">
     <!-- SVG Image Label -->
     <div class="text-sm font-medium text-secondary-700 mb-2">
       {{ layerId }}

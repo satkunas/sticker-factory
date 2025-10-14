@@ -13,7 +13,7 @@
     >
       <div
         v-if="isExpanded"
-        class="bg-secondary-25 border-t border-secondary-200 overflow-hidden"
+        class="bg-secondary-25 border-t border-secondary-200 overflow-hidden rounded-b-lg"
       >
       <!-- Text Styling Section -->
       <div class="p-4">

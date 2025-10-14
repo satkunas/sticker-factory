@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full mb-6">
+  <div class="w-full mb-6" data-instance-id="template-selector">
     <!-- Template Selector Header -->
     <div class="text-sm font-medium text-secondary-700 mb-2">
       Sticker Template
@@ -9,8 +9,8 @@
     <div class="relative">
       <button
         class="w-full px-4 py-3 bg-white border border-secondary-200 rounded-lg text-left focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 hover:border-secondary-300 transition-colors"
-        :class="{ 'ring-2 ring-primary-500 border-primary-500': isOpen }"
-        @click="isOpen = !isOpen"
+        :class="{ 'ring-2 ring-primary-500 border-primary-500': isExpanded }"
+        @click="toggleExpanded"
       >
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-3">
@@ -39,7 +39,7 @@
           <!-- Dropdown Arrow -->
           <svg
             class="w-5 h-5 text-secondary-400 transition-transform duration-200"
-            :class="{ 'rotate-180': isOpen }"
+            :class="{ 'rotate-180': isExpanded }"
             fill="currentColor"
             viewBox="0 0 20 20"
           >
@@ -50,7 +50,7 @@
 
       <!-- Dropdown Content -->
       <div
-        v-if="isOpen"
+        v-if="isExpanded"
         class="absolute z-50 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-80 overflow-y-auto"
       >
         <div class="py-2">
@@ -100,7 +100,7 @@
 
 <script setup lang="ts">
 /* eslint-disable no-undef */
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, inject, onMounted, onUnmounted } from 'vue'
 import { loadAllTemplates, getDefaultTemplate } from '../config/template-loader'
 import { encodeTemplateStateCompact } from '../utils/url-encoding'
 import type { SimpleTemplate } from '../types/template-types'
@@ -118,8 +118,24 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<Emits>()
 
-// Dropdown state
-const isOpen = ref(false)
+// Unified dropdown management
+const dropdownManager = inject('dropdownManager')
+const INSTANCE_ID = 'template-selector'
+
+// Computed expanded state
+const isExpanded = computed(() => {
+  if (dropdownManager) {
+    return dropdownManager.isExpanded(INSTANCE_ID)
+  }
+  return false
+})
+
+// Toggle expansion
+const toggleExpanded = () => {
+  if (dropdownManager) {
+    dropdownManager.toggle(INSTANCE_ID)
+  }
+}
 
 // Available templates (loaded dynamically)
 const templates = ref<SimpleTemplate[]>([])
@@ -127,7 +143,10 @@ const templates = ref<SimpleTemplate[]>([])
 // Template selection handler
 const selectTemplate = (template: SimpleTemplate) => {
   emit('update:selectedTemplate', template)
-  isOpen.value = false
+  // Close dropdown using unified manager
+  if (dropdownManager) {
+    dropdownManager.close(INSTANCE_ID)
+  }
 }
 
 // Generate .svg URL for template preview with default values
@@ -143,19 +162,17 @@ const getTemplateSvgUrl = (template: SimpleTemplate): string => {
   return `/${encoded}.svg`
 }
 
-// Close dropdown when clicking outside
-const _handleClickOutside = (event: Event) => {
-  const target = event.target as HTMLElement
-  const dropdown = target.closest('.relative')
-
-  if (!dropdown) {
-    isOpen.value = false
+// Escape key handler
+const handleKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape' && isExpanded.value && dropdownManager) {
+    dropdownManager.close(INSTANCE_ID)
   }
 }
 
 // Load templates on mount and initialize with default template if none selected
 onMounted(async () => {
-  document.addEventListener("click", _handleClickOutside)
+  // Add Escape key listener
+  document.addEventListener('keydown', handleKeydown)
 
   templates.value = await loadAllTemplates()
 
@@ -168,7 +185,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  document.removeEventListener("click", _handleClickOutside)
+  document.removeEventListener('keydown', handleKeydown)
 })
 </script>
 

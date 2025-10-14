@@ -64,6 +64,7 @@
           :template="selectedTemplate"
           :layers="layers"
           containerClasses="h-full"
+          @layerClick="handleLayerClick"
         />
       </div>
 
@@ -113,7 +114,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, provide, defineAsyncComponent } from 'vue'
+import { ref, computed, onMounted, provide, defineAsyncComponent, nextTick } from 'vue'
 import {
   isLoadingFromUrl,
   selectedTemplate as storeSelectedTemplate,
@@ -171,13 +172,27 @@ const dropdownManager = {
   isExpanded: (id: string) => expandedDropdowns.value.has(id),
 
   toggle: (id: string) => {
-    if (expandedDropdowns.value.has(id)) {
+    const wasExpanded = expandedDropdowns.value.has(id)
+
+    if (wasExpanded) {
       expandedDropdowns.value.delete(id)
     } else {
       // Close all other dropdowns
       expandedDropdowns.value.clear()
       // Open this dropdown
       expandedDropdowns.value.add(id)
+
+      // Wait for BOTH collapse and expansion animations to complete before scrolling
+      // Both animations are 300ms and run simultaneously
+      // Wait 400ms to ensure both have fully completed and layout has settled
+      nextTick(() => {
+        setTimeout(() => {
+          const element = document.querySelector(`[data-instance-id="${id}"]`)
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+          }
+        }, 400)
+      })
     }
   },
 
@@ -395,6 +410,38 @@ onMounted(async () => {
 const handleTemplateSelection = async (template: SimpleTemplate) => {
   logger.debug('🎯 handleTemplateSelection called with template:', template.id)
   await updateTemplate(template.id)
+}
+
+// Handle layer click from SVG to expand corresponding form element
+const handleLayerClick = (layerId: string) => {
+  logger.debug('Layer clicked:', layerId)
+
+  // Find the layer type from the template to construct the correct instanceId
+  const templateLayer = selectedTemplate.value?.layers.find(l => l.id === layerId)
+  if (!templateLayer) {
+    logger.warn('Layer not found in template:', layerId)
+    return
+  }
+
+  // Construct instanceId based on layer type (matching getLayerProps logic)
+  let instanceId: string
+  switch (templateLayer.type) {
+    case 'text':
+      instanceId = layerId
+      break
+    case 'shape':
+      instanceId = `shape-${layerId}`
+      break
+    case 'svgImage':
+      instanceId = `svgImage-${layerId}`
+      break
+    default:
+      logger.warn('Unknown layer type:', templateLayer.type)
+      return
+  }
+
+  // Toggle the dropdown (scroll-to-view is handled automatically by dropdownManager)
+  dropdownManager.toggle(instanceId)
 }
 
 
