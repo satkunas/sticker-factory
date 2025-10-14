@@ -5,11 +5,11 @@
       Sticker Template
     </div>
 
-    <!-- Dropdown -->
-    <div class="relative">
+    <!-- Expandable Container -->
+    <div class="relative rounded-lg transition-all duration-300 ease-in-out" :class="{ 'ring-2 ring-primary-500': isExpanded }">
       <button
-        class="w-full px-4 py-3 bg-white border border-secondary-200 rounded-lg text-left focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 hover:border-secondary-300 transition-colors"
-        :class="{ 'ring-2 ring-primary-500 border-primary-500': isExpanded }"
+        class="w-full px-4 py-3 bg-white border border-secondary-200 rounded-t-lg text-left focus:outline-none hover:border-secondary-300 transition-colors"
+        :class="{ 'border-primary-500': isExpanded, 'rounded-b-lg': !isExpanded }"
         @click="toggleExpanded"
       >
         <div class="flex items-center justify-between">
@@ -48,12 +48,12 @@
         </div>
       </button>
 
-      <!-- Dropdown Content -->
+      <!-- Inline Dropdown Content -->
       <div
         v-if="isExpanded"
-        class="absolute z-50 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-80 overflow-y-auto"
+        class="bg-secondary-25 border-t border-secondary-200 overflow-hidden rounded-b-lg"
       >
-        <div class="py-2">
+        <div class="max-h-96 overflow-y-auto">
           <button
             v-for="template in templates"
             :key="template.id"
@@ -188,9 +188,3 @@ onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
 })
 </script>
-
-<style scoped>
-button {
-  position: relative;
-}
-</style>

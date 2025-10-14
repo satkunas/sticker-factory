@@ -6,10 +6,10 @@
     </div>
 
     <!-- Arrow Button -->
-    <div class="relative rounded-lg overflow-hidden transition-all duration-300 ease-in-out" :class="{ 'ring-2 ring-primary-500': isExpanded }">
+    <div class="relative rounded-lg transition-all duration-300 ease-in-out" :class="{ 'ring-2 ring-primary-500': isExpanded }">
       <button
-        class="expandable-header-btn"
-        :class="{ 'border-primary-500': isExpanded }"
+        class="w-full p-3 bg-white border border-secondary-200 rounded-t-lg text-left focus:outline-none hover:border-secondary-300 transition-colors"
+        :class="{ 'border-primary-500': isExpanded, 'rounded-b-lg': !isExpanded }"
         type="button"
         @click="_toggleExpanded"
       >

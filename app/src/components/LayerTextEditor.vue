@@ -5,8 +5,8 @@
       <input
         :value="modelValue"
         type="text"
-        class="input-field w-full pr-10 rounded-t-lg"
-        :class="{ 'border-primary-500': isExpanded, 'rounded-b-lg': !isExpanded }"
+        class="w-full px-4 py-3 pr-10 bg-white border border-secondary-200 focus:outline-none hover:border-secondary-300 transition-colors"
+        :class="{ 'border-primary-500': isExpanded, 'rounded-b-lg': !isExpanded, 'rounded-t-lg': true }"
         :placeholder="placeholder"
         :style="{
           fontFamily: selectedFont ? getFontFamily(selectedFont) : undefined
