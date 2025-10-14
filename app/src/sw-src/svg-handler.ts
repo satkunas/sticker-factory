@@ -15,7 +15,7 @@ import { calculateOptimalTransformOrigin } from '../utils/svg-bounds'
 import type { FlatLayerData } from '../types/template-types'
 
 // Cache name for SVG responses
-const CACHE_NAME = 'sticker-factory-svg-v1'
+const CACHE_NAME = 'sticker-factory-svg-v2'
 
 /**
  * Handle SVG request: decode state, load template, generate SVG

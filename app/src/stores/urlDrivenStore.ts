@@ -397,6 +397,9 @@ async function handleUrlDecode(urlPath: string): Promise<void> {
     if (!stickerMatch) {
       logger.warn('Invalid sticker URL format:', urlPath)
       await loadDefaultState()
+
+      // Clear invalid URL from browser history
+      window.history.replaceState(null, '', '/')
       return
     }
 
@@ -405,9 +408,23 @@ async function handleUrlDecode(urlPath: string): Promise<void> {
 
     // Decode URL state
     const decodedState = decodeTemplateStateCompact(encodedState)
+
     if (!decodedState) {
-      logger.warn('Failed to decode URL state - invalid format')
+      logger.warn('Failed to decode URL state - incompatible encoding version or corrupt data')
+      logger.warn('This URL may have been created with an older version of the application')
+
       await loadDefaultState()
+
+      // CLEAR BAD URL: Replace with homepage to prevent re-triggering error
+      window.history.replaceState(null, '', '/')
+
+      // Show user-friendly console message
+      logger.warn(
+        '⚠️ This URL uses an incompatible encoding format.\n' +
+        'Redirecting to homepage. Your work has not been saved.\n' +
+        'Please create a new sticker and save the new URL.'
+      )
+
       return
     }
 
@@ -422,6 +439,17 @@ async function handleUrlDecode(urlPath: string): Promise<void> {
   } catch (error) {
     logger.error('Error decoding URL state:', error)
     await loadDefaultState()
+
+    // CLEAR BAD URL from browser history
+    window.history.replaceState(null, '', '/')
+
+    // Show user-friendly error
+    logger.error(
+      '❌ Failed to load state from URL.\n' +
+      'The URL may be corrupted or incompatible.\n' +
+      'Redirected to homepage.'
+    )
+
   } finally {
     _state.value.isLoadingFromUrl = false
   }

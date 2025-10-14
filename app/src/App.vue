@@ -123,6 +123,7 @@ import {
   updateLayer
 } from './stores/urlDrivenStore'
 import { logger } from './utils/logger'
+import { encodeTemplateStateCompact, decodeTemplateStateCompact } from './utils/url-encoding'
 const DownloadModal = defineAsyncComponent(() => import('./components/DownloadModal.vue'))
 import TemplateSelector from './components/TemplateSelector.vue'
 import SvgViewer from './components/SvgViewer.vue'
@@ -379,9 +380,76 @@ const svgViewerRef = ref(null)
 // const svgWidth = computed(() => 400)
 // const svgHeight = computed(() => 300)
 
+/**
+ * Encoding consistency validation
+ * Detects when browser has stale cached url-encoding module
+ */
+function validateEncodingConsistency(): boolean {
+  const testState = {
+    selectedTemplateId: 'test-validation',
+    layers: [],
+    lastModified: Date.now()
+  }
+
+  try {
+    // Roundtrip encode/decode test
+    const encoded = encodeTemplateStateCompact(testState)
+    const decoded = decodeTemplateStateCompact(encoded)
+
+    // Verify roundtrip succeeded
+    const isValid = decoded?.selectedTemplateId === 'test-validation'
+
+    if (!isValid) {
+      logger.error('🚨 ENCODING VALIDATION FAILED')
+      logger.error('Browser cache is stale. Please:')
+      logger.error('1. Clear site data (DevTools → Application → Storage → Clear site data)')
+      logger.error('2. Hard refresh (Ctrl+Shift+R)')
+
+      // Block app initialization with user-visible message
+      /* eslint-disable-next-line no-undef */
+      alert(
+        '⚠️ Application cache is stale.\n\n' +
+        'The app cannot load properly because your browser has cached outdated code.\n\n' +
+        'To fix this:\n' +
+        '1. Open DevTools (F12)\n' +
+        '2. Go to Application → Storage\n' +
+        '3. Click "Clear site data"\n' +
+        '4. Hard refresh (Ctrl+Shift+R)\n\n' +
+        'If this message persists, please contact support.'
+      )
+
+      return false
+    }
+
+    logger.info('✅ Encoding validation passed')
+    return true
+
+  } catch (error) {
+    logger.error('Encoding validation error:', error)
+
+    /* eslint-disable-next-line no-undef */
+    alert(
+      '⚠️ Application initialization failed.\n\n' +
+      'Please clear your browser cache and reload:\n' +
+      '1. Open DevTools (F12)\n' +
+      '2. Application → Storage → Clear site data\n' +
+      '3. Hard refresh (Ctrl+Shift+R)'
+    )
+
+    return false
+  }
+}
+
 // Simplified initialization - URL-driven store handles everything
 onMounted(async () => {
   try {
+    // CRITICAL: Validate encoding consistency BEFORE any other initialization
+    if (!validateEncodingConsistency()) {
+      // Validation failed - block initialization
+      logger.error('App initialization blocked due to encoding validation failure')
+      return  // Do not proceed with initialization
+    }
+
     // Start background tasks that don't affect initial loading
     const fontPromise = import('./config/fonts').then(({ preloadPopularFonts }) => {
       return preloadPopularFonts().catch(error => {

@@ -24,6 +24,23 @@ import type { AppState } from '../types/app-state'
 import { logger } from './logger'
 
 // ============================================================================
+// ENCODING VERSION
+// ============================================================================
+
+/**
+ * Encoding format version
+ *
+ * INCREMENT THIS on any breaking changes to encoding format:
+ * - Changes to compression dictionaries (TEMPLATE_MAP, FONT_MAP, etc.)
+ * - Changes to property mapping (PROP_MAP)
+ * - Changes to encode/decode algorithms
+ *
+ * Version History:
+ * - v2: Modern encoding with TextEncoder/TextDecoder (current, initial versioned release)
+ */
+const ENCODING_VERSION = 2
+
+// ============================================================================
 // COMPRESSION DICTIONARIES AND MAPPING TABLES
 // ============================================================================
 
@@ -230,6 +247,57 @@ function decompressTemplateId(value: string): string {
 }
 
 // ============================================================================
+// MODERN UTF-8 ENCODING/DECODING HELPERS
+// ============================================================================
+
+/**
+ * Convert a UTF-8 string to Base64-URL-safe encoding (modern, safe method)
+ * Replaces deprecated escape() + unescape() pattern
+ */
+function stringToBase64Url(str: string): string {
+  // Convert string to UTF-8 bytes
+  // eslint-disable-next-line no-undef
+  const utf8Bytes = new TextEncoder().encode(str)
+
+  // Convert bytes to binary string
+  let binaryString = ''
+  utf8Bytes.forEach(byte => {
+    binaryString += String.fromCharCode(byte)
+  })
+
+  // Base64 encode and make URL-safe
+  return btoa(binaryString)
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '')
+}
+
+/**
+ * Convert Base64-URL-safe encoding back to UTF-8 string (modern, safe method)
+ * Replaces deprecated escape() + unescape() pattern
+ */
+function base64UrlToString(base64url: string): string {
+  // Restore standard Base64 format
+  const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/')
+
+  // Add padding if needed
+  const padded = base64 + '='.repeat((4 - base64.length % 4) % 4)
+
+  // Decode Base64 to binary string
+  const binaryString = atob(padded)
+
+  // Convert binary string to UTF-8 bytes
+  const utf8Bytes = new Uint8Array(binaryString.length)
+  for (let i = 0; i < binaryString.length; i++) {
+    utf8Bytes[i] = binaryString.charCodeAt(i)
+  }
+
+  // Decode UTF-8 bytes to string
+  // eslint-disable-next-line no-undef
+  return new TextDecoder().decode(utf8Bytes)
+}
+
+// ============================================================================
 // MAIN ENCODING/DECODING FUNCTIONS
 // ============================================================================
 
@@ -257,7 +325,12 @@ export function encodeTemplateStateCompact(state: AppState): string {
       if (layer.fontSize !== undefined) flatLayer[PROP_MAP.fontSize] = layer.fontSize
       if (layer.fontWeight !== undefined) flatLayer[PROP_MAP.fontWeight] = layer.fontWeight
       if (layer.fontColor !== undefined) flatLayer[PROP_MAP.fontColor] = compressColor(layer.fontColor)
+      // Support both font.family and direct fontFamily
       if (layer.font?.family !== undefined) flatLayer[PROP_MAP.fontFamily] = compressFont(layer.font.family)
+      // Handle layers that have fontFamily directly (from test data or legacy format)
+      else if ('fontFamily' in layer && layer.fontFamily !== undefined) {
+        flatLayer[PROP_MAP.fontFamily] = compressFont(layer.fontFamily as string)
+      }
 
       // Shape layer properties (uppercase keys)
       if (layer.fill !== undefined) flatLayer[PROP_MAP.fill] = compressColor(layer.fill)
@@ -278,15 +351,16 @@ export function encodeTemplateStateCompact(state: AppState): string {
       return flatLayer
     }) : []
 
-    // Build compressed state object
+    // Build compressed state object with version header
     const compressedState = {
+      v: ENCODING_VERSION,  // Version header for format detection
       [PROP_MAP.selectedTemplateId]: compressedTemplateId,
       [PROP_MAP.layers]: compressedLayers
     }
 
     const jsonString = JSON.stringify(compressedState)
-    const base64 = btoa(unescape(encodeURIComponent(jsonString)))
-    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+    // Use modern, safe encoding (replaces deprecated unescape/encodeURIComponent pattern)
+    return stringToBase64Url(jsonString)
   } catch (error) {
     logger.warn('Failed to encode template state:', error)
     return ''
@@ -301,18 +375,32 @@ export function decodeTemplateStateCompact(encoded: string): Partial<AppState> |
   try {
     if (!encoded || encoded.length < 1) return null
 
-    // Decode Base64 to JSON
-    const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/')
-    // Add padding if needed
-    const padded = base64 + '='.repeat((4 - base64.length % 4) % 4)
-    const jsonString = decodeURIComponent(escape(atob(padded)))
+    // Use modern, safe decoding (replaces deprecated escape/decodeURIComponent pattern)
+    const jsonString = base64UrlToString(encoded)
+
+    // Validate JSON before parsing to detect encoding format mismatches
+    if (!jsonString || jsonString.includes('\ufffd') || jsonString.includes('�')) {
+      logger.warn('Invalid encoding format detected - URL may be from older version')
+      return null
+    }
+
     const compressedState = JSON.parse(jsonString)
+
+    // VERSION CHECK - Reject URLs without version or with wrong version
+    if (!compressedState.v || compressedState.v !== ENCODING_VERSION) {
+      logger.warn(
+        `Encoding version mismatch: expected v${ENCODING_VERSION}, got v${compressedState.v || 'none'}. ` +
+        `This URL was created with an incompatible encoding format.`
+      )
+      return null
+    }
 
     // Access compressed property names
     const compressedTemplateId = compressedState[PROP_MAP.selectedTemplateId]
     const compressedLayers = compressedState[PROP_MAP.layers]
 
     if (!compressedTemplateId || !Array.isArray(compressedLayers)) {
+      logger.warn('Invalid compressed state structure')
       return null
     }
 
@@ -407,10 +495,14 @@ export function isValidEncodedState(encoded: string): boolean {
   if (!encoded || encoded.length < 1) return false
 
   try {
-    const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/')
-    const paddedBase64 = base64 + '='.repeat((4 - base64.length % 4) % 4)
-    const jsonString = decodeURIComponent(escape(atob(paddedBase64)))
+    // Use modern, safe decoding (replaces deprecated escape/decodeURIComponent pattern)
+    const jsonString = base64UrlToString(encoded)
     const compressedState = JSON.parse(jsonString)
+
+    // Validate version compatibility - require version field
+    if (!compressedState.v || compressedState.v !== ENCODING_VERSION) {
+      return false  // Reject URLs without version or with wrong version
+    }
 
     // Validate compressed structure
     return !!(compressedState[PROP_MAP.selectedTemplateId] && Array.isArray(compressedState[PROP_MAP.layers]))
