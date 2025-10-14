@@ -79,9 +79,6 @@
                 <div class="text-sm text-secondary-500 truncate">
                   {{ template.description }}
                 </div>
-                <div class="text-xs text-secondary-400 mt-1">
-                  {{ template.category }} shape
-                </div>
               </div>
 
               <!-- Selection Indicator -->
