@@ -3,6 +3,7 @@
     class="w-full h-full relative"
     :class="cursorClass"
     @mousedown="handleMouseDown"
+    @dblclick="handleDoubleClick"
     @mousemove="handleMouseMove"
     @mouseup="handleMouseUp"
     @mouseleave="handleMouseLeave"
@@ -125,14 +126,17 @@ const findLayerId = (target: EventTarget | null): string | null => {
 
 // Event handler pass-through functions
 const handleMouseDown = (e: MouseEvent) => {
-  // Check if a layer was clicked
+  emit('mousedown', e)
+}
+
+const handleDoubleClick = (e: MouseEvent) => {
+  // Check if a layer was double-clicked
   const layerId = findLayerId(e.target)
   if (layerId) {
     emit('layerClick', layerId)
   }
-
-  emit('mousedown', e)
 }
+
 const handleMouseMove = (e: MouseEvent) => emit('mousemove', e)
 const handleMouseUp = (e: MouseEvent) => emit('mouseup', e)
 const handleMouseLeave = (e: MouseEvent) => emit('mouseleave', e)
