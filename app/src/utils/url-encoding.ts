@@ -124,51 +124,167 @@ export const REVERSE_FONT_MAP = Object.fromEntries(
   Object.entries(FONT_MAP).map(([font, char]) => [char, font])
 ) as Record<string, string>
 
+/**
+ * PROPERTY NAME COMPRESSION
+ * =========================
+ * Maps long property names to single characters for maximum compression.
+ * Uses lowercase for text layer properties, uppercase for shape layer properties.
+ */
+const PROP_MAP = {
+  // State level
+  selectedTemplateId: 't',
+  layers: 'l',
+  // Layer common
+  id: 'i',
+  type: 'y',
+  // Text layer (lowercase)
+  text: 'x',
+  fontSize: 's',
+  fontWeight: 'w',
+  fontColor: 'c',
+  fontFamily: 'f',
+  // Shape layer (uppercase)
+  fill: 'F',
+  stroke: 'S',
+  strokeColor: 'C',
+  strokeWidth: 'W',
+  strokeOpacity: 'O',
+  strokeLinejoin: 'j',
+  // SVG image layer
+  svgImageId: 'v',
+  svgContent: 'V',
+  color: 'o',
+  rotation: 'r',
+  scale: 'a',
+  transformOrigin: 'T'
+} as const
+
+/**
+ * TYPE VALUE COMPRESSION
+ * ======================
+ * Maps layer types to single characters.
+ */
+const TYPE_MAP = {
+  text: 't',
+  shape: 's',
+  svgImage: 'i'
+} as const
+
+const REVERSE_TYPE_MAP = Object.fromEntries(
+  Object.entries(TYPE_MAP).map(([k, v]) => [v, k])
+) as Record<string, string>
+
+/**
+ * Compress a color hex value to palette index or keep as-is
+ * @param hex Color hex string like "#ff0000"
+ * @returns Palette index (0-63) or original hex string
+ */
+function compressColor(hex: string): number | string {
+  const idx = COLOR_PALETTE.indexOf(hex as typeof COLOR_PALETTE[number])
+  return idx >= 0 ? idx : hex
+}
+
+/**
+ * Decompress a palette index or hex string back to hex
+ * @param value Palette index or hex string
+ * @returns Color hex string
+ */
+function decompressColor(value: number | string): string {
+  return typeof value === 'number' ? COLOR_PALETTE[value] : value
+}
+
+/**
+ * Compress a font family name to single character or keep as-is
+ * @param fontFamily Font family name like "Inter"
+ * @returns Single character or original font name
+ */
+function compressFont(fontFamily: string): string {
+  return (FONT_MAP as Record<string, string>)[fontFamily] || fontFamily
+}
+
+/**
+ * Decompress a font character back to font family name
+ * @param value Single character or font family name
+ * @returns Font family name
+ */
+function decompressFont(value: string): string {
+  return REVERSE_FONT_MAP[value] || value
+}
+
+/**
+ * Compress a template ID to single character
+ * @param templateId Template ID like "vinyl-record-label"
+ * @returns Single character
+ */
+function compressTemplateId(templateId: string): string {
+  return (TEMPLATE_MAP as Record<string, string>)[templateId] || templateId
+}
+
+/**
+ * Decompress a template character back to template ID
+ * @param value Single character
+ * @returns Template ID
+ */
+function decompressTemplateId(value: string): string {
+  return REVERSE_TEMPLATE_MAP[value] || value
+}
+
 // ============================================================================
 // MAIN ENCODING/DECODING FUNCTIONS
 // ============================================================================
 
 /**
- * FLAT ARCHITECTURE: Encode flat layer data for URL
- * Uses simple JSON encoding with Base64 for URL safety and readability
+ * FLAT ARCHITECTURE: Encode flat layer data for URL with compression
+ * Uses compressed property names, template/font/color compression, and Base64
  *
  * NO HARDCODED FALLBACKS: Only includes properties that are actually defined
  */
 export function encodeTemplateStateCompact(state: AppState): string {
   try {
-    const stateData = {
-      selectedTemplateId: state.selectedTemplateId,
-      layers: Array.isArray(state.layers) ? state.layers.map(layer => {
-        // FLAT ARCHITECTURE: Only include defined properties
-        const flatLayer: Record<string, unknown> = {
-          id: layer.id,
-          type: layer.type
-        }
+    // Compress template ID
+    const compressedTemplateId = state.selectedTemplateId ? compressTemplateId(state.selectedTemplateId) : null
 
-        // Conditionally include flat properties - omit undefined values
-        if (layer.text !== undefined) flatLayer.text = layer.text
-        if (layer.fontSize !== undefined) flatLayer.fontSize = layer.fontSize
-        if (layer.fontWeight !== undefined) flatLayer.fontWeight = layer.fontWeight
-        if (layer.fontColor !== undefined) flatLayer.fontColor = layer.fontColor
-        if (layer.font?.family !== undefined) flatLayer.fontFamily = layer.font.family  // Store font family name
-        if (layer.fill !== undefined) flatLayer.fill = layer.fill
-        if (layer.stroke !== undefined) flatLayer.stroke = layer.stroke
-        if (layer.strokeColor !== undefined) flatLayer.strokeColor = layer.strokeColor
-        if (layer.strokeWidth !== undefined) flatLayer.strokeWidth = layer.strokeWidth
-        if (layer.strokeOpacity !== undefined) flatLayer.strokeOpacity = layer.strokeOpacity
-        if (layer.strokeLinejoin !== undefined) flatLayer.strokeLinejoin = layer.strokeLinejoin
-        if (layer.svgImageId !== undefined) flatLayer.svgImageId = layer.svgImageId
-        if (layer.svgContent !== undefined) flatLayer.svgContent = layer.svgContent
-        if (layer.color !== undefined) flatLayer.color = layer.color
-        if (layer.rotation !== undefined) flatLayer.rotation = layer.rotation
-        if (layer.scale !== undefined) flatLayer.scale = layer.scale
-        if (layer.transformOrigin !== undefined) flatLayer.transformOrigin = layer.transformOrigin
+    // Compress layers
+    const compressedLayers = Array.isArray(state.layers) ? state.layers.map(layer => {
+      // FLAT ARCHITECTURE: Only include defined properties with compressed keys
+      const flatLayer: Record<string, unknown> = {
+        [PROP_MAP.id]: layer.id,
+        [PROP_MAP.type]: (TYPE_MAP as Record<string, string>)[layer.type] || layer.type
+      }
 
-        return flatLayer
-      }) : []
+      // Text layer properties (lowercase keys)
+      if (layer.text !== undefined) flatLayer[PROP_MAP.text] = layer.text
+      if (layer.fontSize !== undefined) flatLayer[PROP_MAP.fontSize] = layer.fontSize
+      if (layer.fontWeight !== undefined) flatLayer[PROP_MAP.fontWeight] = layer.fontWeight
+      if (layer.fontColor !== undefined) flatLayer[PROP_MAP.fontColor] = compressColor(layer.fontColor)
+      if (layer.font?.family !== undefined) flatLayer[PROP_MAP.fontFamily] = compressFont(layer.font.family)
+
+      // Shape layer properties (uppercase keys)
+      if (layer.fill !== undefined) flatLayer[PROP_MAP.fill] = compressColor(layer.fill)
+      if (layer.stroke !== undefined) flatLayer[PROP_MAP.stroke] = compressColor(layer.stroke)
+      if (layer.strokeColor !== undefined) flatLayer[PROP_MAP.strokeColor] = compressColor(layer.strokeColor)
+      if (layer.strokeWidth !== undefined) flatLayer[PROP_MAP.strokeWidth] = layer.strokeWidth
+      if (layer.strokeOpacity !== undefined) flatLayer[PROP_MAP.strokeOpacity] = layer.strokeOpacity
+      if (layer.strokeLinejoin !== undefined) flatLayer[PROP_MAP.strokeLinejoin] = layer.strokeLinejoin
+
+      // SVG image layer properties
+      if (layer.svgImageId !== undefined) flatLayer[PROP_MAP.svgImageId] = layer.svgImageId
+      if (layer.svgContent !== undefined) flatLayer[PROP_MAP.svgContent] = layer.svgContent
+      if (layer.color !== undefined) flatLayer[PROP_MAP.color] = compressColor(layer.color)
+      if (layer.rotation !== undefined) flatLayer[PROP_MAP.rotation] = layer.rotation
+      if (layer.scale !== undefined) flatLayer[PROP_MAP.scale] = layer.scale
+      if (layer.transformOrigin !== undefined) flatLayer[PROP_MAP.transformOrigin] = layer.transformOrigin
+
+      return flatLayer
+    }) : []
+
+    // Build compressed state object
+    const compressedState = {
+      [PROP_MAP.selectedTemplateId]: compressedTemplateId,
+      [PROP_MAP.layers]: compressedLayers
     }
 
-    const jsonString = JSON.stringify(stateData)
+    const jsonString = JSON.stringify(compressedState)
     const base64 = btoa(unescape(encodeURIComponent(jsonString)))
     return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
   } catch (error) {
@@ -178,7 +294,7 @@ export function encodeTemplateStateCompact(state: AppState): string {
 }
 
 /**
- * FLAT ARCHITECTURE: Decode flat layer data from URL
+ * FLAT ARCHITECTURE: Decode flat layer data from URL with decompression
  * Returns only the values that were encoded - NO HARDCODED DEFAULTS
  */
 export function decodeTemplateStateCompact(encoded: string): Partial<AppState> | null {
@@ -190,44 +306,91 @@ export function decodeTemplateStateCompact(encoded: string): Partial<AppState> |
     // Add padding if needed
     const padded = base64 + '='.repeat((4 - base64.length % 4) % 4)
     const jsonString = decodeURIComponent(escape(atob(padded)))
-    const stateData = JSON.parse(jsonString)
+    const compressedState = JSON.parse(jsonString)
 
-    if (!stateData.selectedTemplateId || !Array.isArray(stateData.layers)) {
+    // Access compressed property names
+    const compressedTemplateId = compressedState[PROP_MAP.selectedTemplateId]
+    const compressedLayers = compressedState[PROP_MAP.layers]
+
+    if (!compressedTemplateId || !Array.isArray(compressedLayers)) {
       return null
     }
 
-    // Flat architecture layers - direct property access
+    // Decompress template ID
+    const decompressedTemplateId = decompressTemplateId(compressedTemplateId)
+
+    // Decompress layers
+    const decompressedLayers = compressedLayers.map((compressedLayer: Record<string, unknown>) => {
+      // FLAT ARCHITECTURE: Map compressed properties back to store format
+      // NO HARDCODED DEFAULTS: Only include properties that were encoded
+      const mappedLayer: Record<string, unknown> = {
+        id: compressedLayer[PROP_MAP.id],
+        type: REVERSE_TYPE_MAP[compressedLayer[PROP_MAP.type] as string] || compressedLayer[PROP_MAP.type]
+      }
+
+      // Text layer properties (lowercase keys)
+      if (compressedLayer[PROP_MAP.text] !== undefined) {
+        mappedLayer.text = compressedLayer[PROP_MAP.text]
+      }
+      if (compressedLayer[PROP_MAP.fontSize] !== undefined) {
+        mappedLayer.fontSize = compressedLayer[PROP_MAP.fontSize]
+      }
+      if (compressedLayer[PROP_MAP.fontWeight] !== undefined) {
+        mappedLayer.fontWeight = compressedLayer[PROP_MAP.fontWeight]
+      }
+      if (compressedLayer[PROP_MAP.fontColor] !== undefined) {
+        mappedLayer.fontColor = decompressColor(compressedLayer[PROP_MAP.fontColor] as number | string)
+      }
+      if (compressedLayer[PROP_MAP.fontFamily] !== undefined) {
+        mappedLayer.fontFamily = decompressFont(compressedLayer[PROP_MAP.fontFamily] as string)
+      }
+
+      // Shape layer properties (uppercase keys)
+      if (compressedLayer[PROP_MAP.fill] !== undefined) {
+        mappedLayer.fill = decompressColor(compressedLayer[PROP_MAP.fill] as number | string)
+      }
+      if (compressedLayer[PROP_MAP.stroke] !== undefined) {
+        mappedLayer.stroke = decompressColor(compressedLayer[PROP_MAP.stroke] as number | string)
+      }
+      if (compressedLayer[PROP_MAP.strokeColor] !== undefined) {
+        mappedLayer.strokeColor = decompressColor(compressedLayer[PROP_MAP.strokeColor] as number | string)
+      }
+      if (compressedLayer[PROP_MAP.strokeWidth] !== undefined) {
+        mappedLayer.strokeWidth = compressedLayer[PROP_MAP.strokeWidth]
+      }
+      if (compressedLayer[PROP_MAP.strokeOpacity] !== undefined) {
+        mappedLayer.strokeOpacity = compressedLayer[PROP_MAP.strokeOpacity]
+      }
+      if (compressedLayer[PROP_MAP.strokeLinejoin] !== undefined) {
+        mappedLayer.strokeLinejoin = compressedLayer[PROP_MAP.strokeLinejoin]
+      }
+
+      // SVG image layer properties
+      if (compressedLayer[PROP_MAP.svgImageId] !== undefined) {
+        mappedLayer.svgImageId = compressedLayer[PROP_MAP.svgImageId]
+      }
+      if (compressedLayer[PROP_MAP.svgContent] !== undefined) {
+        mappedLayer.svgContent = compressedLayer[PROP_MAP.svgContent]
+      }
+      if (compressedLayer[PROP_MAP.color] !== undefined) {
+        mappedLayer.color = decompressColor(compressedLayer[PROP_MAP.color] as number | string)
+      }
+      if (compressedLayer[PROP_MAP.rotation] !== undefined) {
+        mappedLayer.rotation = compressedLayer[PROP_MAP.rotation]
+      }
+      if (compressedLayer[PROP_MAP.scale] !== undefined) {
+        mappedLayer.scale = compressedLayer[PROP_MAP.scale]
+      }
+      if (compressedLayer[PROP_MAP.transformOrigin] !== undefined) {
+        mappedLayer.transformOrigin = compressedLayer[PROP_MAP.transformOrigin]
+      }
+
+      return mappedLayer
+    })
+
     return {
-      selectedTemplateId: stateData.selectedTemplateId,
-      layers: stateData.layers.map((layer: Record<string, unknown>) => {
-        // FLAT ARCHITECTURE: Map flat properties to store format
-        // NO HARDCODED DEFAULTS: Only include properties that were encoded
-        const mappedLayer: Record<string, unknown> = {
-          id: layer.id,
-          type: layer.type
-        }
-
-        // Map flat properties with correct naming - conditionally
-        if (layer.text !== undefined) mappedLayer.text = layer.text
-        if (layer.fontSize !== undefined) mappedLayer.fontSize = layer.fontSize
-        if (layer.fontWeight !== undefined) mappedLayer.fontWeight = layer.fontWeight
-        if (layer.fontColor !== undefined) mappedLayer.fontColor = layer.fontColor
-        if (layer.fontFamily !== undefined) mappedLayer.fontFamily = layer.fontFamily  // Font family string
-        if (layer.fill !== undefined) mappedLayer.fill = layer.fill
-        if (layer.stroke !== undefined) mappedLayer.stroke = layer.stroke
-        if (layer.strokeColor !== undefined) mappedLayer.strokeColor = layer.strokeColor
-        if (layer.strokeWidth !== undefined) mappedLayer.strokeWidth = layer.strokeWidth
-        if (layer.strokeOpacity !== undefined) mappedLayer.strokeOpacity = layer.strokeOpacity
-        if (layer.strokeLinejoin !== undefined) mappedLayer.strokeLinejoin = layer.strokeLinejoin
-        if (layer.svgImageId !== undefined) mappedLayer.svgImageId = layer.svgImageId
-        if (layer.svgContent !== undefined) mappedLayer.svgContent = layer.svgContent
-        if (layer.color !== undefined) mappedLayer.color = layer.color
-        if (layer.rotation !== undefined) mappedLayer.rotation = layer.rotation
-        if (layer.scale !== undefined) mappedLayer.scale = layer.scale
-        if (layer.transformOrigin !== undefined) mappedLayer.transformOrigin = layer.transformOrigin
-
-        return mappedLayer
-      })
+      selectedTemplateId: decompressedTemplateId,
+      layers: decompressedLayers
     }
   } catch (error) {
     logger.warn('Failed to decode template state:', error)
@@ -247,10 +410,10 @@ export function isValidEncodedState(encoded: string): boolean {
     const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/')
     const paddedBase64 = base64 + '='.repeat((4 - base64.length % 4) % 4)
     const jsonString = decodeURIComponent(escape(atob(paddedBase64)))
-    const stateData = JSON.parse(jsonString)
+    const compressedState = JSON.parse(jsonString)
 
-    // Validate structure
-    return !!(stateData.selectedTemplateId && Array.isArray(stateData.layers))
+    // Validate compressed structure
+    return !!(compressedState[PROP_MAP.selectedTemplateId] && Array.isArray(compressedState[PROP_MAP.layers]))
   } catch {
     return false
   }
