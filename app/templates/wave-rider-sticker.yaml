@@ -40,6 +40,7 @@ layers:
     textPath: "wave-path"
     startOffset: "0%"
     dy: -15
+    dominantBaseline: "middle"
     position: { x: "50%", y: "50%" }
     maxLength: 30
     fontFamily: "Oswald"
@@ -57,6 +58,7 @@ layers:
     textPath: "wave-path"
     startOffset: "75%"
     dy: 10
+    dominantBaseline: "middle"
     position: { x: "50%", y: "50%" }
     maxLength: 20
     fontFamily: "Inter"

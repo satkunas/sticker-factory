@@ -47,12 +47,15 @@ layers:
     default: "CERTIFICATE OF"
     textPath: "top-arc-path"
     startOffset: "50%"
+    dy: 5
+    dominantBaseline: "middle"
     position: { x: "50%", y: "50%" }
     maxLength: 25
     fontFamily: "Oswald"
-    fontSize: 24
+    fontSize: 36
     fontWeight: 700
     fontColor: "#1e40af"
+    clip: "innner-circle"
 
   # Bottom curved text
   - id: "bottom-text"
@@ -62,6 +65,7 @@ layers:
     textPath: "bottom-arc-path"
     startOffset: "50%"
     dy: -5
+    dominantBaseline: "middle"
     position: { x: "50%", y: "50%" }
     maxLength: 25
     fontFamily: "Oswald"
@@ -91,3 +95,4 @@ layers:
     fontSize: 18
     fontWeight: 700
     fontColor: "#1e40af"
+    clip: "inner-circle"

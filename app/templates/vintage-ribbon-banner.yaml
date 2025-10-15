@@ -60,6 +60,7 @@ layers:
     textPath: "ribbon-path"
     startOffset: "25%"
     dy: 5
+    dominantBaseline: "middle"
     position: { x: "50%", y: "50%" }
     maxLength: 25
     fontFamily: "Oswald"
