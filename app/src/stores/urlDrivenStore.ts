@@ -112,6 +112,11 @@ export interface LayerFormData {
   strokeOpacity?: number
   strokeLinejoin?: string
 
+  // TextPath properties (curved text along paths)
+  startOffset?: string  // Position on path (percentage or absolute)
+  dy?: number  // Vertical offset from path baseline
+  dominantBaseline?: string  // Text baseline alignment
+
   // Shape properties (matching template property names)
   fill?: string  // Matches template property name
   stroke?: string  // Matches template property name
@@ -182,6 +187,8 @@ function flattenTemplateLayer(templateLayer: TemplateLayer): FlatLayerData {
     position, rotation, scale, clip, clipPath, opacity,
     // Text properties
     text, label, placeholder, maxLength, fontFamily, fontColor, fontSize, fontWeight,
+    // TextPath properties (curved text along paths)
+    textPath, startOffset, dy, dominantBaseline,
     // Shape properties
     subtype, width, height, rx, ry, points, fill, stroke, strokeWidth, strokeLinejoin, path,
     // SVG Image properties
@@ -196,6 +203,8 @@ function flattenTemplateLayer(templateLayer: TemplateLayer): FlatLayerData {
     id, type, position, rotation, scale, clip, clipPath, opacity,
     // Text properties (directly accessible)
     text, label, placeholder, maxLength, fontFamily, fontColor, fontSize, fontWeight,
+    // TextPath properties (curved text along paths)
+    textPath, startOffset, dy, dominantBaseline,
     // Shape properties (directly accessible)
     subtype, width, height, rx, ry, points, path,
     fillColor: fill, // Map 'fill' to 'fillColor' for shapes
@@ -508,6 +517,12 @@ function mergeTemplateWithUrlData(template: SimpleTemplate, urlLayers: Array<{ i
 
   // Process each template layer
   template.layers.forEach(templateLayer => {
+    // Skip path layers - they are static reference paths for textPath, not editable
+    const flatLayer = templateLayer as unknown as FlatLayerData
+    if (flatLayer.subtype === 'path') {
+      return  // Don't create form entry for path layers
+    }
+
     const urlOverride = urlOverrides[templateLayer.id] || {}
 
     // Create form data entry with template defaults + URL overrides
@@ -518,7 +533,6 @@ function mergeTemplateWithUrlData(template: SimpleTemplate, urlLayers: Array<{ i
 
     // Apply type-specific merging
     // Cast to FlatLayerData since template loader flattens structure at runtime
-    const flatLayer = templateLayer as unknown as FlatLayerData
 
     if (templateLayer.type === 'text') {
       // Template loader now flattens structure - properties are directly on layer
@@ -530,6 +544,11 @@ function mergeTemplateWithUrlData(template: SimpleTemplate, urlLayers: Array<{ i
       formEntry.strokeWidth = urlOverride.strokeWidth !== undefined ? urlOverride.strokeWidth : flatLayer.strokeWidth
       formEntry.strokeOpacity = urlOverride.strokeOpacity !== undefined ? urlOverride.strokeOpacity : flatLayer.strokeOpacity
       formEntry.strokeLinejoin = urlOverride.strokeLinejoin !== undefined ? urlOverride.strokeLinejoin : flatLayer.strokeLinejoin
+
+      // TextPath properties (curved text)
+      formEntry.startOffset = urlOverride.startOffset !== undefined ? urlOverride.startOffset : flatLayer.startOffset
+      formEntry.dy = urlOverride.dy !== undefined ? urlOverride.dy : flatLayer.dy
+      formEntry.dominantBaseline = urlOverride.dominantBaseline !== undefined ? urlOverride.dominantBaseline : flatLayer.dominantBaseline
 
       // Handle fontFamily from URL - convert to font object
       if (urlOverride.fontFamily !== undefined) {
@@ -697,12 +716,21 @@ function updateRenderData(): void {
         strokeOpacity: flatLayer.strokeOpacity,
         strokeLinejoin: flatLayer.strokeLinejoin,
         position: flatLayer.position,
+        // TextPath properties for curved text
+        textPath: flatLayer.textPath,
+        startOffset: flatLayer.startOffset,
+        dy: flatLayer.dy,
+        dominantBaseline: flatLayer.dominantBaseline,
         // Only override with form data if form data exists
         ...(formLayer?.text !== undefined && { text: formLayer.text }),
         ...(formLayer?.fontSize !== undefined && { fontSize: formLayer.fontSize }),
         ...(formLayer?.fontWeight !== undefined && { fontWeight: formLayer.fontWeight }),
         ...(formLayer?.fontColor !== undefined && { fontColor: formLayer.fontColor }),
         ...(formLayer?.font?.family !== undefined && { fontFamily: formLayer.font.family }),
+        // TextPath property overrides (curved text along paths)
+        ...(formLayer?.startOffset !== undefined && { startOffset: formLayer.startOffset }),
+        ...(formLayer?.dy !== undefined && { dy: formLayer.dy }),
+        ...(formLayer?.dominantBaseline !== undefined && { dominantBaseline: formLayer.dominantBaseline }),
         // Only include stroke if strokeWidth > 0
         ...(formLayer?.strokeWidth !== undefined && formLayer.strokeWidth > 0 && {
           stroke: formLayer.strokeColor,
@@ -1347,7 +1375,65 @@ export const hasClipPaths = computed(() => {
   )
 })
 
+// Generate textPath path definitions from template shapes
+export const textPathDefinitions = computed(() => {
+  if (!_state.value.selectedTemplate?.layers) return []
 
+  const pathDefinitions: Array<{id: string, pathData: string}> = []
+
+  // Find all text layers that reference textPath
+  const textPathReferences = new Set<string>()
+
+  _state.value.selectedTemplate.layers.forEach(layer => {
+    // Check for textPath property in text layers
+    if (layer.type === 'text' && layer.textInput?.textPath) {
+      textPathReferences.add(layer.textInput.textPath)
+    }
+    // Also check for direct textPath property (flat architecture)
+    // Cast to FlatLayerData to access textPath property
+    const flatLayer = layer as unknown as FlatLayerData
+    if (layer.type === 'text' && flatLayer.textPath) {
+      textPathReferences.add(flatLayer.textPath)
+    }
+  })
+
+  // Generate path definitions for referenced paths
+  textPathReferences.forEach(pathId => {
+    const pathLayer = _state.value.selectedTemplate?.layers.find(layer =>
+      layer.type === 'shape' && layer.id === pathId
+    )
+
+    if (pathLayer) {
+      // Cast to FlatLayerData to access path property
+      const flatPathLayer = pathLayer as unknown as FlatLayerData
+
+      // Only include path layers with subtype='path' and path data
+      if (flatPathLayer.subtype === 'path' && flatPathLayer.path) {
+        pathDefinitions.push({
+          id: pathId,
+          pathData: flatPathLayer.path
+        })
+      }
+    }
+  })
+
+  return pathDefinitions
+})
+
+// Check if template has any textPath paths
+export const hasTextPaths = computed(() => {
+  if (!_state.value.selectedTemplate?.layers) return false
+  return _state.value.selectedTemplate.layers.some(layer => {
+    if (layer.type === 'text') {
+      // Check nested textInput property
+      if (layer.textInput?.textPath) return true
+      // Check flat property
+      const flatLayer = layer as unknown as FlatLayerData
+      if (flatLayer.textPath) return true
+    }
+    return false
+  })
+})
 
 // ============================================================================
 // FLAT ARCHITECTURE: New computed properties for simplified data flow

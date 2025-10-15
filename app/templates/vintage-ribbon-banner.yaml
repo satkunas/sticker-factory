@@ -1,0 +1,123 @@
+name: "Vintage Ribbon Banner"
+id: "vintage-ribbon-banner"
+description: "Classic ribbon banner with elegant curved text"
+width: 400
+height: 300
+layers:
+  # Background
+  - id: "background"
+    type: "shape"
+    subtype: "rect"
+    position: { x: "50%", y: "50%" }
+    width: 400
+    height: 300
+    fill: "#f8fafc"
+    stroke: "none"
+    strokeWidth: 0
+
+  # Ribbon shadow
+  - id: "ribbon-shadow"
+    type: "shape"
+    subtype: "path"
+    path: "M 50,155 Q 100,120 200,145 T 350,155 L 340,175 Q 195,150 100,175 Z"
+    position: { x: 0, y: 0 }
+    fill: "#94a3b8"
+    stroke: "none"
+    strokeWidth: 0
+
+  # Main ribbon shape
+  - id: "ribbon-visual"
+    type: "shape"
+    subtype: "path"
+    path: "M 50,150 Q 100,115 200,140 T 350,150 L 340,170 Q 195,145 100,170 Z"
+    position: { x: 0, y: 0 }
+    fill: "#dc2626"
+    stroke: "#991b1b"
+    strokeWidth: 2
+
+  # Ribbon highlight
+  - id: "ribbon-highlight"
+    type: "shape"
+    subtype: "path"
+    path: "M 50,150 Q 100,115 200,140 T 350,150 L 340,155 Q 195,130 100,155 Z"
+    position: { x: 0, y: 0 }
+    fill: "#f87171"
+    stroke: "none"
+    strokeWidth: 0
+
+  # Ribbon path for text (centerline)
+  - id: "ribbon-path"
+    type: "shape"
+    subtype: "path"
+    path: "M 70,150 Q 120,118 220,143 T 370,153"
+    position: { x: 0, y: 0 }
+
+  # Main banner text
+  - id: "banner-text"
+    type: "text"
+    label: "Banner Text"
+    default: "GRAND OPENING"
+    textPath: "ribbon-path"
+    startOffset: "25%"
+    dy: 5
+    position: { x: "50%", y: "50%" }
+    maxLength: 25
+    fontFamily: "Oswald"
+    fontSize: 28
+    fontWeight: 700
+    fontColor: "#ffffff"
+    strokeColor: "#7f1d1d"
+    strokeWidth: 1
+
+  # Left ribbon tail
+  - id: "left-tail"
+    type: "shape"
+    subtype: "path"
+    path: "M 50,150 L 30,140 L 35,170 L 50,170 Z"
+    position: { x: 0, y: 0 }
+    fill: "#b91c1c"
+    stroke: "#991b1b"
+    strokeWidth: 2
+
+  # Right ribbon tail
+  - id: "right-tail"
+    type: "shape"
+    subtype: "path"
+    path: "M 350,150 L 370,145 L 365,175 L 340,170 Z"
+    position: { x: 0, y: 0 }
+    fill: "#b91c1c"
+    stroke: "#991b1b"
+    strokeWidth: 2
+
+  # Decorative corner elements
+  - id: "corner-top-left"
+    type: "svgImage"
+    svgId: "ui-star"
+    position: { x: "10%", y: "15%" }
+    width: 24
+    height: 24
+    fill: "#fbbf24"
+    stroke: "#f59e0b"
+    strokeWidth: 2
+
+  - id: "corner-top-right"
+    type: "svgImage"
+    svgId: "ui-star"
+    position: { x: "90%", y: "15%" }
+    width: 24
+    height: 24
+    fill: "#fbbf24"
+    stroke: "#f59e0b"
+    strokeWidth: 2
+
+  # Date or subtitle text
+  - id: "date-text"
+    type: "text"
+    label: "Date"
+    default: "Since 2025"
+    position: { x: "50%", y: "75%" }
+    maxLength: 20
+    fontFamily: "Inter"
+    fontSize: 16
+    fontWeight: 600
+    fontColor: "#475569"

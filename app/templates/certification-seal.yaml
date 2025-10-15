@@ -1,0 +1,93 @@
+name: "Certification Seal"
+id: "certification-seal"
+description: "Circular certification badge with curved text along arcs"
+width: 400
+height: 400
+layers:
+  # Outer circle border
+  - id: "outer-circle"
+    type: "shape"
+    subtype: "circle"
+    position: { x: "50%", y: "50%" }
+    width: 320
+    height: 320
+    fill: "none"
+    stroke: "#2563eb"
+    strokeWidth: 4
+
+  # Inner circle background
+  - id: "inner-circle"
+    type: "shape"
+    subtype: "circle"
+    position: { x: "50%", y: "50%" }
+    width: 280
+    height: 280
+    fill: "#dbeafe"
+    stroke: "#3b82f6"
+    strokeWidth: 2
+
+  # Top arc path (for textPath reference)
+  - id: "top-arc-path"
+    type: "shape"
+    subtype: "path"
+    path: "M 80,200 A 120,120 0 0,1 320,200"
+    position: { x: 0, y: 0 }
+
+  # Bottom arc path (for textPath reference)
+  - id: "bottom-arc-path"
+    type: "shape"
+    subtype: "path"
+    path: "M 80,200 A 120,120 0 0,0 320,200"
+    position: { x: 0, y: 0 }
+
+  # Top curved text
+  - id: "top-text"
+    type: "text"
+    label: "Top Text"
+    default: "CERTIFICATE OF"
+    textPath: "top-arc-path"
+    startOffset: "50%"
+    position: { x: "50%", y: "50%" }
+    maxLength: 25
+    fontFamily: "Oswald"
+    fontSize: 24
+    fontWeight: 700
+    fontColor: "#1e40af"
+
+  # Bottom curved text
+  - id: "bottom-text"
+    type: "text"
+    label: "Bottom Text"
+    default: "EXCELLENCE"
+    textPath: "bottom-arc-path"
+    startOffset: "50%"
+    dy: -5
+    position: { x: "50%", y: "50%" }
+    maxLength: 25
+    fontFamily: "Oswald"
+    fontSize: 28
+    fontWeight: 700
+    fontColor: "#1e40af"
+
+  # Center star decoration
+  - id: "center-star"
+    type: "svgImage"
+    svgId: "ui-star"
+    position: { x: "50%", y: "50%" }
+    width: 60
+    height: 60
+    fill: "#fbbf24"
+    stroke: "#f59e0b"
+    strokeWidth: 2
+
+  # Center year/number text
+  - id: "center-text"
+    type: "text"
+    label: "Year"
+    default: "2025"
+    position: { x: "50%", y: "58%" }
+    maxLength: 10
+    fontFamily: "Roboto"
+    fontSize: 18
+    fontWeight: 700
+    fontColor: "#1e40af"
