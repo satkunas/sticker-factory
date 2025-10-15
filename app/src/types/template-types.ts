@@ -17,6 +17,10 @@ export interface TemplateTextInput {
   rotation?: number
   clip?: string
   clipPath?: string
+  textPath?: string      // ID of path to follow for curved text
+  startOffset?: string   // Starting position on path (e.g., "0%", "50%", "100%")
+  dy?: number            // Vertical offset from path baseline (-100 to 100)
+  dominantBaseline?: string  // Text baseline alignment (auto, middle, central, hanging, etc.)
   maxLength?: number
   fontFamily?: string
   fontColor?: string
@@ -53,13 +57,14 @@ export interface TemplateLayerBase {
 // Shape layer
 export interface TemplateShapeLayer extends TemplateLayerBase {
   type: 'shape'
-  subtype: 'rect' | 'circle' | 'polygon' | 'ellipse' | 'line'
+  subtype: 'rect' | 'circle' | 'polygon' | 'ellipse' | 'line' | 'path'
   position: { x: number | string; y: number | string } | { x1: number | string; y1: number | string; x2: number | string; y2: number | string }
   width?: number
   height?: number
   rx?: number
   ry?: number
   points?: string
+  path?: string  // SVG path data for path subtype
   stroke: string
   strokeWidth: number
   strokeLinejoin?: string
@@ -77,6 +82,10 @@ export interface TemplateTextInputLayer extends TemplateLayerBase {
   rotation?: number
   clip?: string
   clipPath?: string
+  textPath?: string      // ID of path to follow for curved text
+  startOffset?: string   // Starting position on path (e.g., "0%", "50%", "100%")
+  dy?: number            // Vertical offset from path baseline (-100 to 100)
+  dominantBaseline?: string  // Text baseline alignment (auto, middle, central, hanging, etc.)
   maxLength?: number
   fontFamily?: string
   fontColor?: string
@@ -207,6 +216,9 @@ export interface ProcessedTextInputLayer extends ProcessedLayerBase {
     rotation?: number
     clip?: string
     clipPath?: string
+    textPath?: string      // ID of path to follow for curved text
+    startOffset?: string   // Starting position on path (e.g., "0%", "50%", "100%")
+    dy?: number            // Vertical offset from path baseline (-100 to 100)
     maxLength?: number
     fontFamily?: string
     fontColor?: string
@@ -253,6 +265,12 @@ export interface FlatLayerData {
   fontWeight?: number
   fontColor?: string
   fontFamily?: string
+
+  // TextPath properties (curved text along paths)
+  textPath?: string      // ID of path to follow for curved text
+  startOffset?: string   // Starting position on path (e.g., "0%", "50%", "100%")
+  dy?: number            // Vertical offset from path baseline (-100 to 100)
+  dominantBaseline?: string  // Text baseline alignment (auto, middle, central, hanging, etc.)
 
   // Shape properties
   fillColor?: string

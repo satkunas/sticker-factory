@@ -160,6 +160,11 @@ const PROP_MAP = {
   fontWeight: 'w',
   fontColor: 'c',
   fontFamily: 'f',
+  // TextPath properties (curved text)
+  textPath: 'p',        // Path ID reference
+  startOffset: 'q',     // Starting position on path (percentage string)
+  dy: 'd',              // Vertical offset from path baseline
+  dominantBaseline: 'b',  // Text baseline alignment
   // Shape layer (uppercase)
   fill: 'F',
   stroke: 'S',
@@ -332,6 +337,12 @@ export function encodeTemplateStateCompact(state: AppState): string {
         flatLayer[PROP_MAP.fontFamily] = compressFont(layer.fontFamily as string)
       }
 
+      // TextPath properties (curved text)
+      if (layer.textPath !== undefined) flatLayer[PROP_MAP.textPath] = layer.textPath
+      if (layer.startOffset !== undefined) flatLayer[PROP_MAP.startOffset] = layer.startOffset
+      if (layer.dy !== undefined) flatLayer[PROP_MAP.dy] = layer.dy
+      if (layer.dominantBaseline !== undefined) flatLayer[PROP_MAP.dominantBaseline] = layer.dominantBaseline
+
       // Shape layer properties (uppercase keys)
       if (layer.fill !== undefined) flatLayer[PROP_MAP.fill] = compressColor(layer.fill)
       if (layer.stroke !== undefined) flatLayer[PROP_MAP.stroke] = compressColor(layer.stroke)
@@ -431,6 +442,20 @@ export function decodeTemplateStateCompact(encoded: string): Partial<AppState> |
       }
       if (compressedLayer[PROP_MAP.fontFamily] !== undefined) {
         mappedLayer.fontFamily = decompressFont(compressedLayer[PROP_MAP.fontFamily] as string)
+      }
+
+      // TextPath properties (curved text)
+      if (compressedLayer[PROP_MAP.textPath] !== undefined) {
+        mappedLayer.textPath = compressedLayer[PROP_MAP.textPath]
+      }
+      if (compressedLayer[PROP_MAP.startOffset] !== undefined) {
+        mappedLayer.startOffset = compressedLayer[PROP_MAP.startOffset]
+      }
+      if (compressedLayer[PROP_MAP.dy] !== undefined) {
+        mappedLayer.dy = compressedLayer[PROP_MAP.dy]
+      }
+      if (compressedLayer[PROP_MAP.dominantBaseline] !== undefined) {
+        mappedLayer.dominantBaseline = compressedLayer[PROP_MAP.dominantBaseline]
       }
 
       // Shape layer properties (uppercase keys)

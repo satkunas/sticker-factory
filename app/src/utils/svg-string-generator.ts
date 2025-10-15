@@ -9,7 +9,7 @@
 
 import type { SimpleTemplate, FlatLayerData, ProcessedTemplateLayer } from '../types/template-types'
 import { resolveLayerPosition } from './layer-positioning'
-import { generateMaskDefinitions } from './mask-utils'
+import { generateMaskDefinitions, generateTextPathDefinitions } from './mask-utils'
 import {
   generateSvgImageHtml
 } from './svg-transforms'
@@ -51,12 +51,17 @@ export function generateSvgString(
   // PHASE 3: Generate mask definitions
   const maskDefs = generateMaskDefinitions(template.layers, width, height)
 
-  // PHASE 4: Build defs section with fonts and masks
-  const defsSection = (fontImports || maskDefs.length > 0)
+  // PHASE 3.5: Generate textPath path definitions
+  const textPathDefs = generateTextPathDefinitions(template.layers)
+
+  // PHASE 4: Build defs section with fonts, masks, and textPath paths
+  const defsSection = (fontImports || maskDefs.length > 0 || textPathDefs.length > 0)
     ? `  <defs>\n${fontImports ? `    <style>\n      ${fontImports}\n    </style>\n` : ''}${maskDefs.length > 0 ? `${maskDefs.map(mask =>
       `    <mask id="${mask.id}">
       <path d="${mask.path}" fill="white" />
     </mask>`
+    ).join('\n')  }\n` : ''}${textPathDefs.length > 0 ? `${textPathDefs.map(pathDef =>
+      `    <path id="${pathDef.id}" d="${pathDef.pathData}" />`
     ).join('\n')  }\n` : ''}  </defs>\n`
     : ''
 
@@ -100,11 +105,16 @@ function generateLayerElement(
 
 /**
  * Generate shape layer element
+ * Excludes path layers (subtype='path') which are only used for textPath references
  */
 function generateShapeElement(
   templateLayer: ProcessedTemplateLayer,
   layerData: FlatLayerData | undefined
 ): string {
+  // Skip path layers - these are for textPath references, not visible shapes
+  const subtype = (templateLayer as unknown as { subtype?: string }).subtype
+  if (subtype === 'path') return ''
+
   const path = (templateLayer as unknown as { path?: string }).path
   if (!path) return ''
 
@@ -126,16 +136,13 @@ function generateShapeElement(
 
 /**
  * Generate text layer element with proper center-based positioning
+ * Supports both regular text and textPath (curved text along paths)
  */
 function generateTextElement(
   templateLayer: ProcessedTemplateLayer,
   layerData: FlatLayerData | undefined,
   template: SimpleTemplate
 ): string {
-  const x = resolveLayerPosition(templateLayer.position?.x, template.width)
-  const y = resolveLayerPosition(templateLayer.position?.y, template.height)
-  const rotation = templateLayer.rotation
-
   const text = layerData?.text ?? templateLayer.text ?? ''
   const fontFamily = extractFontFamily(layerData) ?? templateLayer.fontFamily
   const fontSize = layerData?.fontSize ?? templateLayer.fontSize
@@ -150,17 +157,12 @@ function generateTextElement(
   const strokeOpacity = layerData?.strokeOpacity
   const strokeLinejoin = layerData?.strokeLinejoin
 
-  // Build transform
-  let transform = `translate(${x}, ${y})`
-  if (rotation !== undefined) {
-    transform += ` rotate(${rotation})`
-  }
+  // Check if this text uses textPath (curved text along a path)
+  const flatLayer = templateLayer as unknown as FlatLayerData
+  const textPath = flatLayer.textPath
 
   // Build text attributes
-  const textAttrs: string[] = [
-    'text-anchor="middle"',
-    'dominant-baseline="central"'
-  ]
+  const textAttrs: string[] = []
   if (fontFamily !== undefined) textAttrs.push(`font-family="${fontFamily}"`)
   if (fontSize !== undefined) textAttrs.push(`font-size="${fontSize}"`)
   if (fontWeight !== undefined) textAttrs.push(`font-weight="${fontWeight}"`)
@@ -173,9 +175,49 @@ function generateTextElement(
   // Check if layer has clip mask
   const maskAttr = templateLayer.clip ? ` mask="url(#${templateLayer.clip})"` : ''
 
+  // TEXT WITH TEXTPATH (curved text along a path)
+  if (textPath) {
+    const startOffset = layerData?.startOffset ?? flatLayer.startOffset ?? '50%'
+    const dy = layerData?.dy ?? flatLayer.dy
+    const dominantBaseline = layerData?.dominantBaseline ?? flatLayer.dominantBaseline
+
+    const textPathTextAttrs = [
+      'text-anchor="middle"',
+      ...textAttrs
+    ]
+    if (dominantBaseline !== undefined) {
+      textPathTextAttrs.push(`dominant-baseline="${dominantBaseline}"`)
+    }
+
+    return `<g${maskAttr}>
+    <text ${textPathTextAttrs.join(' ')}>
+      <textPath href="#${textPath}" startOffset="${startOffset}">
+        ${dy !== undefined ? `<tspan dy="${dy}">` : ''}${escapeXml(text)}${dy !== undefined ? `</tspan>` : ''}
+      </textPath>
+    </text>
+  </g>`
+  }
+
+  // REGULAR TEXT (straight text with transform positioning)
+  const x = resolveLayerPosition(templateLayer.position?.x, template.width)
+  const y = resolveLayerPosition(templateLayer.position?.y, template.height)
+  const rotation = templateLayer.rotation
+
+  // Build transform
+  let transform = `translate(${x}, ${y})`
+  if (rotation !== undefined) {
+    transform += ` rotate(${rotation})`
+  }
+
+  const regularTextAttrs = [
+    'text-anchor="middle"',
+    'dominant-baseline="central"',
+    ...textAttrs
+  ]
+
   return `<g${maskAttr}>
     <g transform="${transform}">
-      <text ${textAttrs.join(' ')}>${escapeXml(text)}</text>
+      <text ${regularTextAttrs.join(' ')}>${escapeXml(text)}</text>
     </g>
   </g>`
 }

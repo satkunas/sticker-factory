@@ -6,10 +6,11 @@ Create custom SVG badges, stickers, and labels with professional templates, 600+
 
 ## ✨ Features
 
-- **18 Professional Templates** - Circle, Rectangle, Square, Diamond shapes
+- **21 Professional Templates** - Circle, Rectangle, Square, Diamond shapes
 - **100+ SVG Icons** - Royalty-free graphics with full styling control
 - **600+ Google Fonts** - Real-time preview with dynamic loading
 - **Multi-text Support** - Individual font styling per text field
+- **Curved Text (TextPath)** - Text that follows curved paths and shapes
 - **Shape Styling** - Fill, stroke, width, and linejoin controls
 - **Advanced Typography** - Size, weight, color, and stroke customization
 - **URL-Based State** - Share designs via URL, state persists automatically
@@ -33,14 +34,15 @@ Visit http://localhost:3000 to start creating!
 
 ## 📋 Available Templates
 
-### Circle Templates (5)
+### Circle Templates (6)
 - Quality Sticker - Premium quality badges
 - Vinyl Record Label - Retro record designs
 - Event Promo Sticker - Event announcements
 - Wellness Sticker - Health and wellness badges
 - Organic Product Seal - Certified organic labels
+- Certification Seal - Award badges with curved text
 
-### Rectangle Templates (9)
+### Rectangle Templates (11)
 - Business Card - Professional contact cards
 - Conference Badge - Event identification
 - Shipping Label - Package labels with details
@@ -50,6 +52,8 @@ Visit http://localhost:3000 to start creating!
 - Booklet Cover - Publication covers
 - Catalog Page - Product catalog layouts
 - Tech Company Sticker - Modern tech badges
+- Wave Rider - Dynamic wave design with curved text
+- Vintage Ribbon Banner - Classic ribbon with elegant curves
 
 ### Square Templates (2)
 - Social Media Post - Instagram-ready graphics
@@ -130,6 +134,45 @@ layers:
   fontWeight: 700             # 100-900
   fontColor: "#1f2937"
 ```
+
+### TextPath (Curved Text)
+
+Use the `textPath` property to make text follow a curved path:
+
+```yaml
+layers:
+  # Define a path for text to follow
+  - id: "curve-path"
+    type: "shape"
+    subtype: "path"
+    path: "M 50,200 Q 200,100 350,200"  # SVG path commands
+    position: { x: 0, y: 0 }
+    fill: "none"
+    stroke: "none"
+    strokeWidth: 0
+
+  # Text follows the path
+  - id: "curved-text"
+    type: "text"
+    label: "Curved Text"
+    default: "FOLLOW THE CURVE"
+    textPath: "curve-path"          # Reference to path ID
+    startOffset: "50%"               # Start at path midpoint (0-100%)
+    dy: -10                          # Offset above path (-100 to 100)
+    position: { x: "50%", y: "50%" }
+    fontFamily: "Oswald"
+    fontSize: 24
+    fontColor: "#1f2937"
+```
+
+**TextPath Properties:**
+- `textPath`: ID of the path layer to follow
+- `startOffset`: Starting position on path (default: "0%")
+  - "0%" = path start, "50%" = midpoint, "100%" = end
+- `dy`: Vertical offset in pixels (default: 0)
+  - Negative = above path, Positive = below path
+
+**Examples:** See certification-seal, wave-rider-sticker, and vintage-ribbon-banner templates
 
 ### SVG Icon Layers
 

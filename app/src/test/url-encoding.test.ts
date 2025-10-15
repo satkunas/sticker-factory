@@ -489,4 +489,351 @@ describe('URL Encoding v2', () => {
       expect(decoded?.layers?.[0]?.transformOrigin).toEqual({ x: 15, y: 10 })
     })
   })
+
+  describe('TextPath Properties', () => {
+    it('should roundtrip encode/decode text layer with textPath', () => {
+      const state: AppState = {
+        selectedTemplateId: 'certification-seal',
+        layers: [
+          {
+            id: 'curved-text',
+            type: 'text',
+            text: 'CURVED TEXT',
+            fontFamily: 'Oswald',
+            fontSize: 24,
+            fontColor: '#1e40af',
+            textPath: 'arc-path',
+            startOffset: '50%',
+            dy: -10
+          }
+        ],
+        lastModified: Date.now()
+      }
+
+      const encoded = encodeTemplateStateCompact(state)
+      const decoded = decodeTemplateStateCompact(encoded)
+
+      expect(decoded?.layers?.[0]?.textPath).toBe('arc-path')
+      expect(decoded?.layers?.[0]?.startOffset).toBe('50%')
+      expect(decoded?.layers?.[0]?.dy).toBe(-10)
+    })
+
+    it('should preserve textPath, startOffset, and dy properties', () => {
+      const state: AppState = {
+        selectedTemplateId: 'wave-rider-sticker',
+        layers: [
+          {
+            id: 'wave-text',
+            type: 'text',
+            text: 'RIDE THE WAVE',
+            fontFamily: 'Oswald',
+            textPath: 'wave-path',
+            startOffset: '25%',
+            dy: 5
+          }
+        ],
+        lastModified: Date.now()
+      }
+
+      const encoded = encodeTemplateStateCompact(state)
+      const decoded = decodeTemplateStateCompact(encoded)
+
+      expect(decoded).toBeTruthy()
+      expect(decoded?.layers).toHaveLength(1)
+      expect(decoded?.layers?.[0]).toMatchObject({
+        id: 'wave-text',
+        type: 'text',
+        text: 'RIDE THE WAVE',
+        textPath: 'wave-path',
+        startOffset: '25%',
+        dy: 5
+      })
+    })
+
+    it('should handle textPath without startOffset/dy (optional)', () => {
+      const state: AppState = {
+        selectedTemplateId: 'test',
+        layers: [
+          {
+            id: 'simple-curved-text',
+            type: 'text',
+            text: 'Simple Curve',
+            fontFamily: 'Inter',
+            textPath: 'simple-path'
+            // No startOffset or dy provided
+          }
+        ],
+        lastModified: Date.now()
+      }
+
+      const encoded = encodeTemplateStateCompact(state)
+      const decoded = decodeTemplateStateCompact(encoded)
+
+      expect(decoded?.layers?.[0]?.textPath).toBe('simple-path')
+      expect(decoded?.layers?.[0]?.startOffset).toBeUndefined()
+      expect(decoded?.layers?.[0]?.dy).toBeUndefined()
+    })
+
+    it('should compress textPath properties using PROP_MAP', () => {
+      const state: AppState = {
+        selectedTemplateId: 'test',
+        layers: [
+          {
+            id: 'text1',
+            type: 'text',
+            text: 'Test',
+            textPath: 'path1',
+            startOffset: '50%',
+            dy: -5
+          }
+        ],
+        lastModified: Date.now()
+      }
+
+      const encoded = encodeTemplateStateCompact(state)
+
+      // Decode to inspect compressed structure
+      const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/')
+      const padded = base64 + '='.repeat((4 - base64.length % 4) % 4)
+      const binaryString = atob(padded)
+      const utf8Bytes = new Uint8Array(binaryString.length)
+      for (let i = 0; i < binaryString.length; i++) {
+        utf8Bytes[i] = binaryString.charCodeAt(i)
+      }
+      /* eslint-disable-next-line no-undef */
+      const jsonString = new TextDecoder().decode(utf8Bytes)
+      const parsed = JSON.parse(jsonString)
+
+      // Should use compressed keys: p, q, d
+      expect(parsed.l[0].p).toBe('path1')       // textPath -> 'p'
+      expect(parsed.l[0].q).toBe('50%')         // startOffset -> 'q'
+      expect(parsed.l[0].d).toBe(-5)            // dy -> 'd'
+    })
+
+    it('should handle multiple text layers with different textPath configurations', () => {
+      const state: AppState = {
+        selectedTemplateId: 'certification-seal',
+        layers: [
+          {
+            id: 'top-text',
+            type: 'text',
+            text: 'TOP',
+            textPath: 'top-arc',
+            startOffset: '50%',
+            dy: 0
+          },
+          {
+            id: 'bottom-text',
+            type: 'text',
+            text: 'BOTTOM',
+            textPath: 'bottom-arc',
+            startOffset: '50%',
+            dy: -5
+          },
+          {
+            id: 'regular-text',
+            type: 'text',
+            text: 'CENTER'
+            // No textPath - regular text
+          }
+        ],
+        lastModified: Date.now()
+      }
+
+      const encoded = encodeTemplateStateCompact(state)
+      const decoded = decodeTemplateStateCompact(encoded)
+
+      expect(decoded?.layers).toHaveLength(3)
+
+      // First layer has textPath
+      expect(decoded?.layers?.[0]?.textPath).toBe('top-arc')
+      expect(decoded?.layers?.[0]?.startOffset).toBe('50%')
+      expect(decoded?.layers?.[0]?.dy).toBe(0)
+
+      // Second layer has different textPath
+      expect(decoded?.layers?.[1]?.textPath).toBe('bottom-arc')
+      expect(decoded?.layers?.[1]?.dy).toBe(-5)
+
+      // Third layer has no textPath
+      expect(decoded?.layers?.[2]?.textPath).toBeUndefined()
+      expect(decoded?.layers?.[2]?.text).toBe('CENTER')
+    })
+
+    it('should handle dy with negative, zero, and positive values', () => {
+      const testCases = [
+        { dy: -100, description: 'maximum negative offset' },
+        { dy: -50, description: 'negative offset' },
+        { dy: 0, description: 'zero offset' },
+        { dy: 50, description: 'positive offset' },
+        { dy: 100, description: 'maximum positive offset' }
+      ]
+
+      testCases.forEach(({ dy, description }) => {
+        const state: AppState = {
+          selectedTemplateId: 'test',
+          layers: [
+            {
+              id: 'text1',
+              type: 'text',
+              text: 'Test',
+              textPath: 'path1',
+              dy
+            }
+          ],
+          lastModified: Date.now()
+        }
+
+        const encoded = encodeTemplateStateCompact(state)
+        const decoded = decodeTemplateStateCompact(encoded)
+
+        expect(decoded?.layers?.[0]?.dy).toBe(dy, description)
+      })
+    })
+
+    it('should handle startOffset with various percentage values', () => {
+      const testCases = ['0%', '25%', '50%', '75%', '100%']
+
+      testCases.forEach(startOffset => {
+        const state: AppState = {
+          selectedTemplateId: 'test',
+          layers: [
+            {
+              id: 'text1',
+              type: 'text',
+              text: 'Test',
+              textPath: 'path1',
+              startOffset
+            }
+          ],
+          lastModified: Date.now()
+        }
+
+        const encoded = encodeTemplateStateCompact(state)
+        const decoded = decodeTemplateStateCompact(encoded)
+
+        expect(decoded?.layers?.[0]?.startOffset).toBe(startOffset)
+      })
+    })
+
+    it('should preserve dominantBaseline property', () => {
+      const state: AppState = {
+        selectedTemplateId: 'certification-seal',
+        layers: [
+          {
+            id: 'curved-text',
+            type: 'text',
+            text: 'CERTIFICATION',
+            fontFamily: 'Oswald',
+            textPath: 'arc-path',
+            startOffset: '50%',
+            dy: -10,
+            dominantBaseline: 'central'
+          }
+        ],
+        lastModified: Date.now()
+      }
+
+      const encoded = encodeTemplateStateCompact(state)
+      const decoded = decodeTemplateStateCompact(encoded)
+
+      expect(decoded?.layers?.[0]?.dominantBaseline).toBe('central')
+    })
+
+    it('should handle various dominantBaseline values', () => {
+      const testCases = ['auto', 'text-bottom', 'alphabetic', 'ideographic', 'middle', 'central', 'mathematical', 'hanging', 'text-top']
+
+      testCases.forEach(dominantBaseline => {
+        const state: AppState = {
+          selectedTemplateId: 'test',
+          layers: [
+            {
+              id: 'text1',
+              type: 'text',
+              text: 'Test',
+              textPath: 'path1',
+              dominantBaseline
+            }
+          ],
+          lastModified: Date.now()
+        }
+
+        const encoded = encodeTemplateStateCompact(state)
+        const decoded = decodeTemplateStateCompact(encoded)
+
+        expect(decoded?.layers?.[0]?.dominantBaseline).toBe(dominantBaseline)
+      })
+    })
+
+    it('should compress dominantBaseline using PROP_MAP (key: b)', () => {
+      const state: AppState = {
+        selectedTemplateId: 'test',
+        layers: [
+          {
+            id: 'text1',
+            type: 'text',
+            text: 'Test',
+            textPath: 'path1',
+            dominantBaseline: 'central'
+          }
+        ],
+        lastModified: Date.now()
+      }
+
+      const encoded = encodeTemplateStateCompact(state)
+
+      // Decode to inspect compressed structure
+      const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/')
+      const padded = base64 + '='.repeat((4 - base64.length % 4) % 4)
+      const binaryString = atob(padded)
+      const utf8Bytes = new Uint8Array(binaryString.length)
+      for (let i = 0; i < binaryString.length; i++) {
+        utf8Bytes[i] = binaryString.charCodeAt(i)
+      }
+      /* eslint-disable-next-line no-undef */
+      const jsonString = new TextDecoder().decode(utf8Bytes)
+      const parsed = JSON.parse(jsonString)
+
+      // Should use compressed key: 'b' for dominantBaseline
+      expect(parsed.l[0].b).toBe('central')
+    })
+
+    it('should handle all textPath properties together', () => {
+      const state: AppState = {
+        selectedTemplateId: 'certification-seal',
+        layers: [
+          {
+            id: 'top-seal-text',
+            type: 'text',
+            text: 'PREMIUM QUALITY',
+            fontFamily: 'Oswald',
+            fontSize: 18,
+            fontWeight: 600,
+            fontColor: '#1e40af',
+            textPath: 'top-arc',
+            startOffset: '50%',
+            dy: -8,
+            dominantBaseline: 'central'
+          }
+        ],
+        lastModified: Date.now()
+      }
+
+      const encoded = encodeTemplateStateCompact(state)
+      const decoded = decodeTemplateStateCompact(encoded)
+
+      expect(decoded?.layers?.[0]).toMatchObject({
+        id: 'top-seal-text',
+        type: 'text',
+        text: 'PREMIUM QUALITY',
+        fontFamily: 'Oswald',
+        fontSize: 18,
+        fontWeight: 600,
+        fontColor: '#1e40af',
+        textPath: 'top-arc',
+        startOffset: '50%',
+        dy: -8,
+        dominantBaseline: 'central'
+      })
+    })
+  })
 })

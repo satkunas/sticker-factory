@@ -48,6 +48,19 @@ export const STROKE_LINEJOIN_OPTIONS = [
   { value: 'miter-clip', label: 'Clip', description: 'Clipped miter corners at line joins' }
 ] as const
 
+// Dominant baseline options for textPath
+export const DOMINANT_BASELINE_OPTIONS = [
+  { value: 'auto', label: 'Auto', description: 'Automatic baseline (default)' },
+  { value: 'middle', label: 'Middle', description: 'Center text vertically on path' },
+  { value: 'central', label: 'Central', description: 'Central baseline alignment' },
+  { value: 'hanging', label: 'Hanging', description: 'Hanging baseline for Indic scripts' },
+  { value: 'alphabetic', label: 'Alpha', description: 'Alphabetic baseline' },
+  { value: 'text-top', label: 'Top', description: 'Top of text em box' },
+  { value: 'text-bottom', label: 'Bottom', description: 'Bottom of text em box' },
+  { value: 'ideographic', label: 'Ideo', description: 'Ideographic baseline for CJK' },
+  { value: 'mathematical', label: 'Math', description: 'Mathematical baseline' }
+] as const
+
 // All possible font weight options
 export const ALL_FONT_WEIGHTS = [
   { label: '100', value: 100 },

@@ -294,6 +294,11 @@ const getLayerProps = (layer: any) => {
         textStrokeWidth: flatLayer.strokeWidth,
         textStrokeLinejoin: flatLayer.strokeLinejoin,
         strokeOpacity: flatLayer.strokeOpacity,
+        // TextPath properties for curved text
+        textPath: flatLayer.textPath,
+        startOffset: flatLayer.startOffset,
+        dy: flatLayer.dy,
+        dominantBaseline: flatLayer.dominantBaseline,
         instanceId: layer.id
       }
     case 'shape':
@@ -339,7 +344,11 @@ const eventMappings = {
     'update:textColor': 'fontColor',
     'update:textStrokeColor': 'strokeColor',
     'update:textStrokeWidth': 'strokeWidth',
-    'update:textStrokeLinejoin': 'strokeLinejoin'
+    'update:textStrokeLinejoin': 'strokeLinejoin',
+    // TextPath event mappings
+    'update:startOffset': 'startOffset',
+    'update:dy': 'dy',
+    'update:dominantBaseline': 'dominantBaseline'
   },
   shape: {
     'update:fillColor': 'fillColor',

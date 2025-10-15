@@ -11,13 +11,24 @@
     </mask>
   </defs>
 
+  <!-- TextPath path definitions -->
+  <defs v-if="textPathDefinitions.length > 0">
+    <path
+      v-for="pathDef in textPathDefinitions"
+      :id="pathDef.id"
+      :key="pathDef.id"
+      :d="pathDef.pathData"
+    />
+  </defs>
+
   <!-- PHASE 2: LAYER RENDERING (preserves YAML order) -->
   <template v-for="{ templateLayer, layerData, transformCase } in renderedLayers" :key="templateLayer.id">
     <!-- SHAPE LAYERS -->
     <!-- Shape paths are already positioned and centered during template loading -->
     <!-- No additional transforms needed - path coordinates are final -->
+    <!-- Exclude subtype='path' shapes - they are only for textPath reference in <defs> -->
     <g
-      v-if="templateLayer.type === 'shape'"
+      v-if="templateLayer.type === 'shape' && templateLayer.subtype !== 'path'"
       :data-layer-id="templateLayer.id"
       :data-layer-type="templateLayer.type"
       class="layer-clickable"
@@ -39,7 +50,31 @@
       class="layer-clickable"
       :mask="templateLayer.clip ? `url(#${templateLayer.clip})` : undefined"
     >
+      <!-- Text with textPath (curved text along path) -->
+      <text
+        v-if="templateLayer.textPath"
+        text-anchor="middle"
+        :font-family="extractFontFamily(layerData) ?? templateLayer.fontFamily"
+        :font-size="layerData?.fontSize ?? templateLayer.fontSize"
+        :font-weight="layerData?.fontWeight ?? templateLayer.fontWeight"
+        :fill="layerData?.fontColor ?? layerData?.textColor ?? templateLayer.fontColor"
+        :stroke="layerData?.strokeWidth !== undefined && layerData.strokeWidth > 0 ? (layerData?.strokeColor ?? templateLayer.strokeColor) : undefined"
+        :stroke-width="layerData?.strokeWidth !== undefined && layerData.strokeWidth > 0 ? layerData.strokeWidth : undefined"
+        :stroke-opacity="layerData?.strokeOpacity"
+        :stroke-linejoin="layerData?.strokeLinejoin"
+        :dominant-baseline="layerData?.dominantBaseline ?? templateLayer.dominantBaseline"
+      >
+        <textPath
+          :href="`#${templateLayer.textPath}`"
+          :startOffset="layerData?.startOffset ?? templateLayer.startOffset"
+        >
+          <tspan :dy="layerData?.dy ?? templateLayer.dy">{{ layerData?.text ?? templateLayer.text }}</tspan>
+        </textPath>
+      </text>
+
+      <!-- Regular text (straight text with transform positioning) -->
       <g
+        v-else
         :transform="`translate(${
           resolveLayerPosition(templateLayer.position.x, template.width)
         }, ${
@@ -193,6 +228,7 @@ import { resolveLayerPosition } from '../utils/layer-positioning'
 import { generateMaskDefinitions } from '../utils/mask-utils'
 import { getSvgImageTransformCase, calculateScaledTransformOrigin, applySvgRenderingAttributes } from '../utils/svg-transforms'
 import { extractFontFamily } from '../utils/font-utils'
+import { textPathDefinitions } from '../stores/urlDrivenStore'
 
 interface Props {
   template: SimpleTemplate

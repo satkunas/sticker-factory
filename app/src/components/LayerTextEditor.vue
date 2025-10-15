@@ -40,6 +40,10 @@
       :text-stroke-linejoin="textStrokeLinejoin"
       :stickerText="modelValue"
       :instanceId="instanceId"
+      :textPath="textPath"
+      :startOffset="startOffset"
+      :dy="dy"
+      :dominantBaseline="dominantBaseline"
       @update:selectedFont="$emit('update:selectedFont', $event)"
       @update:textColor="$emit('update:textColor', $event)"
       @update:fontSize="$emit('update:fontSize', $event)"
@@ -47,6 +51,9 @@
       @update:textStrokeWidth="$emit('update:textStrokeWidth', $event)"
       @update:textStrokeColor="$emit('update:textStrokeColor', $event)"
       @update:textStrokeLinejoin="$emit('update:textStrokeLinejoin', $event)"
+      @update:startOffset="$emit('update:startOffset', $event)"
+      @update:dy="$emit('update:dy', $event)"
+      @update:dominantBaseline="$emit('update:dominantBaseline', $event)"
     />
     </div>
   </div>
@@ -68,6 +75,11 @@ interface Props {
   textStrokeColor?: string
   textStrokeLinejoin?: string
   instanceId?: string
+  // TextPath properties for curved text
+  textPath?: string
+  startOffset?: string
+  dy?: number
+  dominantBaseline?: string
 }
 
 interface Emits {
@@ -79,6 +91,10 @@ interface Emits {
   'update:textStrokeWidth': [value: number]
   'update:textStrokeColor': [value: string]
   'update:textStrokeLinejoin': [value: string]
+  // TextPath emit events
+  'update:startOffset': [value: string]
+  'update:dy': [value: number]
+  'update:dominantBaseline': [value: string]
 }
 
 const props = defineProps<Props>()

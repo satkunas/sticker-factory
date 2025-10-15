@@ -204,12 +204,20 @@ async function processSvgImageLayer(
 
 /**
  * Convert shape layer to SVG path
- * Handles rect, circle, ellipse, polygon, line subtypes
+ * Handles path, rect, circle, ellipse, polygon, line subtypes
+ * For path subtype, preserves the original path data (used for textPath references)
  */
 export function convertShapeLayerToPath(
   layer: TemplateShapeLayer,
   viewBox: ViewBox
 ): string {
+  // Handle path subtype - use the path as-is (for textPath references)
+  if (layer.subtype === 'path') {
+    // Access path using runtime structure (differs from TypeScript types)
+    const pathData = (layer as unknown as { path?: string }).path
+    return pathData || ''
+  }
+
   if (layer.subtype === 'line') {
     const linePos = layer.position as { x1: number | string; y1: number | string; x2: number | string; y2: number | string }
     const resolvedPos = resolveLinePosition(linePos, viewBox)

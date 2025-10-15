@@ -291,6 +291,89 @@
               </div>
             </div>
           </div>
+
+          <!-- TextPath Controls (Curved Text) - Only shown when textPath exists -->
+          <div v-if="textPath" class="border-t border-secondary-100 pt-4">
+            <h5 class="text-sm font-medium text-secondary-700 mb-3">
+              Curved Text Position
+            </h5>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+              <!-- Start Offset -->
+              <div class="min-w-0">
+                <div class="text-xs font-medium text-secondary-600 mb-2">
+                  Start Offset (%)
+                </div>
+                <div class="flex items-center space-x-2">
+                  <input
+                    :value="parseFloat(startOffset || '0')"
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
+                    @input="$emit('update:startOffset', `${$event.target.value}%`)"
+                  >
+                  <input
+                    :value="parseFloat(startOffset || '0')"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="1"
+                    class="w-14 px-1 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    @input="$emit('update:startOffset', `${$event.target.value}%`)"
+                  >
+                  <span class="text-xs text-secondary-500">%</span>
+                </div>
+              </div>
+
+              <!-- Vertical Offset (dy) -->
+              <div class="min-w-0">
+                <div class="text-xs font-medium text-secondary-600 mb-2">
+                  Vertical Offset (px)
+                </div>
+                <div class="flex items-center space-x-2">
+                  <input
+                    :value="dy || 0"
+                    type="range"
+                    min="-100"
+                    max="100"
+                    step="1"
+                    class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
+                    @input="$emit('update:dy', parseInt($event.target.value) || 0)"
+                  >
+                  <input
+                    :value="dy || 0"
+                    type="number"
+                    min="-100"
+                    max="100"
+                    step="1"
+                    class="w-14 px-1 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    @input="$emit('update:dy', parseInt($event.target.value) || 0)"
+                  >
+                  <span class="text-xs text-secondary-500">px</span>
+                </div>
+              </div>
+
+              <!-- Dominant Baseline (text alignment on path) -->
+              <div class="min-w-0">
+                <div class="text-xs font-medium text-secondary-600 mb-2">
+                  Baseline Alignment
+                </div>
+                <div class="grid grid-cols-3 gap-1">
+                  <button
+                    v-for="baseline in DOMINANT_BASELINE_OPTIONS"
+                    :key="baseline.value"
+                    class="px-2 py-1 text-xs rounded border transition-all text-center"
+                    :class="(dominantBaseline || 'auto') === baseline.value ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white border-secondary-200 text-secondary-600 hover:border-secondary-300'"
+                    :title="baseline.description"
+                    @click="$emit('update:dominantBaseline', baseline.value)"
+                  >
+                    {{ baseline.label }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -396,7 +479,7 @@ import { FONT_CATEGORIES, loadFont, type FontConfig } from '../config/fonts'
 import FontTile from './FontTile.vue'
 import { useFontSelector } from '../composables/useFontSelector'
 import { getFontCategoryColor } from '../utils/font-utils'
-import { PRESET_COLORS, COMMON_FONT_SIZES, STROKE_LINEJOIN_OPTIONS, COLOR_NONE } from '../utils/ui-constants'
+import { PRESET_COLORS, COMMON_FONT_SIZES, STROKE_LINEJOIN_OPTIONS, DOMINANT_BASELINE_OPTIONS, COLOR_NONE } from '../utils/ui-constants'
 import { logger } from '../utils/logger'
 
 interface Props {
@@ -409,6 +492,11 @@ interface Props {
   textStrokeLinejoin?: string
   stickerText?: string
   instanceId?: string
+  // TextPath properties for curved text
+  textPath?: string
+  startOffset?: string
+  dy?: number
+  dominantBaseline?: string
 }
 
 interface Emits {
@@ -419,6 +507,10 @@ interface Emits {
   'update:textStrokeWidth': [value: number]
   'update:textStrokeColor': [value: string]
   'update:textStrokeLinejoin': [value: string]
+  // TextPath emit events
+  'update:startOffset': [value: string]
+  'update:dy': [value: number]
+  'update:dominantBaseline': [value: string]
 }
 
 const props = defineProps<Props>()
