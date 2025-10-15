@@ -64,14 +64,8 @@ export const getStyledSvgContent = (svgImage: any) => {
         // Use SVG bounds analysis to find the true center of any SVG content
         const centerOffset = calculateSvgCenterOffset(styledContent)
 
-        // Apply safety validation to prevent NaN in transforms
-        const safeOffsetX = isFinite(centerOffset.x) ? centerOffset.x : 0
-        const safeOffsetY = isFinite(centerOffset.y) ? centerOffset.y : 0
-        const safeMinX = isFinite(minX) ? minX : 0
-        const safeMinY = isFinite(minY) ? minY : 0
-
         // Wrap inner content with precise centering compensation
-        return `<g transform="translate(${-safeMinX + safeOffsetX}, ${-safeMinY + safeOffsetY})">
+        return `<g transform="translate(${-minX + centerOffset.x}, ${-minY + centerOffset.y})">
           <g transform="scale(1, 1)">
             ${innerContent}
           </g>

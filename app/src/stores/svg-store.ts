@@ -652,7 +652,6 @@ const CATEGORY_CONSOLIDATION: Record<string, string> = {
 
   // Misc (catch-all for unique items)
   'zzz': 'misc',
-  'xxx': 'misc',
   'whirl': 'misc',
   'tic': 'misc',
   'reserved': 'misc',
@@ -762,23 +761,6 @@ export async function loadSvgLibraryStore(): Promise<SvgLibraryItem[]> {
     _state.value.isLoading = false
     logger.error('SVG Store: Error loading library:', error)
     throw error
-  }
-}
-
-/**
- * Create SVG library item from filename and content
- */
-function _createSvgLibraryItem(filename: string, content: string): SvgLibraryItem | null {
-  if (!content || !filename) return null
-
-  const { category, name, tags } = parseSvgFilename(filename)
-
-  return {
-    id: filename,
-    name,
-    category,
-    svgContent: content,
-    tags
   }
 }
 

@@ -14,11 +14,7 @@ import type {
 } from '../types/template-types'
 import {
   DEFAULT_VIEWBOX_WIDTH,
-  DEFAULT_VIEWBOX_HEIGHT,
-  DEFAULT_SHAPE_WIDTH,
-  DEFAULT_SHAPE_HEIGHT,
-  DEFAULT_ELLIPSE_HEIGHT,
-  DEFAULT_POLYGON_SIZE
+  DEFAULT_VIEWBOX_HEIGHT
 } from '../config/constants'
 
 /**
@@ -228,14 +224,16 @@ export function convertShapeLayerToPath(
 
   switch (layer.subtype) {
     case 'rect': {
-      const width = layer.width ?? DEFAULT_SHAPE_WIDTH
-      const height = layer.height ?? DEFAULT_SHAPE_HEIGHT
-      const rx = layer.rx ?? 0  // No rounding if undefined
-      const ry = layer.ry ?? 0  // No rounding if undefined
+      if (!layer.width || !layer.height) return ''
+
+      const width = layer.width
+      const height = layer.height
+      const rx = layer.rx
+      const ry = layer.ry
       const x = pos.x - width/2
       const y = pos.y - height/2
 
-      if (rx > 0 || ry > 0) {
+      if (rx && ry && (rx > 0 || ry > 0)) {
         return `M${x + rx},${y} L${x + width - rx},${y} Q${x + width},${y} ${x + width},${y + ry} L${x + width},${y + height - ry} Q${x + width},${y + height} ${x + width - rx},${y + height} L${x + rx},${y + height} Q${x},${y + height} ${x},${y + height - ry} L${x},${y + ry} Q${x},${y} ${x + rx},${y} Z`
       } else {
         return `M${x},${y} L${x + width},${y} L${x + width},${y + height} L${x},${y + height} Z`
@@ -243,13 +241,15 @@ export function convertShapeLayerToPath(
     }
 
     case 'circle': {
-      const radius = (layer.width ?? DEFAULT_SHAPE_WIDTH) / 2
+      if (!layer.width) return ''
+      const radius = layer.width / 2
       return `M${pos.x - radius},${pos.y} A${radius},${radius} 0 1,0 ${pos.x + radius},${pos.y} A${radius},${radius} 0 1,0 ${pos.x - radius},${pos.y} Z`
     }
 
     case 'ellipse': {
-      const rWidth = (layer.width ?? DEFAULT_SHAPE_WIDTH) / 2
-      const rHeight = (layer.height ?? DEFAULT_ELLIPSE_HEIGHT) / 2
+      if (!layer.width || !layer.height) return ''
+      const rWidth = layer.width / 2
+      const rHeight = layer.height / 2
       return `M${pos.x - rWidth},${pos.y} A${rWidth},${rHeight} 0 1,0 ${pos.x + rWidth},${pos.y} A${rWidth},${rHeight} 0 1,0 ${pos.x - rWidth},${pos.y} Z`
     }
 
@@ -263,17 +263,12 @@ export function convertShapeLayerToPath(
         })
         return `M${absolutePoints.join(' L')} Z`
       }
-      // Default triangle if no points specified
-      return `M${pos.x},${pos.y - DEFAULT_POLYGON_SIZE} L${pos.x + DEFAULT_POLYGON_SIZE},${pos.y + DEFAULT_POLYGON_SIZE/2} L${pos.x - DEFAULT_POLYGON_SIZE},${pos.y + DEFAULT_POLYGON_SIZE/2} Z`
+      return ''
     }
 
     default: {
-      // Default to rectangle
-      const defWidth = layer.width ?? DEFAULT_SHAPE_WIDTH
-      const defHeight = layer.height ?? DEFAULT_SHAPE_HEIGHT
-      const defX = pos.x - defWidth/2
-      const defY = pos.y - defHeight/2
-      return `M${defX},${defY} L${defX + defWidth},${defY} L${defX + defWidth},${defY + defHeight} L${defX},${defY + defHeight} Z`
+      // Unknown subtype - no default shape
+      return ''
     }
   }
 }

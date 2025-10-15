@@ -288,9 +288,10 @@ describe('SVG Coordinate Conversion', () => {
       expect(result).toEqual({ x: -25, y: 75 })
     })
 
-    it('should handle invalid values gracefully', () => {
+    it('should propagate NaN for invalid values (no hardcoded fallbacks)', () => {
       const result = resolvePercentageCoords({ x: 'invalid%', y: NaN }, testViewBox)
-      expect(result).toEqual({ x: 0, y: 0 })
+      expect(isNaN(result.x)).toBe(true)
+      expect(isNaN(result.y)).toBe(true)
     })
   })
 

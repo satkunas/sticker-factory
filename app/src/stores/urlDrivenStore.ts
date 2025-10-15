@@ -35,36 +35,13 @@ import {
 import { loadTemplate } from '../config/template-loader'
 
 // ============================================================================
-// SAFETY UTILITY FUNCTIONS
+// NO SAFETY UTILITIES - All calculations derive from actual measurements
 // ============================================================================
-
-/**
- * Validate that a number is finite and not NaN
- */
-function isValidNumber(value: number): boolean {
-  return typeof value === 'number' && isFinite(value) && !isNaN(value)
-}
-
-/**
- * Ensure a number is valid, returning fallback if invalid
- */
-function safeNumber(value: number, fallback = 0): number {
-  return isValidNumber(value) ? value : fallback
-}
-
-/**
- * Create a safe transform string, filtering out NaN values
- */
-function safeTransform(transformParts: string[]): string {
-  // Filter out any transform parts that contain NaN
-  const validParts = transformParts.filter(part => !part.includes('NaN'))
-  return validParts.join(' ')
-}
 import type { SimpleTemplate, FlatLayerData, TemplateLayer, TemplateTextInput, TemplateShape } from '../types/template-types'
 import { AVAILABLE_FONTS, type FontConfig } from '../config/fonts'
 import { resolveCoordinate } from '../utils/svg'
 import { processLayerForRendering, type ProcessedLayer } from '../utils/unified-positioning'
-// Removed unused import: getStyledSvgContent
+import { getStyledSvgContent } from '../utils/svg-template'
 import { useSvgViewBox } from '../composables/useSvgViewBox'
 
 // ============================================================================
@@ -230,12 +207,7 @@ function mergeFlatLayerData(templateDefaults: FlatLayerData, formOverrides: Part
 
   // Calculate transform origin for SVG images if they have content
   if (merged.type === 'svgImage' && merged.svgContent) {
-    try {
-      merged.transformOrigin = calculateOptimalTransformOrigin(merged.svgContent)
-    } catch (error) {
-      // Fallback to geometric center of standard 24x24 viewBox
-      merged.transformOrigin = { x: 12, y: 12 }
-    }
+    merged.transformOrigin = calculateOptimalTransformOrigin(merged.svgContent)
   }
 
   return merged
@@ -815,8 +787,7 @@ function updateRenderData(): void {
           })
         } catch (error) {
           logger.warn(`Failed to calculate centroid for ${templateLayer.id}:`, error)
-          // Fallback to center of standard 24x24 viewBox (with safety guard)
-          renderLayer.transformOrigin = { x: safeNumber(12), y: safeNumber(12) }
+          // No fallback - let transform origin be undefined if calculation fails
           renderLayer.useCentroidOrigin = false
         }
       } else {
@@ -1006,16 +977,7 @@ export const mergedFormData = computed(() => {
 
       // Calculate transform origin for proper rotation/scaling around center-of-mass
       if (mergedLayer.svgContent) {
-        try {
-          const optimalOrigin = calculateOptimalTransformOrigin(mergedLayer.svgContent)
-          mergedLayer.transformOrigin = optimalOrigin
-        } catch (error) {
-          // Fallback to geometric center of standard 24x24 viewBox
-          mergedLayer.transformOrigin = { x: 12, y: 12 }
-        }
-      } else {
-        // No SVG content available - use default center for standard 24x24 viewBox
-        mergedLayer.transformOrigin = { x: 12, y: 12 }
+        mergedLayer.transformOrigin = calculateOptimalTransformOrigin(mergedLayer.svgContent)
       }
 
       // Store calculates transform string - no conditional logic in components
@@ -1027,34 +989,32 @@ export const mergedFormData = computed(() => {
       const rotation = mergedLayer.rotation
       const scale = mergedLayer.scale
 
-      // First translate to position if coordinates exist (with safety guards)
-      if (absoluteX !== undefined && absoluteY !== undefined && isValidNumber(absoluteX) && isValidNumber(absoluteY)) {
+      // First translate to position if coordinates exist
+      if (absoluteX !== undefined && absoluteY !== undefined) {
         transforms.push(`translate(${absoluteX}, ${absoluteY})`)
       }
 
       // For center-based scale and rotation
       if ((scale !== undefined && scale !== 1) || (rotation !== undefined && rotation !== 0)) {
-        const centerX = targetWidth ? safeNumber(targetWidth / 2) : 0
-        const centerY = targetHeight ? safeNumber(targetHeight / 2) : 0
+        const centerX = targetWidth ? targetWidth / 2 : undefined
+        const centerY = targetHeight ? targetHeight / 2 : undefined
 
-        if (centerX !== 0 || centerY !== 0) {
+        if (centerX !== undefined && centerY !== undefined) {
           transforms.push(`translate(${centerX}, ${centerY})`)
-        }
 
-        if (scale !== undefined && scale !== 1 && isValidNumber(scale)) {
-          transforms.push(`scale(${scale})`)
-        }
+          if (scale !== undefined && scale !== 1) {
+            transforms.push(`scale(${scale})`)
+          }
 
-        if (rotation !== undefined && rotation !== 0 && isValidNumber(rotation)) {
-          transforms.push(`rotate(${rotation})`)
-        }
+          if (rotation !== undefined && rotation !== 0) {
+            transforms.push(`rotate(${rotation})`)
+          }
 
-        if (centerX !== 0 || centerY !== 0) {
           transforms.push(`translate(${-centerX}, ${-centerY})`)
         }
       }
 
-      mergedLayer.transformString = safeTransform(transforms)
+      mergedLayer.transformString = transforms.join(' ')
     }
 
     return mergedLayer
@@ -1135,19 +1095,6 @@ export const computedRenderData = computed(() => {
         const absoluteX = resolveCoordinate(positionX, viewBox.width, viewBox.x)
         const absoluteY = resolveCoordinate(positionY, viewBox.height, viewBox.y)
 
-        // Debug logging to find NaN source
-        if (isNaN(absoluteX) || isNaN(absoluteY)) {
-          logger.debug(`NaN detected in transform calculation for ${templateLayer.id}:`, {
-            positionX, positionY,
-            viewBox,
-            absoluteX, absoluteY,
-            resolveCoordinateResult: {
-              x: resolveCoordinate(positionX, viewBox.width, viewBox.x),
-              y: resolveCoordinate(positionY, viewBox.height, viewBox.y)
-            }
-          })
-        }
-
         // CORRECT APPROACH: Separate base positioning from user scaling
         const svgSize = 24  // Standard SVG viewBox size
         const svgCenter = svgSize / 2  // 12
@@ -1162,35 +1109,8 @@ export const computedRenderData = computed(() => {
         const finalX = absoluteX - (baseScaledWidth / 2)
         const finalY = absoluteY - (baseScaledHeight / 2)
 
-        // Debug logging for NaN in final calculations
-        if (isNaN(finalX) || isNaN(finalY)) {
-          logger.debug(`NaN detected in final position calculation for ${templateLayer.id}:`, {
-            absoluteX, absoluteY,
-            svgSize, baseScaleX, baseScaleY,
-            baseScaledWidth, baseScaledHeight,
-            finalX, finalY,
-            targetWidth, targetHeight
-          })
-        }
-
-        // Debug logging for NaN in outerTransform before generation
-        if (isNaN(finalX) || isNaN(finalY) || isNaN(baseScaleX) || isNaN(baseScaleY)) {
-          logger.debug(`🚨 NaN detected in outerTransform generation for ${templateLayer.id}:`, {
-            finalX, finalY, baseScaleX, baseScaleY,
-            absoluteX, absoluteY,
-            svgSize, targetWidth, targetHeight,
-            baseScaledWidth, baseScaledHeight,
-            transforms: { finalX, finalY, baseScaleX, baseScaleY }
-          })
-        }
-
-        // OUTER TRANSFORM: Position and base scaling only (high precision) - with NaN safety
-        const safeFinalX = isValidNumber(finalX) ? finalX : 0
-        const safeFinalY = isValidNumber(finalY) ? finalY : 0
-        const safeBaseScaleX = isValidNumber(baseScaleX) ? baseScaleX : 1
-        const safeBaseScaleY = isValidNumber(baseScaleY) ? baseScaleY : 1
-
-        outerTransform = `translate(${safeFinalX.toFixed(6)}, ${safeFinalY.toFixed(6)}) scale(${safeBaseScaleX.toFixed(6)}, ${safeBaseScaleY.toFixed(6)})`
+        // OUTER TRANSFORM: Position and base scaling only (high precision)
+        outerTransform = `translate(${finalX.toFixed(6)}, ${finalY.toFixed(6)}) scale(${baseScaleX.toFixed(6)}, ${baseScaleY.toFixed(6)})`
 
         // INNER TRANSFORM: User scaling and rotation around optimal center (high precision)
         const userScale = scale !== undefined ? scale : 1
@@ -1216,44 +1136,25 @@ export const computedRenderData = computed(() => {
             })
           }
 
-          // Safety guard: Ensure transform origin values are valid numbers
-          const safeTransformOrigin = {
-            x: safeNumber(transformOrigin.x, svgCenter),
-            y: safeNumber(transformOrigin.y, svgCenter)
-          }
-
-          // Debug logging for transform origin issues
-          if (!isValidNumber(transformOrigin.x) || !isValidNumber(transformOrigin.y)) {
-            logger.debug(`Invalid transformOrigin detected for ${templateLayer.id} - using fallback:`, {
-              originalTransformOrigin: transformOrigin,
-              safeTransformOrigin,
-              useCentroidOrigin: renderLayer.useCentroidOrigin,
-              centroidAnalysis: renderLayer.centroidAnalysis,
-              renderLayerTransformOrigin: renderLayer.transformOrigin,
-              svgCenter
-            })
-          }
-
-          // Build transform steps with safety guards
+          // Build transform steps
           const transformSteps: string[] = []
 
           // Move to optimal center of the SVG coordinate system
-          transformSteps.push(`translate(${safeTransformOrigin.x.toFixed(6)}, ${safeTransformOrigin.y.toFixed(6)})`)
+          transformSteps.push(`translate(${transformOrigin.x.toFixed(6)}, ${transformOrigin.y.toFixed(6)})`)
 
           // Apply user transformations in correct order
-          if (rotation !== undefined && rotation !== 0 && isValidNumber(rotation)) {
+          if (rotation !== undefined && rotation !== 0) {
             transformSteps.push(`rotate(${rotation.toFixed(6)})`)
           }
 
-          if (userScale !== 1 && isValidNumber(userScale)) {
+          if (userScale !== 1) {
             transformSteps.push(`scale(${userScale.toFixed(6)})`)
           }
 
           // Move back from center
-          transformSteps.push(`translate(${(-safeTransformOrigin.x).toFixed(6)}, ${(-safeTransformOrigin.y).toFixed(6)})`)
+          transformSteps.push(`translate(${(-transformOrigin.x).toFixed(6)}, ${(-transformOrigin.y).toFixed(6)})`)
 
-          // Create safe transform string
-          innerTransform = safeTransform(transformSteps)
+          innerTransform = transformSteps.join(' ')
         }
       }
 
@@ -1484,15 +1385,19 @@ export const svgRenderData = computed(() => {
     // Keep additional properties for compatibility
     processedWithExtras.position = flatLayer.position
 
-    // For SVG images, add the styled content
-    // TODO: Fix svgContent handling - temporarily disabled to test unified positioning
-    if (processed.type === 'svgImage') {
-      // Just pass through the svgContent without styling for now
-      if (flatLayer.svgContent) {
-        processedWithExtras.svgContent = flatLayer.svgContent
-        // Skip getStyledSvgContent for now due to runtime error
-        processedWithExtras.styledContent = flatLayer.svgContent
-      }
+    // For SVG images, add the styled content with proper color injection and transforms
+    if (processed.type === 'svgImage' && flatLayer.svgContent) {
+      // Apply styling (colors, strokes) and extract inner content
+      const styledContent = getStyledSvgContent({
+        svgContent: flatLayer.svgContent,
+        fill: flatLayer.color,
+        stroke: flatLayer.stroke,
+        strokeWidth: flatLayer.strokeWidth,
+        strokeLinejoin: flatLayer.strokeLinejoin
+      })
+
+      processedWithExtras.svgContent = flatLayer.svgContent  // Keep original for analysis
+      processedWithExtras.styledContent = styledContent      // Use styled version for rendering
     }
 
     return processed

@@ -319,7 +319,7 @@ export function isPercentage(value: number | string): value is string {
  */
 export function parsePercentage(value: string): number {
   const numericPart = parseFloat(value.replace('%', ''))
-  return isNaN(numericPart) ? 0 : numericPart / 100
+  return numericPart / 100
 }
 
 /**
@@ -340,7 +340,7 @@ export function resolveCoordinate(
   viewBoxStart = 0
 ): number {
   if (typeof value === 'number') {
-    return isNaN(value) ? 0 : value
+    return value
   }
 
   if (isPercentage(value)) {
@@ -348,9 +348,8 @@ export function resolveCoordinate(
     return viewBoxStart + (viewBoxDimension * percentage)
   }
 
-  // Fallback: try to parse as number
-  const parsed = parseFloat(value)
-  return isNaN(parsed) ? 0 : parsed
+  // Try to parse as number - let NaN propagate if invalid
+  return parseFloat(value)
 }
 
 /**

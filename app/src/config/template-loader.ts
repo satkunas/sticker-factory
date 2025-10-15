@@ -235,9 +235,9 @@ const _calculateViewBoxFromLayers = (shapeLayers: TemplateShapeLayer[]): { x: nu
       const pos = layer.position as { x: number | string; y: number | string }
       if (typeof pos.x === 'number' && typeof pos.y === 'number') {
         hasAbsoluteCoords = true
-        const width = layer.width ?? 0  // No width = no contribution to bounds
-        const height = layer.height ?? 0  // No height = no contribution to bounds
-        const strokeWidth = layer.strokeWidth ?? 0  // No stroke = 0 stroke width
+        const width = layer.width || 0
+        const height = layer.height || 0
+        const strokeWidth = layer.strokeWidth || 0
         const halfStroke = strokeWidth / 2
 
         minX = Math.min(minX, pos.x - width/2 - halfStroke)

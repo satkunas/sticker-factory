@@ -159,10 +159,17 @@ function parseRectElements(svgContent: string): SvgBounds[] {
   while ((match = rectRegex.exec(svgContent)) !== null) {
     const rectElement = match[0]
 
-    const x = parseFloat(getAttributeValue(rectElement, 'x') || '0')
-    const y = parseFloat(getAttributeValue(rectElement, 'y') || '0')
-    const width = parseFloat(getAttributeValue(rectElement, 'width') || '0')
-    const height = parseFloat(getAttributeValue(rectElement, 'height') || '0')
+    const xAttr = getAttributeValue(rectElement, 'x')
+    const yAttr = getAttributeValue(rectElement, 'y')
+    const widthAttr = getAttributeValue(rectElement, 'width')
+    const heightAttr = getAttributeValue(rectElement, 'height')
+
+    if (!xAttr || !yAttr || !widthAttr || !heightAttr) continue
+
+    const x = parseFloat(xAttr)
+    const y = parseFloat(yAttr)
+    const width = parseFloat(widthAttr)
+    const height = parseFloat(heightAttr)
 
     const xMin = x
     const xMax = x + width
@@ -192,9 +199,15 @@ function parseCircleElements(svgContent: string): SvgBounds[] {
   while ((match = circleRegex.exec(svgContent)) !== null) {
     const circleElement = match[0]
 
-    const cx = parseFloat(getAttributeValue(circleElement, 'cx') || '0')
-    const cy = parseFloat(getAttributeValue(circleElement, 'cy') || '0')
-    const r = parseFloat(getAttributeValue(circleElement, 'r') || '0')
+    const cxAttr = getAttributeValue(circleElement, 'cx')
+    const cyAttr = getAttributeValue(circleElement, 'cy')
+    const rAttr = getAttributeValue(circleElement, 'r')
+
+    if (!cxAttr || !cyAttr || !rAttr) continue
+
+    const cx = parseFloat(cxAttr)
+    const cy = parseFloat(cyAttr)
+    const r = parseFloat(rAttr)
 
     const xMin = cx - r
     const xMax = cx + r
@@ -224,10 +237,17 @@ function parseEllipseElements(svgContent: string): SvgBounds[] {
   while ((match = ellipseRegex.exec(svgContent)) !== null) {
     const ellipseElement = match[0]
 
-    const cx = parseFloat(getAttributeValue(ellipseElement, 'cx') || '0')
-    const cy = parseFloat(getAttributeValue(ellipseElement, 'cy') || '0')
-    const rx = parseFloat(getAttributeValue(ellipseElement, 'rx') || '0')
-    const ry = parseFloat(getAttributeValue(ellipseElement, 'ry') || '0')
+    const cxAttr = getAttributeValue(ellipseElement, 'cx')
+    const cyAttr = getAttributeValue(ellipseElement, 'cy')
+    const rxAttr = getAttributeValue(ellipseElement, 'rx')
+    const ryAttr = getAttributeValue(ellipseElement, 'ry')
+
+    if (!cxAttr || !cyAttr || !rxAttr || !ryAttr) continue
+
+    const cx = parseFloat(cxAttr)
+    const cy = parseFloat(cyAttr)
+    const rx = parseFloat(rxAttr)
+    const ry = parseFloat(ryAttr)
 
     const xMin = cx - rx
     const xMax = cx + rx
@@ -257,10 +277,17 @@ function parseLineElements(svgContent: string): SvgBounds[] {
   while ((match = lineRegex.exec(svgContent)) !== null) {
     const lineElement = match[0]
 
-    const x1 = parseFloat(getAttributeValue(lineElement, 'x1') || '0')
-    const y1 = parseFloat(getAttributeValue(lineElement, 'y1') || '0')
-    const x2 = parseFloat(getAttributeValue(lineElement, 'x2') || '0')
-    const y2 = parseFloat(getAttributeValue(lineElement, 'y2') || '0')
+    const x1Attr = getAttributeValue(lineElement, 'x1')
+    const y1Attr = getAttributeValue(lineElement, 'y1')
+    const x2Attr = getAttributeValue(lineElement, 'x2')
+    const y2Attr = getAttributeValue(lineElement, 'y2')
+
+    if (!x1Attr || !y1Attr || !x2Attr || !y2Attr) continue
+
+    const x1 = parseFloat(x1Attr)
+    const y1 = parseFloat(y1Attr)
+    const x2 = parseFloat(x2Attr)
+    const y2 = parseFloat(y2Attr)
 
     const xMin = Math.min(x1, x2)
     const xMax = Math.max(x1, x2)
@@ -1265,28 +1292,6 @@ function extractPathPoints(pathData: string): Point[] {
 }
 
 /**
- * Sample points along a path for centroid calculation
- */
-function _samplePathPoints(pathData: string, numSamples: number): Point[] {
-  // For now, return the extracted points (can be enhanced with actual path sampling)
-  const extractedPoints = extractPathPoints(pathData)
-
-  if (extractedPoints.length <= numSamples) {
-    return extractedPoints
-  }
-
-  // Simple sampling by taking every nth point
-  const step = Math.floor(extractedPoints.length / numSamples)
-  const sampledPoints: Point[] = []
-
-  for (let i = 0; i < extractedPoints.length; i += step) {
-    sampledPoints.push(extractedPoints[i])
-  }
-
-  return sampledPoints
-}
-
-/**
  * Calculate centroid of a polygon using the shoelace formula
  */
 function calculatePolygonCentroidFromPoints(points: Point[]): Point {
@@ -1331,36 +1336,6 @@ function calculatePolygonCentroidFromPoints(points: Point[]): Point {
   const safeY = isFinite(centroidY) ? centroidY : 0
 
   return { x: safeX, y: safeY }
-}
-
-/**
- * Calculate bounds from an array of points
- */
-function _calculateBoundsFromPoints(points: Point[]): { xMin: number; xMax: number; yMin: number; yMax: number; width: number; height: number } {
-  if (points.length === 0) {
-    return { xMin: 0, xMax: 0, yMin: 0, yMax: 0, width: 0, height: 0 }
-  }
-
-  let xMin = points[0].x
-  let xMax = points[0].x
-  let yMin = points[0].y
-  let yMax = points[0].y
-
-  for (const point of points) {
-    xMin = Math.min(xMin, point.x)
-    xMax = Math.max(xMax, point.x)
-    yMin = Math.min(yMin, point.y)
-    yMax = Math.max(yMax, point.y)
-  }
-
-  return {
-    xMin,
-    xMax,
-    yMin,
-    yMax,
-    width: xMax - xMin,
-    height: yMax - yMin
-  }
 }
 
 // Helper functions removed - using general-purpose calculatePathCentroid() for all paths
