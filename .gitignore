@@ -9,4 +9,5 @@ app/public/sw-bundle.js.map
 !app/CLAUDE.md
 !app/README.md
 !app/templates/README.md
+app/test-results/
 

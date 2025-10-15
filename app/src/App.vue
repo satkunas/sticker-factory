@@ -307,8 +307,8 @@ const getLayerProps = (layer: any) => {
         shapeDimensions: getShapeDimensions(selectedTemplate.value, layer.id),
         shapeData: getShapeData(selectedTemplate.value, layer.id),
         shapePath: getShapePath(selectedTemplate.value, layer.id),
-        fillColor: flatLayer.fillColor,
-        strokeColor: flatLayer.strokeColor,
+        fillColor: flatLayer.fill,
+        strokeColor: flatLayer.stroke,
         strokeWidth: flatLayer.strokeWidth,
         strokeLinejoin: flatLayer.strokeLinejoin,
         instanceId: `shape-${layer.id}`
@@ -351,8 +351,8 @@ const eventMappings = {
     'update:dominantBaseline': 'dominantBaseline'
   },
   shape: {
-    'update:fillColor': 'fillColor',
-    'update:strokeColor': 'strokeColor',
+    'update:fillColor': 'fill',
+    'update:strokeColor': 'stroke',
     'update:strokeWidth': 'strokeWidth',
     'update:strokeLinejoin': 'strokeLinejoin'
   },

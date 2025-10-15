@@ -207,8 +207,7 @@ function flattenTemplateLayer(templateLayer: TemplateLayer): FlatLayerData {
     textPath, startOffset, dy, dominantBaseline,
     // Shape properties (directly accessible)
     subtype, width, height, rx, ry, points, path,
-    fillColor: fill, // Map 'fill' to 'fillColor' for shapes
-    strokeColor: stroke, strokeWidth, strokeLinejoin,
+    fill, stroke, strokeWidth, strokeLinejoin,
     // SVG Image properties (directly accessible)
     svgImageId, svgContent,
     color, // SVG images use 'color' instead of 'fill' to distinguish from shapes
