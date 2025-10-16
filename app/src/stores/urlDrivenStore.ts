@@ -216,13 +216,17 @@ function mergeFlatLayerData(templateDefaults: FlatLayerData, formOverrides: Part
  * Create flat form data for entire template
  */
 function createFlatFormData(template: SimpleTemplate, urlFormData: Partial<FlatLayerData>[] = []): FlatLayerData[] {
-  return template.layers.map(templateLayer => {
-    // Flatten template layer to get all defaults
-    const templateDefaults = flattenTemplateLayer(templateLayer)
-    const userOverrides = urlFormData.find(layer => layer.id === templateLayer.id) || {}
+  return template.layers
+    .filter(templateLayer => {
+      const flatLayer = templateLayer as unknown as FlatLayerData
+      return flatLayer.subtype !== 'path'
+    })
+    .map(templateLayer => {
+      const templateDefaults = flattenTemplateLayer(templateLayer)
+      const userOverrides = urlFormData.find(layer => layer.id === templateLayer.id) || {}
 
-    return mergeFlatLayerData(templateDefaults, userOverrides)
-  })
+      return mergeFlatLayerData(templateDefaults, userOverrides)
+    })
 }
 
 // ============================================================================
