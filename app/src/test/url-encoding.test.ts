@@ -275,7 +275,7 @@ describe('URL Encoding v2', () => {
   })
 
   describe('Compression Efficiency', () => {
-    it('should compress template IDs', () => {
+    it('should preserve template IDs for URL stability', () => {
       const state: AppState = {
         selectedTemplateId: 'business-card',
         layers: [],
@@ -289,10 +289,9 @@ describe('URL Encoding v2', () => {
       const padded = base64 + '='.repeat((4 - base64.length % 4) % 4)
       const decoded = atob(padded)
 
-      // Should NOT contain the full string "business-card"
-      expect(decoded).not.toContain('business-card')
-      // Should contain compressed version 'B'
-      expect(decoded).toContain('B')
+      // Template IDs are NOT compressed to ensure URL stability when adding new templates
+      // Should contain the full template filename
+      expect(decoded).toContain('business-card')
     })
 
     it('should compress common font families', () => {

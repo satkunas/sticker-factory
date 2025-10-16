@@ -45,34 +45,18 @@ const ENCODING_VERSION = 2
 // ============================================================================
 
 /**
- * TEMPLATE ID COMPRESSION
- * =======================
- * Maps long template IDs to single characters for maximum compression.
- * Supports up to 62 templates using A-Z, a-z, 0-9.
+ * TEMPLATE ID - NO COMPRESSION
+ * =============================
+ * Template IDs (filenames) are used as-is in URLs for stability.
+ *
+ * Why no compression:
+ * - Filenames are already short kebab-case strings (e.g., "business-card")
+ * - Adding new templates must NEVER break existing URLs
+ * - No 62-template limit
+ * - Real compression gains come from property names, fonts, and colors
+ *
+ * Template IDs are passed through unchanged for encode/decode.
  */
-export const TEMPLATE_MAP = {
-  'vinyl-record-label': 'A',
-  'business-card': 'B',
-  'event-promo-sticker': 'C',
-  'conference-sticker': 'D',
-  'quality-sticker': 'E',
-  'booklet-cover': 'F',
-  'catalog-page': 'G',
-  'concert-ticket': 'H',
-  'safety-alert-diamond': 'I',
-  'shipping-label': 'J',
-  'social-media-post': 'K',
-  'social-media-announcement': 'L',
-  'tech-company-sticker': 'M',
-  'wellness-sticker': 'N',
-  'youtube-thumbnail': 'O',
-  'food-packaging-label': 'P',
-  // Future templates: Q, R, S, T, U, V, W, X, Y, Z, a-z, 0-9
-} as const
-
-export const REVERSE_TEMPLATE_MAP = Object.fromEntries(
-  Object.entries(TEMPLATE_MAP).map(([id, char]) => [char, id])
-) as Record<string, string>
 
 /**
  * COLOR PALETTE COMPRESSION
@@ -234,21 +218,21 @@ function decompressFont(value: string): string {
 }
 
 /**
- * Compress a template ID to single character
- * @param templateId Template ID like "vinyl-record-label"
- * @returns Single character
+ * Template IDs are not compressed - pass through unchanged
+ * @param templateId Template filename like "business-card"
+ * @returns Same template ID unchanged
  */
 function compressTemplateId(templateId: string): string {
-  return (TEMPLATE_MAP as Record<string, string>)[templateId] || templateId
+  return templateId
 }
 
 /**
- * Decompress a template character back to template ID
- * @param value Single character
- * @returns Template ID
+ * Template IDs are not compressed - pass through unchanged
+ * @param value Template filename like "business-card"
+ * @returns Same template ID unchanged
  */
 function decompressTemplateId(value: string): string {
-  return REVERSE_TEMPLATE_MAP[value] || value
+  return value
 }
 
 // ============================================================================
