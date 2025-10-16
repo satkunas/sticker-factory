@@ -11,52 +11,32 @@
         <div class="space-y-3">
           <!-- Category Filter (moved to top) -->
           <div class="flex flex-wrap gap-1">
-            <!-- When focused: show all pills. When blurred: show only selected pill -->
-            <template v-if="searchFocused">
-              <!-- All Categories pill when focused -->
-              <button
-                :class="[
-                  'px-2 py-1 text-xs rounded transition-colors',
-                  selectedCategory === null
-                    ? 'bg-primary-100 text-primary-700'
-                    : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-                ]"
-                @click="selectCategoryAndClose(null)"
-              >
-                All Categories
-              </button>
-              <!-- All category pills when focused -->
-              <button
-                v-for="category in svgStore.categories.value"
-                :key="category"
-                :class="[
-                  'px-2 py-1 text-xs rounded transition-colors',
-                  selectedCategory === category
-                    ? 'bg-primary-100 text-primary-700'
-                    : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-                ]"
-                @click="selectCategoryAndClose(category)"
-              >
-                {{ categoryDisplayName(category) }}
-              </button>
-            </template>
-            <template v-else>
-              <!-- When blurred: show only the selected pill -->
-              <button
-                v-if="selectedCategory === null"
-                class="px-2 py-1 text-xs rounded bg-primary-100 text-primary-700"
-                @click="selectedCategory = null"
-              >
-                All Categories
-              </button>
-              <button
-                v-else
-                class="px-2 py-1 text-xs rounded bg-primary-100 text-primary-700"
-                @click="searchFocused = true"
-              >
-                {{ categoryDisplayName(selectedCategory) }}
-              </button>
-            </template>
+            <!-- All Categories button -->
+            <button
+              :class="[
+                'px-2 py-1 text-xs rounded transition-colors',
+                selectedCategory === null
+                  ? 'bg-primary-100 text-primary-700'
+                  : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
+              ]"
+              @click="selectedCategory = null"
+            >
+              All Categories
+            </button>
+            <!-- All category buttons -->
+            <button
+              v-for="category in svgStore.categories.value"
+              :key="category"
+              :class="[
+                'px-2 py-1 text-xs rounded transition-colors',
+                selectedCategory === category
+                  ? 'bg-primary-100 text-primary-700'
+                  : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
+              ]"
+              @click="selectedCategory = category"
+            >
+              {{ categoryDisplayName(category) }}
+            </button>
           </div>
 
           <!-- Search Input (moved below pills) -->
@@ -66,8 +46,6 @@
               type="text"
               placeholder="Search SVGs by name or tag..."
               class="w-full px-3 py-2 pr-8 border border-secondary-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              @focus="searchFocused = true"
-              @blur="handleSearchBlur"
             >
             <button
               v-if="searchQuery.length > 0"
@@ -112,7 +90,9 @@
               v-for="svg in visibleSvgs"
               :key="svg.id"
               class="svg-tile group relative aspect-square bg-white border border-secondary-200 rounded-md p-2 cursor-pointer hover:border-primary-300 hover:shadow-sm transition-all duration-200 flex items-center justify-center"
-              :class="{ 'ring-2 ring-primary-500 border-primary-500': selectedSvgId === svg.id }"
+              :class="{
+                'ring-2 ring-primary-500 border-primary-500 bg-primary-50 shadow-md shadow-primary-200': props.selectedSvgId === svg.id
+              }"
               :title="`${svg.name} (${svg.category})`"
               @click="selectSvg(svg)"
             >
@@ -120,7 +100,7 @@
               <div
                 :ref="(el) => setTileRef(el, svg.id)"
                 class="w-full h-full flex items-center justify-center text-secondary-700 transition-colors"
-                :class="{ 'text-primary-600': selectedSvgId === svg.id }"
+                :class="{ 'text-primary-600': props.selectedSvgId === svg.id }"
               >
                 <!-- Loaded SVG Content -->
                 <div v-if="loadedSvgContent[svg.id]" class="w-full h-full flex items-center justify-center" v-html="loadedSvgContent[svg.id]"></div>
@@ -128,14 +108,22 @@
                 <div v-else class="w-4 h-4 bg-secondary-300 rounded animate-pulse"></div>
               </div>
 
-              <!-- Selection indicator -->
+              <!-- Selection indicator with larger badge -->
               <div
-                v-if="selectedSvgId === svg.id"
-                class="absolute -top-1 -right-1 w-4 h-4 bg-primary-500 rounded-full flex items-center justify-center"
+                v-if="props.selectedSvgId === svg.id"
+                class="absolute -top-1 -right-1 w-5 h-5 bg-primary-600 rounded-full flex items-center justify-center shadow-lg"
               >
-                <svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                 </svg>
+              </div>
+
+              <!-- "Selected" Label -->
+              <div
+                v-if="props.selectedSvgId === svg.id"
+                class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 bg-primary-600 text-white text-xs px-2 py-0.5 rounded-full whitespace-nowrap font-medium shadow-md z-10"
+              >
+                Selected
               </div>
 
               <!-- SVG Name (on hover) -->
@@ -170,7 +158,7 @@
               Click an icon to select it
             </div>
             <button
-              v-if="selectedSvgId"
+              v-if="props.selectedSvgId"
               class="px-3 py-1 text-xs bg-red-50 border border-red-200 rounded-md text-red-600 hover:bg-red-100 transition-colors"
               type="button"
               title="Remove selected SVG"
@@ -203,7 +191,7 @@ interface Emits {
   'clear': []
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 
 const emit = defineEmits<Emits>()
 
@@ -213,7 +201,6 @@ const svgStore = useSvgStore()
 // Component state
 const searchQuery = ref('')
 const selectedCategory = ref<string | null>(null)
-const searchFocused = ref(false)
 
 // Enhanced lazy loading state for 5000+ icons
 const svgGridContainer = ref<HTMLElement>()
@@ -315,20 +302,6 @@ watch([searchQuery, selectedCategory], () => {
 // Helper function to display category names
 const categoryDisplayName = (category: string): string => {
   return category.charAt(0).toUpperCase() + category.slice(1).replace(/([A-Z])/g, ' $1')
-}
-
-// Handle search blur with delay to allow pill clicks to complete
-const handleSearchBlur = () => {
-  // Delay the blur handling to allow click events on category pills to complete
-  setTimeout(() => {
-    searchFocused.value = false
-  }, 150)
-}
-
-// Select category and automatically close the expanded list
-const selectCategoryAndClose = (category: string | null) => {
-  selectedCategory.value = category
-  searchFocused.value = false
 }
 
 // Lazy loading helper functions

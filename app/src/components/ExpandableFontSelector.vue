@@ -382,7 +382,7 @@
         <h4 class="section-header">
           Font Family
         </h4>
-        
+
         <!-- Search -->
         <div class="mb-3 relative">
           <input

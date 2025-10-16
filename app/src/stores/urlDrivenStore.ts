@@ -521,9 +521,11 @@ function mergeTemplateWithUrlData(template: SimpleTemplate, urlLayers: Array<{ i
       formEntry.dy = urlOverride.dy !== undefined ? urlOverride.dy : flatLayer.dy
       formEntry.dominantBaseline = urlOverride.dominantBaseline !== undefined ? urlOverride.dominantBaseline : flatLayer.dominantBaseline
 
-      // Handle fontFamily from URL - convert to font object
-      if (urlOverride.fontFamily !== undefined) {
-        const fontConfig = AVAILABLE_FONTS.find(f => f.family === urlOverride.fontFamily || f.name === urlOverride.fontFamily)
+      // Handle fontFamily - convert string to font object
+      // Priority: URL override > template default
+      const fontFamilyToUse = urlOverride.fontFamily !== undefined ? urlOverride.fontFamily : flatLayer.fontFamily
+      if (fontFamilyToUse) {
+        const fontConfig = AVAILABLE_FONTS.find(f => f.family === fontFamilyToUse || f.name === fontFamilyToUse)
         if (fontConfig) {
           formEntry.font = fontConfig
         }

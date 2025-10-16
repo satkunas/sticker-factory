@@ -76,6 +76,16 @@ export function filterFonts(
     )
   }
 
+  // Deduplicate by font name (keep first occurrence)
+  const seen = new Set<string>()
+  filteredFonts = filteredFonts.filter(font => {
+    if (seen.has(font.name)) {
+      return false
+    }
+    seen.add(font.name)
+    return true
+  })
+
   return filteredFonts
 }
 

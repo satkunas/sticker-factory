@@ -5,8 +5,12 @@
       <input
         :value="modelValue"
         type="text"
-        class="w-full px-4 py-3 pr-10 bg-white border border-secondary-200 focus:outline-none hover:border-secondary-300 transition-colors"
-        :class="{ 'border-primary-500': isExpanded, 'rounded-b-lg': !isExpanded, 'rounded-t-lg': true }"
+        class="w-full px-4 pr-10 py-3 bg-white border border-secondary-200 focus:outline-none hover:border-secondary-300 transition-colors"
+        :class="{
+          'border-primary-500': isExpanded,
+          'rounded-b-lg': !isExpanded && !selectedFont,
+          'rounded-t-lg': true
+        }"
         :placeholder="placeholder"
         :style="{
           fontFamily: selectedFont ? getFontFamily(selectedFont) : undefined
@@ -28,6 +32,11 @@
           <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
         </svg>
       </button>
+
+      <!-- Font Info Label (appears after input, before expandable) -->
+      <div v-if="selectedFont" class="px-4 py-1 bg-white border-x border-secondary-200 text-[10px] text-secondary-500" :class="{ 'border-primary-500': isExpanded, 'border-b': !isExpanded, 'rounded-b-lg': !isExpanded }">
+        {{ selectedFont.name }} • {{ FONT_CATEGORIES[selectedFont.category] }}
+      </div>
 
       <!-- Expandable Font Selector -->
       <ExpandableFontSelector
@@ -62,7 +71,7 @@
 <script setup lang="ts">
 import { inject, computed, ref } from 'vue'
 import ExpandableFontSelector from './ExpandableFontSelector.vue'
-import { getFontFamily, type FontConfig } from '../config/fonts' // Used in template
+import { getFontFamily, FONT_CATEGORIES, type FontConfig } from '../config/fonts' // Used in template
 
 interface Props {
   modelValue: string

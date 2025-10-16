@@ -37,9 +37,9 @@
             >
               SVG
             </div>
-            <div class="flex flex-col">
+            <div class="flex flex-col relative z-10">
               <span class="text-sm text-secondary-900">{{ imageLabel }}</span>
-              <span v-if="imageDimensions" class="text-xs text-secondary-500">{{ imageDimensions }}</span>
+              <span v-if="svgCategory" class="text-[10px] text-secondary-500">{{ svgCategory }}</span>
             </div>
           </div>
           <svg
@@ -384,6 +384,7 @@ import {
 } from '../utils/svg-styling'
 import { PRESET_COLORS, STROKE_LINEJOIN_OPTIONS, COLOR_NONE } from '../utils/ui-constants'
 import type { SvgViewBoxFitAnalysis, SvgCentroid } from '../utils/svg-bounds'
+import { useSvgStore } from '../stores/svgStore'
 
 interface Props {
   imageLabel?: string
@@ -416,6 +417,9 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<Emits>()
 
+// SVG Store for category lookup
+const svgStore = useSvgStore()
+
 // Unified dropdown management
 const dropdownManager = inject('dropdownManager')
 
@@ -429,6 +433,15 @@ const containerRef = ref<HTMLElement>()
 const layerId = computed(() => {
   if (!props.instanceId) return 'SVG Image'
   return props.instanceId.replace(/^svgImage-/, '')
+})
+
+// Get selected SVG category
+const svgCategory = computed(() => {
+  if (!props.svgId) return null
+  const svg = svgStore.items.value.find(item => item.id === props.svgId)
+  if (!svg?.category) return null
+  // Capitalize and format category name
+  return svg.category.charAt(0).toUpperCase() + svg.category.slice(1).replace(/([A-Z])/g, ' $1')
 })
 
 // Local expansion state
