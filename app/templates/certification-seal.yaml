@@ -55,7 +55,7 @@ layers:
     fontSize: 36
     fontWeight: 700
     fontColor: "#1e40af"
-    clip: "innner-circle"
+    clip: "inner-circle"
 
   # Bottom curved text
   - id: "bottom-text"

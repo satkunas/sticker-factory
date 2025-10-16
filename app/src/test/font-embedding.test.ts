@@ -5,7 +5,7 @@ import {
   clearFontCache,
   getFontCacheSize,
   getFontCacheMemoryUsage
-} from '../utils/fontEmbedding'
+} from '../utils/font-embedding'
 
 // Mock fetch for font downloads
 global.fetch = vi.fn()

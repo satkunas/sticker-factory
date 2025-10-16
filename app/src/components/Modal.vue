@@ -40,7 +40,7 @@
 
 <script setup lang="ts">
 import { watch, onUnmounted } from 'vue'
-import { getKeyboardStore } from '../stores/keyboard'
+import { getKeyboardStore } from '../stores/keyboardStore'
 
 interface Props {
   show: boolean

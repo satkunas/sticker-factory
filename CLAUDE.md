@@ -394,21 +394,55 @@ findImageBounds()         // Different verb
 - **ViewBox**: Always "viewBox" (not "vb", "viewport")
 
 ### Component/File Naming
-| Pattern | Purpose | Examples |
-|---------|---------|----------|
-| `use*.ts` | Vue composables | `useSvgCentering.ts`, `useFontSelector.ts` |
-| `*-utils.ts` | Pure utilities | `svg-utils.ts`, `font-utils.ts` |
-| `*-types.ts` | Type definitions | `svg-types.ts`, `template-types.ts` |
-| `*Store.ts` | Pinia stores | `urlDrivenStore.ts`, `fontStore.ts` |
-| `*Modal.vue` | Modal components | `DownloadModal.vue`, `SettingsModal.vue` |
-| `*Selector.vue` | Selector components | `FontSelector.vue`, `ColorSelector.vue` |
+**CRITICAL: Filename case must be consistent across the codebase. Use `git mv` for all renames.**
+
+| File Type | Pattern | Case | Examples |
+|-----------|---------|------|----------|
+| **Stores** | `*Store.ts` | camelCase + suffix | `urlDrivenStore.ts`, `svgStore.ts`, `keyboardStore.ts` |
+| **Utils** | `*-utils.ts` or `*.ts` | kebab-case | `font-embedding.ts`, `svg-transforms.ts`, `url-encoding.ts` |
+| **Composables** | `use*.ts` | camelCase | `useSvgCentering.ts`, `useTemplateHelpers.ts`, `useFontSelector.ts` |
+| **Components** | `*.vue` | PascalCase | `Modal.vue`, `DownloadModal.vue`, `FontSelector.vue` |
+| **Config** | `*.ts` | kebab-case | `template-loader.ts`, `svg-library-loader.ts`, `fonts.ts` |
+| **Types** | `*-types.ts` | kebab-case | `template-types.ts`, `svg-types.ts` |
+| **Tests** | `*.test.ts` | Match source file | `font-embedding.test.ts`, `svg-transforms.test.ts` |
+
+**Enforcement Rules:**
+```bash
+# ✅ CORRECT - Stores use camelCase + Store suffix
+stores/urlDrivenStore.ts
+stores/svgStore.ts
+stores/keyboardStore.ts
+
+# ❌ WRONG - Inconsistent naming
+stores/url-driven-store.ts  # kebab-case not allowed for stores
+stores/svg-store.ts         # kebab-case not allowed for stores
+stores/keyboard.ts          # missing Store suffix
+
+# ✅ CORRECT - Utils use kebab-case
+utils/font-embedding.ts
+utils/svg-transforms.ts
+utils/url-encoding.ts
+
+# ❌ WRONG - Inconsistent naming
+utils/fontEmbedding.ts      # camelCase not allowed for utils
+utils/svgTransforms.ts      # camelCase not allowed for utils
+
+# ✅ CORRECT - Composables use camelCase with use prefix
+composables/useSvgCentering.ts
+composables/useTemplateHelpers.ts
+
+# ❌ WRONG - Inconsistent naming
+composables/use-svg-centering.ts  # kebab-case not allowed for composables
+composables/svgCentering.ts       # missing use prefix
+```
 
 ### Consistency Rules
 1. **Same feature = same prefix**: All SVG-related → `svg-*`, all font-related → `font-*`
 2. **Same verb for same operation**: Calculating bounds always uses `calculate`, never `get`/`find`/`compute`
 3. **No abbreviations**: Write `transform` not `xform`, `coordinate` not `coord`
 4. **CamelCase for functions**: `calculateBounds()` not `calculate_bounds()`
-5. **kebab-case for files**: `svg-transforms.ts` not `svgTransforms.ts` or `svg_transforms.ts`
+5. **File renaming**: Always use `git mv old-name new-name` to preserve git history
+6. **Test naming**: Tests must match source filename with `.test.ts` suffix
 
 ## 🧪 Testing & Quality
 

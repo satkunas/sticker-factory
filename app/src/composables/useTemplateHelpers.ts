@@ -1,6 +1,6 @@
 import type { SimpleTemplate } from '../types/template-types'
 import { getTemplateTextInputs } from '../config/template-loader'
-import { useSvgStore } from '../stores/svg-store'
+import { useSvgStore } from '../stores/svgStore'
 
 /**
  * Composable for template helper functions

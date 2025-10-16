@@ -188,7 +188,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, type ComponentPublicInstance } from 'vue'
 import type { SvgLibraryItem } from '../types/template-types'
-import { useSvgStore } from '../stores/svg-store'
+import { useSvgStore } from '../stores/svgStore'
 import { logger } from '../utils/logger'
 
 interface Props {

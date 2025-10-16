@@ -1,5 +1,5 @@
 import type { SvgLibraryItem } from '../types/template-types'
-import { useSvgStore } from '../stores/svg-store'
+import { useSvgStore } from '../stores/svgStore'
 
 // Backward compatibility layer - delegates to SVG store
 // This file maintains the old API while using the new store internally

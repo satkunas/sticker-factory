@@ -134,7 +134,7 @@ import Modal from './Modal.vue'
 import { jsPDF } from 'jspdf'
 import type { SimpleTemplate, FlatLayerData, AppState } from '../types/template-types'
 import { AVAILABLE_FONTS } from '../config/fonts'
-import { embedWebFonts } from '../utils/fontEmbedding'
+import { embedWebFonts } from '../utils/font-embedding'
 import { encodeTemplateStateCompact } from '../utils/url-encoding'
 
 interface Props {

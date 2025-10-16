@@ -466,7 +466,7 @@ onMounted(async () => {
       })
     })
 
-    const svgStorePromise = import('./stores/svg-store').then(async ({ useSvgStore }) => {
+    const svgStorePromise = import('./stores/svgStore').then(async ({ useSvgStore }) => {
       const svgStore = useSvgStore()
       await svgStore.loadSvgLibraryStore()
     })
