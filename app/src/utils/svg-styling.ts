@@ -54,21 +54,30 @@ export interface SvgCompleteStiling {
 
 /**
  * Inject fill and stroke colors into SVG content
- * Intelligently applies colors to appropriate elements
+ *
+ * This function ALWAYS overrides hardcoded colors in SVG files to ensure
+ * user-selected colors are applied. When colors are provided:
+ * - SVG, path, and shape elements: colors always applied (overrides hardcoded values)
+ * - Text elements: colors only applied if forceFill/forceStroke options are set
  *
  * @param svgContent - Original SVG content
- * @param fillColor - Fill color to apply
- * @param strokeColor - Stroke color to apply
- * @param options - Additional color styling options
+ * @param fillColor - Fill color to apply (overrides all existing fills)
+ * @param strokeColor - Stroke color to apply (overrides all existing strokes)
+ * @param options - Control which element types to color (forceFill/forceStroke for text)
  * @returns SVG content with colors applied
  *
  * @example
+ * // Color all elements including text
  * const coloredSvg = injectSvgColors(
  *   svgContent,
  *   '#ff0000',
  *   '#000000',
  *   { forceFill: true }
  * )
+ *
+ * @example
+ * // Color shapes only, preserve text colors
+ * const shapesOnlyColored = injectSvgColors(svgContent, '#ff0000')
  */
 export function injectSvgColors(
   svgContent: string,
@@ -83,25 +92,26 @@ export function injectSvgColors(
   try {
     // Apply colors to the root SVG element
     if (fillColor || strokeColor) {
-      processedSvg = applyColorsToElement(processedSvg, 'svg', fillColor, strokeColor, options)
+      processedSvg = applyColorsToElement(processedSvg, 'svg', fillColor, strokeColor)
     }
 
     // Apply colors to path elements (most common)
     if (fillColor || strokeColor) {
-      processedSvg = applyColorsToElement(processedSvg, 'path', fillColor, strokeColor, options)
+      processedSvg = applyColorsToElement(processedSvg, 'path', fillColor, strokeColor)
     }
 
     // Apply colors to other shape elements
     const shapeElements = ['circle', 'rect', 'ellipse', 'polygon', 'line', 'polyline']
     shapeElements.forEach(elementType => {
       if (fillColor || strokeColor) {
-        processedSvg = applyColorsToElement(processedSvg, elementType, fillColor, strokeColor, options)
+        processedSvg = applyColorsToElement(processedSvg, elementType, fillColor, strokeColor)
       }
     })
 
-    // Apply colors to text elements if specified
+    // Apply colors to text elements only if forceFill/forceStroke options are set
+    // This allows selective coloring - shapes always get colored, text only when explicitly requested
     if ((fillColor && options.forceFill) || (strokeColor && options.forceStroke)) {
-      processedSvg = applyColorsToElement(processedSvg, 'text', fillColor, strokeColor, options)
+      processedSvg = applyColorsToElement(processedSvg, 'text', fillColor, strokeColor)
     }
 
     return processedSvg
@@ -115,19 +125,20 @@ export function injectSvgColors(
 /**
  * Apply colors to specific element type in SVG
  *
+ * When colors are provided, this function ALWAYS removes any existing fill/stroke
+ * attributes to ensure user-selected colors override hardcoded values in SVG files.
+ *
  * @param svgContent - SVG content
  * @param elementType - Type of element to target
- * @param fillColor - Fill color
- * @param strokeColor - Stroke color
- * @param options - Color styling options
+ * @param fillColor - Fill color (if provided, overrides all existing fills)
+ * @param strokeColor - Stroke color (if provided, overrides all existing strokes)
  * @returns Modified SVG content
  */
 function applyColorsToElement(
   svgContent: string,
   elementType: string,
   fillColor?: string,
-  strokeColor?: string,
-  options: Omit<SvgColorStyling, 'fill' | 'stroke'> = {}
+  strokeColor?: string
 ): string {
   // Updated regex to match both self-closing and opening tags while preserving structure
   const regex = new RegExp(`<${elementType}([^>]*?)(/?)>`, 'gi')
@@ -135,40 +146,23 @@ function applyColorsToElement(
   return svgContent.replace(regex, (_match, attributes, selfClosing) => {
     let modifiedAttributes = attributes
 
-    // Handle fill color
+    // Handle fill color - ALWAYS remove hardcoded fills when fillColor is provided
     if (fillColor) {
-      if (options.forceFill || !attributes.includes('fill=')) {
-        // Remove existing fill if forcing
-        if (options.forceFill) {
-          modifiedAttributes = modifiedAttributes.replace(/\s*fill=["'][^"']*["']/gi, '')
-        }
+      // First, ALWAYS remove any existing fill attributes when fillColor is provided
+      // This ensures hardcoded fills in SVG files don't override user colors
+      modifiedAttributes = modifiedAttributes.replace(/\s*fill\s*=\s*["'][^"']*["']/gi, '')
 
-        // Add fill if not present or if forcing
-        if (!attributes.includes('fill=') || options.forceFill) {
-          modifiedAttributes += ` fill="${fillColor}"`
-        }
-      } else if (attributes.includes('fill="currentColor"') || attributes.includes("fill='currentColor'")) {
-        // Replace currentColor with actual color
-        modifiedAttributes = modifiedAttributes.replace(/fill=["']currentColor["']/gi, `fill="${fillColor}"`)
-      }
+      // Then add the new fill color
+      modifiedAttributes += ` fill="${fillColor}"`
     }
 
-    // Handle stroke color
+    // Handle stroke color - ALWAYS remove hardcoded strokes when strokeColor is provided
     if (strokeColor) {
-      if (options.forceStroke || !attributes.includes('stroke=')) {
-        // Remove existing stroke if forcing
-        if (options.forceStroke) {
-          modifiedAttributes = modifiedAttributes.replace(/\s*stroke=["'][^"']*["']/gi, '')
-        }
+      // First, ALWAYS remove any existing stroke attributes when strokeColor is provided
+      modifiedAttributes = modifiedAttributes.replace(/\s*stroke\s*=\s*["'][^"']*["']/gi, '')
 
-        // Add stroke if not present or if forcing
-        if (!attributes.includes('stroke=') || options.forceStroke) {
-          modifiedAttributes += ` stroke="${strokeColor}"`
-        }
-      } else if (attributes.includes('stroke="currentColor"') || attributes.includes("stroke='currentColor'")) {
-        // Replace currentColor with actual color
-        modifiedAttributes = modifiedAttributes.replace(/stroke=["']currentColor["']/gi, `stroke="${strokeColor}"`)
-      }
+      // Then add the new stroke color
+      modifiedAttributes += ` stroke="${strokeColor}"`
     }
 
     // Preserve self-closing structure: add back the slash if it was there originally
