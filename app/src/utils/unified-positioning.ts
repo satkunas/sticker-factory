@@ -30,7 +30,7 @@ export interface LayerTransform {
  * Includes viewBox centering that was previously done by wrapper transform
  * For svgImage type, includes additional centering offset
  */
-export function calculateLayerTransform(
+function calculateLayerTransform(
   position: LayerPosition | undefined,
   viewBox: ViewBox | undefined,
   scale?: number,
@@ -93,7 +93,7 @@ export function calculateLayerTransform(
 /**
  * Generate shape path centered at origin (for transform-based positioning)
  */
-export function generateCenteredShapePath(
+function generateCenteredShapePath(
   subtype: string,
   width: number,
   height: number,
@@ -247,19 +247,4 @@ export function processLayerForRendering(
   }
 
   return processed
-}
-
-/**
- * Check if all required positioning data is available
- */
-export function hasValidPosition(layer: FlatLayerData, viewBox: ViewBox | undefined): boolean {
-  return !!(
-    layer &&
-    layer.position &&
-    layer.position.x !== undefined &&
-    layer.position.y !== undefined &&
-    viewBox &&
-    viewBox.width > 0 &&
-    viewBox.height > 0
-  )
 }

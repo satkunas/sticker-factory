@@ -234,7 +234,7 @@ export function combineTransforms(transforms: string[]): string {
  * @param contentDimensions - Content dimensions to validate
  * @returns True if inputs are valid
  */
-export function validateCenteringInputs(
+function validateCenteringInputs(
   templateViewBox: ViewBox,
   contentDimensions: Dimensions
 ): boolean {
