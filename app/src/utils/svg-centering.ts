@@ -216,26 +216,6 @@ export function maintainCenterDuringRotation(
 }
 
 /**
- * Calculate proper transform origin for combined transforms
- *
- * @param imageCenter - Center point of the image
- * @param contentCenter - Center point of the content area
- * @returns Transform origin string for SVG transforms
- */
-export function calculateTransformOrigin(
-  imageCenter: Point,
-  contentCenter: Point
-): string {
-  // Validate inputs
-  if (!isValidNumber(imageCenter.x) || !isValidNumber(imageCenter.y) ||
-      !isValidNumber(contentCenter.x) || !isValidNumber(contentCenter.y)) {
-    return 'center'
-  }
-
-  return `${imageCenter.x} ${imageCenter.y}`
-}
-
-/**
  * Combine multiple transforms into a single transform string
  *
  * @param transforms - Array of transform strings to combine

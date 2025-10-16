@@ -861,14 +861,6 @@ export function analyzeSvgViewBoxFit(svgContent: string, padding = 2): SvgViewBo
   }
 }
 
-/**
- * Quick check if an SVG has centering issues
- */
-export function hasSvgCenteringIssues(svgContent: string): boolean {
-  const analysis = analyzeSvgViewBoxFit(svgContent)
-  return analysis.severity === 'minor' || analysis.severity === 'major'
-}
-
 // =============================================================================
 // CENTER-OF-MASS (CENTROID) CALCULATION FUNCTIONS
 // =============================================================================
