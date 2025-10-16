@@ -4,7 +4,7 @@
     :class="[
       'relative aspect-square rounded-lg border-2 transition-all duration-200 group',
       isSelected
-        ? 'border-primary-500 bg-primary-50'
+        ? 'border-primary-500 bg-primary-50 shadow-md shadow-primary-200'
         : 'border-secondary-200 hover:border-secondary-300 hover:bg-secondary-50'
     ]"
     :title="font.name"
@@ -12,9 +12,9 @@
   >
     <!-- Font Preview Character -->
     <div class="absolute inset-1 flex items-center justify-center overflow-hidden">
-      <span 
+      <span
         class="font-bold leading-none select-none overflow-hidden text-ellipsis whitespace-nowrap max-w-full text-center"
-        :style="{ 
+        :style="{
           fontFamily: fontLoaded ? getFontFamily(font) : font.fallback, // Used in template
           color: isSelected ? '#059669' : '#374151',
           fontSize: getOptimalFontSize(font, stickerText, props.showPreview)
@@ -23,15 +23,23 @@
         {{ getPreviewChar(font, stickerText, props.showPreview) }}
       </span>
     </div>
-    
-    <!-- Selection Indicator -->
-    <div 
+
+    <!-- Selection Indicator with Badge -->
+    <div
       v-if="isSelected"
-      class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary-600 flex items-center justify-center"
+      class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary-600 flex items-center justify-center shadow-lg"
     >
-      <svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+      <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
       </svg>
+    </div>
+
+    <!-- "Selected" Label -->
+    <div
+      v-if="isSelected"
+      class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 bg-primary-600 text-white text-xs px-2 py-0.5 rounded-full whitespace-nowrap font-medium shadow-md"
+    >
+      Selected
     </div>
     
     <!-- Font Name on Hover -->

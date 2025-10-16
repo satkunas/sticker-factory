@@ -217,10 +217,6 @@ function mergeFlatLayerData(templateDefaults: FlatLayerData, formOverrides: Part
  */
 function createFlatFormData(template: SimpleTemplate, urlFormData: Partial<FlatLayerData>[] = []): FlatLayerData[] {
   return template.layers
-    .filter(templateLayer => {
-      const flatLayer = templateLayer as unknown as FlatLayerData
-      return flatLayer.subtype !== 'path'
-    })
     .map(templateLayer => {
       const templateDefaults = flattenTemplateLayer(templateLayer)
       const userOverrides = urlFormData.find(layer => layer.id === templateLayer.id) || {}

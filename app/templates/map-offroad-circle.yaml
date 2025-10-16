@@ -1,0 +1,156 @@
+name: "M.A.P. OFF ROAD"
+id: "map-offroad-circle"
+description: "Circular off-road sticker with gradient stripe and mountain icon"
+category: "circle"
+width: 400
+height: 400
+layers:
+  # Outer white circle background
+  - id: "white-bg"
+    type: "shape"
+    subtype: "circle"
+    position: { x: "50%", y: "50%" }
+    width: 360
+    height: 360
+    fill: "#ffffff"
+    stroke: "none"
+
+  # Outer circle border
+  - id: "outer-border"
+    type: "shape"
+    subtype: "circle"
+    position: { x: "50%", y: "50%" }
+    width: 370
+    height: 370
+    fill: "none"
+    stroke: "#3d3d3d"
+    strokeWidth: 4
+
+  # Diagonal stripe band - red section (arc path)
+  - id: "stripe-red"
+    type: "shape"
+    subtype: "path"
+    path: "M 270,70 A 180,180 0 0,1 320,180 L 310,185 A 170,170 0 0,0 265,80 Z"
+    position: { x: 0, y: 0 }
+    fill: "#e63946"
+    stroke: "none"
+
+  # Diagonal stripe band - orange section (arc path)
+  - id: "stripe-orange"
+    type: "shape"
+    subtype: "path"
+    path: "M 280,65 A 185,185 0 0,1 330,185 L 320,190 A 175,175 0 0,0 270,75 Z"
+    position: { x: 0, y: 0 }
+    fill: "#ff8c42"
+    stroke: "none"
+
+  # Diagonal stripe band - yellow section (arc path)
+  - id: "stripe-yellow"
+    type: "shape"
+    subtype: "path"
+    path: "M 290,60 A 190,190 0 0,1 340,190 L 330,195 A 180,180 0 0,0 280,70 Z"
+    position: { x: 0, y: 0 }
+    fill: "#ffd700"
+    stroke: "none"
+
+  # Central brown circle
+  - id: "center-circle"
+    type: "shape"
+    subtype: "circle"
+    position: { x: "50%", y: "50%" }
+    width: 180
+    height: 180
+    fill: "#3d2817"
+    stroke: "none"
+
+  # Mountain icon - 3 peaks (custom path)
+  - id: "mountain-icon"
+    type: "shape"
+    subtype: "path"
+    path: "M 150,230 L 170,190 L 190,210 L 200,190 L 220,220 L 235,195 L 250,230 Z"
+    position: { x: 0, y: 0 }
+    fill: "#ffffff"
+    stroke: "none"
+
+  # Top arc path for "M.A.P. OFF" curved text
+  - id: "top-arc-path"
+    type: "shape"
+    subtype: "path"
+    path: "M 70,200 A 130,130 0 0,1 330,200"
+    position: { x: 0, y: 0 }
+
+  # Top curved text - "M.A.P. OFF"
+  - id: "top-curved-text"
+    type: "text"
+    label: "Top Text"
+    default: "M.A.P. OFF"
+    textPath: "top-arc-path"
+    startOffset: "50%"
+    dy: -10
+    dominantBaseline: "middle"
+    position: { x: "50%", y: "50%" }
+    maxLength: 15
+    fontFamily: "Oswald"
+    fontSize: 48
+    fontWeight: 700
+    fontColor: "#3d2817"
+
+  # "ROAD" text on gradient stripe
+  - id: "road-text"
+    type: "text"
+    label: "Road Text"
+    default: "ROAD"
+    position: { x: "72%", y: "35%" }
+    maxLength: 10
+    fontFamily: "Oswald"
+    fontSize: 44
+    fontWeight: 700
+    fontColor: "#3d2817"
+    rotation: -45
+
+  # "ESTD" text (left side)
+  - id: "estd-text"
+    type: "text"
+    label: "Est Label"
+    default: "ESTD"
+    position: { x: "20%", y: "48%" }
+    maxLength: 8
+    fontFamily: "Roboto Condensed"
+    fontSize: 20
+    fontWeight: 700
+    fontColor: "#3d2817"
+
+  # Year "2020" (right side)
+  - id: "year-text"
+    type: "text"
+    label: "Year"
+    default: "2020"
+    position: { x: "80%", y: "48%" }
+    maxLength: 4
+    fontFamily: "Roboto Condensed"
+    fontSize: 20
+    fontWeight: 700
+    fontColor: "#3d2817"
+
+  # Bottom arc path for coordinates
+  - id: "bottom-arc-path"
+    type: "shape"
+    subtype: "path"
+    path: "M 90,200 A 110,110 0 0,0 310,200"
+    position: { x: 0, y: 0 }
+
+  # Bottom curved coordinates
+  - id: "bottom-coordinates"
+    type: "text"
+    label: "Coordinates"
+    default: "45.58209,-73.32785"
+    textPath: "bottom-arc-path"
+    startOffset: "50%"
+    dy: 12
+    dominantBaseline: "middle"
+    position: { x: "50%", y: "50%" }
+    maxLength: 25
+    fontFamily: "Roboto"
+    fontSize: 22
+    fontWeight: 700
+    fontColor: "#3d2817"

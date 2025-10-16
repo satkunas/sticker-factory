@@ -26,9 +26,10 @@
     <!-- SHAPE LAYERS -->
     <!-- Shape paths are already positioned and centered during template loading -->
     <!-- No additional transforms needed - path coordinates are final -->
-    <!-- Exclude subtype='path' shapes - they are only for textPath reference in <defs> -->
+    <!-- Render visible shapes (with fill/stroke) even if subtype='path' -->
+    <!-- Only exclude pure textPath reference paths (no fill/stroke) -->
     <g
-      v-if="templateLayer.type === 'shape' && templateLayer.subtype !== 'path'"
+      v-if="templateLayer.type === 'shape' && (templateLayer.subtype !== 'path' || templateLayer.fill || templateLayer.stroke)"
       :data-layer-id="templateLayer.id"
       :data-layer-type="templateLayer.type"
       class="layer-clickable"

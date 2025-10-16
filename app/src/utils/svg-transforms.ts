@@ -144,11 +144,12 @@ export function getSvgImageTransformCase(layerData: FlatLayerData | undefined): 
   rotation?: number
   transformOrigin?: Point
 } {
-  // Complex transforms: scale + rotation with transform origin
-  if (layerData?.transformOrigin && layerData?.scale !== undefined) {
+  // Complex transforms: scale and/or rotation with transform origin
+  // Treat undefined scale as 1 (100%) when rotation is present
+  if (layerData?.transformOrigin && (layerData?.scale !== undefined || layerData?.rotation !== undefined)) {
     return {
       case: 'scale-with-origin',
-      scale: layerData.scale,
+      scale: layerData.scale !== undefined ? layerData.scale : 1, // Default to 1 (100%) if undefined
       rotation: layerData.rotation,
       transformOrigin: layerData.transformOrigin
     }
@@ -162,7 +163,7 @@ export function getSvgImageTransformCase(layerData: FlatLayerData | undefined): 
     }
   }
 
-  // Rotation only (no scale)
+  // Rotation only (no scale, no transform origin)
   if (layerData?.rotation !== undefined) {
     return {
       case: 'rotation-only',

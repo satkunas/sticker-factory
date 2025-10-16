@@ -1,0 +1,134 @@
+name: "La Vérendrye Québec"
+id: "verendrye-square"
+description: "Square sticker with slingshot design for La Vérendrye, Québec"
+category: "square"
+width: 400
+height: 400
+layers:
+  # Yellow background
+  - id: "yellow-bg"
+    type: "shape"
+    subtype: "rect"
+    position: { x: "50%", y: "50%" }
+    width: 380
+    height: 380
+    fill: "#ffeb3b"
+    stroke: "none"
+    rx: 8
+    ry: 8
+    rotation: 15
+
+  # Outer border (dark gray)
+  - id: "outer-border"
+    type: "shape"
+    subtype: "rect"
+    position: { x: "50%", y: "50%" }
+    width: 390
+    height: 390
+    fill: "none"
+    stroke: "#4a4a4a"
+    strokeWidth: 6
+    rx: 12
+    ry: 12
+    rotation: 15
+
+  # Inner border (dark gray)
+  - id: "inner-border"
+    type: "shape"
+    subtype: "rect"
+    position: { x: "50%", y: "50%" }
+    width: 340
+    height: 340
+    fill: "none"
+    stroke: "#4a4a4a"
+    strokeWidth: 4
+    rx: 8
+    ry: 8
+    rotation: 15
+
+  # Slingshot left arm (handle/base)
+  - id: "slingshot-handle"
+    type: "shape"
+    subtype: "path"
+    path: "M 100,120 Q 90,180 95,250 Q 98,320 105,380"
+    position: { x: 0, y: 0 }
+    fill: "none"
+    stroke: "#4a4a4a"
+    strokeWidth: 32
+    strokeLinecap: "round"
+    rotation: 15
+
+  # Slingshot right arm (elastic band)
+  - id: "slingshot-band"
+    type: "shape"
+    subtype: "path"
+    path: "M 105,130 Q 180,100 260,120 L 290,140 Q 300,150 310,165"
+    position: { x: 0, y: 0 }
+    fill: "none"
+    stroke: "#4a4a4a"
+    strokeWidth: 26
+    strokeLinecap: "round"
+    strokeLinejoin: "round"
+    rotation: 15
+
+  # Slingshot crossbar
+  - id: "slingshot-cross"
+    type: "shape"
+    subtype: "path"
+    path: "M 295,145 L 315,175"
+    position: { x: 0, y: 0 }
+    fill: "none"
+    stroke: "#4a4a4a"
+    strokeWidth: 20
+    strokeLinecap: "round"
+    rotation: 15
+
+  # Text arc path for "La Vérendrye"
+  - id: "text-arc-1"
+    type: "shape"
+    subtype: "path"
+    path: "M 110,300 Q 130,220 170,180"
+    position: { x: 0, y: 0 }
+    rotation: 15
+
+  # "La Vérendrye" text
+  - id: "text-verendrye"
+    type: "text"
+    label: "Place Name 1"
+    default: "La Vérendrye"
+    textPath: "text-arc-1"
+    startOffset: "5%"
+    dy: 0
+    dominantBaseline: "middle"
+    position: { x: "50%", y: "50%" }
+    maxLength: 20
+    fontFamily: "Roboto"
+    fontSize: 36
+    fontWeight: 400
+    fontColor: "#3d3d3d"
+    rotation: 15
+
+  # Text arc path for "Québec"
+  - id: "text-arc-2"
+    type: "shape"
+    subtype: "path"
+    path: "M 110,340 Q 125,280 155,240"
+    position: { x: 0, y: 0 }
+    rotation: 15
+
+  # "Québec" text
+  - id: "text-quebec"
+    type: "text"
+    label: "Place Name 2"
+    default: "Québec"
+    textPath: "text-arc-2"
+    startOffset: "5%"
+    dy: 0
+    dominantBaseline: "middle"
+    position: { x: "50%", y: "50%" }
+    maxLength: 15
+    fontFamily: "Roboto"
+    fontSize: 32
+    fontWeight: 400
+    fontColor: "#3d3d3d"
+    rotation: 15

@@ -1,0 +1,122 @@
+name: "US Route Shield"
+id: "us-route-shield"
+description: "Classic US highway route shield (Maine US 1 style)"
+category: "diamond"
+width: 400
+height: 450
+layers:
+  # Shield background (white)
+  - id: "shield-bg"
+    type: "shape"
+    subtype: "path"
+    path: "M 200,40 Q 160,40 130,55 Q 110,65 95,80 L 90,90 Q 85,110 85,130 L 85,280 Q 90,320 110,350 Q 140,390 200,410 Q 260,390 290,350 Q 310,320 315,280 L 315,130 Q 315,110 310,90 L 305,80 Q 290,65 270,55 Q 240,40 200,40 Z"
+    position: { x: 0, y: 0 }
+    fill: "#ffffff"
+    stroke: "none"
+
+  # Shield border (dark gray with texture)
+  - id: "shield-border"
+    type: "shape"
+    subtype: "path"
+    path: "M 200,30 Q 155,30 120,48 Q 95,60 75,80 L 68,92 Q 60,115 60,140 L 60,280 Q 65,325 90,360 Q 125,405 200,428 Q 275,405 310,360 Q 335,325 340,280 L 340,140 Q 340,115 332,92 L 325,80 Q 305,60 280,48 Q 245,30 200,30 Z"
+    position: { x: 0, y: 0 }
+    fill: "none"
+    stroke: "#4a4a4a"
+    strokeWidth: 8
+
+  # Scalloped top decorations (left)
+  - id: "scallop-left-1"
+    type: "shape"
+    subtype: "path"
+    path: "M 140,60 Q 145,50 150,60"
+    position: { x: 0, y: 0 }
+    fill: "none"
+    stroke: "#4a4a4a"
+    strokeWidth: 6
+
+  # Scalloped top decorations (center-left)
+  - id: "scallop-left-2"
+    type: "shape"
+    subtype: "path"
+    path: "M 170,48 Q 175,38 180,48"
+    position: { x: 0, y: 0 }
+    fill: "none"
+    stroke: "#4a4a4a"
+    strokeWidth: 6
+
+  # Scalloped top decorations (center)
+  - id: "scallop-center"
+    type: "shape"
+    subtype: "path"
+    path: "M 195,42 Q 200,32 205,42"
+    position: { x: 0, y: 0 }
+    fill: "none"
+    stroke: "#4a4a4a"
+    strokeWidth: 6
+
+  # Scalloped top decorations (center-right)
+  - id: "scallop-right-1"
+    type: "shape"
+    subtype: "path"
+    path: "M 220,48 Q 225,38 230,48"
+    position: { x: 0, y: 0 }
+    fill: "none"
+    stroke: "#4a4a4a"
+    strokeWidth: 6
+
+  # Scalloped top decorations (right)
+  - id: "scallop-right-2"
+    type: "shape"
+    subtype: "path"
+    path: "M 250,60 Q 255,50 260,60"
+    position: { x: 0, y: 0 }
+    fill: "none"
+    stroke: "#4a4a4a"
+    strokeWidth: 6
+
+  # "MAINE" text at top
+  - id: "state-name"
+    type: "text"
+    label: "State Name"
+    default: "MAINE"
+    position: { x: "50%", y: "20%" }
+    maxLength: 15
+    fontFamily: "Oswald"
+    fontSize: 52
+    fontWeight: 700
+    fontColor: "#3d3d3d"
+
+  # Horizontal separator line
+  - id: "separator-line"
+    type: "shape"
+    subtype: "rect"
+    position: { x: "50%", y: "32%" }
+    width: 200
+    height: 3
+    fill: "#3d3d3d"
+    stroke: "none"
+
+  # "U S" text
+  - id: "us-text"
+    type: "text"
+    label: "US Text"
+    default: "U S"
+    position: { x: "50%", y: "44%" }
+    maxLength: 8
+    fontFamily: "Oswald"
+    fontSize: 48
+    fontWeight: 700
+    fontColor: "#3d3d3d"
+    letterSpacing: 12
+
+  # Route number "1"
+  - id: "route-number"
+    type: "text"
+    label: "Route Number"
+    default: "1"
+    position: { x: "50%", y: "72%" }
+    maxLength: 4
+    fontFamily: "Oswald"
+    fontSize: 160
+    fontWeight: 700
+    fontColor: "#3d3d3d"

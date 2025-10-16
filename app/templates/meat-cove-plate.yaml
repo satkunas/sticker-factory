@@ -1,0 +1,119 @@
+name: "Meat Cove License Plate"
+id: "meat-cove-plate"
+description: "License plate style sticker for Meat Cove, Cape Breton Island"
+category: "rectangle"
+width: 600
+height: 300
+layers:
+  # Sky blue background
+  - id: "sky-bg"
+    type: "shape"
+    subtype: "rect"
+    position: { x: "50%", y: "50%" }
+    width: 540
+    height: 260
+    fill: "#b8e6f5"
+    stroke: "none"
+    rx: 8
+    ry: 8
+
+  # Purple outer border
+  - id: "outer-border"
+    type: "shape"
+    subtype: "rect"
+    position: { x: "50%", y: "50%" }
+    width: 550
+    height: 270
+    fill: "none"
+    stroke: "#7c6ba6"
+    strokeWidth: 6
+    rx: 12
+    ry: 12
+
+  # Yellow sun (half circle at top)
+  - id: "sun"
+    type: "shape"
+    subtype: "circle"
+    position: { x: "50%", y: "12%" }
+    width: 50
+    height: 50
+    fill: "#ffd700"
+    stroke: "none"
+
+  # Green hills - back layer (wavy path)
+  - id: "hills-back"
+    type: "shape"
+    subtype: "path"
+    path: "M 0,140 Q 80,100 160,130 Q 240,160 320,135 Q 400,110 480,145 Q 520,165 560,150 L 560,280 L 0,280 Z"
+    position: { x: 0, y: 0 }
+    fill: "#7cb342"
+    stroke: "none"
+
+  # Green hills - front layer (wavy path)
+  - id: "hills-front"
+    type: "shape"
+    subtype: "path"
+    path: "M 0,180 Q 100,150 200,175 Q 300,200 400,170 Q 480,150 560,185 L 560,280 L 0,280 Z"
+    position: { x: 0, y: 0 }
+    fill: "#66bb6a"
+    stroke: "none"
+
+  # "Meat Cove" title text (italic)
+  - id: "title-text"
+    type: "text"
+    label: "Title"
+    default: "Meat Cove"
+    position: { x: "50%", y: "13%" }
+    maxLength: 20
+    fontFamily: "Playfair Display"
+    fontSize: 38
+    fontWeight: 700
+    fontColor: "#7c6ba6"
+    fontStyle: "italic"
+
+  # Left text "4U2"
+  - id: "left-code"
+    type: "text"
+    label: "Left Code"
+    default: "4U2"
+    position: { x: "22%", y: "52%" }
+    maxLength: 5
+    fontFamily: "Oswald"
+    fontSize: 96
+    fontWeight: 700
+    fontColor: "#7c6ba6"
+
+  # Cape Breton Island shape (simplified outline)
+  - id: "island-shape"
+    type: "shape"
+    subtype: "path"
+    path: "M 280,110 Q 285,105 290,108 L 295,115 Q 300,125 298,135 L 293,145 Q 288,152 283,148 L 278,140 Q 275,130 277,120 Z"
+    position: { x: 0, y: 0 }
+    fill: "#66bb6a"
+    stroke: "#ffffff"
+    strokeWidth: 2
+
+  # Right text "SEA"
+  - id: "right-code"
+    type: "text"
+    label: "Right Code"
+    default: "SEA"
+    position: { x: "78%", y: "52%" }
+    maxLength: 5
+    fontFamily: "Oswald"
+    fontSize: 96
+    fontWeight: 700
+    fontColor: "#7c6ba6"
+
+  # "Cape Breton Island" subtitle (italic)
+  - id: "subtitle-text"
+    type: "text"
+    label: "Subtitle"
+    default: "Cape Breton Island"
+    position: { x: "50%", y: "85%" }
+    maxLength: 30
+    fontFamily: "Playfair Display"
+    fontSize: 32
+    fontWeight: 700
+    fontColor: "#7c6ba6"
+    fontStyle: "italic"

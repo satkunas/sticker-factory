@@ -1,0 +1,198 @@
+name: "Parks Canada Badge"
+id: "parks-canada-badge"
+description: "Official Parks Canada circular badge with outdoor symbols"
+category: "circle"
+width: 400
+height: 400
+layers:
+  # Dark green outer circle
+  - id: "outer-circle"
+    type: "shape"
+    subtype: "circle"
+    position: { x: "50%", y: "50%" }
+    width: 370
+    height: 370
+    fill: "#2f5943"
+    stroke: "none"
+
+  # Cream border circle
+  - id: "border-circle"
+    type: "shape"
+    subtype: "circle"
+    position: { x: "50%", y: "50%" }
+    width: 380
+    height: 380
+    fill: "none"
+    stroke: "#f2e8d5"
+    strokeWidth: 8
+
+  # Inner circle border
+  - id: "inner-circle"
+    type: "shape"
+    subtype: "circle"
+    position: { x: "50%", y: "50%" }
+    width: 300
+    height: 300
+    fill: "none"
+    stroke: "#f2e8d5"
+    strokeWidth: 2
+
+  # Left arc path for "PARKS"
+  - id: "left-arc-path"
+    type: "shape"
+    subtype: "path"
+    path: "M 120,100 A 150,150 0 0,0 80,200"
+    position: { x: 0, y: 0 }
+
+  # "PARKS" curved text
+  - id: "parks-text"
+    type: "text"
+    label: "Parks Text"
+    default: "PARKS"
+    textPath: "left-arc-path"
+    startOffset: "5%"
+    dy: 0
+    dominantBaseline: "middle"
+    position: { x: "50%", y: "50%" }
+    maxLength: 10
+    fontFamily: "Oswald"
+    fontSize: 44
+    fontWeight: 700
+    fontColor: "#f2e8d5"
+
+  # Right arc path for "PARCS"
+  - id: "right-arc-path"
+    type: "shape"
+    subtype: "path"
+    path: "M 320,200 A 150,150 0 0,0 280,100"
+    position: { x: 0, y: 0 }
+
+  # "PARCS" curved text
+  - id: "parcs-text"
+    type: "text"
+    label: "Parcs Text"
+    default: "PARCS"
+    textPath: "right-arc-path"
+    startOffset: "5%"
+    dy: 0
+    dominantBaseline: "middle"
+    position: { x: "50%", y: "50%" }
+    maxLength: 10
+    fontFamily: "Oswald"
+    fontSize: 44
+    fontWeight: 700
+    fontColor: "#f2e8d5"
+
+  # Maple leaf at top
+  - id: "maple-leaf-top"
+    type: "svgImage"
+    svgId: "leaf"
+    position: { x: "50%", y: "16%" }
+    width: 24
+    height: 24
+    fill: "#f2e8d5"
+
+  # Left paddle - handle (rotated rectangle)
+  - id: "left-paddle-handle"
+    type: "shape"
+    subtype: "rect"
+    position: { x: "38%", y: "50%" }
+    width: 80
+    height: 8
+    fill: "#f2e8d5"
+    stroke: "none"
+    rotation: -38
+
+  # Left paddle - blade (rotated ellipse)
+  - id: "left-paddle-blade"
+    type: "shape"
+    subtype: "ellipse"
+    position: { x: "25%", y: "38%" }
+    width: 24
+    height: 14
+    fill: "#f2e8d5"
+    stroke: "none"
+    rotation: -38
+
+  # Right paddle - handle (rotated rectangle)
+  - id: "right-paddle-handle"
+    type: "shape"
+    subtype: "rect"
+    position: { x: "62%", y: "50%" }
+    width: 80
+    height: 8
+    fill: "#f2e8d5"
+    stroke: "none"
+    rotation: 38
+
+  # Right paddle - blade (rotated ellipse)
+  - id: "right-paddle-blade"
+    type: "shape"
+    subtype: "ellipse"
+    position: { x: "75%", y: "38%" }
+    width: 24
+    height: 14
+    fill: "#f2e8d5"
+    stroke: "none"
+    rotation: 38
+
+  # Trees icon (top center)
+  - id: "trees-icon"
+    type: "svgImage"
+    svgId: "trees"
+    position: { x: "50%", y: "30%" }
+    width: 28
+    height: 28
+    fill: "#f2e8d5"
+
+  # Wave icon (left quadrant)
+  - id: "wave-icon"
+    type: "shape"
+    subtype: "path"
+    path: "M 125,205 Q 130,200 135,205 Q 140,210 145,205"
+    position: { x: 0, y: 0 }
+    fill: "none"
+    stroke: "#f2e8d5"
+    strokeWidth: 3
+    strokeLinecap: "round"
+
+  # Tent icon (right quadrant)
+  - id: "tent-icon"
+    type: "svgImage"
+    svgId: "tent"
+    position: { x: "70%", y: "52%" }
+    width: 24
+    height: 24
+    fill: "#f2e8d5"
+
+  # Mountain icon (bottom center)
+  - id: "mountain-icon"
+    type: "svgImage"
+    svgId: "mountain"
+    position: { x: "50%", y: "68%" }
+    width: 28
+    height: 28
+    fill: "#f2e8d5"
+
+  # Bottom arc path for "CANADA"
+  - id: "bottom-arc-path"
+    type: "shape"
+    subtype: "path"
+    path: "M 90,200 A 120,120 0 0,0 310,200"
+    position: { x: 0, y: 0 }
+
+  # "CANADA" curved text
+  - id: "canada-text"
+    type: "text"
+    label: "Canada Text"
+    default: "CANADA"
+    textPath: "bottom-arc-path"
+    startOffset: "50%"
+    dy: 15
+    dominantBaseline: "middle"
+    position: { x: "50%", y: "50%" }
+    maxLength: 10
+    fontFamily: "Oswald"
+    fontSize: 40
+    fontWeight: 700
+    fontColor: "#f2e8d5"
