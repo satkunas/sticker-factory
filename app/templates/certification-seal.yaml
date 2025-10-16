@@ -52,7 +52,7 @@ layers:
     position: { x: "50%", y: "50%" }
     maxLength: 25
     fontFamily: "Oswald"
-    fontSize: 36
+    fontSize: 32
     fontWeight: 700
     fontColor: "#1e40af"
     clip: "inner-circle"
@@ -72,11 +72,12 @@ layers:
     fontSize: 28
     fontWeight: 700
     fontColor: "#1e40af"
+    clip: "inner-circle"
 
   # Center star decoration
   - id: "center-star"
     type: "svgImage"
-    svgId: "ui-star"
+    svgId: "star"
     position: { x: "50%", y: "50%" }
     width: 60
     height: 60
@@ -92,7 +93,7 @@ layers:
     position: { x: "50%", y: "58%" }
     maxLength: 10
     fontFamily: "Roboto"
-    fontSize: 18
+    fontSize: 20
     fontWeight: 700
     fontColor: "#1e40af"
     clip: "inner-circle"

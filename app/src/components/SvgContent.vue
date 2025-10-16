@@ -161,7 +161,8 @@
                   undefined,
                   layerData?.color,
                   layerData?.strokeColor,
-                  layerData?.strokeWidth
+                  layerData?.strokeWidth,
+                  layerData?.strokeLinejoin
                 )"
               />
             </g>
@@ -179,7 +180,8 @@
                 undefined,
                 layerData?.color,
                 layerData?.strokeColor,
-                layerData?.strokeWidth
+                layerData?.strokeWidth,
+                layerData?.strokeLinejoin
               )"
             />
           </g>
@@ -196,7 +198,8 @@
                 undefined,
                 layerData?.color,
                 layerData?.strokeColor,
-                layerData?.strokeWidth
+                layerData?.strokeWidth,
+                layerData?.strokeLinejoin
               )"
             />
           </g>
@@ -212,7 +215,8 @@
               undefined,
               layerData?.color,
               layerData?.strokeColor,
-              layerData?.strokeWidth
+              layerData?.strokeWidth,
+              layerData?.strokeLinejoin
             )"
           />
         </template>

@@ -33,7 +33,7 @@ layers:
     clip: "inner-circle"
     maxLength: 12
     fontFamily: "Oswald"
-    fontSize: 18
+    fontSize: 20
     fontWeight: 700
     fontColor: "#7f1d1d"
 
@@ -45,7 +45,7 @@ layers:
     clip: "inner-circle"
     maxLength: 12
     fontFamily: "Oswald"
-    fontSize: 15
+    fontSize: 17
     fontWeight: 600
     fontColor: "#991b1b"
 

@@ -64,11 +64,12 @@ layers:
     position: { x: "50%", y: "50%" }
     maxLength: 25
     fontFamily: "Oswald"
-    fontSize: 28
+    fontSize: 32
     fontWeight: 700
     fontColor: "#ffffff"
     strokeColor: "#7f1d1d"
     strokeWidth: 1
+    clip: "ribbon-visual"
 
   # Left ribbon tail
   - id: "left-tail"
@@ -93,7 +94,7 @@ layers:
   # Decorative corner elements
   - id: "corner-top-left"
     type: "svgImage"
-    svgId: "ui-star"
+    svgId: "star"
     position: { x: "10%", y: "15%" }
     width: 24
     height: 24
@@ -103,7 +104,7 @@ layers:
 
   - id: "corner-top-right"
     type: "svgImage"
-    svgId: "ui-star"
+    svgId: "star"
     position: { x: "90%", y: "15%" }
     width: 24
     height: 24
@@ -122,3 +123,4 @@ layers:
     fontSize: 16
     fontWeight: 600
     fontColor: "#475569"
+    clip: "background"

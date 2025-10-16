@@ -1,8 +1,8 @@
 name: "Event Promotion Sticker"
 id: "event-promo-sticker"
 description: "Bold promotional sticker for events and sales"
-width: 144
-height: 144
+width: 200
+height: 200
 viewBox: { x: 0, y: 0, width: 200, height: 200 }
 layers:
   - id: "starburst-background"
@@ -46,7 +46,7 @@ layers:
     clip: "inner-circle"
     maxLength: 10
     fontFamily: "Bebas Neue"
-    fontSize: 24
+    fontSize: 28
     fontWeight: 400
     fontColor: "#ffffff"
 
@@ -60,7 +60,7 @@ layers:
     fontFamily: "Bebas Neue"
     fontSize: 18
     fontWeight: 400
-    fontColor: "#fef2f2"
+    fontColor: "#fde68a"
 
   - id: "detail-text"
     type: "text"
@@ -70,6 +70,6 @@ layers:
     clip: "inner-circle"
     maxLength: 15
     fontFamily: "Oswald"
-    fontSize: 11
+    fontSize: 12
     fontWeight: 600
     fontColor: "#fef2f2"

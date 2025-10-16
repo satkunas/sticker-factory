@@ -32,7 +32,7 @@ layers:
     clip: "page-background"
     maxLength: 30
     fontFamily: "Oswald"
-    fontSize: 22
+    fontSize: 24
     fontWeight: 700
     fontColor: "#111827"
 
@@ -67,7 +67,7 @@ layers:
     position: { x: "70%", y: "82%" }
     clip: "page-background"
     maxLength: 50
-    fontFamily: "Inter"
+    fontFamily: "Roboto"
     fontSize: 13
     fontWeight: 500
     fontColor: "#374151"

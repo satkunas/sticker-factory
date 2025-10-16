@@ -34,7 +34,7 @@ layers:
     clip: "header-bar"
     maxLength: 15
     fontFamily: "Bebas Neue"
-    fontSize: 16
+    fontSize: 18
     fontWeight: 400
     fontColor: "#ffffff"
 
@@ -46,7 +46,7 @@ layers:
     clip: "sticker-background"
     maxLength: 20
     fontFamily: "Oswald"
-    fontSize: 22
+    fontSize: 24
     fontWeight: 700
     fontColor: "#111827"
 
@@ -58,7 +58,7 @@ layers:
     clip: "sticker-background"
     maxLength: 25
     fontFamily: "Inter"
-    fontSize: 16
+    fontSize: 17
     fontWeight: 500
     fontColor: "#374151"
 

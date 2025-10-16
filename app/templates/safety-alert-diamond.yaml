@@ -43,7 +43,7 @@ layers:
     clip: "background"
     maxLength: 10
     fontFamily: "Oswald"
-    fontSize: 20
+    fontSize: 22
     fontWeight: 700
     fontColor: "#dc2626"
 
@@ -57,7 +57,7 @@ layers:
     fontFamily: "Inter"
     fontSize: 14
     fontWeight: 600
-    fontColor: "#7f1d1d"
+    fontColor: "#991b1b"
 
   - id: "icon-middle-left"
     type: "svgImage"

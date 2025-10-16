@@ -19,7 +19,7 @@
       </defs>
 
       <!-- Content group without wrapper transform - each element handles its own positioning -->
-      <template v-for="(element, index) in svgRenderData" :key="`${element.type}-${index}`">
+      <template v-for="(element, index) in svgRenderData" :key="getElementKey(element, index)">
         <!-- Shape rendering with unified transform -->
         <g v-if="element.type === 'shape'" :transform="element.transform">
           <path
@@ -53,9 +53,10 @@
         </g>
 
         <!-- SVG Image rendering with unified transform -->
+        <!-- Key includes hash of styledContent to force re-render on style changes -->
         <g v-if="element.type === 'svgImage'" :transform="element.transform">
           <g
-            :key="element.id"
+            :key="getElementKey(element, index)"
             :clip-path="element.clipPath"
             v-html="element.styledContent || element.svgContent"
           />
@@ -114,6 +115,29 @@ const {
   updateImageCenter,
   getImageCenterTransform
 } = useSvgCentering(templateRef)
+
+// Simple hash function for generating stable keys from content
+// This ensures Vue re-renders v-html when styledContent changes
+const hashString = (str: string): string => {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i)
+    hash = ((hash << 5) - hash) + char
+    hash = hash & hash // Convert to 32-bit integer
+  }
+  return Math.abs(hash).toString(36)
+}
+
+// Generate Vue key that includes content hash for proper reactivity
+const getElementKey = (element: any, index: number): string => {
+  if (element.type === 'svgImage' && element.styledContent) {
+    // Hash the styledContent to create a stable, short key
+    // Any change to styling (color, stroke, strokeLinejoin, etc.) will change the hash
+    const hash = hashString(element.styledContent)
+    return `${element.id}-${hash}`
+  }
+  return `${element.type}-${index}`
+}
 
 // Transform validation is now handled in the unified positioning utility
 

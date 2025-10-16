@@ -7,13 +7,20 @@ import {
   sanitizeColorValue
 } from './svg-styling'
 import { resolveCoordinate } from './svg'
-import { calculateSvgCenterOffset } from './svg-bounds'
 
 /**
  * Enhanced SVG styling with proper color injection and positioning
  * Pure function that doesn't depend on reactive state
  */
 export const getStyledSvgContent = (svgImage: any) => {
+  logger.info('🎨 getStyledSvgContent CALLED with:', {
+    hasSvgContent: !!svgImage.svgContent,
+    strokeWidth: svgImage.strokeWidth,
+    strokeLinejoin: svgImage.strokeLinejoin,
+    fill: svgImage.fill,
+    stroke: svgImage.stroke
+  })
+
   const svgContent = svgImage.svgContent
   if (!svgContent) return ''
 
@@ -36,50 +43,22 @@ export const getStyledSvgContent = (svgImage: any) => {
       )
     }
 
-    // Apply stroke properties only if defined
-    if (strokeWidth !== undefined && strokeLinejoin) {
+    // Normalize currentColor for proper inheritance
+    styledContent = normalizeSvgCurrentColor(styledContent)
+
+    // CRITICAL: Apply stroke properties to outer <svg> element BEFORE extraction
+    // This ensures stroke-linejoin is on the <svg> tag that gets rendered
+    if (strokeWidth !== undefined || strokeLinejoin) {
+      logger.info('Applying stroke properties to SVG:', { strokeWidth, strokeLinejoin })
+      logger.info('Before stroke application:', styledContent.substring(0, 200))
+
       styledContent = applySvgStrokeProperties(
         styledContent,
         strokeWidth,
         strokeLinejoin
       )
-    }
 
-    // Normalize currentColor for proper inheritance
-    styledContent = normalizeSvgCurrentColor(styledContent)
-
-    // CRITICAL FIX: Extract inner content while preserving coordinate system
-    // Strip outer <svg> wrapper but maintain proper scaling context
-    const svgMatch = styledContent.match(/<svg[^>]*viewBox="([^"]*)"[^>]*>(.*?)<\/svg>/s)
-    if (svgMatch && svgMatch[2]) {
-      const viewBox = svgMatch[1] // e.g., "0 0 24 24"
-      const innerContent = svgMatch[2].trim()
-
-      // Extract viewBox dimensions to ensure proper coordinate system
-      const viewBoxParts = viewBox.split(/\s+/)
-      if (viewBoxParts.length === 4) {
-        const [minX, minY, _width, _height] = viewBoxParts.map(Number)
-
-        // Calculate dynamic offset to center the actual content within the viewBox
-        // Use SVG bounds analysis to find the true center of any SVG content
-        const centerOffset = calculateSvgCenterOffset(styledContent)
-
-        // Wrap inner content with precise centering compensation
-        return `<g transform="translate(${-minX + centerOffset.x}, ${-minY + centerOffset.y})">
-          <g transform="scale(1, 1)">
-            ${innerContent}
-          </g>
-        </g>`
-      }
-
-      // Fallback: return inner content as-is
-      return innerContent
-    }
-
-    // Fallback: try to extract without viewBox
-    const fallbackMatch = styledContent.match(/<svg[^>]*>(.*?)<\/svg>/s)
-    if (fallbackMatch && fallbackMatch[1]) {
-      return fallbackMatch[1].trim()
+      logger.info('After stroke application:', styledContent.substring(0, 200))
     }
 
     return styledContent

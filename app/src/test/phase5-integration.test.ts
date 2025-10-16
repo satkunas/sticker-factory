@@ -11,7 +11,8 @@ import {
   getUrlDrivenState,
   resetUrlDrivenStore,
   updateTemplate,
-  updateLayer
+  updateLayer,
+  flatFormData
 } from '../stores/urlDrivenStore'
 
 // Mock router for testing
@@ -228,7 +229,6 @@ describe('Phase 5: Integration Testing', () => {
 
     it('should generate correct render data from merged form data', async () => {
       initializeUrlDrivenStore(mockRouter)
-      const state = getUrlDrivenState()
 
       await updateTemplate('business-card')
 
@@ -238,14 +238,14 @@ describe('Phase 5: Integration Testing', () => {
         fontSize: 22
       })
 
-      // Check render data generation
-      expect(state.renderData).toHaveLength(3)
+      // Check render data generation (using new reactive computed system)
+      expect(flatFormData.value).toHaveLength(3)
 
-      const companyNameRender = state.renderData.find(layer => layer.id === 'company-name')
+      const companyNameRender = flatFormData.value.find(layer => layer.id === 'company-name')
       expect(companyNameRender).toBeDefined()
-      expect(companyNameRender?.textInput?.text).toBe('Test Company')
-      expect(companyNameRender?.textInput?.fontSize).toBe(22)
-      expect(companyNameRender?.textInput?.fontColor).toBe('#1a365d') // Template default
+      expect(companyNameRender?.text).toBe('Test Company')
+      expect(companyNameRender?.fontSize).toBe(22)
+      expect(companyNameRender?.fontColor).toBe('#1a365d') // Template default
     })
   })
 

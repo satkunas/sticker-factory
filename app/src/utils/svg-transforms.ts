@@ -70,7 +70,8 @@ export function applySvgRenderingAttributes(
   clipPath?: string,
   color?: string,
   strokeColor?: string,
-  strokeWidth?: number
+  strokeWidth?: number,
+  strokeLinejoin?: string
 ): string {
   if (!svgContent) return ''
 
@@ -98,6 +99,9 @@ export function applySvgRenderingAttributes(
   }
   if (strokeWidth !== undefined && strokeWidth > 0) {
     attributesToSet['stroke-width'] = strokeWidth.toString()
+  }
+  if (strokeLinejoin !== undefined) {
+    attributesToSet['stroke-linejoin'] = strokeLinejoin
   }
 
   // Process the SVG element
@@ -202,7 +206,8 @@ export function generateSvgImageHtml(
     undefined,
     layerData?.color,
     layerData?.strokeColor,
-    layerData?.strokeWidth
+    layerData?.strokeWidth,
+    layerData?.strokeLinejoin
   )
 
   // Check if layer has clip mask

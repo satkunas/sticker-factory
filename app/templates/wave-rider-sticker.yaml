@@ -44,11 +44,12 @@ layers:
     position: { x: "50%", y: "50%" }
     maxLength: 30
     fontFamily: "Oswald"
-    fontSize: 32
+    fontSize: 36
     fontWeight: 700
     fontColor: "#ffffff"
     strokeColor: "#0369a1"
     strokeWidth: 1
+    clip: "background"
 
   # Subtitle following wave
   - id: "subtitle-text"
@@ -65,6 +66,7 @@ layers:
     fontSize: 16
     fontWeight: 600
     fontColor: "#e0f2fe"
+    clip: "background"
 
   # Sun decoration
   - id: "sun"

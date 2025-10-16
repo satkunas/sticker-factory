@@ -44,8 +44,8 @@ layers:
     position: { x: "50%", y: "60%" }
     clip: "background"
     maxLength: 15
-    fontFamily: "Nunito"
-    fontSize: 16
+    fontFamily: "Oswald"
+    fontSize: 18
     fontWeight: 700
     fontColor: "#166534"
 

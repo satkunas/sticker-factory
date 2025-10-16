@@ -44,7 +44,7 @@ layers:
     fontFamily: "Inter"
     fontSize: 14
     fontWeight: 500
-    fontColor: "#e0e7ff"
+    fontColor: "#dbeafe"
 
   - id: "main-content"
     type: "text"
@@ -54,7 +54,7 @@ layers:
     clip: "cover-background"
     maxLength: 60
     fontFamily: "Inter"
-    fontSize: 14
+    fontSize: 15
     fontWeight: 400
     fontColor: "#374151"
 

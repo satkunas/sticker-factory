@@ -452,8 +452,8 @@ async function applyDecodedState(decodedState: Partial<AppState>): Promise<void>
       const mergedFormData = mergeTemplateWithUrlData(template, decodedState.layers || [])
       _state.value.formData = mergedFormData
 
-      // Generate render data
-      updateRenderData()
+      // TEMPORARY: Disable OLD render system to force NEW reactive system
+      // updateRenderData()
     }
   }
 }
@@ -569,12 +569,14 @@ export function updateLayer(layerId: string, updates: Partial<LayerFormData>): v
     return
   }
 
-  _state.value.formData[layerIndex] = {
-    ..._state.value.formData[layerIndex],
-    ...updates
-  }
+  // CRITICAL FIX: Replace entire array to trigger Vue reactivity
+  // Mutating array[index] doesn't trigger computed properties that depend on the array
+  _state.value.formData = _state.value.formData.map((layer, index) =>
+    index === layerIndex ? { ...layer, ...updates } : layer
+  )
 
-  updateRenderData()
+  // TEMPORARY: Disable OLD render system to force NEW reactive system
+  // updateRenderData()
   scheduleUrlSync()
 
   logger.debug(`Layer ${layerId} updated:`, updates)
@@ -606,8 +608,8 @@ export async function updateTemplate(templateId: string): Promise<void> {
     const newFormData = mergeTemplateWithUrlData(newTemplate, [])
     _state.value.formData = newFormData
 
-    // Update render data and schedule URL sync
-    updateRenderData()
+    // TEMPORARY: Disable OLD render system to force NEW reactive system
+    // updateRenderData()
     scheduleUrlSync()
 
     logger.info(`Template updated to: ${templateId}`)
@@ -639,17 +641,18 @@ export function updateLayers(updates: Array<{ layerId: string; updates: Partial<
   })
 
   if (hasChanges) {
-    // Update render data and schedule URL sync once for all changes
-    updateRenderData()
+    // TEMPORARY: Disable OLD render system to force NEW reactive system
+    // updateRenderData()
     scheduleUrlSync()
   }
 }
 
 /**
  * Update render data based on current form data and template
+ * LEGACY: Currently disabled in favor of NEW reactive computed system
  */
-function updateRenderData(): void {
-  logger.debug(`🔄 updateRenderData called - template: ${_state.value.selectedTemplate?.id || 'none'}, layers: ${_state.value.selectedTemplate?.layers?.length || 0}`)
+function _updateRenderData(): void {
+  logger.debug(`🔄 _updateRenderData called - template: ${_state.value.selectedTemplate?.id || 'none'}, layers: ${_state.value.selectedTemplate?.layers?.length || 0}`)
 
   if (!_state.value.selectedTemplate) {
     _state.value.renderData = []
@@ -1339,25 +1342,52 @@ export const hasTextPaths = computed(() => {
  * Flat form data computed property - simple object spread merging
  */
 export const flatFormData = computed(() => {
+  logger.info('📊 flatFormData COMPUTED RUNNING - formData length:', _state.value.formData.length)
+
   if (!_state.value.selectedTemplate) {
     return []
   }
 
   // Simple flat merging - no conditionals, no nested property access
-  return createFlatFormData(_state.value.selectedTemplate, _state.value.formData as FlatLayerData[])
+  const result = createFlatFormData(_state.value.selectedTemplate, _state.value.formData as FlatLayerData[])
+
+  logger.info('📊 flatFormData RESULT:', result.map(l => ({ id: l.id, strokeLinejoin: l.strokeLinejoin })))
+
+  return result
 })
 
 /**
- * SVG render data - unified positioning for all layer types
+ * SVG render data - unified positioning for all layer types with reactive stroke-linejoin
  * All types now use the same transform-based positioning system
+ *
+ * CRITICAL: This computed MUST be consumed by components to establish Vue dependency tracking.
+ * It tracks deep properties in formData to detect stroke-linejoin changes.
  */
 export const svgRenderData = computed(() => {
+  logger.warn('🔄 svgRenderData COMPUTED START - being evaluated now!')
+
   const template = _state.value.selectedTemplate
   if (!template) {
+    logger.warn('🔄 svgRenderData: no template, returning empty array')
     return []
   }
 
-  return flatFormData.value.map(flatLayer => {
+  // CRITICAL FIX: Access each layer object individually to establish deep reactivity
+  // Vue needs to see direct property access on each object, not just array operations
+  const layers = _state.value.formData
+  layers.forEach(layer => {
+    // Force Vue to track these properties by accessing them
+    void layer.strokeLinejoin
+    void layer.strokeWidth
+    void layer.color
+    void layer.stroke
+  })
+
+  const flatData = createFlatFormData(template, layers as FlatLayerData[])
+
+  logger.info('🔄 svgRenderData COMPUTED RUNNING - layers:', layers.map(l => ({ id: l.id, strokeLinejoin: l.strokeLinejoin })))
+
+  return flatData.map(flatLayer => {
     const templateLayer = template.layers.find(t => t.id === flatLayer.id)
     if (!templateLayer) return null
 
@@ -1381,8 +1411,10 @@ export const svgRenderData = computed(() => {
     // Keep additional properties for compatibility
     processedWithExtras.position = flatLayer.position
 
-    // For SVG images, add the styled content with proper color injection and transforms
+    // CRITICAL FIX: For SVG images, add the styled content with proper stroke-linejoin
     if (processed.type === 'svgImage' && flatLayer.svgContent) {
+      logger.info('🎨 Applying styled content for', flatLayer.id, 'strokeLinejoin:', flatLayer.strokeLinejoin)
+
       // Apply styling (colors, strokes) and extract inner content
       const styledContent = getStyledSvgContent({
         svgContent: flatLayer.svgContent,

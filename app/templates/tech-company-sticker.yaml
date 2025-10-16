@@ -49,7 +49,7 @@ layers:
     clip: "background"
     maxLength: 20
     fontFamily: "Roboto"
-    fontSize: 18
+    fontSize: 20
     fontWeight: 700
     fontColor: "#ffffff"
 
@@ -61,7 +61,7 @@ layers:
     clip: "background"
     maxLength: 25
     fontFamily: "Inter"
-    fontSize: 16
+    fontSize: 18
     fontWeight: 600
     fontColor: "#1f2937"
 

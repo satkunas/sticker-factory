@@ -32,7 +32,7 @@ layers:
     clip: "ticket-background"
     maxLength: 25
     fontFamily: "Bebas Neue"
-    fontSize: 24
+    fontSize: 26
     fontWeight: 700
     fontColor: "#7c2d12"
 
@@ -43,7 +43,7 @@ layers:
     position: { x: "25%", y: "50%" }
     clip: "ticket-background"
     maxLength: 30
-    fontFamily: "Oswald"
+    fontFamily: "Inter"
     fontSize: 16
     fontWeight: 600
     fontColor: "#92400e"
@@ -56,7 +56,7 @@ layers:
     clip: "ticket-background"
     maxLength: 25
     fontFamily: "Inter"
-    fontSize: 14
+    fontSize: 15
     fontWeight: 500
     fontColor: "#451a03"
 

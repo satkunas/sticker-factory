@@ -12,7 +12,7 @@ layers:
     height: 300
     stroke: "#e5e7eb"
     strokeWidth: 1
-    fill: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+    fill: "#667eea"
 
   - id: "content-overlay"
     type: "shape"
@@ -32,7 +32,7 @@ layers:
     clip: "content-overlay"
     maxLength: 20
     fontFamily: "Oswald"
-    fontSize: 22
+    fontSize: 26
     fontWeight: 700
     fontColor: "#1f2937"
 
@@ -56,7 +56,7 @@ layers:
     clip: "content-overlay"
     maxLength: 20
     fontFamily: "Bebas Neue"
-    fontSize: 16
+    fontSize: 18
     fontWeight: 400
     fontColor: "#7c3aed"
 
