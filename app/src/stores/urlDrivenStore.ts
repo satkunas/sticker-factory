@@ -197,10 +197,9 @@ function flattenTemplateLayer(templateLayer: TemplateLayer): FlatLayerData {
  * Merge flat template defaults with flat form overrides (simple object spread)
  */
 function mergeFlatLayerData(templateDefaults: FlatLayerData, formOverrides: Partial<FlatLayerData> = {}): FlatLayerData {
-  // Simple object spread - no conditionals, no nested property access
   const merged = {
-    ...templateDefaults,    // All template defaults
-    ...formOverrides,       // User form overrides
+    ...templateDefaults,
+    ...formOverrides,
     id: templateDefaults.id, // Always preserve template ID
     type: templateDefaults.type // Always preserve template type
   }
@@ -220,11 +219,8 @@ function createFlatFormData(template: SimpleTemplate, urlFormData: Partial<FlatL
   return template.layers.map(templateLayer => {
     // Flatten template layer to get all defaults
     const templateDefaults = flattenTemplateLayer(templateLayer)
-
-    // Find user overrides for this layer
     const userOverrides = urlFormData.find(layer => layer.id === templateLayer.id) || {}
 
-    // Simple merge with object spread
     return mergeFlatLayerData(templateDefaults, userOverrides)
   })
 }
@@ -569,16 +565,12 @@ export function updateLayer(layerId: string, updates: Partial<LayerFormData>): v
     return
   }
 
-  // Update form data
   _state.value.formData[layerIndex] = {
     ..._state.value.formData[layerIndex],
     ...updates
   }
 
-  // Update render data
   updateRenderData()
-
-  // Schedule URL sync
   scheduleUrlSync()
 
   logger.debug(`Layer ${layerId} updated:`, updates)
