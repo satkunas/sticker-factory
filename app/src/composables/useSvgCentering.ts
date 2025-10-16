@@ -56,36 +56,27 @@ export function useSvgCentering(
   customContentDimensions?: Ref<Dimensions | null>,
   gridScale = 2.0
 ): SvgCenteringState {
-
-  // Image center tracking
   const imageCenters = ref<Map<string, Point>>(new Map())
 
-  // Calculate content dimensions
   const contentDimensions = computed<Dimensions>(() => {
-    // Use custom dimensions if provided
     if (customContentDimensions?.value) {
       return customContentDimensions.value
     }
 
-    // Auto-calculate from template
     if (template.value?.viewBox) {
       return calculateContentBounds(template.value.viewBox, 1.5)
     }
 
-    // Fallback dimensions
     return { width: 400, height: 300 }
   })
 
-  // Individual dimension accessors
   const contentWidth = computed(() => contentDimensions.value.width)
   const contentHeight = computed(() => contentDimensions.value.height)
 
-  // Calculate grid bounds
   const gridBounds = computed<GridBounds>(() => {
     return calculateGridBounds(contentDimensions.value, gridScale)
   })
 
-  // Calculate centering transform values
   const centeringTransformValues = computed<CenteringTransform>(() => {
     if (!template.value?.viewBox) {
       return {
@@ -102,12 +93,10 @@ export function useSvgCentering(
     )
   })
 
-  // Generate centering transform string
   const centeringTransform = computed<string>(() => {
     return centeringTransformValues.value.transformString
   })
 
-  // Update image center tracking
   const updateImageCenter = (imageId: string, center: Point) => {
     imageCenters.value.set(imageId, { ...center })
   }
@@ -123,7 +112,6 @@ export function useSvgCentering(
 
     const transforms: string[] = []
 
-    // Add zoom transform if specified
     if (zoomLevel && zoomLevel !== 1.0) {
       const contentCenter: Point = {
         x: contentDimensions.value.width / 2,
@@ -141,7 +129,6 @@ export function useSvgCentering(
       }
     }
 
-    // Add rotation transform if specified
     if (rotation && rotation !== 0) {
       const rotationTransform = maintainCenterDuringRotation(
         imageCenter,
@@ -157,7 +144,6 @@ export function useSvgCentering(
     return combineTransforms(transforms)
   }
 
-  // Combine multiple transforms
   const getCombinedTransform = (
     baseTransform: string,
     additionalTransforms: string[]
@@ -171,14 +157,12 @@ export function useSvgCentering(
     () => template.value?.id,
     (newTemplateId, oldTemplateId) => {
       if (newTemplateId !== oldTemplateId) {
-        // Clear image centers when template changes
         imageCenters.value.clear()
       }
     }
   )
 
   return {
-    // Computed properties
     contentDimensions,
     contentWidth,
     contentHeight,
@@ -186,10 +170,8 @@ export function useSvgCentering(
     centeringTransform,
     centeringTransformValues,
 
-    // Reactive refs
     imageCenters,
 
-    // Methods
     updateImageCenter,
     getImageCenterTransform,
     getCombinedTransform
@@ -215,13 +197,12 @@ export function calculateElementCenter(
       const percent = parseFloat(pos) / 100
       return dimension * percent
     }
-    return typeof pos === 'number' ? pos : (parseFloat(pos) || 0)  // Invalid strings default to 0
+    return typeof pos === 'number' ? pos : (parseFloat(pos) || 0)
   }
 
   const x = resolvePosition(element.position.x, templateViewBox.width)
   const y = resolvePosition(element.position.y, templateViewBox.height)
 
-  // For elements with dimensions, calculate center
   if (element.width && element.height) {
     return {
       x: x + element.width / 2,

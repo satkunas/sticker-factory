@@ -29,7 +29,6 @@ export async function processTemplateLayers(
   yamlTemplate: YamlTemplate,
   svgContentLoader?: (svgId: string) => Promise<string | null>
 ): Promise<ProcessedTemplateLayer[]> {
-  // Calculate viewBox
   const viewBox = yamlTemplate.width && yamlTemplate.height
     ? {
         x: 0,
@@ -48,7 +47,6 @@ export async function processTemplateLayers(
 
   const layers: ProcessedTemplateLayer[] = []
 
-  // Process all layers
   for (const layer of yamlTemplate.layers) {
     if (layer.type === 'shape') {
       layers.push(processShapeLayer(layer, viewBox))
@@ -76,13 +74,11 @@ function processShapeLayer(
     ...otherProps
   } = layer
 
-  // Resolve percentage coordinates
   const resolvedPosition = resolvePosition(
     position as { x: number | string; y: number | string },
     viewBox
   )
 
-  // Convert shape to SVG path
   const path = convertShapeLayerToPath(layer, viewBox)
 
   return {
@@ -125,7 +121,6 @@ function processTextLayer(
     ...otherProps
   } = layer
 
-  // Resolve percentage coordinates
   const resolvedPosition = resolvePosition(
     position as { x: number | string; y: number | string },
     viewBox
@@ -171,7 +166,6 @@ async function processSvgImageLayer(
   // Preserve original position strings for center-based positioning
   const originalPosition = position as { x: number | string; y: number | string }
 
-  // Load SVG content if loader provided and content not already present
   let svgContent = layerSvgContent || ''
   if (svgId && !svgContent && svgContentLoader) {
     svgContent = await svgContentLoader(svgId) || ''
