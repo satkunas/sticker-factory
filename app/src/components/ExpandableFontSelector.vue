@@ -17,15 +17,13 @@
       >
       <!-- Text Styling Section -->
       <div class="p-4">
-        <div class="space-y-4">
-          <!-- Text Controls -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-            <!-- Color Section -->
-            <div class="min-w-0">
-              <div class="text-sm font-medium text-secondary-700 mb-2">
-                Color
-              </div>
-              <div class="flex items-center space-x-1 mb-2">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Color Section -->
+          <div class="bg-secondary-500/5 rounded-lg p-3">
+            <div class="text-sm font-medium text-secondary-700 mb-3">
+              Color
+            </div>
+              <div class="bg-white rounded-lg p-2 flex items-center space-x-1 mb-2">
                 <!-- Hidden color input -->
                 <input
                   ref="textColorInputRef"
@@ -50,6 +48,7 @@
                   @input="$emit('update:textColor', $event.target.value)"
                 >
               </div>
+              <div class="bg-white rounded-lg p-2">
               <div class="grid grid-cols-6 md:grid-cols-12 gap-1">
                 <!-- None button with red cross icon -->
                 <button
@@ -94,14 +93,15 @@
                   @click="$emit('update:textColor', color)"
                 />
               </div>
-            </div>
-
-            <!-- Font Size Section -->
-            <div class="min-w-0">
-              <div class="text-sm font-medium text-secondary-700 mb-2">
-                Size
               </div>
-              <div class="flex items-center space-x-2 mb-2">
+          </div>
+
+          <!-- Font Size Section -->
+          <div class="bg-secondary-500/5 rounded-lg p-3">
+            <div class="text-sm font-medium text-secondary-700 mb-3">
+              Size
+            </div>
+              <div class="bg-white rounded-lg p-2 flex items-center space-x-2 mb-2">
                 <input
                   :value="fontSize"
                   type="range"
@@ -119,6 +119,7 @@
                   @input="$emit('update:fontSize', parseInt($event.target.value) || undefined)"
                 >
               </div>
+              <div class="bg-white rounded-lg p-2">
               <div class="grid grid-cols-3 md:grid-cols-6 gap-1">
                 <button
                   v-for="size in COMMON_FONT_SIZES"
@@ -130,13 +131,15 @@
                   {{ size }}
                 </button>
               </div>
-            </div>
-
-            <!-- Font Weight Section -->
-            <div class="min-w-0">
-              <div class="text-sm font-medium text-secondary-700 mb-2">
-                Weight
               </div>
+          </div>
+
+          <!-- Font Weight Section -->
+          <div class="bg-secondary-500/5 rounded-lg p-3">
+            <div class="text-sm font-medium text-secondary-700 mb-3">
+              Weight
+            </div>
+              <div class="bg-white rounded-lg p-2">
               <div class="grid grid-cols-2 gap-1 mb-2">
                 <button
                   v-for="weight in fontWeights.slice(0, 4)"
@@ -159,16 +162,16 @@
                   {{ weight.label }}
                 </button>
               </div>
-            </div>
+              </div>
           </div>
 
           <!-- Line Height Control (only shown for multiline text) -->
-          <div v-if="multiline" class="border-t border-secondary-100 pt-4">
+          <div v-if="multiline" class="bg-secondary-500/5 rounded-lg p-3">
             <h5 class="text-sm font-medium text-secondary-700 mb-3">
               Multi-line Spacing
             </h5>
             <div class="grid grid-cols-1">
-              <div class="min-w-0">
+              <div class="bg-white rounded-lg p-3 min-w-0">
                 <div class="text-xs font-medium text-secondary-600 mb-2">
                   Line Height
                 </div>
@@ -200,14 +203,52 @@
             </div>
           </div>
 
-          <!-- Bottom Row: Stroke Controls -->
-          <div class="border-t border-secondary-100 pt-4">
+          <!-- Rotation Control (hidden for textPath as rotation is incompatible with curved text) -->
+          <div v-if="!textPath" class="bg-secondary-500/5 rounded-lg p-3">
+            <h5 class="text-sm font-medium text-secondary-700 mb-3">
+              Text Rotation
+            </h5>
+            <div class="grid grid-cols-1">
+              <div class="bg-white rounded-lg p-3 min-w-0">
+                <div class="text-xs font-medium text-secondary-600 mb-2">
+                  Rotation
+                </div>
+                <div class="flex items-center space-x-2">
+                  <input
+                    :value="rotation ?? 0"
+                    type="range"
+                    min="-180"
+                    max="180"
+                    step="1"
+                    class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
+                    @input="$emit('update:rotation', parseFloat($event.target.value) || 0)"
+                  >
+                  <div class="relative">
+                    <input
+                      :value="rotation ?? 0"
+                      type="number"
+                      step="1"
+                      class="w-14 px-1 py-1 pr-4 text-xs border border-secondary-200 rounded text-center focus:outline-none focus:ring-1 focus:ring-primary-500"
+                      @input="$emit('update:rotation', parseFloat($event.target.value) || 0)"
+                    >
+                    <span class="absolute right-1 top-1/2 transform -translate-y-1/2 text-xs text-secondary-400 pointer-events-none">°</span>
+                  </div>
+                </div>
+                <div class="text-xs text-secondary-500 mt-1">
+                  Rotate text (-180 to 180 degrees, positive = clockwise)
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stroke Controls -->
+          <div class="bg-secondary-500/5 rounded-lg p-3 md:col-span-2">
             <h5 class="text-sm font-medium text-secondary-700 mb-3">
               Text Stroke
             </h5>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <!-- Stroke Color -->
-              <div class="min-w-0">
+              <div class="bg-white rounded-lg p-3 min-w-0">
                 <div class="text-xs font-medium text-secondary-600 mb-2">
                   Color
                 </div>
@@ -283,7 +324,7 @@
               </div>
 
               <!-- Stroke Width -->
-              <div class="min-w-0">
+              <div class="bg-white rounded-lg p-3 min-w-0" :class="{ 'opacity-50': textStrokeColor === COLOR_NONE }">
                 <div class="text-xs font-medium text-secondary-600 mb-2">
                   Width
                 </div>
@@ -294,6 +335,8 @@
                     min="0"
                     max="10"
                     step="0.5"
+                    :disabled="textStrokeColor === COLOR_NONE"
+                    :class="{ 'cursor-not-allowed': textStrokeColor === COLOR_NONE }"
                     class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
                     @input="$emit('update:textStrokeWidth', parseFloat($event.target.value) || undefined)"
                   >
@@ -303,6 +346,8 @@
                     min="0"
                     max="20"
                     step="0.5"
+                    :disabled="textStrokeColor === COLOR_NONE"
+                    :class="{ 'cursor-not-allowed': textStrokeColor === COLOR_NONE }"
                     class="w-14 px-1 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
                     @input="$emit('update:textStrokeWidth', parseFloat($event.target.value) || undefined)"
                   >
@@ -310,7 +355,7 @@
               </div>
 
               <!-- Stroke Linejoin -->
-              <div class="min-w-0">
+              <div class="bg-white rounded-lg p-3 min-w-0" :class="{ 'opacity-50': textStrokeColor === COLOR_NONE }">
                 <div class="text-xs font-medium text-secondary-600 mb-2">
                   Linejoin
                 </div>
@@ -318,8 +363,12 @@
                   <button
                     v-for="linejoin in STROKE_LINEJOIN_OPTIONS"
                     :key="linejoin.value"
+                    :disabled="textStrokeColor === COLOR_NONE"
                     class="px-2 py-1 text-xs rounded border transition-all text-center"
-                    :class="textStrokeLinejoin === linejoin.value ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white border-secondary-200 text-secondary-600 hover:border-secondary-300'"
+                    :class="[
+                      textStrokeLinejoin === linejoin.value ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white border-secondary-200 text-secondary-600 hover:border-secondary-300',
+                      { 'cursor-not-allowed': textStrokeColor === COLOR_NONE }
+                    ]"
                     :title="linejoin.description"
                     @click="$emit('update:textStrokeLinejoin', linejoin.value)"
                   >
@@ -331,13 +380,13 @@
           </div>
 
           <!-- TextPath Controls (Curved Text) - Only shown when textPath exists -->
-          <div v-if="textPath" class="border-t border-secondary-100 pt-4">
+          <div v-if="textPath" class="bg-secondary-500/5 rounded-lg p-3 md:col-span-2">
             <h5 class="text-sm font-medium text-secondary-700 mb-3">
               Curved Text Position
             </h5>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <!-- Start Offset -->
-              <div class="min-w-0">
+              <div class="bg-white rounded-lg p-3 min-w-0">
                 <div class="text-xs font-medium text-secondary-600 mb-2">
                   Start Offset (%)
                 </div>
@@ -365,7 +414,7 @@
               </div>
 
               <!-- Vertical Offset (dy) -->
-              <div class="min-w-0">
+              <div class="bg-white rounded-lg p-3 min-w-0">
                 <div class="text-xs font-medium text-secondary-600 mb-2">
                   Vertical Offset (px)
                 </div>
@@ -393,7 +442,7 @@
               </div>
 
               <!-- Dominant Baseline (text alignment on path) -->
-              <div class="min-w-0">
+              <div class="bg-white rounded-lg p-3 min-w-0">
                 <div class="text-xs font-medium text-secondary-600 mb-2">
                   Baseline Alignment
                 </div>
@@ -416,93 +465,73 @@
       </div>
 
       <!-- Font Selection Section -->
-      <div class="p-4">
+      <div class="p-4 mx-4 bg-secondary-500/5 rounded-lg">
         <h4 class="section-header">
           Font Family
         </h4>
 
         <!-- Search -->
-        <div class="mb-3 relative">
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search fonts..."
-            class="w-full px-3 py-2 pr-8 border border-secondary-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          >
-          <button
-            v-if="searchQuery.length > 0"
-            class="absolute right-2 top-1/2 transform -translate-y-1/2 text-secondary-400 hover:text-secondary-600 transition-colors"
-            type="button"
-            title="Clear search"
-            @click="searchQuery = ''"
-          >
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-            </svg>
-          </button>
-        </div>
-        
-        <!-- Categories and Preview Toggle -->
-        <div class="mb-3">
-          <div class="flex flex-wrap gap-1 mb-2">
-            <button
-              :class="[
-                'px-2 py-1 text-xs rounded transition-colors',
-                selectedCategory === null
-                  ? 'bg-primary-100 text-primary-700'
-                  : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-              ]"
-              @click="selectedCategory = null"
+        <div class="mb-2 bg-white rounded-lg p-2">
+          <div class="relative">
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search fonts..."
+              class="w-full px-3 py-2 pr-8 border border-secondary-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             >
-              All
-            </button>
             <button
-              v-for="(label, category) in FONT_CATEGORIES"
-              :key="category"
-              :class="[
-                'px-2 py-1 text-xs rounded transition-colors flex items-center space-x-1',
-                selectedCategory === category
-                  ? 'bg-primary-100 text-primary-700'
-                  : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-              ]"
-              @click="selectedCategory = category"
+              v-if="searchQuery.length > 0"
+              class="absolute right-2 top-1/2 transform -translate-y-1/2 text-secondary-400 hover:text-secondary-600 transition-colors"
+              type="button"
+              title="Clear search"
+              @click="searchQuery = ''"
             >
-              <div 
-                :class="[
-                  'w-2 h-2 rounded-full',
-                  getFontCategoryColor(category)
-                ]"
-              />
-              <span>{{ label }}</span>
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
             </button>
           </div>
-        </div>
-        
-        <!-- Font List -->
-        <div ref="fontListContainer" class="max-h-80 overflow-y-auto" @scroll="handleScroll">
-          <div class="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-6 gap-2">
-            <FontTile
-              v-for="font in visibleFonts"
-              :key="font.name"
-              :ref="el => { if (selectedFont?.name === font.name && el) selectedFontTile = el }"
-              :font="font"
-              :isSelected="selectedFont?.name === font.name"
-              :stickerText="stickerText"
-              @select="selectFont"
+
+          <!-- Category Filter and Results Count -->
+          <div class="mt-2 flex items-center gap-2">
+            <CategoryDropdown
+              v-model="selectedCategory"
+              :categories="fontCategoryOptions"
+              allLabel="All Fonts"
             />
-          </div>
-          
-          <!-- Loading indicator -->
-          <div v-if="isLoadingMore && visibleFonts.length < filteredFonts.length" class="py-2 text-center text-secondary-500">
-            <div class="text-xs">
-              Loading more fonts...
+            <div v-if="filteredFonts.length > 0" class="text-sm text-secondary-600 whitespace-nowrap">
+              {{ filteredFonts.length }} {{ filteredFonts.length === 1 ? 'font' : 'fonts' }} found
             </div>
           </div>
-          
-          <div v-if="filteredFonts.length === 0" class="py-4 text-center text-secondary-500">
-            <p class="text-sm">
-              No fonts found matching "{{ searchQuery }}"
-            </p>
+        </div>
+
+        <!-- Font List -->
+        <div class="bg-white rounded-lg p-2">
+          <div ref="fontListContainer" class="max-h-80 overflow-y-auto overflow-x-hidden" @scroll="handleScroll">
+            <div class="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-6 gap-2">
+              <FontTile
+                v-for="font in visibleFonts"
+                :key="font.name"
+                :ref="el => { if (selectedFont?.name === font.name && el) selectedFontTile = el }"
+                :font="font"
+                :isSelected="selectedFont?.name === font.name"
+                :stickerText="stickerText"
+                @select="selectFont"
+              />
+            </div>
+
+            <!-- Loading indicator -->
+            <div v-if="isLoadingMore && visibleFonts.length < filteredFonts.length" class="py-2 text-center text-secondary-500">
+              <div class="text-xs">
+                Loading more fonts...
+              </div>
+            </div>
+
+            <div v-if="filteredFonts.length === 0" class="py-4 text-center text-secondary-500">
+              <p class="text-sm">
+                No fonts found matching "{{ searchQuery }}"
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -515,6 +544,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, inject, nextTick } from 'vue'
 import { FONT_CATEGORIES, loadFont, type FontConfig } from '../config/fonts'
 import FontTile from './FontTile.vue'
+import CategoryDropdown from './CategoryDropdown.vue'
 import { useFontSelector } from '../composables/useFontSelector'
 import { getFontCategoryColor } from '../utils/font-utils'
 import { PRESET_COLORS, COMMON_FONT_SIZES, STROKE_LINEJOIN_OPTIONS, DOMINANT_BASELINE_OPTIONS, COLOR_NONE } from '../utils/ui-constants'
@@ -538,6 +568,8 @@ interface Props {
   // Multi-line text properties
   multiline?: boolean
   lineHeight?: number
+  // Rotation property (for all text types)
+  rotation?: number
 }
 
 interface Emits {
@@ -554,6 +586,8 @@ interface Emits {
   'update:dominantBaseline': [value: string]
   // Multi-line text emit events
   'update:lineHeight': [value: number]
+  // Rotation emit event
+  'update:rotation': [value: number]
 }
 
 const props = defineProps<Props>()
@@ -586,6 +620,15 @@ const {
   fontWeights,
   handleScroll
 } = useFontSelector(computed(() => props.selectedFont))
+
+// Prepare font categories for dropdown
+const fontCategoryOptions = computed(() => {
+  return Object.entries(FONT_CATEGORIES).map(([value, label]) => ({
+    value,
+    label,
+    colorClass: getFontCategoryColor(value)
+  }))
+})
 
 // Component container ref for scrolling
 const containerRef = ref<HTMLElement>()

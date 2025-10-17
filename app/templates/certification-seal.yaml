@@ -30,14 +30,14 @@ layers:
   - id: "top-arc-path"
     type: "shape"
     subtype: "path"
-    path: "M 80,200 A 120,120 0 0,1 320,200"
+    path: "M 200,200 m -120,0 a 120,120 0 1,0 240,0 a 120,120 0 1,0 -240,0"
     position: { x: 0, y: 0 }
 
   # Bottom arc path (for textPath reference)
   - id: "bottom-arc-path"
     type: "shape"
     subtype: "path"
-    path: "M 80,200 A 120,120 0 0,0 320,200"
+    path: "M 200,200 m -120,0 a 120,120 0 1,0 240,0 a 120,120 0 1,0 -240,0"
     position: { x: 0, y: 0 }
 
   # Top curved text

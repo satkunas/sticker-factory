@@ -2,45 +2,15 @@
   <!-- Inline SVG Selector (Direct Content) -->
   <div ref="containerRef" class="w-full">
       <!-- SVG Selection Section -->
-      <div class="p-4 border-b border-secondary-200 bg-secondary-25">
+      <div class="p-4 mx-4 bg-secondary-500/5 rounded-lg mb-3">
         <h4 class="section-header">
           SVG Library
         </h4>
 
-        <!-- Search and Filters -->
-        <div class="space-y-3">
-          <!-- Category Filter (moved to top) -->
-          <div class="flex flex-wrap gap-1">
-            <!-- All Categories button -->
-            <button
-              :class="[
-                'px-2 py-1 text-xs rounded transition-colors',
-                selectedCategory === null
-                  ? 'bg-primary-100 text-primary-700'
-                  : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-              ]"
-              @click="selectedCategory = null"
-            >
-              All Categories
-            </button>
-            <!-- All category buttons -->
-            <button
-              v-for="category in svgStore.categories.value"
-              :key="category"
-              :class="[
-                'px-2 py-1 text-xs rounded transition-colors',
-                selectedCategory === category
-                  ? 'bg-primary-100 text-primary-700'
-                  : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-              ]"
-              @click="selectedCategory = category"
-            >
-              {{ categoryDisplayName(category) }}
-            </button>
-          </div>
-
-          <!-- Search Input (moved below pills) -->
-          <div class="relative">
+        <!-- Search and Category -->
+        <div class="bg-white rounded-lg p-2">
+          <!-- Search -->
+          <div class="mb-2 relative">
             <input
               v-model="searchQuery"
               type="text"
@@ -60,31 +30,39 @@
             </button>
           </div>
 
-          <!-- Results Count -->
-          <div v-if="filteredSvgs.length > 0" class="text-sm text-secondary-600">
-            {{ filteredSvgs.length }} {{ filteredSvgs.length === 1 ? 'icon' : 'icons' }} found
+          <!-- Category Filter and Results Count -->
+          <div class="flex items-center gap-2">
+            <CategoryDropdown
+              v-model="selectedCategory"
+              :categories="svgCategoryOptions"
+              allLabel="All Categories"
+            />
+            <div v-if="filteredSvgs.length > 0" class="text-sm text-secondary-600 whitespace-nowrap">
+              {{ filteredSvgs.length }} {{ filteredSvgs.length === 1 ? 'icon' : 'icons' }} found
+            </div>
           </div>
         </div>
       </div>
 
       <!-- SVG Grid -->
-      <div class="p-4">
-        <div v-if="svgStore.isLoading.value" class="flex items-center justify-center py-8">
-          <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
-          <span class="ml-3 text-sm text-secondary-600">Loading 5000+ SVGs...</span>
-        </div>
+      <div class="p-4 mx-4 bg-secondary-500/5 rounded-lg">
+        <div class="bg-white rounded-lg p-2">
+          <div v-if="svgStore.isLoading.value" class="flex items-center justify-center py-8">
+            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
+            <span class="ml-3 text-sm text-secondary-600">Loading 5000+ SVGs...</span>
+          </div>
 
-        <div v-else-if="filteredSvgs.length === 0" class="text-center py-8">
-          <svg class="mx-auto h-8 w-8 text-secondary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.513-.73-6.291-1.971" />
-          </svg>
-          <h3 class="mt-2 text-sm font-medium text-secondary-900">No SVGs found</h3>
-          <p class="mt-1 text-xs text-secondary-500">
-            {{ searchQuery || selectedCategory ? 'Try adjusting your search or filter' : 'No SVGs available' }}
-          </p>
-        </div>
+          <div v-else-if="filteredSvgs.length === 0" class="text-center py-8">
+            <svg class="mx-auto h-8 w-8 text-secondary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.513-.73-6.291-1.971" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-secondary-900">No SVGs found</h3>
+            <p class="mt-1 text-xs text-secondary-500">
+              {{ searchQuery || selectedCategory ? 'Try adjusting your search or filter' : 'No SVGs available' }}
+            </p>
+          </div>
 
-        <div v-else ref="svgGridContainer" class="max-h-64 overflow-y-auto" @scroll="handleScroll">
+          <div v-else ref="svgGridContainer" class="max-h-64 overflow-y-auto overflow-x-hidden" @scroll="handleScroll">
           <div class="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2 pt-2">
             <div
               v-for="svg in visibleSvgs"
@@ -150,6 +128,7 @@
             </div>
           </div>
         </div>
+        </div>
 
         <!-- Action Buttons -->
         <div v-if="!svgStore.isLoading.value && filteredSvgs.length > 0" class="mt-4 pt-3 border-t border-secondary-100">
@@ -178,6 +157,7 @@ import { ref, computed, watch, onMounted, onUnmounted, type ComponentPublicInsta
 import type { SvgLibraryItem } from '../types/template-types'
 import { useSvgStore } from '../stores/svgStore'
 import { logger } from '../utils/logger'
+import CategoryDropdown from './CategoryDropdown.vue'
 
 interface Props {
   selectedSvgId?: string
@@ -236,6 +216,14 @@ const filteredSvgs = computed(() => {
 // Visible SVGs for lazy loading
 const visibleSvgs = computed(() => {
   return filteredSvgs.value.slice(0, visibleSvgCount.value)
+})
+
+// Prepare SVG categories for dropdown
+const svgCategoryOptions = computed(() => {
+  return svgStore.categories.value.map(category => ({
+    value: category,
+    label: categoryDisplayName(category)
+  }))
 })
 
 // Enhanced scroll handler for massive collections (5000+ icons)

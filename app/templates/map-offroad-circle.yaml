@@ -76,7 +76,7 @@ layers:
   - id: "top-arc-path"
     type: "shape"
     subtype: "path"
-    path: "M 70,200 A 130,130 0 0,1 330,200"
+    path: "M 200,200 m -130,0 a 130,130 0 1,0 260,0 a 130,130 0 1,0 -260,0"
     position: { x: 0, y: 0 }
 
   # Top curved text - "M.A.P. OFF"
@@ -127,7 +127,7 @@ layers:
   - id: "bottom-arc-path"
     type: "shape"
     subtype: "path"
-    path: "M 90,200 A 110,110 0 0,0 310,200"
+    path: "M 200,200 m -110,0 a 110,110 0 1,0 220,0 a 110,110 0 1,0 -220,0"
     position: { x: 0, y: 0 }
 
   # Bottom curved coordinates

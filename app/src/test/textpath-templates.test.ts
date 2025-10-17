@@ -254,17 +254,17 @@ describe('TextPath Template Validation', () => {
       expect(bottomArcPath).toBeTruthy()
 
       // Verify the path property is preserved (not converted to a rectangle)
-      expect(topArcPath?.path).toContain('M 80,200')  // Original path data
-      expect(topArcPath?.path).toContain('A 120,120') // Arc command
-      expect(bottomArcPath?.path).toContain('M 80,200')  // Original path data
-      expect(bottomArcPath?.path).toContain('A 120,120') // Arc command
+      expect(topArcPath?.path).toContain('M 200,200')  // Full circle path data
+      expect(topArcPath?.path).toContain('a 120,120') // Arc command (lowercase = relative)
+      expect(bottomArcPath?.path).toContain('M 200,200')  // Full circle path data
+      expect(bottomArcPath?.path).toContain('a 120,120') // Arc command (lowercase = relative)
 
       // Verify they are NOT converted to rectangles (which would contain "L")
-      // Arc paths should only have M (move) and A (arc) commands
+      // Arc paths should only have M/m (move) and A/a (arc) commands
       const hasOnlyMoveAndArc = (pathData: string) => {
         // Remove the path data, leaving only commands
         const commands = pathData.replace(/[0-9.,\s-]+/g, '')
-        return commands.match(/^[MA]+$/) !== null
+        return commands.match(/^[MAma]+$/) !== null
       }
 
       expect(hasOnlyMoveAndArc(topArcPath!.path!)).toBe(true)

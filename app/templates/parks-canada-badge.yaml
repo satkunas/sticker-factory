@@ -41,7 +41,7 @@ layers:
   - id: "left-arc-path"
     type: "shape"
     subtype: "path"
-    path: "M 120,100 A 150,150 0 0,0 80,200"
+    path: "M 200,200 m -150,0 a 150,150 0 1,0 300,0 a 150,150 0 1,0 -300,0"
     position: { x: 0, y: 0 }
 
   # "PARKS" curved text
@@ -64,7 +64,7 @@ layers:
   - id: "right-arc-path"
     type: "shape"
     subtype: "path"
-    path: "M 320,200 A 150,150 0 0,0 280,100"
+    path: "M 200,200 m -150,0 a 150,150 0 1,0 300,0 a 150,150 0 1,0 -300,0"
     position: { x: 0, y: 0 }
 
   # "PARCS" curved text
@@ -178,7 +178,7 @@ layers:
   - id: "bottom-arc-path"
     type: "shape"
     subtype: "path"
-    path: "M 90,200 A 120,120 0 0,0 310,200"
+    path: "M 200,200 m -120,0 a 120,120 0 1,0 240,0 a 120,120 0 1,0 -240,0"
     position: { x: 0, y: 0 }
 
   # "CANADA" curved text
