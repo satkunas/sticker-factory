@@ -1,0 +1,72 @@
+name: "TORQ Hexagon Vertical"
+id: "torq-hexagon-vertical"
+description: "Hexagon sticker with vertical sides - TORQ 2025 Exploration Estivale"
+category: "hexagon"
+width: 400
+height: 460
+layers:
+  # Background hexagon
+  - id: "background"
+    type: "shape"
+    subtype: "polygon"
+    position: { x: "50%", y: "50%" }
+    points: "200,30 315,115 315,345 200,430 85,345 85,115"
+    fill: "#f0f4f8"
+    stroke: "none"
+
+  # Border hexagon
+  - id: "border"
+    type: "shape"
+    subtype: "polygon"
+    position: { x: "50%", y: "50%" }
+    points: "200,30 315,115 315,345 200,430 85,345 85,115"
+    fill: "none"
+    stroke: "#2d3748"
+    strokeWidth: 6
+
+  # Inner border hexagon
+  - id: "inner-border"
+    type: "shape"
+    subtype: "polygon"
+    position: { x: "50%", y: "50%" }
+    points: "200,50 295,125 295,335 200,410 105,335 105,125"
+    fill: "none"
+    stroke: "#4a5568"
+    strokeWidth: 2
+
+  # Top section - SVG icon
+  - id: "top-icon"
+    type: "svgImage"
+    label: "Icon"
+    svgId: "mountain"
+    position: { x: "50%", y: "20%" }
+    width: 64
+    height: 64
+    fill: "#2b6cb0"
+    clip: "background"
+
+  # Middle section - "TORQ 2025" text
+  - id: "middle-text"
+    type: "text"
+    label: "Year Text"
+    default: "TORQ 2025"
+    position: { x: "50%", y: "50%" }
+    maxLength: 15
+    fontFamily: "Oswald"
+    fontSize: 68
+    fontWeight: 700
+    fontColor: "#2d3748"
+    clip: "background"
+
+  # Bottom section - "Exploration Estivale" text
+  - id: "bottom-text"
+    type: "text"
+    label: "Subtitle"
+    default: "Exploration Estivale"
+    position: { x: "50%", y: "78%" }
+    maxLength: 25
+    fontFamily: "Oswald"
+    fontSize: 42
+    fontWeight: 700
+    fontColor: "#4a5568"
+    clip: "background"

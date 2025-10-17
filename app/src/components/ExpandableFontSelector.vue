@@ -162,6 +162,44 @@
             </div>
           </div>
 
+          <!-- Line Height Control (only shown for multiline text) -->
+          <div v-if="multiline" class="border-t border-secondary-100 pt-4">
+            <h5 class="text-sm font-medium text-secondary-700 mb-3">
+              Multi-line Spacing
+            </h5>
+            <div class="grid grid-cols-1">
+              <div class="min-w-0">
+                <div class="text-xs font-medium text-secondary-600 mb-2">
+                  Line Height
+                </div>
+                <div class="flex items-center space-x-2">
+                  <input
+                    :value="lineHeight ?? 1.2"
+                    type="range"
+                    min="0.8"
+                    max="2.5"
+                    step="0.1"
+                    class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
+                    @input="$emit('update:lineHeight', parseFloat($event.target.value))"
+                  >
+                  <input
+                    :value="lineHeight ?? 1.2"
+                    type="number"
+                    min="0.8"
+                    max="2.5"
+                    step="0.1"
+                    class="w-14 px-1 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    @input="$emit('update:lineHeight', parseFloat($event.target.value))"
+                  >
+                  <span class="text-xs text-secondary-500">×</span>
+                </div>
+                <div class="text-xs text-secondary-500 mt-1">
+                  Controls spacing between lines (1.0 = tight, 2.0 = loose)
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Bottom Row: Stroke Controls -->
           <div class="border-t border-secondary-100 pt-4">
             <h5 class="text-sm font-medium text-secondary-700 mb-3">
@@ -497,6 +535,9 @@ interface Props {
   startOffset?: string
   dy?: number
   dominantBaseline?: string
+  // Multi-line text properties
+  multiline?: boolean
+  lineHeight?: number
 }
 
 interface Emits {
@@ -511,6 +552,8 @@ interface Emits {
   'update:startOffset': [value: string]
   'update:dy': [value: number]
   'update:dominantBaseline': [value: string]
+  // Multi-line text emit events
+  'update:lineHeight': [value: number]
 }
 
 const props = defineProps<Props>()

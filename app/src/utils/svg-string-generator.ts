@@ -14,6 +14,7 @@ import {
   generateSvgImageHtml
 } from './svg-transforms'
 import { extractFontFamily } from './font-utils'
+import { splitLines, calculateLineDy } from './text-multiline'
 
 /**
  * Generate complete SVG string from template and layer data
@@ -157,9 +158,10 @@ function generateTextElement(
   const strokeOpacity = layerData?.strokeOpacity
   const strokeLinejoin = layerData?.strokeLinejoin
 
-  // Check if this text uses textPath (curved text along a path)
+  // Check if this text uses textPath (curved text along a path) or multiline
   const flatLayer = templateLayer as unknown as FlatLayerData
   const textPath = flatLayer.textPath
+  const multiline = (templateLayer as unknown as { multiline?: boolean }).multiline
 
   // Build text attributes
   const textAttrs: string[] = []
@@ -198,7 +200,41 @@ function generateTextElement(
   </g>`
   }
 
-  // REGULAR TEXT (straight text with transform positioning)
+  // MULTI-LINE TEXT (tspan-based line breaks)
+  if (multiline && !textPath) {
+    const lines = splitLines(text)
+    const lineHeight = layerData?.lineHeight ?? (templateLayer as unknown as { lineHeight?: number }).lineHeight ?? 1.2
+
+    const x = resolveLayerPosition(templateLayer.position?.x, template.width)
+    const y = resolveLayerPosition(templateLayer.position?.y, template.height)
+    const rotation = templateLayer.rotation
+
+    let transform = `translate(${x}, ${y})`
+    if (rotation !== undefined) {
+      transform += ` rotate(${rotation})`
+    }
+
+    const tspans = lines.map((line, i) => {
+      const dy = calculateLineDy(i, lines.length, fontSize ?? 16, lineHeight)
+      return `<tspan x="0" dy="${dy}">${escapeXml(line)}</tspan>`
+    }).join('\n        ')
+
+    const multilineTextAttrs = [
+      'text-anchor="middle"',
+      'dominant-baseline="central"',
+      ...textAttrs
+    ]
+
+    return `<g${maskAttr}>
+    <g transform="${transform}">
+      <text ${multilineTextAttrs.join(' ')}>
+        ${tspans}
+      </text>
+    </g>
+  </g>`
+  }
+
+  // REGULAR TEXT (single-line with transform positioning)
   const x = resolveLayerPosition(templateLayer.position?.x, template.width)
   const y = resolveLayerPosition(templateLayer.position?.y, template.height)
   const rotation = templateLayer.rotation

@@ -73,7 +73,44 @@
         </textPath>
       </text>
 
-      <!-- Regular text (straight text with transform positioning) -->
+      <!-- Multi-line text (tspan-based line breaks) -->
+      <g
+        v-else-if="!templateLayer.textPath && templateLayer.multiline"
+        :transform="`translate(${
+          resolveLayerPosition(templateLayer.position.x, template.width)
+        }, ${
+          resolveLayerPosition(templateLayer.position.y, template.height)
+        })${templateLayer.rotation !== undefined ? ` rotate(${templateLayer.rotation})` : ''}`"
+      >
+        <text
+          text-anchor="middle"
+          dominant-baseline="central"
+          :font-family="extractFontFamily(layerData) ?? templateLayer.fontFamily"
+          :font-size="layerData?.fontSize ?? templateLayer.fontSize"
+          :font-weight="layerData?.fontWeight ?? templateLayer.fontWeight"
+          :fill="layerData?.fontColor ?? layerData?.textColor ?? templateLayer.fontColor"
+          :stroke="layerData?.strokeWidth !== undefined && layerData.strokeWidth > 0 ? (layerData?.strokeColor ?? templateLayer.strokeColor) : undefined"
+          :stroke-width="layerData?.strokeWidth !== undefined && layerData.strokeWidth > 0 ? layerData.strokeWidth : undefined"
+          :stroke-opacity="layerData?.strokeOpacity"
+          :stroke-linejoin="layerData?.strokeLinejoin"
+        >
+          <tspan
+            v-for="(line, index) in splitLines(layerData?.text ?? templateLayer.text ?? '')"
+            :key="index"
+            x="0"
+            :dy="calculateLineDy(
+              index,
+              splitLines(layerData?.text ?? templateLayer.text ?? '').length,
+              layerData?.fontSize ?? templateLayer.fontSize ?? 16,
+              layerData?.lineHeight ?? templateLayer.lineHeight ?? 1.2
+            )"
+          >
+            {{ line }}
+          </tspan>
+        </text>
+      </g>
+
+      <!-- Regular text (single-line with transform positioning) -->
       <g
         v-else
         :transform="`translate(${
@@ -234,6 +271,7 @@ import { generateMaskDefinitions } from '../utils/mask-utils'
 import { getSvgImageTransformCase, calculateScaledTransformOrigin, applySvgRenderingAttributes } from '../utils/svg-transforms'
 import { extractFontFamily } from '../utils/font-utils'
 import { textPathDefinitions } from '../stores/urlDrivenStore'
+import { splitLines, calculateLineDy } from '../utils/text-multiline'
 
 interface Props {
   template: SimpleTemplate

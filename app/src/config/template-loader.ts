@@ -163,12 +163,38 @@ const validateYamlTemplate = (template: any): template is YamlTemplate => {
   }
 
   // Check for layers array
-  if (Array.isArray(template.layers)) {
-    return true
+  if (!Array.isArray(template.layers)) {
+    logger.error('Template must have layers array')
+    return false
   }
 
-  logger.error('Template must have layers array')
-  return false
+  // Validate individual layers
+  for (const layer of template.layers) {
+    if (!validateLayer(layer)) {
+      return false
+    }
+  }
+
+  return true
+}
+
+/**
+ * Validate individual layer structure and compatibility
+ */
+const validateLayer = (layer: any): boolean => {
+  // Validate text layers for multiline + textPath incompatibility
+  if (layer.type === 'text') {
+    if (layer.multiline && layer.textPath) {
+      logger.error(
+        `Layer "${layer.id}": Cannot use multiline with textPath. ` +
+        `Multi-line text creates horizontal lines, but textPath curves text along a path. ` +
+        `These features are mutually exclusive.`
+      )
+      return false
+    }
+  }
+
+  return true
 }
 
 

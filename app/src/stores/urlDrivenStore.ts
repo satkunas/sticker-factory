@@ -166,6 +166,8 @@ function flattenTemplateLayer(templateLayer: TemplateLayer): FlatLayerData {
     text, label, placeholder, maxLength, fontFamily, fontColor, fontSize, fontWeight,
     // TextPath properties (curved text along paths)
     textPath, startOffset, dy, dominantBaseline,
+    // Multi-line text properties
+    multiline, lineHeight,
     // Shape properties
     subtype, width, height, rx, ry, points, fill, stroke, strokeWidth, strokeLinejoin, path,
     // SVG Image properties
@@ -182,6 +184,8 @@ function flattenTemplateLayer(templateLayer: TemplateLayer): FlatLayerData {
     text, label, placeholder, maxLength, fontFamily, fontColor, fontSize, fontWeight,
     // TextPath properties (curved text along paths)
     textPath, startOffset, dy, dominantBaseline,
+    // Multi-line text properties
+    multiline, lineHeight,
     // Shape properties (directly accessible)
     subtype, width, height, rx, ry, points, path,
     fill, stroke, strokeWidth, strokeLinejoin,

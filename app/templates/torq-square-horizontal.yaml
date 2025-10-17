@@ -1,0 +1,82 @@
+name: "TORQ Square Horizontal"
+id: "torq-square-horizontal"
+description: "Square sticker with horizontal sections - TORQ 2025 Exploration Estivale"
+category: "square"
+width: 400
+height: 400
+layers:
+  # Background square
+  - id: "background"
+    type: "shape"
+    subtype: "rect"
+    position: { x: "50%", y: "50%" }
+    width: 380
+    height: 380
+    fill: "#f0f4f8"
+    stroke: "none"
+    rx: 8
+    ry: 8
+
+  # Border square
+  - id: "border"
+    type: "shape"
+    subtype: "rect"
+    position: { x: "50%", y: "50%" }
+    width: 390
+    height: 390
+    fill: "none"
+    stroke: "#2d3748"
+    strokeWidth: 6
+    rx: 12
+    ry: 12
+
+  # Inner border square
+  - id: "inner-border"
+    type: "shape"
+    subtype: "rect"
+    position: { x: "50%", y: "50%" }
+    width: 340
+    height: 340
+    fill: "none"
+    stroke: "#4a5568"
+    strokeWidth: 2
+    rx: 8
+    ry: 8
+
+  # Left section - SVG icon
+  - id: "left-icon"
+    type: "svgImage"
+    label: "Icon"
+    svgId: "mountain"
+    position: { x: "22%", y: "50%" }
+    width: 64
+    height: 64
+    fill: "#2b6cb0"
+    clip: "background"
+
+  # Middle section - "TORQ 2025" text
+  - id: "middle-text"
+    type: "text"
+    label: "Year Text"
+    default: "TORQ 2025"
+    position: { x: "50%", y: "50%" }
+    maxLength: 15
+    fontFamily: "Oswald"
+    fontSize: 68
+    fontWeight: 700
+    fontColor: "#2d3748"
+    clip: "background"
+
+  # Right section - "Exploration Estivale" text
+  - id: "right-text"
+    type: "text"
+    label: "Subtitle"
+    default: "Exploration Estivale"
+    position: { x: "78%", y: "50%" }
+    maxLength: 25
+    fontFamily: "Oswald"
+    fontSize: 38
+    fontWeight: 700
+    fontColor: "#4a5568"
+    clip: "background"
+    rotation: 90

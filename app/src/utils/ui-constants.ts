@@ -89,3 +89,6 @@ export const FONT_LOADING_CONFIG = {
   SCROLL_THRESHOLD: 100, // px from bottom
   LOAD_DELAY: 100 // ms
 } as const
+
+// Textarea configuration for multi-line text input
+export const MIN_TEXTAREA_ROWS = 1 as const

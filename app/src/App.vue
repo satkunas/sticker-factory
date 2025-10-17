@@ -299,6 +299,9 @@ const getLayerProps = (layer: any) => {
         startOffset: flatLayer.startOffset,
         dy: flatLayer.dy,
         dominantBaseline: flatLayer.dominantBaseline,
+        // Multi-line text properties
+        multiline: flatLayer.multiline,
+        lineHeight: flatLayer.lineHeight,
         instanceId: layer.id
       }
     case 'shape':
@@ -348,7 +351,9 @@ const eventMappings = {
     // TextPath event mappings
     'update:startOffset': 'startOffset',
     'update:dy': 'dy',
-    'update:dominantBaseline': 'dominantBaseline'
+    'update:dominantBaseline': 'dominantBaseline',
+    // Multi-line text event mappings
+    'update:lineHeight': 'lineHeight'
   },
   shape: {
     'update:fillColor': 'fill',

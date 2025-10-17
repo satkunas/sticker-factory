@@ -21,6 +21,8 @@ export interface TemplateTextInput {
   startOffset?: string   // Starting position on path (e.g., "0%", "50%", "100%")
   dy?: number            // Vertical offset from path baseline (-100 to 100)
   dominantBaseline?: string  // Text baseline alignment (auto, middle, central, hanging, etc.)
+  multiline?: boolean    // Enable multi-line text with \n line breaks (default: false)
+  lineHeight?: number    // Line spacing multiplier for multi-line text (default: 1.2, range: 0.8-2.5)
   maxLength?: number
   fontFamily?: string
   fontColor?: string
@@ -86,6 +88,8 @@ export interface TemplateTextInputLayer extends TemplateLayerBase {
   startOffset?: string   // Starting position on path (e.g., "0%", "50%", "100%")
   dy?: number            // Vertical offset from path baseline (-100 to 100)
   dominantBaseline?: string  // Text baseline alignment (auto, middle, central, hanging, etc.)
+  multiline?: boolean    // Enable multi-line text with \n line breaks (default: false)
+  lineHeight?: number    // Line spacing multiplier for multi-line text (default: 1.2, range: 0.8-2.5)
   maxLength?: number
   fontFamily?: string
   fontColor?: string
@@ -271,6 +275,9 @@ export interface FlatLayerData {
   startOffset?: string   // Starting position on path (e.g., "0%", "50%", "100%")
   dy?: number            // Vertical offset from path baseline (-100 to 100)
   dominantBaseline?: string  // Text baseline alignment (auto, middle, central, hanging, etc.)
+
+  // Multi-line text properties
+  lineHeight?: number    // Line spacing multiplier for multi-line text (overrides template default)
 
   // Shape properties
   fillColor?: string

@@ -83,7 +83,7 @@ layers:
   - id: "top-curved-text"
     type: "text"
     label: "Top Text"
-    default: "M.A.P. OFF"
+    default: "M.A.P. OFF ROAD"
     textPath: "top-arc-path"
     startOffset: "50%"
     dy: -10
@@ -95,24 +95,13 @@ layers:
     fontWeight: 700
     fontColor: "#3d2817"
 
-  # "ROAD" text on gradient stripe
-  - id: "road-text"
-    type: "text"
-    label: "Road Text"
-    default: "ROAD"
-    position: { x: "72%", y: "35%" }
-    maxLength: 10
-    fontFamily: "Oswald"
-    fontSize: 44
-    fontWeight: 700
-    fontColor: "#3d2817"
-    rotation: -45
-
   # "ESTD" text (left side)
   - id: "estd-text"
     type: "text"
+    multiline: true
+    lineHeight: 1.2
     label: "Est Label"
-    default: "ESTD"
+    default: "ES\nTD"
     position: { x: "20%", y: "48%" }
     maxLength: 8
     fontFamily: "Roboto Condensed"
@@ -123,8 +112,10 @@ layers:
   # Year "2020" (right side)
   - id: "year-text"
     type: "text"
+    multiline: true
+    lineHeight: 1.2
     label: "Year"
-    default: "2020"
+    default: "20\n20"
     position: { x: "80%", y: "48%" }
     maxLength: 4
     fontFamily: "Roboto Condensed"

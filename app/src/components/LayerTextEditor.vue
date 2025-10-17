@@ -2,7 +2,29 @@
   <div ref="containerRef" class="w-full" :data-instance-id="instanceId">
     <!-- Text Input with Arrow Icon -->
     <div class="relative rounded-lg transition-all duration-300 ease-in-out" :class="{ 'ring-2 ring-primary-500': isExpanded }">
+      <!-- Multi-line textarea -->
+      <textarea
+        v-if="multiline"
+        :value="modelValue"
+        class="w-full px-4 pr-10 py-3 bg-white border border-secondary-200 focus:outline-none hover:border-secondary-300 transition-all resize-none overflow-hidden"
+        :class="{
+          'border-primary-500': isExpanded,
+          'rounded-b-lg': !isExpanded && !selectedFont,
+          'rounded-t-lg': true
+        }"
+        :placeholder="placeholder"
+        :style="{
+          fontFamily: selectedFont ? getFontFamily(selectedFont) : undefined,
+          fontWeight: fontWeight
+        }"
+        :rows="textareaRows"
+        @input="$emit('update:modelValue', $event.target.value)"
+        @focus="handleFocus"
+      />
+
+      <!-- Single-line input -->
       <input
+        v-else
         :value="modelValue"
         type="text"
         class="w-full px-4 pr-10 py-3 bg-white border border-secondary-200 focus:outline-none hover:border-secondary-300 transition-colors"
@@ -53,6 +75,8 @@
       :startOffset="startOffset"
       :dy="dy"
       :dominantBaseline="dominantBaseline"
+      :multiline="multiline"
+      :lineHeight="lineHeight"
       @update:selectedFont="$emit('update:selectedFont', $event)"
       @update:textColor="$emit('update:textColor', $event)"
       @update:fontSize="$emit('update:fontSize', $event)"
@@ -63,6 +87,7 @@
       @update:startOffset="$emit('update:startOffset', $event)"
       @update:dy="$emit('update:dy', $event)"
       @update:dominantBaseline="$emit('update:dominantBaseline', $event)"
+      @update:lineHeight="$emit('update:lineHeight', $event)"
     />
     </div>
   </div>
@@ -72,6 +97,7 @@
 import { inject, computed, ref } from 'vue'
 import ExpandableFontSelector from './ExpandableFontSelector.vue'
 import { getFontFamily, FONT_CATEGORIES, type FontConfig } from '../config/fonts' // Used in template
+import { MIN_TEXTAREA_ROWS } from '../utils/ui-constants'
 
 interface Props {
   modelValue: string
@@ -89,6 +115,9 @@ interface Props {
   startOffset?: string
   dy?: number
   dominantBaseline?: string
+  // Multi-line text support
+  multiline?: boolean
+  lineHeight?: number
 }
 
 interface Emits {
@@ -104,6 +133,8 @@ interface Emits {
   'update:startOffset': [value: string]
   'update:dy': [value: number]
   'update:dominantBaseline': [value: string]
+  // Multi-line text emit events
+  'update:lineHeight': [value: number]
 }
 
 const props = defineProps<Props>()
@@ -129,6 +160,12 @@ const isExpanded = computed(() => {
   }
   // Legacy fallback
   return expandedInstances.value.has(id)
+})
+
+// Computed textarea rows - always shrink to fit content (min 1, no max)
+const textareaRows = computed(() => {
+  const lineCount = (props.modelValue || '').split('\n').length
+  return Math.max(MIN_TEXTAREA_ROWS, lineCount)
 })
 
 // Handle focus - expand the options
