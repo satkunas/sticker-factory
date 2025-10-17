@@ -161,11 +161,15 @@ function generateTextElement(
   // Check if this text uses textPath (curved text along a path) or multiline
   const flatLayer = templateLayer as unknown as FlatLayerData
   const textPath = flatLayer.textPath
-  const multiline = (templateLayer as unknown as { multiline?: boolean }).multiline
+  const multiline = flatLayer.multiline
 
   // Build text attributes
   const textAttrs: string[] = []
-  if (fontFamily !== undefined) textAttrs.push(`font-family="${fontFamily}"`)
+  // Remove any existing quotes from fontFamily to prevent double-quoting
+  if (fontFamily !== undefined) {
+    const cleanFontFamily = fontFamily.replace(/^["']|["']$/g, '')
+    textAttrs.push(`font-family="${cleanFontFamily}"`)
+  }
   if (fontSize !== undefined) textAttrs.push(`font-size="${fontSize}"`)
   if (fontWeight !== undefined) textAttrs.push(`font-weight="${fontWeight}"`)
   if (fill !== undefined) textAttrs.push(`fill="${fill}"`)
@@ -203,7 +207,7 @@ function generateTextElement(
   // MULTI-LINE TEXT (tspan-based line breaks)
   if (multiline && !textPath) {
     const lines = splitLines(text)
-    const lineHeight = layerData?.lineHeight ?? (templateLayer as unknown as { lineHeight?: number }).lineHeight ?? 1.2
+    const lineHeight = layerData?.lineHeight ?? flatLayer.lineHeight ?? 1.2
 
     const x = resolveLayerPosition(templateLayer.position?.x, template.width)
     const y = resolveLayerPosition(templateLayer.position?.y, template.height)

@@ -38,7 +38,7 @@ layers:
     label: "Main Text"
     default: "RIDE THE WAVE"
     textPath: "wave-path"
-    startOffset: "0%"
+    startOffset: "45%"
     dy: -15
     dominantBaseline: "middle"
     position: { x: "50%", y: "50%" }
