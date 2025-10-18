@@ -36,8 +36,8 @@
     >
       <path
         :d="templateLayer.path"
-        :fill="layerData?.fillColor || layerData?.fill || templateLayer.fill"
-        :stroke="layerData?.stroke || layerData?.strokeColor || templateLayer.stroke"
+        :fill="layerData?.fillColor || templateLayer.fillColor"
+        :stroke="layerData?.strokeColor || templateLayer.strokeColor"
         :stroke-width="layerData?.strokeWidth ?? templateLayer.strokeWidth"
         :stroke-linejoin="layerData?.strokeLinejoin || templateLayer.strokeLinejoin"
       />

@@ -97,6 +97,37 @@ Components: 60%+ coverage (integration tests)
 3. Test error handling and validation
 4. Add tests to same commit as feature code
 
+### Property Rendering Tests (CRITICAL)
+**ALL form properties MUST work in ALL 4 rendering contexts:**
+
+1. **Main SVG preview** (SvgContent.vue)
+2. **Template selection icons** (TemplateSelector.vue)
+3. **Download preview** (Service Worker .svg URL)
+4. **Download files** (exported SVG/PNG)
+
+**Testing Requirements:**
+- **When adding a new property**: Add test to `property-rendering.test.ts`
+- **When a property doesn't work in any context**: Add failing test that reproduces the issue BEFORE fixing
+- **Test MUST verify**: Property flows through entire data pipeline (form → store → all 4 renderers)
+
+**Example test structure:**
+```typescript
+it('should render NEW_PROPERTY in SVG string generator', () => {
+  const layers = [{ id: 'test-layer', NEW_PROPERTY: 'value' }]
+  const svg = generateSvgString(template, layers)
+
+  // Verify property is applied
+  expect(svg).toContain('expected-output')
+  expect(svg).not.toContain('template-default') // Not default
+})
+```
+
+**Why this matters:**
+- Properties have failed silently in download contexts before
+- Prevents "works in preview but not in download" bugs
+- Ensures template selector icons show correct colors/styling
+- Guards against property name normalization regressions
+
 ### Never Disable Tests
 **Disabled tests = broken code. If tests fail, FIX THEM.**
 

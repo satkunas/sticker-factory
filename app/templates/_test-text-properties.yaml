@@ -1,0 +1,19 @@
+name: "[TEST] Text Properties"
+id: "_test-text-properties"
+description: "Test template for ALL text properties: text, fontFamily, fontColor, fontSize, fontWeight, strokeColor, strokeWidth, strokeLinejoin"
+width: 300
+height: 200
+layers:
+  # Single text for testing all text properties
+  - id: "test-text"
+    type: "text"
+    label: "Test Text"
+    default: "Test"
+    position: { x: "50%", y: "50%" }
+    fontFamily: "Arial"
+    fontColor: "#333333"
+    fontSize: 32
+    fontWeight: 700
+    strokeColor: "#ff0000"
+    strokeWidth: 0
+    strokeLinejoin: "round"

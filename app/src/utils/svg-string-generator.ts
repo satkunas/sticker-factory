@@ -119,8 +119,9 @@ function generateShapeElement(
   const path = (templateLayer as unknown as { path?: string }).path
   if (!path) return ''
 
-  const fill = layerData?.fillColor ?? layerData?.fill ?? templateLayer.fill
-  const stroke = layerData?.stroke ?? layerData?.strokeColor ?? templateLayer.stroke
+  // Use normalized property names (fillColor, strokeColor)
+  const fill = layerData?.fillColor ?? templateLayer.fillColor
+  const stroke = layerData?.strokeColor ?? templateLayer.strokeColor
   const strokeWidth = layerData?.strokeWidth ?? templateLayer.strokeWidth
   const strokeLinejoin = layerData?.strokeLinejoin
 

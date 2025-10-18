@@ -1,0 +1,20 @@
+name: "[TEST] Shape Properties"
+id: "_test-shape-properties"
+description: "Test template for ALL shape properties: fillColor, strokeColor, strokeWidth, strokeLinejoin, opacity, rotation, scale"
+width: 200
+height: 200
+layers:
+  # Single shape for testing all shape properties
+  - id: "test-shape"
+    type: "shape"
+    subtype: "rect"
+    position: { x: "50%", y: "50%" }
+    width: 100
+    height: 100
+    fill: "#ff0000"
+    stroke: "#000000"
+    strokeWidth: 2
+    strokeLinejoin: "miter"
+    opacity: 1.0
+    rotation: 0
+    scale: 1.0

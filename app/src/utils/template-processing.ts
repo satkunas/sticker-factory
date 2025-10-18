@@ -62,6 +62,7 @@ export async function processTemplateLayers(
 
 /**
  * Process shape layer: resolve coordinates, convert to path
+ * PROPERTY NORMALIZATION: Maps YAML 'fill' → 'fillColor', 'stroke' → 'strokeColor'
  */
 function processShapeLayer(
   layer: TemplateShapeLayer,
@@ -91,8 +92,9 @@ function processShapeLayer(
     rx,
     ry,
     points,
-    fill,
-    stroke,
+    // NORMALIZE: Map YAML properties to standardized names
+    fillColor: fill,       // Map 'fill' → 'fillColor'
+    strokeColor: stroke,   // Map 'stroke' → 'strokeColor'
     strokeWidth,
     strokeLinejoin,
     opacity,
@@ -148,6 +150,7 @@ function processTextLayer(
 
 /**
  * Process SVG image layer: preserve position strings, optionally load content
+ * PROPERTY NORMALIZATION: Maps YAML 'fill' → 'color', 'stroke' → 'strokeColor'
  */
 async function processSvgImageLayer(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -179,8 +182,9 @@ async function processSvgImageLayer(
     svgContent,
     width,
     height,
-    color: fill,
-    stroke,
+    // NORMALIZE: Map YAML properties to standardized names
+    color: fill,            // Map 'fill' → 'color' (svgImage uses 'color' not 'fillColor')
+    strokeColor: stroke,    // Map 'stroke' → 'strokeColor'
     strokeWidth,
     strokeLinejoin,
     opacity,

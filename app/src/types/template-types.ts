@@ -34,6 +34,9 @@ export interface TemplateTextInput {
   strokeLinejoin?: string
 }
 
+// Template shape definition (from YAML)
+// NOTE: Uses short property names (fill, stroke) matching YAML syntax
+// Template loader maps these to longer names (fillColor, strokeColor) in FlatLayerData
 export interface TemplateShape {
   id: string
   type: 'rect' | 'circle' | 'polygon' | 'ellipse' | 'line' | 'path'
@@ -43,10 +46,10 @@ export interface TemplateShape {
   rx?: number
   ry?: number
   points?: string
-  stroke: string
+  stroke: string        // Mapped to strokeColor by loader
   strokeWidth: number
   strokeLinejoin?: string
-  fill: string
+  fill: string          // Mapped to fillColor by loader
   opacity?: number
   path?: string
 }
@@ -56,7 +59,9 @@ export interface TemplateLayerBase {
   id: string
 }
 
-// Shape layer
+// Shape layer (from YAML)
+// NOTE: Uses short property names (fill, stroke) matching YAML syntax
+// Template loader maps these to longer names (fillColor, strokeColor) in FlatLayerData
 export interface TemplateShapeLayer extends TemplateLayerBase {
   type: 'shape'
   subtype: 'rect' | 'circle' | 'polygon' | 'ellipse' | 'line' | 'path'
@@ -67,10 +72,10 @@ export interface TemplateShapeLayer extends TemplateLayerBase {
   ry?: number
   points?: string
   path?: string  // SVG path data for path subtype
-  stroke: string
+  stroke: string        // Mapped to strokeColor by loader
   strokeWidth: number
   strokeLinejoin?: string
-  fill: string
+  fill: string          // Mapped to fillColor by loader
   opacity?: number
 }
 
@@ -101,7 +106,9 @@ export interface TemplateTextInputLayer extends TemplateLayerBase {
   strokeLinejoin?: string
 }
 
-// SVG image layer
+// SVG image layer (from YAML)
+// NOTE: Uses 'fill' and 'stroke' in YAML matching other shapes
+// Template loader maps 'fill' to 'color' and 'stroke' to 'strokeColor' for svgImage layers
 export interface TemplateSvgImageLayer extends TemplateLayerBase {
   type: 'svgImage'
   svgId?: string           // Reference to library SVG
@@ -109,8 +116,8 @@ export interface TemplateSvgImageLayer extends TemplateLayerBase {
   position: { x: number | string; y: number | string }
   width?: number
   height?: number
-  fill: string
-  stroke: string
+  fill: string             // Mapped to 'color' by loader (svgImage-specific)
+  stroke: string           // Mapped to strokeColor by loader
   strokeWidth: number
   strokeLinejoin?: string
   clip?: string            // Clip path reference
@@ -256,6 +263,8 @@ export type ProcessedTemplateLayer = ProcessedShapeLayer | ProcessedTextInputLay
 
 // FLAT ARCHITECTURE: New simplified flat layer data structure
 // This replaces the complex nested approach with a single flat structure
+// PROPERTY NAMING: All color properties use longer names (fillColor, strokeColor, fontColor)
+// Template loader maps YAML properties (fill → fillColor, stroke → strokeColor) during load
 export interface FlatLayerData {
   id: string
   type?: 'text' | 'shape' | 'svgImage'  // Type is derived from template, not stored in form
@@ -267,7 +276,7 @@ export interface FlatLayerData {
   default?: string
   fontSize?: number
   fontWeight?: number
-  fontColor?: string
+  fontColor?: string  // Standardized color property name
   fontFamily?: string
 
   // TextPath properties (curved text along paths)
@@ -278,22 +287,21 @@ export interface FlatLayerData {
 
   // Multi-line text properties
   lineHeight?: number    // Line spacing multiplier for multi-line text (overrides template default)
+  multiline?: boolean    // Enable multi-line text rendering
 
-  // Shape properties
-  fillColor?: string
-  fill?: string  // Template uses 'fill', form uses 'fillColor' - both supported
+  // Shape properties (standardized color property names)
+  fillColor?: string     // Mapped from template 'fill' property
 
   // SVG Image properties
   svgImageId?: string
   svgContent?: string
-  color?: string
+  color?: string         // SVG images use 'color' (distinct from shape fillColor)
   scale?: number
   rotation?: number
   transformOrigin?: { x: number; y: number }  // Optimal center point for rotation/scale
 
-  // Universal properties
-  strokeColor?: string
-  stroke?: string  // Template uses 'stroke', form uses 'strokeColor' - both supported
+  // Universal properties (standardized names)
+  strokeColor?: string   // Mapped from template 'stroke' property
   strokeWidth?: number
   strokeOpacity?: number
   strokeLinejoin?: string
@@ -307,10 +315,11 @@ export interface FlatLayerData {
   opacity?: number
 
   // Shape-specific template properties
-  subtype?: 'rect' | 'circle' | 'polygon' | 'ellipse' | 'line'
+  subtype?: 'rect' | 'circle' | 'polygon' | 'ellipse' | 'line' | 'path'
   rx?: number
   ry?: number
   points?: string
+  path?: string  // SVG path data for path subtype
 
   // Computed/derived properties
   transformString?: string

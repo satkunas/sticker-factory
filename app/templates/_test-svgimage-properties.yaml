@@ -1,0 +1,20 @@
+name: "[TEST] SVG Image Properties"
+id: "_test-svgimage-properties"
+description: "Test template for ALL svgImage properties: color, strokeColor, strokeWidth, strokeLinejoin, opacity, rotation, scale"
+width: 200
+height: 200
+layers:
+  # Single SVG image for testing all svgImage properties
+  - id: "test-svgimage"
+    type: "svgImage"
+    svgId: "ui-feedback-star"
+    position: { x: "50%", y: "50%" }
+    width: 80
+    height: 80
+    fill: "#ffd700"
+    stroke: "#ff8c00"
+    strokeWidth: 2
+    strokeLinejoin: "round"
+    opacity: 1.0
+    rotation: 0
+    scale: 1.0

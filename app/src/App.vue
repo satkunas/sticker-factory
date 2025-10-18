@@ -312,8 +312,8 @@ const getLayerProps = (layer: any) => {
         shapeDimensions: getShapeDimensions(selectedTemplate.value, layer.id),
         shapeData: getShapeData(selectedTemplate.value, layer.id),
         shapePath: getShapePath(selectedTemplate.value, layer.id),
-        fillColor: flatLayer.fill,
-        strokeColor: flatLayer.stroke,
+        fillColor: flatLayer.fillColor,      // Use normalized property name
+        strokeColor: flatLayer.strokeColor,  // Use normalized property name
         strokeWidth: flatLayer.strokeWidth,
         strokeLinejoin: flatLayer.strokeLinejoin,
         instanceId: `shape-${layer.id}`
@@ -360,8 +360,8 @@ const eventMappings = {
     'update:rotation': 'rotation'
   },
   shape: {
-    'update:fillColor': 'fill',
-    'update:strokeColor': 'stroke',
+    'update:fillColor': 'fillColor',       // Normalized property name
+    'update:strokeColor': 'strokeColor',   // Normalized property name
     'update:strokeWidth': 'strokeWidth',
     'update:strokeLinejoin': 'strokeLinejoin'
   },
@@ -394,8 +394,8 @@ const resetEventMappings = {
     'reset:rotation': 'rotation'
   },
   shape: {
-    'reset:fillColor': 'fill',
-    'reset:strokeColor': 'stroke',
+    'reset:fillColor': 'fillColor',        // Normalized property name
+    'reset:strokeColor': 'strokeColor',    // Normalized property name
     'reset:strokeWidth': 'strokeWidth',
     'reset:strokeLinejoin': 'strokeLinejoin'
   },

@@ -73,18 +73,19 @@ export interface UrlDrivenState {
 
 /**
  * Unified layer form data that users can mutate
+ * PROPERTY NAMING: Standardized on longer color names (fillColor, strokeColor, fontColor)
  */
 export interface LayerFormData {
   id: string
   type: 'text' | 'shape' | 'svgImage'
 
-  // Text properties (matching template property names)
+  // Text properties (standardized color property names)
   text?: string
   font?: FontConfig | null
   fontSize?: number
   fontWeight?: number
-  fontColor?: string  // Matches template property name
-  strokeColor?: string
+  fontColor?: string      // Standardized color property
+  strokeColor?: string    // Standardized stroke property
   strokeWidth?: number
   strokeOpacity?: number
   strokeLinejoin?: string
@@ -94,9 +95,9 @@ export interface LayerFormData {
   dy?: number  // Vertical offset from path baseline
   dominantBaseline?: string  // Text baseline alignment
 
-  // Shape properties (matching template property names)
-  fill?: string  // Matches template property name
-  stroke?: string  // Matches template property name
+  // Shape properties (standardized color property names)
+  fillColor?: string      // Standardized fill property (mapped from template 'fill')
+  strokeColor?: string    // Same as text strokeColor (mapped from template 'stroke')
 
   // SVG image properties
   svgImageId?: string
@@ -153,47 +154,46 @@ export interface RenderableLayer {
 
 /**
  * Flatten template layer into flat structure (extract nested properties to root level)
+ * NOTE: Template loader already normalizes property names, so we just pass them through
  */
 function flattenTemplateLayer(templateLayer: TemplateLayer): FlatLayerData {
   // NEW FLAT ARCHITECTURE: Single destructuring-based flattening
-  // All template layers now have properties directly accessible (no nested objects)
+  // Template loader already normalized YAML properties (fill → fillColor, stroke → strokeColor)
+  // We just pass through the already-normalized properties
 
   const {
     id, type,
     // Universal properties (all layer types)
     position, rotation, scale, clip, clipPath, opacity,
-    // Text properties
+    // Text properties (already normalized)
     text, label, placeholder, maxLength, fontFamily, fontColor, fontSize, fontWeight,
     // TextPath properties (curved text along paths)
     textPath, startOffset, dy, dominantBaseline,
     // Multi-line text properties
     multiline, lineHeight,
-    // Shape properties
-    subtype, width, height, rx, ry, points, fill, stroke, strokeWidth, strokeLinejoin, path,
-    // SVG Image properties
-    svgImageId, svgContent, color,
+    // Shape properties (already normalized by template loader)
+    subtype, width, height, rx, ry, points, path, strokeWidth, strokeLinejoin,
+    // SVG Image properties (already normalized by template loader)
+    svgImageId, svgContent,
     // Strip out any legacy nested objects that might still exist
     textInput: _, shape: __, svgImage: ___,
     ...otherProps
   } = templateLayer as unknown as FlatLayerData
 
-  // Return flat structure with clean property mapping
+  // Return flat structure - properties already normalized by template loader
   return {
     id, type, position, rotation, scale, clip, clipPath, opacity,
-    // Text properties (directly accessible)
+    // Text properties (already use normalized names)
     text, label, placeholder, maxLength, fontFamily, fontColor, fontSize, fontWeight,
-    // TextPath properties (curved text along paths)
+    // TextPath properties
     textPath, startOffset, dy, dominantBaseline,
     // Multi-line text properties
     multiline, lineHeight,
-    // Shape properties (directly accessible)
-    subtype, width, height, rx, ry, points, path,
-    fill, stroke, strokeWidth, strokeLinejoin,
-    // SVG Image properties (directly accessible)
+    // Shape/universal properties (already normalized)
+    subtype, width, height, rx, ry, points, path, strokeWidth, strokeLinejoin,
+    // SVG Image/universal properties (already normalized)
     svgImageId, svgContent,
-    color, // SVG images use 'color' instead of 'fill' to distinguish from shapes
-    strokeColor: stroke, // Map template 'stroke' to 'strokeColor' for form/component compatibility
-    // Include any other properties that might exist
+    // Include any other properties that might exist (including fillColor, strokeColor, color)
     ...otherProps
   }
 }
@@ -544,16 +544,16 @@ function mergeTemplateWithUrlData(template: SimpleTemplate, urlLayers: Array<{ i
         }
       }
     } else if (templateLayer.type === 'shape') {
-      // Template loader now flattens structure - properties are directly on layer
-      formEntry.fill = urlOverride.fill !== undefined ? urlOverride.fill : flatLayer.fill
-      formEntry.stroke = urlOverride.stroke !== undefined ? urlOverride.stroke : flatLayer.stroke
+      // Template loader now flattens structure - properties use normalized names
+      formEntry.fillColor = urlOverride.fillColor !== undefined ? urlOverride.fillColor : flatLayer.fillColor
+      formEntry.strokeColor = urlOverride.strokeColor !== undefined ? urlOverride.strokeColor : flatLayer.strokeColor
       formEntry.strokeWidth = urlOverride.strokeWidth !== undefined ? urlOverride.strokeWidth : flatLayer.strokeWidth
       formEntry.strokeLinejoin = urlOverride.strokeLinejoin !== undefined ? urlOverride.strokeLinejoin : flatLayer.strokeLinejoin
     } else if (templateLayer.type === 'svgImage') {
-      // Template loader now flattens structure - properties are directly on layer
+      // Template loader now flattens structure - properties use normalized names
       formEntry.svgImageId = urlOverride.svgImageId !== undefined ? urlOverride.svgImageId : flatLayer.svgImageId
       formEntry.color = urlOverride.color !== undefined ? urlOverride.color : flatLayer.color
-      formEntry.strokeColor = urlOverride.strokeColor !== undefined ? urlOverride.strokeColor : flatLayer.stroke
+      formEntry.strokeColor = urlOverride.strokeColor !== undefined ? urlOverride.strokeColor : flatLayer.strokeColor
       formEntry.strokeWidth = urlOverride.strokeWidth !== undefined ? urlOverride.strokeWidth : flatLayer.strokeWidth
       formEntry.strokeLinejoin = urlOverride.strokeLinejoin !== undefined ? urlOverride.strokeLinejoin : flatLayer.strokeLinejoin
       formEntry.svgContent = urlOverride.svgContent !== undefined ? urlOverride.svgContent : flatLayer.svgContent
@@ -728,18 +728,18 @@ function _updateRenderData(): void {
         ...(flatLayer.clip && { clipPath: `url(#clip-${flatLayer.clip})` })
       }
     } else if (templateLayer.type === 'shape') {
-      // Template loader now flattens structure - reconstruct for compatibility
+      // Template loader now flattens structure - reconstruct for compatibility using normalized names
       renderLayer.shape = {
         id: flatLayer.id,
         type: 'path',
         path: flatLayer.path,
-        fill: flatLayer.fill,
-        stroke: flatLayer.stroke,
+        fill: flatLayer.fillColor,      // Use normalized property name
+        stroke: flatLayer.strokeColor,  // Use normalized property name
         strokeWidth: flatLayer.strokeWidth,
         strokeLinejoin: flatLayer.strokeLinejoin,
-        // Only override with form data if form data exists
-        ...(formLayer?.fill !== undefined && { fill: formLayer.fill }),
-        ...(formLayer?.stroke !== undefined && { stroke: formLayer.stroke }),
+        // Only override with form data if form data exists (using normalized names)
+        ...(formLayer?.fillColor !== undefined && { fill: formLayer.fillColor }),
+        ...(formLayer?.strokeColor !== undefined && { stroke: formLayer.strokeColor }),
         ...(formLayer?.strokeWidth !== undefined && { strokeWidth: formLayer.strokeWidth }),
         ...(formLayer?.strokeLinejoin !== undefined && { strokeLinejoin: formLayer.strokeLinejoin })
       }
@@ -936,17 +936,17 @@ export const mergedFormData = computed(() => {
         defaultLayer.strokeLinejoin = flatLayer.strokeLinejoin
         defaultLayer.strokeOpacity = flatLayer.strokeOpacity
       } else if (templateLayer.type === 'shape') {
-        // Template loader now flattens structure - properties are directly on layer
-        defaultLayer.fill = flatLayer.fill
-        defaultLayer.stroke = flatLayer.stroke
+        // Template loader now flattens structure - properties use normalized names
+        defaultLayer.fillColor = flatLayer.fillColor
+        defaultLayer.strokeColor = flatLayer.strokeColor
         defaultLayer.strokeWidth = flatLayer.strokeWidth
         defaultLayer.strokeLinejoin = flatLayer.strokeLinejoin
       } else if (templateLayer.type === 'svgImage') {
-        // Template loader now flattens structure - properties are directly on layer
+        // Template loader now flattens structure - properties use normalized names
         defaultLayer.svgImageId = flatLayer.svgImageId
         defaultLayer.svgContent = flatLayer.svgContent
         defaultLayer.color = flatLayer.color
-        defaultLayer.strokeColor = flatLayer.stroke
+        defaultLayer.strokeColor = flatLayer.strokeColor  // Already normalized by flattenTemplateLayer
         defaultLayer.strokeWidth = flatLayer.strokeWidth
         defaultLayer.strokeLinejoin = flatLayer.strokeLinejoin
         defaultLayer.rotation = flatLayer.rotation
@@ -973,17 +973,17 @@ export const mergedFormData = computed(() => {
       mergedLayer.strokeLinejoin = formLayer.strokeLinejoin !== undefined ? formLayer.strokeLinejoin : flatLayer.strokeLinejoin
       mergedLayer.strokeOpacity = formLayer.strokeOpacity !== undefined ? formLayer.strokeOpacity : flatLayer.strokeOpacity
     } else if (templateLayer.type === 'shape') {
-      // Template loader now flattens structure - properties are directly on layer
-      mergedLayer.fill = formLayer.fill !== undefined ? formLayer.fill : flatLayer.fill
-      mergedLayer.stroke = formLayer.stroke !== undefined ? formLayer.stroke : flatLayer.stroke
+      // Template loader now flattens structure - properties use normalized names
+      mergedLayer.fillColor = formLayer.fillColor !== undefined ? formLayer.fillColor : flatLayer.fillColor
+      mergedLayer.strokeColor = formLayer.strokeColor !== undefined ? formLayer.strokeColor : flatLayer.strokeColor
       mergedLayer.strokeWidth = formLayer.strokeWidth !== undefined ? formLayer.strokeWidth : flatLayer.strokeWidth
       mergedLayer.strokeLinejoin = formLayer.strokeLinejoin !== undefined ? formLayer.strokeLinejoin : flatLayer.strokeLinejoin
     } else if (templateLayer.type === 'svgImage') {
-      // Template loader now flattens structure - properties are directly on layer
+      // Template loader now flattens structure - properties use normalized names
       mergedLayer.svgImageId = formLayer.svgImageId !== undefined ? formLayer.svgImageId : flatLayer.svgImageId
       mergedLayer.svgContent = formLayer.svgContent !== undefined ? formLayer.svgContent : flatLayer.svgContent
       mergedLayer.color = formLayer.color !== undefined ? formLayer.color : flatLayer.color
-      mergedLayer.strokeColor = formLayer.strokeColor !== undefined ? formLayer.strokeColor : flatLayer.stroke
+      mergedLayer.strokeColor = formLayer.strokeColor !== undefined ? formLayer.strokeColor : flatLayer.strokeColor  // Already normalized
       mergedLayer.strokeWidth = formLayer.strokeWidth !== undefined ? formLayer.strokeWidth : flatLayer.strokeWidth
       mergedLayer.strokeLinejoin = formLayer.strokeLinejoin !== undefined ? formLayer.strokeLinejoin : flatLayer.strokeLinejoin
       mergedLayer.rotation = formLayer.rotation !== undefined ? formLayer.rotation : flatLayer.rotation
@@ -1070,9 +1070,9 @@ export const computedRenderData = computed(() => {
     } else if (templateLayer.type === 'shape' && templateLayer.shape) {
       renderLayer.shape = {
         ...templateLayer.shape,
-        // Only override with form data if form data exists
-        ...(formLayer?.fill !== undefined && { fill: formLayer.fill }),
-        ...(formLayer?.stroke !== undefined && { stroke: formLayer.stroke }),
+        // Only override with form data if form data exists (using normalized names)
+        ...(formLayer?.fillColor !== undefined && { fill: formLayer.fillColor }),
+        ...(formLayer?.strokeColor !== undefined && { stroke: formLayer.strokeColor }),
         ...(formLayer?.strokeWidth !== undefined && { strokeWidth: formLayer.strokeWidth }),
         ...(formLayer?.strokeLinejoin !== undefined && { strokeLinejoin: formLayer.strokeLinejoin })
       }
