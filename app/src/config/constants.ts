@@ -1,8 +1,6 @@
 // Application-wide constants following ALL_UPPERCASE naming convention
 
-// Storage keys
-export const STORAGE_KEY_MAIN = 'sticker-factory-data'
-export const STORAGE_KEY_TEMPLATE = 'sticker-factory-template-data'
+// Storage keys (legacy - app uses URL-driven state now)
 export const STORAGE_VERSION = 1
 
 // Template processing
@@ -44,14 +42,7 @@ export const SVG_PREVIEW_SIZE = 24
 export const URL_SYNC_DEBOUNCE_MS = 500 // Debounce delay for URL updates
 export const URL_SYNC_TIMEOUT_MS = 500 // Timeout value for URL sync operations
 
-// File handling
-export const SUPPORTED_JSON_MIME_TYPE = 'application/json'
-export const FILE_SIZE_KB = 1024
-
-// Default colors
-export const COLOR_DEFAULT_PRIMARY = '#22c55e'
-export const COLOR_DEFAULT_BLACK = '#000000'
-export const COLOR_DEFAULT_WHITE = '#ffffff'
+// Default colors (stroke color for shapes)
 export const COLOR_DEFAULT_STROKE = '#333333'
 
 // Download defaults
