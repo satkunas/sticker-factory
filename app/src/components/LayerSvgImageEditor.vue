@@ -138,7 +138,7 @@
                 max="360"
                 step="1"
                 class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
-                @input="$emit('update:rotation', parseFloat($event.target.value) || 0)"
+                @input="handleRotationSliderInput($event.target.value)"
               >
               <div class="relative">
                 <input
@@ -148,7 +148,7 @@
                   max="360"
                   step="1"
                   class="w-14 px-1 py-1 pr-4 text-xs border border-secondary-200 rounded text-center focus:outline-none focus:ring-1 focus:ring-primary-500"
-                  @input="$emit('update:rotation', Math.max(0, Math.min(360, parseFloat($event.target.value) || 0)))"
+                  @input="handleRotationTextInput($event.target.value)"
                 >
                 <span class="absolute right-1 top-1/2 transform -translate-y-1/2 text-xs text-secondary-400 pointer-events-none">°</span>
               </div>
@@ -374,7 +374,7 @@
                     :disabled="strokeColor === COLOR_NONE"
                     :class="{ 'cursor-not-allowed': strokeColor === COLOR_NONE }"
                     class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
-                    @input="$emit('update:strokeWidth', parseFloat($event.target.value) || 0)"
+                    @input="handleStrokeWidthInput($event.target.value)"
                   >
                   <input
                     :value="strokeWidth"
@@ -385,7 +385,7 @@
                     :disabled="strokeColor === COLOR_NONE"
                     :class="{ 'cursor-not-allowed': strokeColor === COLOR_NONE }"
                     class="w-12 px-1 py-1 text-xs border border-secondary-200 rounded text-center focus:outline-none focus:ring-1 focus:ring-primary-500"
-                    @input="$emit('update:strokeWidth', parseFloat($event.target.value) || 0)"
+                    @input="handleStrokeWidthInput($event.target.value)"
                   >
                 </div>
               </div>
@@ -644,14 +644,43 @@ const scalePercentage = computed(() => Math.round(props.scale * 100))
 
 // Scale event handlers
 const handleScaleSliderInput = (sliderValue: string) => {
-  const newScale = sliderValueToScale(parseFloat(sliderValue) || 0)
-  emit('update:scale', newScale)
+  const parsed = parseFloat(sliderValue)
+  if (!isNaN(parsed)) {
+    const newScale = sliderValueToScale(parsed)
+    emit('update:scale', newScale)
+  }
 }
 
 const handleScaleTextInput = (percentageValue: string) => {
-  const percentage = parseFloat(percentageValue) || 100
-  const clampedPercentage = Math.max(1, Math.min(10000, percentage))
-  const newScale = clampedPercentage / 100
-  emit('update:scale', newScale)
+  const percentage = parseFloat(percentageValue)
+  if (!isNaN(percentage)) {
+    const clampedPercentage = Math.max(1, Math.min(10000, percentage))
+    const newScale = clampedPercentage / 100
+    emit('update:scale', newScale)
+  }
+}
+
+// Rotation event handlers
+const handleRotationSliderInput = (value: string) => {
+  const parsed = parseFloat(value)
+  if (!isNaN(parsed)) {
+    emit('update:rotation', parsed)
+  }
+}
+
+const handleRotationTextInput = (value: string) => {
+  const parsed = parseFloat(value)
+  if (!isNaN(parsed)) {
+    const clamped = Math.max(0, Math.min(360, parsed))
+    emit('update:rotation', clamped)
+  }
+}
+
+// Stroke width event handler
+const handleStrokeWidthInput = (value: string) => {
+  const parsed = parseFloat(value)
+  if (!isNaN(parsed)) {
+    emit('update:strokeWidth', parsed)
+  }
 }
 </script>

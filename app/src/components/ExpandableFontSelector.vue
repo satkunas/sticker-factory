@@ -264,7 +264,7 @@
                     max="180"
                     step="1"
                     class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
-                    @input="$emit('update:rotation', parseFloat($event.target.value) || 0)"
+                    @input="handleRotationInput($event.target.value)"
                   >
                   <div class="relative">
                     <input
@@ -272,7 +272,7 @@
                       type="number"
                       step="1"
                       class="w-14 px-1 py-1 pr-4 text-xs border border-secondary-200 rounded text-center focus:outline-none focus:ring-1 focus:ring-primary-500"
-                      @input="$emit('update:rotation', parseFloat($event.target.value) || 0)"
+                      @input="handleRotationInput($event.target.value)"
                     >
                     <span class="absolute right-1 top-1/2 transform -translate-y-1/2 text-xs text-secondary-400 pointer-events-none">°</span>
                   </div>
@@ -487,22 +487,22 @@
                 </div>
                 <div class="flex items-center space-x-2">
                   <input
-                    :value="dy || 0"
+                    :value="dy ?? 0"
                     type="range"
                     min="-100"
                     max="100"
                     step="1"
                     class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
-                    @input="$emit('update:dy', parseInt($event.target.value) || 0)"
+                    @input="handleDyInput($event.target.value)"
                   >
                   <input
-                    :value="dy || 0"
+                    :value="dy ?? 0"
                     type="number"
                     min="-100"
                     max="100"
                     step="1"
                     class="w-14 px-1 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
-                    @input="$emit('update:dy', parseInt($event.target.value) || 0)"
+                    @input="handleDyInput($event.target.value)"
                   >
                   <span class="text-xs text-secondary-500">px</span>
                 </div>
@@ -685,6 +685,21 @@ interface Emits {
 const props = defineProps<Props>()
 
 const emit = defineEmits<Emits>()
+
+// Input handlers - validate before emitting
+const handleRotationInput = (value: string) => {
+  const parsed = parseFloat(value)
+  if (!isNaN(parsed)) {
+    emit('update:rotation', parsed)
+  }
+}
+
+const handleDyInput = (value: string) => {
+  const parsed = parseInt(value)
+  if (!isNaN(parsed)) {
+    emit('update:dy', parsed)
+  }
+}
 
 // Color picker references
 const textColorInputRef = ref<HTMLInputElement>()

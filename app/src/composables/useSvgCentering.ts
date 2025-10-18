@@ -194,10 +194,21 @@ export function calculateElementCenter(
   // Handle percentage positions
   const resolvePosition = (pos: number | string, dimension: number): number => {
     if (typeof pos === 'string' && pos.endsWith('%')) {
-      const percent = parseFloat(pos) / 100
-      return dimension * percent
+      const percentValue = parseFloat(pos)
+      if (isNaN(percentValue)) {
+        throw new Error(`Invalid position value: "${pos}" - must be a number or percentage`)
+      }
+      return dimension * (percentValue / 100)
     }
-    return typeof pos === 'number' ? pos : (parseFloat(pos) || 0)
+    if (typeof pos === 'number') {
+      return pos
+    }
+    // Parse string to number - if invalid, throw error (no hardcoded fallbacks)
+    const parsed = parseFloat(pos)
+    if (isNaN(parsed)) {
+      throw new Error(`Invalid position value: "${pos}" - must be a number or percentage`)
+    }
+    return parsed
   }
 
   const x = resolvePosition(element.position.x, templateViewBox.width)

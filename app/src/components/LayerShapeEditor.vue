@@ -362,7 +362,7 @@
                     :disabled="strokeColor === COLOR_NONE"
                     :class="{ 'cursor-not-allowed': strokeColor === COLOR_NONE }"
                     class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
-                    @input="$emit('update:strokeWidth', parseFloat($event.target.value) || 0)"
+                    @input="handleStrokeWidthInput($event.target.value)"
                   >
                   <input
                     :value="strokeWidth"
@@ -373,7 +373,7 @@
                     :disabled="strokeColor === COLOR_NONE"
                     :class="{ 'cursor-not-allowed': strokeColor === COLOR_NONE }"
                     class="w-12 px-1 py-1 text-xs border border-secondary-200 rounded text-center focus:outline-none focus:ring-1 focus:ring-primary-500"
-                    @input="$emit('update:strokeWidth', parseFloat($event.target.value) || 0)"
+                    @input="handleStrokeWidthInput($event.target.value)"
                   >
                 </div>
               </div>
@@ -439,7 +439,15 @@ interface Emits {
 
 const props = defineProps<Props>()
 
-defineEmits<Emits>()
+const emit = defineEmits<Emits>()
+
+// Stroke width event handler
+const handleStrokeWidthInput = (value: string) => {
+  const parsed = parseFloat(value)
+  if (!isNaN(parsed)) {
+    emit('update:strokeWidth', parsed)
+  }
+}
 
 // Unified dropdown management
 const dropdownManager = inject('dropdownManager')
