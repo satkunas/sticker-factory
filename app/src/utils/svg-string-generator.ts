@@ -120,7 +120,7 @@ function generateShapeElement(
   if (!path) return ''
 
   const fill = layerData?.fillColor ?? layerData?.fill ?? templateLayer.fill
-  const stroke = layerData?.strokeColor ?? layerData?.stroke ?? templateLayer.stroke
+  const stroke = layerData?.stroke ?? layerData?.strokeColor ?? templateLayer.stroke
   const strokeWidth = layerData?.strokeWidth ?? templateLayer.strokeWidth
   const strokeLinejoin = layerData?.strokeLinejoin
 

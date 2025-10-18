@@ -24,10 +24,10 @@
       <g v-if="templateLayer.type === 'shape'">
         <path
           :d="templateLayer.path"
-          :fill="layerData?.fillColor ?? layerData?.fill ?? templateLayer.fill"
-          :stroke="layerData?.strokeColor ?? layerData?.stroke ?? templateLayer.stroke"
+          :fill="layerData?.fillColor || layerData?.fill || templateLayer.fill"
+          :stroke="layerData?.stroke || layerData?.strokeColor || templateLayer.stroke"
           :stroke-width="layerData?.strokeWidth ?? templateLayer.strokeWidth"
-          :stroke-linejoin="layerData?.strokeLinejoin"
+          :stroke-linejoin="layerData?.strokeLinejoin || templateLayer.strokeLinejoin"
         />
       </g>
 

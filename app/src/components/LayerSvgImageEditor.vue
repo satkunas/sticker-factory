@@ -189,12 +189,16 @@
                 >
                 <!-- Color picker button -->
                 <button
-                  class="w-7 h-7 rounded border border-secondary-300 cursor-pointer hover:border-secondary-400 transition-colors"
-                  :style="{ backgroundColor: props.color }"
+                  class="w-7 h-7 rounded border border-secondary-300 cursor-pointer hover:border-secondary-400 transition-colors flex items-center justify-center"
+                  :style="props.color === COLOR_NONE ? { backgroundColor: 'white' } : { backgroundColor: props.color }"
                   :title="`Click to change color (${props.color})`"
                   type="button"
                   @click="$refs.colorInputRef?.click()"
-                />
+                >
+                  <svg v-if="props.color === COLOR_NONE" class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                  </svg>
+                </button>
                 <input
                   :value="props.color"
                   type="text"
@@ -279,12 +283,16 @@
                 >
                 <!-- Color picker button -->
                 <button
-                  class="w-7 h-7 rounded border border-secondary-300 cursor-pointer hover:border-secondary-400 transition-colors flex-shrink-0"
-                  :style="{ backgroundColor: strokeColor }"
+                  class="w-7 h-7 rounded border border-secondary-300 cursor-pointer hover:border-secondary-400 transition-colors flex-shrink-0 flex items-center justify-center"
+                  :style="strokeColor === COLOR_NONE ? { backgroundColor: 'white' } : { backgroundColor: strokeColor }"
                   :title="`Click to change stroke color (${strokeColor})`"
                   type="button"
                   @click="$refs.strokeColorInputRef?.click()"
-                />
+                >
+                  <svg v-if="strokeColor === COLOR_NONE" class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                  </svg>
+                </button>
                 <input
                   :value="strokeColor"
                   type="text"
