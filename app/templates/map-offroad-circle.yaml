@@ -108,6 +108,7 @@ layers:
     fontSize: 20
     fontWeight: 700
     fontColor: "#3d2817"
+    clip: "outer-border"
 
   # Year "2020" (right side)
   - id: "year-text"

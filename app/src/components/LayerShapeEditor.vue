@@ -136,15 +136,37 @@
           v-if="isExpanded"
           class="bg-secondary-25 border-t border-secondary-200 overflow-hidden"
         >
-        <div class="p-4 space-y-4">
-          <!-- Object Controls -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-            <!-- Fill Color Section -->
-            <div class="min-w-0">
-              <div class="text-sm font-medium text-secondary-700 mb-2">
+        <!-- Path Layer Notice (disabled editing) -->
+        <div v-if="isPathLayer" class="p-4 bg-amber-50 border-b border-amber-200">
+          <div class="flex items-start space-x-2">
+            <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+            <div class="flex-1">
+              <p class="text-sm font-medium text-amber-800">Path Layer (Read-Only)</p>
+              <p class="text-xs text-amber-700 mt-1">This layer is used as a path reference for curved text and cannot be edited directly.</p>
+            </div>
+          </div>
+        </div>
+        <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4" :class="{ 'opacity-50 pointer-events-none': isPathLayer }">
+          <!-- Fill Color Section -->
+          <div class="bg-secondary-500/5 rounded-lg p-3">
+            <div class="flex items-center justify-between mb-3">
+              <div class="text-sm font-medium text-secondary-700">
                 Fill Color
               </div>
-              <div class="flex items-center space-x-1 mb-2">
+              <button
+                type="button"
+                class="p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
+                title="Reset to template default"
+                @click="$emit('reset:fillColor')"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            </div>
+              <div class="bg-white rounded-lg p-2 flex items-center space-x-1 mb-2">
                 <!-- Hidden color input -->
                 <input
                   ref="fillColorInputRef"
@@ -169,6 +191,7 @@
                   @input="$emit('update:fillColor', $event.target.value)"
                 >
               </div>
+              <div class="bg-white rounded-lg p-2">
               <div class="grid grid-cols-6 md:grid-cols-12 gap-1">
                 <!-- None button with red cross icon -->
                 <button
@@ -213,14 +236,27 @@
                   @click="$emit('update:fillColor', color)"
                 />
               </div>
-            </div>
+              </div>
+          </div>
 
-            <!-- Stroke Color Section -->
-            <div class="min-w-0">
-              <div class="text-sm font-medium text-secondary-700 mb-2">
+          <!-- Stroke Color Section -->
+          <div class="bg-secondary-500/5 rounded-lg p-3">
+            <div class="flex items-center justify-between mb-3">
+              <div class="text-sm font-medium text-secondary-700">
                 Stroke Color
               </div>
-              <div class="flex items-center space-x-1 mb-2">
+              <button
+                type="button"
+                class="p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
+                title="Reset to template default"
+                @click="$emit('reset:strokeColor')"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            </div>
+              <div class="bg-white rounded-lg p-2 flex items-center space-x-1 mb-2">
                 <!-- Hidden color input -->
                 <input
                   ref="strokeColorInputRef"
@@ -245,6 +281,7 @@
                   @input="$emit('update:strokeColor', $event.target.value)"
                 >
               </div>
+              <div class="bg-white rounded-lg p-2">
               <div class="grid grid-cols-6 md:grid-cols-12 gap-1">
                 <!-- None button with red cross icon -->
                 <button
@@ -289,17 +326,29 @@
                   @click="$emit('update:strokeColor', color)"
                 />
               </div>
-            </div>
+              </div>
           </div>
 
           <!-- Stroke Controls Section -->
-          <div class="border-t border-secondary-100 pt-4">
-            <h5 class="text-sm font-medium text-secondary-700 mb-3">
-              Stroke Options
-            </h5>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+          <div class="bg-secondary-500/5 rounded-lg p-3 md:col-span-2">
+            <div class="flex items-center justify-between mb-3">
+              <h5 class="text-sm font-medium text-secondary-700">
+                Stroke Options
+              </h5>
+              <button
+                type="button"
+                class="p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
+                title="Reset to template default"
+                @click="$emit('reset:strokeWidth'); $emit('reset:strokeLinejoin')"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <!-- Stroke Width -->
-              <div class="min-w-0">
+              <div class="bg-white rounded-lg p-3 min-w-0" :class="{ 'opacity-50': strokeColor === COLOR_NONE }">
                 <div class="text-xs font-medium text-secondary-600 mb-2">
                   Width
                 </div>
@@ -310,6 +359,8 @@
                     min="0"
                     max="12"
                     step="0.5"
+                    :disabled="strokeColor === COLOR_NONE"
+                    :class="{ 'cursor-not-allowed': strokeColor === COLOR_NONE }"
                     class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
                     @input="$emit('update:strokeWidth', parseFloat($event.target.value) || 0)"
                   >
@@ -319,6 +370,8 @@
                     min="0"
                     max="12"
                     step="0.5"
+                    :disabled="strokeColor === COLOR_NONE"
+                    :class="{ 'cursor-not-allowed': strokeColor === COLOR_NONE }"
                     class="w-12 px-1 py-1 text-xs border border-secondary-200 rounded text-center focus:outline-none focus:ring-1 focus:ring-primary-500"
                     @input="$emit('update:strokeWidth', parseFloat($event.target.value) || 0)"
                   >
@@ -326,7 +379,7 @@
               </div>
 
               <!-- Stroke Linejoin -->
-              <div class="min-w-0">
+              <div class="bg-white rounded-lg p-3 min-w-0" :class="{ 'opacity-50': strokeColor === COLOR_NONE }">
                 <div class="text-xs font-medium text-secondary-600 mb-2">
                   Linejoin
                 </div>
@@ -334,8 +387,12 @@
                   <button
                     v-for="linejoin in STROKE_LINEJOIN_OPTIONS"
                     :key="linejoin.value"
+                    :disabled="strokeColor === COLOR_NONE"
                     class="px-2 py-1 text-xs rounded border transition-all text-center"
-                    :class="strokeLinejoin === linejoin.value ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white border-secondary-200 text-secondary-600 hover:border-secondary-300'"
+                    :class="[
+                      strokeLinejoin === linejoin.value ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white border-secondary-200 text-secondary-600 hover:border-secondary-300',
+                      { 'cursor-not-allowed': strokeColor === COLOR_NONE }
+                    ]"
                     :title="linejoin.description"
                     @click="$emit('update:strokeLinejoin', linejoin.value)"
                   >
@@ -373,6 +430,11 @@ interface Emits {
   'update:strokeColor': [value: string]
   'update:strokeWidth': [value: number]
   'update:strokeLinejoin': [value: string]
+  // Reset events
+  'reset:fillColor': []
+  'reset:strokeColor': []
+  'reset:strokeWidth': []
+  'reset:strokeLinejoin': []
 }
 
 const props = defineProps<Props>()
@@ -387,6 +449,11 @@ const expandedObjectInstances = inject('expandedObjectSelectors', ref(new Set<st
 
 // Component container ref for scrolling
 const containerRef = ref<HTMLElement>()
+
+// Check if this is a path layer (used for textPath references, not editable)
+const isPathLayer = computed(() => {
+  return props.shapeData?.subtype === 'path'
+})
 
 // Extract layer ID from instanceId (removes "shape-" prefix)
 const layerId = computed(() => {

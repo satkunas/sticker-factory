@@ -77,6 +77,7 @@
       :dominantBaseline="dominantBaseline"
       :multiline="multiline"
       :lineHeight="lineHeight"
+      :rotation="rotation"
       @update:selectedFont="$emit('update:selectedFont', $event)"
       @update:textColor="$emit('update:textColor', $event)"
       @update:fontSize="$emit('update:fontSize', $event)"
@@ -88,6 +89,19 @@
       @update:dy="$emit('update:dy', $event)"
       @update:dominantBaseline="$emit('update:dominantBaseline', $event)"
       @update:lineHeight="$emit('update:lineHeight', $event)"
+      @update:rotation="$emit('update:rotation', $event)"
+      @reset:selectedFont="$emit('reset:selectedFont')"
+      @reset:textColor="$emit('reset:textColor')"
+      @reset:fontSize="$emit('reset:fontSize')"
+      @reset:fontWeight="$emit('reset:fontWeight')"
+      @reset:textStrokeWidth="$emit('reset:textStrokeWidth')"
+      @reset:textStrokeColor="$emit('reset:textStrokeColor')"
+      @reset:textStrokeLinejoin="$emit('reset:textStrokeLinejoin')"
+      @reset:startOffset="$emit('reset:startOffset')"
+      @reset:dy="$emit('reset:dy')"
+      @reset:dominantBaseline="$emit('reset:dominantBaseline')"
+      @reset:lineHeight="$emit('reset:lineHeight')"
+      @reset:rotation="$emit('reset:rotation')"
     />
     </div>
   </div>
@@ -118,6 +132,8 @@ interface Props {
   // Multi-line text support
   multiline?: boolean
   lineHeight?: number
+  // Rotation support
+  rotation?: number
 }
 
 interface Emits {
@@ -135,6 +151,21 @@ interface Emits {
   'update:dominantBaseline': [value: string]
   // Multi-line text emit events
   'update:lineHeight': [value: number]
+  // Rotation emit event
+  'update:rotation': [value: number]
+  // Reset emit events
+  'reset:selectedFont': []
+  'reset:textColor': []
+  'reset:fontSize': []
+  'reset:fontWeight': []
+  'reset:textStrokeWidth': []
+  'reset:textStrokeColor': []
+  'reset:textStrokeLinejoin': []
+  'reset:startOffset': []
+  'reset:dy': []
+  'reset:dominantBaseline': []
+  'reset:lineHeight': []
+  'reset:rotation': []
 }
 
 const props = defineProps<Props>()

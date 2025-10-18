@@ -20,8 +20,20 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Color Section -->
           <div class="bg-secondary-500/5 rounded-lg p-3">
-            <div class="text-sm font-medium text-secondary-700 mb-3">
-              Color
+            <div class="flex items-center justify-between mb-3">
+              <div class="text-sm font-medium text-secondary-700">
+                Color
+              </div>
+              <button
+                type="button"
+                class="p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
+                title="Reset to template default"
+                @click="$emit('reset:textColor')"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
             </div>
               <div class="bg-white rounded-lg p-2 flex items-center space-x-1 mb-2">
                 <!-- Hidden color input -->
@@ -96,11 +108,24 @@
               </div>
           </div>
 
-          <!-- Font Size Section -->
+          <!-- Font Size & Weight Section -->
           <div class="bg-secondary-500/5 rounded-lg p-3">
-            <div class="text-sm font-medium text-secondary-700 mb-3">
-              Size
+            <div class="flex items-center justify-between mb-3">
+              <div class="text-sm font-medium text-secondary-700">
+                Size & Weight
+              </div>
+              <button
+                type="button"
+                class="p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
+                title="Reset to template default"
+                @click="$emit('reset:fontSize'); $emit('reset:fontWeight')"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
             </div>
+              <!-- Size Controls -->
               <div class="bg-white rounded-lg p-2 flex items-center space-x-2 mb-2">
                 <input
                   :value="fontSize"
@@ -119,7 +144,7 @@
                   @input="$emit('update:fontSize', parseInt($event.target.value) || undefined)"
                 >
               </div>
-              <div class="bg-white rounded-lg p-2">
+              <div class="bg-white rounded-lg p-2 mb-2">
               <div class="grid grid-cols-3 md:grid-cols-6 gap-1">
                 <button
                   v-for="size in COMMON_FONT_SIZES"
@@ -132,13 +157,7 @@
                 </button>
               </div>
               </div>
-          </div>
-
-          <!-- Font Weight Section -->
-          <div class="bg-secondary-500/5 rounded-lg p-3">
-            <div class="text-sm font-medium text-secondary-700 mb-3">
-              Weight
-            </div>
+              <!-- Weight Controls -->
               <div class="bg-white rounded-lg p-2">
               <div class="grid grid-cols-2 gap-1 mb-2">
                 <button
@@ -167,9 +186,21 @@
 
           <!-- Line Height Control (only shown for multiline text) -->
           <div v-if="multiline" class="bg-secondary-500/5 rounded-lg p-3">
-            <h5 class="text-sm font-medium text-secondary-700 mb-3">
-              Multi-line Spacing
-            </h5>
+            <div class="flex items-center justify-between mb-3">
+              <h5 class="text-sm font-medium text-secondary-700">
+                Multi-line Spacing
+              </h5>
+              <button
+                type="button"
+                class="p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
+                title="Reset to template default"
+                @click="$emit('reset:lineHeight')"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            </div>
             <div class="grid grid-cols-1">
               <div class="bg-white rounded-lg p-3 min-w-0">
                 <div class="text-xs font-medium text-secondary-600 mb-2">
@@ -205,9 +236,21 @@
 
           <!-- Rotation Control (hidden for textPath as rotation is incompatible with curved text) -->
           <div v-if="!textPath" class="bg-secondary-500/5 rounded-lg p-3">
-            <h5 class="text-sm font-medium text-secondary-700 mb-3">
-              Text Rotation
-            </h5>
+            <div class="flex items-center justify-between mb-3">
+              <h5 class="text-sm font-medium text-secondary-700">
+                Text Rotation
+              </h5>
+              <button
+                type="button"
+                class="p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
+                title="Reset to template default"
+                @click="$emit('reset:rotation')"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            </div>
             <div class="grid grid-cols-1">
               <div class="bg-white rounded-lg p-3 min-w-0">
                 <div class="text-xs font-medium text-secondary-600 mb-2">
@@ -243,9 +286,21 @@
 
           <!-- Stroke Controls -->
           <div class="bg-secondary-500/5 rounded-lg p-3 md:col-span-2">
-            <h5 class="text-sm font-medium text-secondary-700 mb-3">
-              Text Stroke
-            </h5>
+            <div class="flex items-center justify-between mb-3">
+              <h5 class="text-sm font-medium text-secondary-700">
+                Text Stroke
+              </h5>
+              <button
+                type="button"
+                class="p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
+                title="Reset to template default"
+                @click="$emit('reset:textStrokeColor'); $emit('reset:textStrokeWidth'); $emit('reset:textStrokeLinejoin')"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <!-- Stroke Color -->
               <div class="bg-white rounded-lg p-3 min-w-0">
@@ -381,9 +436,21 @@
 
           <!-- TextPath Controls (Curved Text) - Only shown when textPath exists -->
           <div v-if="textPath" class="bg-secondary-500/5 rounded-lg p-3 md:col-span-2">
-            <h5 class="text-sm font-medium text-secondary-700 mb-3">
-              Curved Text Position
-            </h5>
+            <div class="flex items-center justify-between mb-3">
+              <h5 class="text-sm font-medium text-secondary-700">
+                Curved Text Position
+              </h5>
+              <button
+                type="button"
+                class="p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
+                title="Reset to template default"
+                @click="$emit('reset:startOffset'); $emit('reset:dy'); $emit('reset:dominantBaseline')"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <!-- Start Offset -->
               <div class="bg-white rounded-lg p-3 min-w-0">
@@ -466,9 +533,21 @@
 
       <!-- Font Selection Section -->
       <div class="p-4 mx-4 bg-secondary-500/5 rounded-lg">
-        <h4 class="section-header">
-          Font Family
-        </h4>
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="section-header">
+            Font Family
+          </h4>
+          <button
+            type="button"
+            class="p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
+            title="Reset to template default"
+            @click="$emit('reset:selectedFont')"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
+        </div>
 
         <!-- Search -->
         <div class="mb-2 bg-white rounded-lg p-2">
@@ -588,6 +667,19 @@ interface Emits {
   'update:lineHeight': [value: number]
   // Rotation emit event
   'update:rotation': [value: number]
+  // Reset emit events
+  'reset:selectedFont': []
+  'reset:textColor': []
+  'reset:fontSize': []
+  'reset:fontWeight': []
+  'reset:textStrokeWidth': []
+  'reset:textStrokeColor': []
+  'reset:textStrokeLinejoin': []
+  'reset:startOffset': []
+  'reset:dy': []
+  'reset:dominantBaseline': []
+  'reset:lineHeight': []
+  'reset:rotation': []
 }
 
 const props = defineProps<Props>()

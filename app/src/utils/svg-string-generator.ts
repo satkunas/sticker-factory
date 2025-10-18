@@ -211,7 +211,7 @@ function generateTextElement(
 
     const x = resolveLayerPosition(templateLayer.position?.x, template.width)
     const y = resolveLayerPosition(templateLayer.position?.y, template.height)
-    const rotation = templateLayer.rotation
+    const rotation = layerData?.rotation ?? templateLayer.rotation
 
     let transform = `translate(${x}, ${y})`
     if (rotation !== undefined) {
@@ -241,7 +241,7 @@ function generateTextElement(
   // REGULAR TEXT (single-line with transform positioning)
   const x = resolveLayerPosition(templateLayer.position?.x, template.width)
   const y = resolveLayerPosition(templateLayer.position?.y, template.height)
-  const rotation = templateLayer.rotation
+  const rotation = layerData?.rotation ?? templateLayer.rotation
 
   // Build transform
   let transform = `translate(${x}, ${y})`

@@ -30,7 +30,7 @@ layers:
   - id: "top-arc-path"
     type: "shape"
     subtype: "path"
-    path: "M 200,200 m -120,0 a 120,120 0 1,0 240,0 a 120,120 0 1,0 -240,0"
+    path: "M 200,200 m -120,0 a 120,120 0 1,1 240,0 a 120,120 0 1,1 -240,0"
     position: { x: 0, y: 0 }
 
   # Bottom arc path (for textPath reference)
@@ -40,19 +40,32 @@ layers:
     path: "M 200,200 m -120,0 a 120,120 0 1,0 240,0 a 120,120 0 1,0 -240,0"
     position: { x: 0, y: 0 }
 
+
+  # Center star decoration
+  - id: "center-star"
+    type: "svgImage"
+    svgId: "ui-feedback-star"
+    position: { x: "50%", y: "50%" }
+    width: 75
+    height: 75
+    fill: "#fbbf24"
+    stroke: "#f59e0b"
+    strokeWidth: 2
+    clip: "inner-circle"
+
   # Top curved text
   - id: "top-text"
     type: "text"
     label: "Top Text"
     default: "CERTIFICATE OF"
     textPath: "top-arc-path"
-    startOffset: "50%"
+    startOffset: "25%"
     dy: 5
-    dominantBaseline: "middle"
+    dominantBaseline: "central"
     position: { x: "50%", y: "50%" }
     maxLength: 25
     fontFamily: "Oswald"
-    fontSize: 32
+    fontSize: 48
     fontWeight: 700
     fontColor: "#1e40af"
     clip: "inner-circle"
@@ -63,27 +76,16 @@ layers:
     label: "Bottom Text"
     default: "EXCELLENCE"
     textPath: "bottom-arc-path"
-    startOffset: "50%"
-    dy: -5
-    dominantBaseline: "middle"
+    startOffset: "25%"
+    dy: -10
+    dominantBaseline: "central"
     position: { x: "50%", y: "50%" }
     maxLength: 25
     fontFamily: "Oswald"
-    fontSize: 28
+    fontSize: 48
     fontWeight: 700
     fontColor: "#1e40af"
     clip: "inner-circle"
-
-  # Center star decoration
-  - id: "center-star"
-    type: "svgImage"
-    svgId: "star"
-    position: { x: "50%", y: "50%" }
-    width: 60
-    height: 60
-    fill: "#fbbf24"
-    stroke: "#f59e0b"
-    strokeWidth: 2
 
   # Center year/number text
   - id: "center-text"
@@ -92,8 +94,8 @@ layers:
     default: "2025"
     position: { x: "50%", y: "58%" }
     maxLength: 10
-    fontFamily: "Roboto"
-    fontSize: 20
+    fontFamily: "Oswald"
+    fontSize: 65
     fontWeight: 700
     fontColor: "#1e40af"
     clip: "inner-circle"

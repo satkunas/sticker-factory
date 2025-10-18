@@ -80,7 +80,7 @@
           resolveLayerPosition(templateLayer.position.x, template.width)
         }, ${
           resolveLayerPosition(templateLayer.position.y, template.height)
-        })${templateLayer.rotation !== undefined ? ` rotate(${templateLayer.rotation})` : ''}`"
+        })${(layerData?.rotation ?? templateLayer.rotation) !== undefined ? ` rotate(${layerData?.rotation ?? templateLayer.rotation})` : ''}`"
       >
         <text
           text-anchor="middle"
@@ -117,7 +117,7 @@
           resolveLayerPosition(templateLayer.position.x, template.width)
         }, ${
           resolveLayerPosition(templateLayer.position.y, template.height)
-        })${templateLayer.rotation !== undefined ? ` rotate(${templateLayer.rotation})` : ''}`"
+        })${(layerData?.rotation ?? templateLayer.rotation) !== undefined ? ` rotate(${layerData?.rotation ?? templateLayer.rotation})` : ''}`"
       >
         <text
           text-anchor="middle"

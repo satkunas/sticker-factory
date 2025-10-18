@@ -78,9 +78,25 @@
             class="mb-4"
             @dismiss="() => {}"
           />
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+          <div class="bg-secondary-500/5 rounded-lg p-3">
+          <div class="flex items-center justify-between mb-3">
+            <h5 class="text-sm font-medium text-secondary-700">
+              Transform Controls
+            </h5>
+            <button
+              type="button"
+              class="p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
+              title="Reset to template default"
+              @click="$emit('reset:scale'); $emit('reset:rotation')"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <!-- Scale Control -->
-          <div class="min-w-0">
+          <div class="bg-white rounded-lg p-3 min-w-0">
             <div class="text-xs font-medium text-secondary-600 mb-2">
               Scale
             </div>
@@ -110,7 +126,7 @@
           </div>
 
           <!-- Rotation Control -->
-          <div class="min-w-0">
+          <div class="bg-white rounded-lg p-3 min-w-0">
             <div class="text-xs font-medium text-secondary-600 mb-2">
               Rotation
             </div>
@@ -138,20 +154,31 @@
               </div>
             </div>
           </div>
+          </div>
         </div>
       </div>
 
       <!-- SVG Image Styling Section -->
       <div class="p-4 bg-secondary-25 border-t border-secondary-200">
-        <div class="space-y-4">
-          <!-- SVG Controls -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-            <!-- Color Section -->
-            <div class="min-w-0">
-              <div class="text-sm font-medium text-secondary-700 mb-2">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Color Section -->
+          <div class="bg-secondary-500/5 rounded-lg p-3">
+            <div class="flex items-center justify-between mb-3">
+              <div class="text-sm font-medium text-secondary-700">
                 Color
               </div>
-              <div class="flex items-center space-x-1 mb-2">
+              <button
+                type="button"
+                class="p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
+                title="Reset to template default"
+                @click="$emit('reset:color')"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            </div>
+              <div class="bg-white rounded-lg p-2 flex items-center space-x-1 mb-2">
                 <!-- Hidden color input -->
                 <input
                   ref="colorInputRef"
@@ -176,6 +203,7 @@
                   @input="$emit('update:color', $event.target.value)"
                 >
               </div>
+              <div class="bg-white rounded-lg p-2">
               <div class="grid grid-cols-6 md:grid-cols-12 gap-1">
                 <!-- None button with red cross icon -->
                 <button
@@ -220,14 +248,27 @@
                   @click="$emit('update:color', paletteColor)"
                 />
               </div>
-            </div>
+              </div>
+          </div>
 
-            <!-- Stroke Color Section -->
-            <div class="min-w-0">
-              <div class="text-sm font-medium text-secondary-700 mb-2">
+          <!-- Stroke Color Section -->
+          <div class="bg-secondary-500/5 rounded-lg p-3">
+            <div class="flex items-center justify-between mb-3">
+              <div class="text-sm font-medium text-secondary-700">
                 Stroke Color
               </div>
-              <div class="flex items-center space-x-1 mb-2">
+              <button
+                type="button"
+                class="p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
+                title="Reset to template default"
+                @click="$emit('reset:strokeColor')"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            </div>
+              <div class="bg-white rounded-lg p-2 flex items-center space-x-1 mb-2">
                 <!-- Hidden color input -->
                 <input
                   ref="strokeColorInputRef"
@@ -252,6 +293,7 @@
                   @input="$emit('update:strokeColor', $event.target.value)"
                 >
               </div>
+              <div class="bg-white rounded-lg p-2">
               <div class="grid grid-cols-6 md:grid-cols-12 gap-1">
                 <!-- None button with red cross icon -->
                 <button
@@ -296,17 +338,29 @@
                   @click="$emit('update:strokeColor', paletteColor)"
                 />
               </div>
-            </div>
+              </div>
           </div>
 
           <!-- Stroke Controls Section -->
-          <div class="border-t border-secondary-100 pt-4">
-            <h5 class="text-sm font-medium text-secondary-700 mb-3">
-              Stroke Options
-            </h5>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+          <div class="bg-secondary-500/5 rounded-lg p-3 md:col-span-2">
+            <div class="flex items-center justify-between mb-3">
+              <h5 class="text-sm font-medium text-secondary-700">
+                Stroke Options
+              </h5>
+              <button
+                type="button"
+                class="p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
+                title="Reset to template default"
+                @click="$emit('reset:strokeWidth'); $emit('reset:strokeLinejoin')"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <!-- Stroke Width -->
-              <div class="min-w-0">
+              <div class="bg-white rounded-lg p-3 min-w-0" :class="{ 'opacity-50': strokeColor === COLOR_NONE }">
                 <div class="text-xs font-medium text-secondary-600 mb-2">
                   Width
                 </div>
@@ -317,6 +371,8 @@
                     min="0"
                     max="12"
                     step="0.5"
+                    :disabled="strokeColor === COLOR_NONE"
+                    :class="{ 'cursor-not-allowed': strokeColor === COLOR_NONE }"
                     class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
                     @input="$emit('update:strokeWidth', parseFloat($event.target.value) || 0)"
                   >
@@ -326,6 +382,8 @@
                     min="0"
                     max="12"
                     step="0.5"
+                    :disabled="strokeColor === COLOR_NONE"
+                    :class="{ 'cursor-not-allowed': strokeColor === COLOR_NONE }"
                     class="w-12 px-1 py-1 text-xs border border-secondary-200 rounded text-center focus:outline-none focus:ring-1 focus:ring-primary-500"
                     @input="$emit('update:strokeWidth', parseFloat($event.target.value) || 0)"
                   >
@@ -333,7 +391,7 @@
               </div>
 
               <!-- Stroke Linejoin -->
-              <div class="min-w-0">
+              <div class="bg-white rounded-lg p-3 min-w-0" :class="{ 'opacity-50': strokeColor === COLOR_NONE }">
                 <div class="text-xs font-medium text-secondary-600 mb-2">
                   Linejoin
                 </div>
@@ -341,8 +399,12 @@
                   <button
                     v-for="linejoin in STROKE_LINEJOIN_OPTIONS"
                     :key="linejoin.value"
+                    :disabled="strokeColor === COLOR_NONE"
                     class="px-2 py-1 text-xs rounded border transition-all text-center"
-                    :class="strokeLinejoin === linejoin.value ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white border-secondary-200 text-secondary-600 hover:border-secondary-300'"
+                    :class="[
+                      strokeLinejoin === linejoin.value ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white border-secondary-200 text-secondary-600 hover:border-secondary-300',
+                      { 'cursor-not-allowed': strokeColor === COLOR_NONE }
+                    ]"
                     :title="linejoin.description"
                     @click="$emit('update:strokeLinejoin', linejoin.value)"
                   >
@@ -411,6 +473,15 @@ interface Emits {
   'update:strokeLinejoin': [value: string]
   'update:rotation': [value: number]
   'update:scale': [value: number]
+  // Reset events
+  'reset:svgContent': []
+  'reset:svgId': []
+  'reset:color': []
+  'reset:strokeColor': []
+  'reset:strokeWidth': []
+  'reset:strokeLinejoin': []
+  'reset:rotation': []
+  'reset:scale': []
 }
 
 const props = defineProps<Props>()
@@ -476,10 +547,17 @@ const _toggleExpanded = () => {
 }
 
 
-// Clear SVG selection
+// Clear SVG selection and reset all properties to template defaults
 const clearSvg = () => {
-  emit('update:svgContent', '')
-  emit('update:svgId', '')
+  // Emit all reset events to restore template defaults (including svgContent and svgId)
+  emit('reset:svgContent')
+  emit('reset:svgId')
+  emit('reset:color')
+  emit('reset:strokeColor')
+  emit('reset:strokeWidth')
+  emit('reset:strokeLinejoin')
+  emit('reset:rotation')
+  emit('reset:scale')
 }
 
 // Escape key handler

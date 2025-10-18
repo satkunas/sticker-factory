@@ -302,6 +302,8 @@ const getLayerProps = (layer: any) => {
         // Multi-line text properties
         multiline: flatLayer.multiline,
         lineHeight: flatLayer.lineHeight,
+        // Rotation property
+        rotation: flatLayer.rotation,
         instanceId: layer.id
       }
     case 'shape':
@@ -353,7 +355,9 @@ const eventMappings = {
     'update:dy': 'dy',
     'update:dominantBaseline': 'dominantBaseline',
     // Multi-line text event mappings
-    'update:lineHeight': 'lineHeight'
+    'update:lineHeight': 'lineHeight',
+    // Rotation event mapping
+    'update:rotation': 'rotation'
   },
   shape: {
     'update:fillColor': 'fill',
@@ -373,18 +377,64 @@ const eventMappings = {
   }
 } as const
 
-// Pure event mapper - no conditional logic
+// FLAT ARCHITECTURE: Reset event mapping - maps reset events to store properties
+const resetEventMappings = {
+  text: {
+    'reset:selectedFont': 'font',
+    'reset:textColor': 'fontColor',
+    'reset:fontSize': 'fontSize',
+    'reset:fontWeight': 'fontWeight',
+    'reset:textStrokeWidth': 'strokeWidth',
+    'reset:textStrokeColor': 'strokeColor',
+    'reset:textStrokeLinejoin': 'strokeLinejoin',
+    'reset:startOffset': 'startOffset',
+    'reset:dy': 'dy',
+    'reset:dominantBaseline': 'dominantBaseline',
+    'reset:lineHeight': 'lineHeight',
+    'reset:rotation': 'rotation'
+  },
+  shape: {
+    'reset:fillColor': 'fill',
+    'reset:strokeColor': 'stroke',
+    'reset:strokeWidth': 'strokeWidth',
+    'reset:strokeLinejoin': 'strokeLinejoin'
+  },
+  svgImage: {
+    'reset:svgContent': 'svgContent',
+    'reset:svgId': 'svgImageId',
+    'reset:color': 'color',
+    'reset:strokeColor': 'strokeColor',
+    'reset:strokeWidth': 'strokeWidth',
+    'reset:strokeLinejoin': 'strokeLinejoin',
+    'reset:rotation': 'rotation',
+    'reset:scale': 'scale'
+  }
+} as const
+
+// Pure event mapper - handles both update and reset events
 const getLayerEvents = (layer: any) => {
   const mapping = eventMappings[layer.type as keyof typeof eventMappings]
+  const resetMapping = resetEventMappings[layer.type as keyof typeof resetEventMappings]
+
   if (!mapping) return {}
 
-  // Generate event handlers from mapping configuration
-  return Object.fromEntries(
+  // Generate update event handlers from mapping configuration
+  const updateEvents = Object.fromEntries(
     Object.entries(mapping).map(([eventName, storeProperty]) => [
       eventName,
       (value: any) => updateLayer(layer.id, { [storeProperty]: value })
     ])
   )
+
+  // Generate reset event handlers - set property to undefined to use template default
+  const resetEvents = resetMapping ? Object.fromEntries(
+    Object.entries(resetMapping).map(([eventName, storeProperty]) => [
+      eventName,
+      () => updateLayer(layer.id, { [storeProperty]: undefined })
+    ])
+  ) : {}
+
+  return { ...updateEvents, ...resetEvents }
 }
 
 // SVG viewer ref
