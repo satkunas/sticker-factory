@@ -1,11 +1,23 @@
 <template>
   <!-- Inline SVG Selector (Direct Content) -->
-  <div ref="containerRef" class="w-full">
+  <div ref="containerRef" class="w-full overflow-x-hidden">
       <!-- SVG Selection Section -->
-      <div class="p-4 mx-4 bg-secondary-500/5 rounded-lg mb-3">
-        <h4 class="section-header">
-          SVG Library
-        </h4>
+      <div class="p-4 mx-4 bg-secondary-500/5 rounded-lg mb-3 max-w-full">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="section-header">
+            SVG Library
+          </h4>
+          <button
+            type="button"
+            class="p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
+            title="Reset to template default"
+            @click="clearSelection"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
+        </div>
 
         <!-- Search and Category -->
         <div class="bg-white rounded-lg p-2">
@@ -31,7 +43,7 @@
           </div>
 
           <!-- Category Filter and Results Count -->
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-2">
             <CategoryDropdown
               v-model="selectedCategory"
               :categories="svgCategoryOptions"
@@ -45,7 +57,7 @@
       </div>
 
       <!-- SVG Grid -->
-      <div class="p-4 mx-4 bg-secondary-500/5 rounded-lg">
+      <div class="p-4 mx-4 bg-secondary-500/5 rounded-lg max-w-full">
         <div class="bg-white rounded-lg p-2">
           <div v-if="svgStore.isLoading.value" class="flex items-center justify-center py-8">
             <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
@@ -63,7 +75,7 @@
           </div>
 
           <div v-else ref="svgGridContainer" class="max-h-64 overflow-y-auto overflow-x-hidden" @scroll="handleScroll">
-          <div class="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2 pt-2">
+          <div class="w-full min-w-0 grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2 pt-2">
             <div
               v-for="svg in visibleSvgs"
               :key="svg.id"
