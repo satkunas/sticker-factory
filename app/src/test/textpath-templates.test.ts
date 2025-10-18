@@ -154,11 +154,11 @@ describe('TextPath Template Validation', () => {
 
       const topText = template.layers.find((layer: any) => layer.id === 'top-text')
       expect(topText.startOffset).toBeDefined()
-      expect(topText.startOffset).toBe('50%')
+      expect(topText.startOffset).toBe('25%')
 
       const bottomText = template.layers.find((layer: any) => layer.id === 'bottom-text')
       expect(bottomText.startOffset).toBeDefined()
-      expect(bottomText.startOffset).toBe('50%')
+      expect(bottomText.startOffset).toBe('25%')
       expect(bottomText.dy).toBeDefined()
       expect(typeof bottomText.dy).toBe('number')
     })

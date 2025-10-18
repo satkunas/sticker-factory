@@ -141,24 +141,6 @@
           </div>
         </div>
         </div>
-
-        <!-- Action Buttons -->
-        <div v-if="!svgStore.isLoading.value && filteredSvgs.length > 0" class="mt-4 pt-3 border-t border-secondary-100">
-          <div class="flex items-center justify-between">
-            <div class="text-xs text-secondary-500">
-              Click an icon to select it
-            </div>
-            <button
-              v-if="props.selectedSvgId"
-              class="px-3 py-1 text-xs bg-red-50 border border-red-200 rounded-md text-red-600 hover:bg-red-100 transition-colors"
-              type="button"
-              title="Remove selected SVG"
-              @click="clearSelection"
-            >
-              Remove SVG
-            </button>
-          </div>
-        </div>
       </div>
   </div>
 </template>
@@ -375,10 +357,8 @@ const selectSvg = async (svg: SvgLibraryItem) => {
   emit('update:selectedSvgContent', loadedSvgContent.value[svg.id] || svg.svgContent)
 }
 
-// Clear selection
+// Clear selection - only emit clear event, parent handles reset logic
 const clearSelection = () => {
-  emit('update:selectedSvgId', '')
-  emit('update:selectedSvgContent', '')
   emit('clear')
 }
 

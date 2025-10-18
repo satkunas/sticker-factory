@@ -192,6 +192,7 @@ function flattenTemplateLayer(templateLayer: TemplateLayer): FlatLayerData {
     // SVG Image properties (directly accessible)
     svgImageId, svgContent,
     color, // SVG images use 'color' instead of 'fill' to distinguish from shapes
+    strokeColor: stroke, // Map template 'stroke' to 'strokeColor' for form/component compatibility
     // Include any other properties that might exist
     ...otherProps
   }
@@ -199,11 +200,20 @@ function flattenTemplateLayer(templateLayer: TemplateLayer): FlatLayerData {
 
 /**
  * Merge flat template defaults with flat form overrides (simple object spread)
+ * CRITICAL: Filter out undefined values to allow resetting to template defaults
  */
 function mergeFlatLayerData(templateDefaults: FlatLayerData, formOverrides: Partial<FlatLayerData> = {}): FlatLayerData {
+  // Filter out undefined values from formOverrides to preserve template defaults
+  const cleanedOverrides: Partial<FlatLayerData> = {}
+  for (const key in formOverrides) {
+    if (formOverrides[key as keyof FlatLayerData] !== undefined) {
+      cleanedOverrides[key as keyof FlatLayerData] = formOverrides[key as keyof FlatLayerData] as any
+    }
+  }
+
   const merged = {
     ...templateDefaults,
-    ...formOverrides,
+    ...cleanedOverrides,
     id: templateDefaults.id, // Always preserve template ID
     type: templateDefaults.type // Always preserve template type
   }
@@ -520,6 +530,9 @@ function mergeTemplateWithUrlData(template: SimpleTemplate, urlLayers: Array<{ i
       formEntry.startOffset = urlOverride.startOffset !== undefined ? urlOverride.startOffset : flatLayer.startOffset
       formEntry.dy = urlOverride.dy !== undefined ? urlOverride.dy : flatLayer.dy
       formEntry.dominantBaseline = urlOverride.dominantBaseline !== undefined ? urlOverride.dominantBaseline : flatLayer.dominantBaseline
+
+      // Rotation property (applies to all text types)
+      formEntry.rotation = urlOverride.rotation !== undefined ? urlOverride.rotation : flatLayer.rotation
 
       // Handle fontFamily - convert string to font object
       // Priority: URL override > template default
