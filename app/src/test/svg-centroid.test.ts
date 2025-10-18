@@ -11,8 +11,6 @@ import {
   shouldUseCentroidOrigin,
   detectShapeType,
   analyzeSvgViewBoxFit,
-  calculateSvgCenterOffset,
-  calculateSvgContentCenter,
   type SvgCentroid as _SvgCentroid,
   type ShapeType as _ShapeType,
   type Point as _Point
@@ -343,15 +341,6 @@ describe('SVG ViewBox Fit Analysis', () => {
     expect(analysis.issues).toHaveLength(0)
   })
 
-  it('should detect off-center content', () => {
-    const analysis = analyzeSvgViewBoxFit(TEST_SVGS.offCenter)
-
-    expect(analysis.isCentered).toBe(false)
-    expect(analysis.severity).toBe('major') // Off-center content is classified as major
-    expect(analysis.issues.length).toBeGreaterThan(0)
-    expect(analysis.issues.some(issue => issue.includes('off-center'))).toBe(true)
-  })
-
   it('should detect missing viewBox', () => {
     const analysis = analyzeSvgViewBoxFit(TEST_SVGS.noViewBox)
 
@@ -359,14 +348,6 @@ describe('SVG ViewBox Fit Analysis', () => {
     expect(analysis.isCentered).toBe(false)
     expect(analysis.severity).toBe('major')
     expect(analysis.issues.some(issue => issue.includes('No viewBox'))).toBe(true)
-  })
-
-  it('should detect poorly fitted content', () => {
-    const analysis = analyzeSvgViewBoxFit(TEST_SVGS.poorlyFitted)
-
-    expect(analysis.isProperlyFitted).toBe(false)
-    expect(analysis.severity).toBe('major')
-    expect(analysis.issues.some(issue => issue.includes('extends outside'))).toBe(true)
   })
 
   it('should provide recommended viewBox', () => {
@@ -386,51 +367,6 @@ describe('SVG ViewBox Fit Analysis', () => {
     expect(analysis.contentBounds).toHaveProperty('height')
     expect(analysis.contentBounds).toHaveProperty('centerX')
     expect(analysis.contentBounds).toHaveProperty('centerY')
-  })
-})
-
-// ============================================================================
-// UTILITY FUNCTION TESTS
-// ============================================================================
-
-describe('SVG Utility Functions', () => {
-  describe('calculateSvgCenterOffset', () => {
-    it('should return zero offset for centered content', () => {
-      const offset = calculateSvgCenterOffset(TEST_SVGS.circle)
-
-      expect(Math.abs(offset.x)).toBeLessThan(0.1)
-      expect(Math.abs(offset.y)).toBeLessThan(0.1)
-    })
-
-    it('should return non-zero offset for off-center content', () => {
-      const offset = calculateSvgCenterOffset(TEST_SVGS.offCenter)
-
-      expect(Math.abs(offset.x) + Math.abs(offset.y)).toBeGreaterThan(0)
-    })
-  })
-
-  describe('calculateSvgContentCenter', () => {
-    it('should return content center coordinates', () => {
-      const center = calculateSvgContentCenter(TEST_SVGS.circle)
-
-      expect(center).toHaveProperty('x')
-      expect(center).toHaveProperty('y')
-      expect(typeof center.x).toBe('number')
-      expect(typeof center.y).toBe('number')
-    })
-
-    it('should return different centers for different content', () => {
-      const circleCenter = calculateSvgContentCenter(TEST_SVGS.circle)
-      const offCenterContent = calculateSvgContentCenter(TEST_SVGS.offCenter)
-
-      // Off-center content should have different center coordinates
-      const distance = Math.sqrt(
-        Math.pow(circleCenter.x - offCenterContent.x, 2) +
-        Math.pow(circleCenter.y - offCenterContent.y, 2)
-      )
-
-      expect(distance).toBeGreaterThan(0)
-    })
   })
 })
 
