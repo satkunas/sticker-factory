@@ -1,20 +1,10 @@
 /**
- * Unified URL-Driven Store
- * ========================
- *
- * Single source of truth for application state management.
+ * URL-Driven Store
  * Data Flow: URL → Decode → Template+Merge → FormData → Components → UserInput → Silent URL Update
- *
- * Architecture Principles:
- * 1. URL is the authoritative source of truth
- * 2. Router integration handles all URL changes
- * 3. Template + URL merge creates mutable form data
- * 4. Form changes trigger debounced URL sync
- * 5. History/back navigation works seamlessly
  */
 
 import { ref, computed, readonly } from 'vue'
-import type { Router, RouteLocationNormalized } from 'vue-router'
+import type { Router } from 'vue-router'
 import { logger } from '../utils/logger'
 import { encodeTemplateStateCompact, decodeTemplateStateCompact } from '../utils/url-encoding'
 import type { AppState } from '../types/app-state'
@@ -22,8 +12,6 @@ import {
   analyzeSvgViewBoxFit,
   type SvgViewBoxFitAnalysis,
   calculateOptimalTransformOrigin,
-  shouldUseCentroidOrigin,
-  calculateSvgCentroid,
   type Point,
   type SvgCentroid
 } from '../utils/svg-bounds'
@@ -33,10 +21,6 @@ import {
   DEFAULT_SHAPE_HEIGHT
 } from '../config/constants'
 import { loadTemplate } from '../config/template-loader'
-
-// ============================================================================
-// NO SAFETY UTILITIES - All calculations derive from actual measurements
-// ============================================================================
 import type { SimpleTemplate, FlatLayerData, TemplateLayer, TemplateTextInput, TemplateShape } from '../types/template-types'
 import { AVAILABLE_FONTS, type FontConfig } from '../config/fonts'
 import { resolveCoordinate } from '../utils/svg'
@@ -44,15 +28,7 @@ import { processLayerForRendering, type ProcessedLayer } from '../utils/unified-
 import { getStyledSvgContent } from '../utils/svg-template'
 import { useSvgViewBox } from '../composables/useSvgViewBox'
 
-// ============================================================================
-// TYPE DEFINITIONS
-// ============================================================================
-
-/**
- * Core application state - all state is derived from URL
- */
 export interface UrlDrivenState {
-  // Router integration
   router: Router | null
   isInitialized: boolean
 
@@ -204,12 +180,12 @@ function flattenTemplateLayer(templateLayer: TemplateLayer): FlatLayerData {
  */
 function mergeFlatLayerData(templateDefaults: FlatLayerData, formOverrides: Partial<FlatLayerData> = {}): FlatLayerData {
   // Filter out undefined values from formOverrides to preserve template defaults
-  const cleanedOverrides: Partial<FlatLayerData> = {}
-  for (const key in formOverrides) {
-    if (formOverrides[key as keyof FlatLayerData] !== undefined) {
-      cleanedOverrides[key as keyof FlatLayerData] = formOverrides[key as keyof FlatLayerData] as any
+  const cleanedOverrides = Object.entries(formOverrides).reduce((acc, [key, value]) => {
+    if (value !== undefined) {
+      acc[key as keyof FlatLayerData] = value
     }
-  }
+    return acc
+  }, {} as Partial<FlatLayerData>)
 
   const merged = {
     ...templateDefaults,
@@ -276,10 +252,7 @@ export function initializeUrlDrivenStore(router: Router): void {
   _state.value.router = router
   _state.value.isInitialized = true
 
-  // Set up router guards for URL change detection
   setupRouterGuards(router)
-
-  logger.info('URL-driven store initialized with router integration')
 }
 
 /**
@@ -290,10 +263,6 @@ function setupRouterGuards(router: Router): void {
   router.beforeEach(async (to, from, next) => {
     try {
       _state.value.currentUrl = to.path
-
-      // Log navigation type for debugging
-      const navigationType = getNavigationType(to, from)
-      logger.debug(`Navigation detected: ${navigationType} (${from.path} → ${to.path})`)
 
       if (to.path === '/') {
         // Homepage - load defaults
@@ -320,64 +289,12 @@ function setupRouterGuards(router: Router): void {
   setupBrowserNavigationHandling(router)
 }
 
-/**
- * Set up browser navigation event handling for better UX
- */
 function setupBrowserNavigationHandling(_router: Router): void {
-  // Listen for popstate events (browser back/forward)
-  window.addEventListener('popstate', (event) => {
-    logger.debug('Browser navigation detected (popstate event)', {
-      state: event.state,
-      url: window.location.pathname
-    })
-
-    // The router will automatically handle the URL change via beforeEach guard
-    // This is just for logging and potential future enhancements
-  })
-
-  // Listen for beforeunload to prevent data loss during navigation
-  window.addEventListener('beforeunload', (_event) => {
-    // Only prevent unload if user has unsaved changes
-    // For now, we'll just log - future enhancement could check for pending changes
-    logger.debug('Page unload detected - URL state should be preserved')
+  window.addEventListener('popstate', () => {
+    // Router handles URL change via beforeEach guard
   })
 }
 
-/**
- * Determine the type of navigation for debugging and analytics
- */
-function getNavigationType(to: RouteLocationNormalized, from: RouteLocationNormalized): string {
-  if (!from.path || from.path === '/') {
-    return 'initial_load'
-  }
-
-  if (to.path === '/' && from.path.endsWith('.sticker')) {
-    return 'back_to_home'
-  }
-
-  if (from.path === '/' && to.path.endsWith('.sticker')) {
-    return 'home_to_sticker'
-  }
-
-  if (to.path.endsWith('.sticker') && from.path.endsWith('.sticker')) {
-    return 'sticker_to_sticker'
-  }
-
-  // Check if this might be browser back/forward by comparing with current URL
-  if (window.location.pathname === to.path) {
-    return 'browser_navigation'
-  }
-
-  return 'programmatic_navigation'
-}
-
-// ============================================================================
-// URL DECODE PIPELINE
-// ============================================================================
-
-/**
- * Handle URL decoding when navigating to a .sticker URL
- */
 async function handleUrlDecode(urlPath: string): Promise<void> {
   _state.value.isLoadingFromUrl = true
 
@@ -394,52 +311,21 @@ async function handleUrlDecode(urlPath: string): Promise<void> {
     }
 
     const encodedState = stickerMatch[1]
-    logger.info(`Decoding URL state: ${encodedState.substring(0, 30)}...`)
-
-    // Decode URL state
     const decodedState = decodeTemplateStateCompact(encodedState)
 
     if (!decodedState) {
       logger.warn('Failed to decode URL state - incompatible encoding version or corrupt data')
-      logger.warn('This URL may have been created with an older version of the application')
-
       await loadDefaultState()
-
-      // CLEAR BAD URL: Replace with homepage to prevent re-triggering error
       window.history.replaceState(null, '', '/')
-
-      // Show user-friendly console message
-      logger.warn(
-        '⚠️ This URL uses an incompatible encoding format.\n' +
-        'Redirecting to homepage. Your work has not been saved.\n' +
-        'Please create a new sticker and save the new URL.'
-      )
-
       return
     }
 
-    // DEBUG: Log what was actually decoded
-    logger.debug('Decoded state from URL:', decodedState)
-
-    // Apply decoded state
     await applyDecodedState(decodedState)
-
-    logger.info('Successfully loaded state from URL')
 
   } catch (error) {
     logger.error('Error decoding URL state:', error)
     await loadDefaultState()
-
-    // CLEAR BAD URL from browser history
     window.history.replaceState(null, '', '/')
-
-    // Show user-friendly error
-    logger.error(
-      '❌ Failed to load state from URL.\n' +
-      'The URL may be corrupted or incompatible.\n' +
-      'Redirected to homepage.'
-    )
-
   } finally {
     _state.value.isLoadingFromUrl = false
   }
@@ -461,32 +347,17 @@ async function applyDecodedState(decodedState: Partial<AppState>): Promise<void>
       // Merge template defaults with URL overrides to create form data
       const mergedFormData = mergeTemplateWithUrlData(template, decodedState.layers || [])
       _state.value.formData = mergedFormData
-
-      // TEMPORARY: Disable OLD render system to force NEW reactive system
-      // updateRenderData()
     }
   }
 }
 
-/**
- * Load default state (used for homepage or fallback)
- */
 async function loadDefaultState(): Promise<void> {
   _state.value.selectedTemplateId = null
   _state.value.selectedTemplate = null
   _state.value.formData = []
   _state.value.renderData = []
-
-  logger.info('Loaded default state')
 }
 
-// ============================================================================
-// TEMPLATE + URL MERGE LOGIC
-// ============================================================================
-
-/**
- * Merge template defaults with URL overrides to create mutable form data
- */
 function mergeTemplateWithUrlData(template: SimpleTemplate, urlLayers: Array<{ id: string; [key: string]: unknown }>): LayerFormData[] {
   const formData: LayerFormData[] = []
 
@@ -590,11 +461,7 @@ export function updateLayer(layerId: string, updates: Partial<LayerFormData>): v
     index === layerIndex ? { ...layer, ...updates } : layer
   )
 
-  // TEMPORARY: Disable OLD render system to force NEW reactive system
-  // updateRenderData()
   scheduleUrlSync()
-
-  logger.debug(`Layer ${layerId} updated:`, updates)
 }
 
 /**
@@ -623,11 +490,7 @@ export async function updateTemplate(templateId: string): Promise<void> {
     const newFormData = mergeTemplateWithUrlData(newTemplate, [])
     _state.value.formData = newFormData
 
-    // TEMPORARY: Disable OLD render system to force NEW reactive system
-    // updateRenderData()
     scheduleUrlSync()
-
-    logger.info(`Template updated to: ${templateId}`)
   } catch (error) {
     logger.error('Error updating template:', error)
   } finally {
@@ -656,182 +519,20 @@ export function updateLayers(updates: Array<{ layerId: string; updates: Partial<
   })
 
   if (hasChanges) {
-    // TEMPORARY: Disable OLD render system to force NEW reactive system
-    // updateRenderData()
     scheduleUrlSync()
   }
 }
 
-/**
- * Update render data based on current form data and template
- * LEGACY: Currently disabled in favor of NEW reactive computed system
- */
-function _updateRenderData(): void {
-  logger.debug(`🔄 _updateRenderData called - template: ${_state.value.selectedTemplate?.id || 'none'}, layers: ${_state.value.selectedTemplate?.layers?.length || 0}`)
-
-  if (!_state.value.selectedTemplate) {
-    _state.value.renderData = []
-    return
-  }
-
-  // Generate render data by merging template with form data
-  _state.value.renderData = _state.value.selectedTemplate.layers.map(templateLayer => {
-    logger.debug(`🏗️ Processing template layer: ${templateLayer.id} (type: ${templateLayer.type})`)
-
-    const formLayer = _state.value.formData.find(layer => layer.id === templateLayer.id)
-
-    const renderLayer: RenderableLayer = {
-      id: templateLayer.id,
-      type: templateLayer.type as 'text' | 'shape' | 'svgImage'
-    }
-
-    // Cast to FlatLayerData since template loader flattens structure at runtime
-    const flatLayer = templateLayer as unknown as FlatLayerData
-
-    if (templateLayer.type === 'text') {
-      // Template loader now flattens structure - reconstruct for compatibility
-      renderLayer.textInput = {
-        text: flatLayer.text,
-        fontSize: flatLayer.fontSize,
-        fontWeight: flatLayer.fontWeight,
-        fontColor: flatLayer.fontColor,
-        fontFamily: flatLayer.fontFamily,
-        strokeColor: flatLayer.strokeColor,
-        strokeWidth: flatLayer.strokeWidth,
-        strokeOpacity: flatLayer.strokeOpacity,
-        strokeLinejoin: flatLayer.strokeLinejoin,
-        position: flatLayer.position,
-        // TextPath properties for curved text
-        textPath: flatLayer.textPath,
-        startOffset: flatLayer.startOffset,
-        dy: flatLayer.dy,
-        dominantBaseline: flatLayer.dominantBaseline,
-        // Only override with form data if form data exists
-        ...(formLayer?.text !== undefined && { text: formLayer.text }),
-        ...(formLayer?.fontSize !== undefined && { fontSize: formLayer.fontSize }),
-        ...(formLayer?.fontWeight !== undefined && { fontWeight: formLayer.fontWeight }),
-        ...(formLayer?.fontColor !== undefined && { fontColor: formLayer.fontColor }),
-        ...(formLayer?.font?.family !== undefined && { fontFamily: formLayer.font.family }),
-        // TextPath property overrides (curved text along paths)
-        ...(formLayer?.startOffset !== undefined && { startOffset: formLayer.startOffset }),
-        ...(formLayer?.dy !== undefined && { dy: formLayer.dy }),
-        ...(formLayer?.dominantBaseline !== undefined && { dominantBaseline: formLayer.dominantBaseline }),
-        // Only include stroke if strokeWidth > 0
-        ...(formLayer?.strokeWidth !== undefined && formLayer.strokeWidth > 0 && {
-          stroke: formLayer.strokeColor,
-          strokeWidth: formLayer.strokeWidth,
-          ...(formLayer.strokeOpacity !== undefined && { strokeOpacity: formLayer.strokeOpacity })
-        }),
-        // Only include strokeLinejoin if specified
-        ...(formLayer?.strokeLinejoin !== undefined && { strokeLinejoin: formLayer.strokeLinejoin }),
-        // Normalize clip path
-        ...(flatLayer.clip && { clipPath: `url(#clip-${flatLayer.clip})` })
-      }
-    } else if (templateLayer.type === 'shape') {
-      // Template loader now flattens structure - reconstruct for compatibility using normalized names
-      renderLayer.shape = {
-        id: flatLayer.id,
-        type: 'path',
-        path: flatLayer.path,
-        fill: flatLayer.fillColor,      // Use normalized property name
-        stroke: flatLayer.strokeColor,  // Use normalized property name
-        strokeWidth: flatLayer.strokeWidth,
-        strokeLinejoin: flatLayer.strokeLinejoin,
-        // Only override with form data if form data exists (using normalized names)
-        ...(formLayer?.fillColor !== undefined && { fill: formLayer.fillColor }),
-        ...(formLayer?.strokeColor !== undefined && { stroke: formLayer.strokeColor }),
-        ...(formLayer?.strokeWidth !== undefined && { strokeWidth: formLayer.strokeWidth }),
-        ...(formLayer?.strokeLinejoin !== undefined && { strokeLinejoin: formLayer.strokeLinejoin })
-      }
-    } else if (templateLayer.type === 'svgImage') {
-      logger.debug(`📊 Processing svgImage layer: ${templateLayer.id}`)
-
-      // Template loader now flattens structure - reconstruct for compatibility
-      renderLayer.svgImage = {
-        id: flatLayer.svgImageId,
-        svgContent: flatLayer.svgContent,
-        width: flatLayer.width,
-        height: flatLayer.height,
-        fill: flatLayer.color,
-        stroke: flatLayer.stroke,
-        strokeWidth: flatLayer.strokeWidth,
-        strokeLinejoin: flatLayer.strokeLinejoin,
-        position: flatLayer.position,
-        // Only override with form data if form data exists
-        ...(formLayer?.color !== undefined && { fill: formLayer.color }),
-        ...(formLayer?.strokeColor !== undefined && { stroke: formLayer.strokeColor }),
-        ...(formLayer?.strokeWidth !== undefined && { strokeWidth: formLayer.strokeWidth }),
-        ...(formLayer?.strokeLinejoin !== undefined && { strokeLinejoin: formLayer.strokeLinejoin }),
-        ...(formLayer?.svgContent !== undefined && { svgContent: formLayer.svgContent }),
-        // Normalize clip path
-        ...(flatLayer.clip && { clipPath: `url(#clip-${flatLayer.clip})` }),
-        ...(formLayer?.scale !== undefined && { scale: formLayer.scale }),
-        ...(formLayer?.rotation !== undefined && { rotation: formLayer.rotation })
-      }
-
-      // Calculate centroid-based transform origin for this SVG layer
-      const svgContent = renderLayer.svgImage.svgContent || flatLayer.svgContent
-      logger.debug(`🔍 SVG content check for ${templateLayer.id}:`, {
-        hasRenderLayerContent: !!renderLayer.svgImage.svgContent,
-        hasTemplateLayerContent: !!flatLayer.svgContent,
-        finalSvgContent: !!svgContent,
-        svgContentLength: svgContent?.length || 0
-      })
-
-      if (svgContent) {
-        try {
-          logger.debug(`Calculating centroid for ${templateLayer.id} with SVG content length: ${svgContent.length}`)
-
-          const centroidResult = calculateSvgCentroid(svgContent)
-          const optimalOrigin = calculateOptimalTransformOrigin(svgContent)
-          const useCentroid = shouldUseCentroidOrigin(svgContent)
-
-          // Add centroid analysis to render layer
-          renderLayer.centroidAnalysis = centroidResult
-          renderLayer.transformOrigin = optimalOrigin
-          renderLayer.useCentroidOrigin = useCentroid
-
-          logger.debug(`Centroid calculated for ${templateLayer.id}:`, {
-            shapeType: centroidResult.shapeType,
-            useCentroid,
-            confidence: centroidResult.confidence,
-            transformOrigin: optimalOrigin,
-            boundingBoxCenter: centroidResult.boundingBoxCenter,
-            centroidCenter: centroidResult.centroidCenter
-          })
-        } catch (error) {
-          logger.warn(`Failed to calculate centroid for ${templateLayer.id}:`, error)
-          // No fallback - let transform origin be undefined if calculation fails
-          renderLayer.useCentroidOrigin = false
-        }
-      } else {
-        logger.warn(`No SVG content found for ${templateLayer.id}`)
-      }
-    }
-
-    return renderLayer
-  })
-}
-
-// ============================================================================
-// URL SYNC SYSTEM
-// ============================================================================
-
-/**
- * Schedule a debounced URL sync
- */
 function scheduleUrlSync(): void {
   if (!_state.value.isInitialized || !_state.value.router) {
     logger.warn('Cannot sync URL - store not initialized')
     return
   }
 
-  // Clear existing timeout
   if (_urlSyncTimeout) {
     clearTimeout(_urlSyncTimeout)
   }
 
-  // Schedule URL update
   _urlSyncTimeout = setTimeout(() => {
     try {
       syncUrlSilently()
@@ -841,9 +542,6 @@ function scheduleUrlSync(): void {
   }, URL_SYNC_TIMEOUT_MS)
 }
 
-/**
- * Sync current state to URL silently (no page reload)
- */
 function syncUrlSilently(): void {
   const currentState = {
     selectedTemplateId: _state.value.selectedTemplateId,
@@ -865,17 +563,9 @@ function syncUrlSilently(): void {
   if (window.location.pathname !== newUrl) {
     window.history.replaceState(null, '', newUrl)
     _state.value.currentUrl = newUrl
-    logger.debug(`URL silently updated: ${newUrl}`)
   }
 }
 
-// ============================================================================
-// PUBLIC API
-// ============================================================================
-
-/**
- * Computed getters for reactive access to state
- */
 export const urlDrivenStore = {
   // State getters
   get isInitialized(): boolean { return _state.value.isInitialized },
@@ -1126,31 +816,15 @@ export const computedRenderData = computed(() => {
         // OUTER TRANSFORM: Position and base scaling only (high precision)
         outerTransform = `translate(${finalX.toFixed(6)}, ${finalY.toFixed(6)}) scale(${baseScaleX.toFixed(6)}, ${baseScaleY.toFixed(6)})`
 
-        // INNER TRANSFORM: User scaling and rotation around optimal center (high precision)
         const userScale = scale !== undefined ? scale : 1
 
-        logger.debug(`Transform calculation for ${templateLayer.id}:`, {
-          rotation,
-          scale: userScale,
-          hasRotation: rotation !== undefined && rotation !== 0,
-          hasScale: userScale !== 1,
-          willCalculateTransform: (rotation !== undefined && rotation !== 0) || (userScale !== 1)
-        })
-
         if ((rotation !== undefined && rotation !== 0) || (userScale !== 1)) {
-          // Determine optimal transform origin (centroid or geometric center)
-          let transformOrigin = { x: svgCenter, y: svgCenter } // Default to geometric center
+          let transformOrigin = { x: svgCenter, y: svgCenter }
 
           if (renderLayer.useCentroidOrigin && renderLayer.transformOrigin) {
             transformOrigin = renderLayer.transformOrigin
-            logger.debug(`Using centroid origin for ${templateLayer.id}:`, {
-              centroidOrigin: transformOrigin,
-              geometricCenter: { x: svgCenter, y: svgCenter },
-              shapeType: renderLayer.centroidAnalysis?.shapeType
-            })
           }
 
-          // Build transform steps
           const transformSteps: string[] = []
 
           // Move to optimal center of the SVG coordinate system
@@ -1349,49 +1023,22 @@ export const hasTextPaths = computed(() => {
   })
 })
 
-// ============================================================================
-// FLAT ARCHITECTURE: New computed properties for simplified data flow
-// ============================================================================
-
-/**
- * Flat form data computed property - simple object spread merging
- */
 export const flatFormData = computed(() => {
-  logger.info('📊 flatFormData COMPUTED RUNNING - formData length:', _state.value.formData.length)
-
   if (!_state.value.selectedTemplate) {
     return []
   }
 
-  // Simple flat merging - no conditionals, no nested property access
-  const result = createFlatFormData(_state.value.selectedTemplate, _state.value.formData as FlatLayerData[])
-
-  logger.info('📊 flatFormData RESULT:', result.map(l => ({ id: l.id, strokeLinejoin: l.strokeLinejoin })))
-
-  return result
+  return createFlatFormData(_state.value.selectedTemplate, _state.value.formData as FlatLayerData[])
 })
 
-/**
- * SVG render data - unified positioning for all layer types with reactive stroke-linejoin
- * All types now use the same transform-based positioning system
- *
- * CRITICAL: This computed MUST be consumed by components to establish Vue dependency tracking.
- * It tracks deep properties in formData to detect stroke-linejoin changes.
- */
 export const svgRenderData = computed(() => {
-  logger.warn('🔄 svgRenderData COMPUTED START - being evaluated now!')
-
   const template = _state.value.selectedTemplate
   if (!template) {
-    logger.warn('🔄 svgRenderData: no template, returning empty array')
     return []
   }
 
-  // CRITICAL FIX: Access each layer object individually to establish deep reactivity
-  // Vue needs to see direct property access on each object, not just array operations
   const layers = _state.value.formData
   layers.forEach(layer => {
-    // Force Vue to track these properties by accessing them
     void layer.strokeLinejoin
     void layer.strokeWidth
     void layer.color
@@ -1399,8 +1046,6 @@ export const svgRenderData = computed(() => {
   })
 
   const flatData = createFlatFormData(template, layers as FlatLayerData[])
-
-  logger.info('🔄 svgRenderData COMPUTED RUNNING - layers:', layers.map(l => ({ id: l.id, strokeLinejoin: l.strokeLinejoin })))
 
   return flatData.map(flatLayer => {
     const templateLayer = template.layers.find(t => t.id === flatLayer.id)
@@ -1426,11 +1071,7 @@ export const svgRenderData = computed(() => {
     // Keep additional properties for compatibility
     processedWithExtras.position = flatLayer.position
 
-    // CRITICAL FIX: For SVG images, add the styled content with proper stroke-linejoin
     if (processed.type === 'svgImage' && flatLayer.svgContent) {
-      logger.info('🎨 Applying styled content for', flatLayer.id, 'strokeLinejoin:', flatLayer.strokeLinejoin)
-
-      // Apply styling (colors, strokes) and extract inner content
       const styledContent = getStyledSvgContent({
         svgContent: flatLayer.svgContent,
         fill: flatLayer.color,
@@ -1439,8 +1080,8 @@ export const svgRenderData = computed(() => {
         strokeLinejoin: flatLayer.strokeLinejoin
       })
 
-      processedWithExtras.svgContent = flatLayer.svgContent  // Keep original for analysis
-      processedWithExtras.styledContent = styledContent      // Use styled version for rendering
+      processedWithExtras.svgContent = flatLayer.svgContent
+      processedWithExtras.styledContent = styledContent
     }
 
     return processed
