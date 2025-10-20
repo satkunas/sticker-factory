@@ -161,268 +161,32 @@
       <!-- SVG Image Styling Section -->
       <div class="p-4 bg-secondary-25 border-t border-secondary-200">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Color Section -->
-          <div class="bg-secondary-500/5 rounded-lg p-3">
-            <div class="flex items-center justify-between mb-3">
-              <div class="text-sm font-medium text-secondary-700">
-                Color
-              </div>
-              <button
-                type="button"
-                class="p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
-                title="Reset to template default"
-                @click="$emit('reset:color')"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              </button>
-            </div>
-              <div class="bg-white rounded-lg p-2 flex items-center space-x-1 mb-2">
-                <!-- Hidden color input -->
-                <input
-                  ref="colorInputRef"
-                  :value="props.color"
-                  type="color"
-                  class="sr-only"
-                  @input="$emit('update:color', $event.target.value)"
-                >
-                <!-- Color picker button -->
-                <button
-                  class="w-7 h-7 rounded border border-secondary-300 cursor-pointer hover:border-secondary-400 transition-colors flex items-center justify-center"
-                  :style="props.color === COLOR_NONE ? { backgroundColor: 'white' } : { backgroundColor: props.color }"
-                  :title="`Click to change color (${props.color})`"
-                  type="button"
-                  @click="$refs.colorInputRef?.click()"
-                >
-                  <svg v-if="props.color === COLOR_NONE" class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                  </svg>
-                </button>
-                <input
-                  :value="props.color"
-                  type="text"
-                  class="flex-1 px-2 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
-                  placeholder="#22c55e"
-                  @input="$emit('update:color', $event.target.value)"
-                >
-              </div>
-              <div class="bg-white rounded-lg p-2">
-              <div class="grid grid-cols-6 md:grid-cols-12 gap-1">
-                <!-- None button with red cross icon -->
-                <button
-                  class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all flex items-center justify-center bg-white"
-                  :class="color === COLOR_NONE ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
-                  :title="'None (invisible SVG)'"
-                  @click="$emit('update:color', COLOR_NONE)"
-                >
-                  <svg class="w-2 h-2 md:w-3 md:h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                  </svg>
-                </button>
-                <button
-                  v-for="paletteColor in PRESET_COLORS.slice(0, 11)"
-                  :key="paletteColor"
-                  class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
-                  :class="color === paletteColor ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
-                  :style="{ backgroundColor: paletteColor }"
-                  :title="paletteColor"
-                  @click="$emit('update:color', paletteColor)"
-                />
-              </div>
-              <div class="grid grid-cols-6 md:grid-cols-12 gap-1 mt-1">
-                <button
-                  v-for="paletteColor in PRESET_COLORS.slice(11, 23)"
-                  :key="paletteColor"
-                  class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
-                  :class="color === paletteColor ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
-                  :style="{ backgroundColor: paletteColor }"
-                  :title="paletteColor"
-                  @click="$emit('update:color', paletteColor)"
-                />
-              </div>
-              <div class="grid grid-cols-6 md:grid-cols-12 gap-1 mt-1">
-                <button
-                  v-for="paletteColor in PRESET_COLORS.slice(23, 35)"
-                  :key="paletteColor"
-                  class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
-                  :class="color === paletteColor ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
-                  :style="{ backgroundColor: paletteColor }"
-                  :title="paletteColor"
-                  @click="$emit('update:color', paletteColor)"
-                />
-              </div>
-              </div>
-          </div>
+          <ColorPickerInput
+            :value="color"
+            label="Color"
+            placeholder="#22c55e"
+            noneLabel="None (invisible SVG)"
+            @update:value="$emit('update:color', $event)"
+            @reset="$emit('reset:color')"
+          />
 
-          <!-- Stroke Color Section -->
-          <div class="bg-secondary-500/5 rounded-lg p-3">
-            <div class="flex items-center justify-between mb-3">
-              <div class="text-sm font-medium text-secondary-700">
-                Stroke Color
-              </div>
-              <button
-                type="button"
-                class="p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
-                title="Reset to template default"
-                @click="$emit('reset:strokeColor')"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              </button>
-            </div>
-              <div class="bg-white rounded-lg p-2 flex items-center space-x-1 mb-2">
-                <!-- Hidden color input -->
-                <input
-                  ref="strokeColorInputRef"
-                  :value="strokeColor"
-                  type="color"
-                  class="sr-only"
-                  @input="$emit('update:strokeColor', $event.target.value)"
-                >
-                <!-- Color picker button -->
-                <button
-                  class="w-7 h-7 rounded border border-secondary-300 cursor-pointer hover:border-secondary-400 transition-colors flex-shrink-0 flex items-center justify-center"
-                  :style="strokeColor === COLOR_NONE ? { backgroundColor: 'white' } : { backgroundColor: strokeColor }"
-                  :title="`Click to change stroke color (${strokeColor})`"
-                  type="button"
-                  @click="$refs.strokeColorInputRef?.click()"
-                >
-                  <svg v-if="strokeColor === COLOR_NONE" class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                  </svg>
-                </button>
-                <input
-                  :value="strokeColor"
-                  type="text"
-                  class="flex-1 px-2 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
-                  placeholder="#000000"
-                  @input="$emit('update:strokeColor', $event.target.value)"
-                >
-              </div>
-              <div class="bg-white rounded-lg p-2">
-              <div class="grid grid-cols-6 md:grid-cols-12 gap-1">
-                <!-- None button with red cross icon -->
-                <button
-                  class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all flex items-center justify-center bg-white"
-                  :class="strokeColor === COLOR_NONE ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
-                  :title="'None (no SVG stroke)'"
-                  @click="$emit('update:strokeColor', COLOR_NONE)"
-                >
-                  <svg class="w-2 h-2 md:w-3 md:h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                  </svg>
-                </button>
-                <button
-                  v-for="paletteColor in PRESET_COLORS.slice(0, 11)"
-                  :key="paletteColor"
-                  class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
-                  :class="strokeColor === paletteColor ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
-                  :style="{ backgroundColor: paletteColor }"
-                  :title="paletteColor"
-                  @click="$emit('update:strokeColor', paletteColor)"
-                />
-              </div>
-              <div class="grid grid-cols-6 md:grid-cols-12 gap-1 mt-1">
-                <button
-                  v-for="paletteColor in PRESET_COLORS.slice(11, 23)"
-                  :key="paletteColor"
-                  class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
-                  :class="strokeColor === paletteColor ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
-                  :style="{ backgroundColor: paletteColor }"
-                  :title="paletteColor"
-                  @click="$emit('update:strokeColor', paletteColor)"
-                />
-              </div>
-              <div class="grid grid-cols-6 md:grid-cols-12 gap-1 mt-1">
-                <button
-                  v-for="paletteColor in PRESET_COLORS.slice(23, 35)"
-                  :key="paletteColor"
-                  class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
-                  :class="strokeColor === paletteColor ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
-                  :style="{ backgroundColor: paletteColor }"
-                  :title="paletteColor"
-                  @click="$emit('update:strokeColor', paletteColor)"
-                />
-              </div>
-              </div>
-          </div>
+          <ColorPickerInput
+            :value="strokeColor"
+            label="Stroke Color"
+            placeholder="#000000"
+            noneLabel="None (no SVG stroke)"
+            @update:value="$emit('update:strokeColor', $event)"
+            @reset="$emit('reset:strokeColor')"
+          />
 
-          <!-- Stroke Controls Section -->
-          <div class="bg-secondary-500/5 rounded-lg p-3 md:col-span-2">
-            <div class="flex items-center justify-between mb-3">
-              <h5 class="text-sm font-medium text-secondary-700">
-                Stroke Options
-              </h5>
-              <button
-                type="button"
-                class="p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
-                title="Reset to template default"
-                @click="$emit('reset:strokeWidth'); $emit('reset:strokeLinejoin')"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              </button>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <!-- Stroke Width -->
-              <div class="bg-white rounded-lg p-3 min-w-0" :class="{ 'opacity-50': strokeColor === COLOR_NONE }">
-                <div class="text-xs font-medium text-secondary-600 mb-2">
-                  Width
-                </div>
-                <div class="flex items-center space-x-2">
-                  <input
-                    :value="strokeWidth"
-                    type="range"
-                    min="0"
-                    max="12"
-                    step="0.5"
-                    :disabled="strokeColor === COLOR_NONE"
-                    :class="{ 'cursor-not-allowed': strokeColor === COLOR_NONE }"
-                    class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
-                    @input="handleStrokeWidthInput($event.target.value)"
-                  >
-                  <input
-                    :value="strokeWidth"
-                    type="number"
-                    min="0"
-                    max="12"
-                    step="0.5"
-                    :disabled="strokeColor === COLOR_NONE"
-                    :class="{ 'cursor-not-allowed': strokeColor === COLOR_NONE }"
-                    class="w-12 px-1 py-1 text-xs border border-secondary-200 rounded text-center focus:outline-none focus:ring-1 focus:ring-primary-500"
-                    @input="handleStrokeWidthInput($event.target.value)"
-                  >
-                </div>
-              </div>
-
-              <!-- Stroke Linejoin -->
-              <div class="bg-white rounded-lg p-3 min-w-0" :class="{ 'opacity-50': strokeColor === COLOR_NONE }">
-                <div class="text-xs font-medium text-secondary-600 mb-2">
-                  Linejoin
-                </div>
-                <div class="grid grid-cols-2 gap-1">
-                  <button
-                    v-for="linejoin in STROKE_LINEJOIN_OPTIONS"
-                    :key="linejoin.value"
-                    :disabled="strokeColor === COLOR_NONE"
-                    class="px-2 py-1 text-xs rounded border transition-all text-center"
-                    :class="[
-                      strokeLinejoin === linejoin.value ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white border-secondary-200 text-secondary-600 hover:border-secondary-300',
-                      { 'cursor-not-allowed': strokeColor === COLOR_NONE }
-                    ]"
-                    :title="linejoin.description"
-                    @click="$emit('update:strokeLinejoin', linejoin.value)"
-                  >
-                    {{ linejoin.label }}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
+          <StrokeControls
+            :stroke-width="strokeWidth"
+            :stroke-linejoin="strokeLinejoin"
+            :disabled="strokeColor === COLOR_NONE"
+            @update:strokeWidth="$emit('update:strokeWidth', $event)"
+            @update:strokeLinejoin="$emit('update:strokeLinejoin', $event)"
+            @reset="$emit('reset:strokeWidth'); $emit('reset:strokeLinejoin')"
+          />
         </div>
       </div>
 
@@ -446,13 +210,15 @@
 import { inject, computed, ref, onMounted, onUnmounted } from 'vue'
 import ExpandableSvgSelector from './ExpandableSvgSelector.vue'
 import SvgCenteringWarning from './SvgCenteringWarning.vue'
+import ColorPickerInput from './ColorPickerInput.vue'
+import StrokeControls from './StrokeControls.vue'
 import {
   injectSvgColors,
   applySvgStrokeProperties,
   normalizeSvgCurrentColor,
   sanitizeColorValue
 } from '../utils/svg-styling'
-import { PRESET_COLORS, STROKE_LINEJOIN_OPTIONS, COLOR_NONE } from '../utils/ui-constants'
+import { COLOR_NONE } from '../utils/ui-constants'
 import type { SvgViewBoxFitAnalysis, SvgCentroid } from '../utils/svg-bounds'
 import { useSvgStore } from '../stores/svgStore'
 
@@ -681,14 +447,6 @@ const handleRotationTextInput = (value: string) => {
   if (!isNaN(parsed)) {
     const clamped = Math.max(0, Math.min(360, parsed))
     emit('update:rotation', clamped)
-  }
-}
-
-// Stroke width event handler
-const handleStrokeWidthInput = (value: string) => {
-  const parsed = parseFloat(value)
-  if (!isNaN(parsed)) {
-    emit('update:strokeWidth', parsed)
   }
 }
 </script>

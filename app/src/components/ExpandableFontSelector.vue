@@ -18,99 +18,14 @@
       <!-- Text Styling Section -->
       <div class="p-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Color Section -->
-          <div class="bg-secondary-500/5 rounded-lg p-3">
-            <div class="flex items-center justify-between mb-3">
-              <div class="text-sm font-medium text-secondary-700">
-                Color
-              </div>
-              <button
-                type="button"
-                class="p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
-                title="Reset to template default"
-                @click="$emit('reset:textColor')"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              </button>
-            </div>
-              <div class="bg-white rounded-lg p-2 flex items-center space-x-1 mb-2">
-                <!-- Hidden color input -->
-                <input
-                  ref="textColorInputRef"
-                  :value="textColor"
-                  type="color"
-                  class="sr-only"
-                  @input="$emit('update:textColor', $event.target.value)"
-                >
-                <!-- Color picker button -->
-                <button
-                  class="w-7 h-7 rounded border border-secondary-300 cursor-pointer hover:border-secondary-400 transition-colors flex items-center justify-center"
-                  :style="textColor === COLOR_NONE ? { backgroundColor: 'white' } : { backgroundColor: textColor }"
-                  :title="`Click to change text color (${textColor})`"
-                  type="button"
-                  @click="$refs.textColorInputRef?.click()"
-                >
-                  <svg v-if="textColor === COLOR_NONE" class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                  </svg>
-                </button>
-                <input
-                  :value="textColor"
-                  type="text"
-                  class="flex-1 px-2 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
-                  placeholder="#000000"
-                  @input="$emit('update:textColor', $event.target.value)"
-                >
-              </div>
-              <div class="bg-white rounded-lg p-2">
-              <div class="grid grid-cols-6 md:grid-cols-12 gap-1">
-                <!-- None button with red cross icon -->
-                <button
-                  class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all flex items-center justify-center bg-white"
-                  :class="textColor === COLOR_NONE ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
-                  :title="'None (invisible text)'"
-                  @click="$emit('update:textColor', COLOR_NONE)"
-                >
-                  <svg class="w-2 h-2 md:w-3 md:h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                  </svg>
-                </button>
-                <button
-                  v-for="color in PRESET_COLORS.slice(0, 11)"
-                  :key="color"
-                  class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
-                  :class="textColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
-                  :style="{ backgroundColor: color }"
-                  :title="color"
-                  @click="$emit('update:textColor', color)"
-                />
-              </div>
-              <div class="grid grid-cols-6 md:grid-cols-12 gap-1 mt-1">
-                <button
-                  v-for="color in PRESET_COLORS.slice(11, 23)"
-                  :key="color"
-                  class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
-                  :class="textColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
-                  :style="{ backgroundColor: color }"
-                  :title="color"
-                  @click="$emit('update:textColor', color)"
-                />
-              </div>
-              <div class="grid grid-cols-6 md:grid-cols-12 gap-1 mt-1">
-                <button
-                  v-for="color in PRESET_COLORS.slice(23, 35)"
-                  :key="color"
-                  class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
-                  :class="textColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
-                  :style="{ backgroundColor: color }"
-                  :title="color"
-                  @click="$emit('update:textColor', color)"
-                />
-              </div>
-              </div>
-          </div>
+          <ColorPickerInput
+            :value="textColor"
+            label="Color"
+            placeholder="#000000"
+            noneLabel="None (invisible text)"
+            @update:value="$emit('update:textColor', $event)"
+            @reset="$emit('reset:textColor')"
+          />
 
           <!-- Font Size & Weight Section -->
           <div class="bg-secondary-500/5 rounded-lg p-3">
@@ -632,6 +547,7 @@ import { ref, computed, watch, onMounted, onUnmounted, inject, nextTick } from '
 import { FONT_CATEGORIES, loadFont, type FontConfig } from '../config/fonts'
 import FontTile from './FontTile.vue'
 import CategoryDropdown from './CategoryDropdown.vue'
+import ColorPickerInput from './ColorPickerInput.vue'
 import { useFontSelector } from '../composables/useFontSelector'
 import { getFontCategoryColor } from '../utils/font-utils'
 import { PRESET_COLORS, COMMON_FONT_SIZES, STROKE_LINEJOIN_OPTIONS, DOMINANT_BASELINE_OPTIONS, COLOR_NONE } from '../utils/ui-constants'
@@ -709,8 +625,7 @@ const handleDyInput = (value: string) => {
   }
 }
 
-// Color picker references
-const textColorInputRef = ref<HTMLInputElement>()
+// Color picker reference (for stroke color only, text color now uses ColorPickerInput component)
 const strokeColorInputRef = ref<HTMLInputElement>()
 
 // Unified dropdown management
