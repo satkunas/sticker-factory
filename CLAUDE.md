@@ -100,7 +100,7 @@ Components: 60%+ coverage (integration tests)
 ### Property Rendering Tests (CRITICAL)
 **ALL form properties MUST work in ALL 4 rendering contexts:**
 
-1. **Main SVG preview** (SvgContent.vue)
+1. **Main SVG preview** (Svg.vue)
 2. **Template selection icons** (TemplateSelector.vue)
 3. **Download preview** (Service Worker .svg URL)
 4. **Download files** (exported SVG/PNG)
@@ -135,7 +135,7 @@ it('should render NEW_PROPERTY in SVG string generator', () => {
 
 | Context | File | Font Handling |
 |---------|------|---------------|
-| **Main Preview** | `SvgContent.vue` | Browser loads fonts (no embedding) |
+| **Main Preview** | `Svg.vue` | Browser loads fonts (no embedding) |
 | **Template Icons** | `svg-string-generator.ts` | Embeds Google Fonts CSS |
 | **Download Preview** | `svg-string-generator.ts` | Embeds Google Fonts CSS |
 | **Download Files** | `svg-string-generator.ts` | Embeds Google Fonts CSS |
@@ -145,7 +145,7 @@ it('should render NEW_PROPERTY in SVG string generator', () => {
 1. **Shape rendering logic MUST be identical**
    ```typescript
    // ✅ CORRECT - Same shouldRenderShape() in both files
-   // SvgContent.vue and svg-string-generator.ts
+   // Svg.vue and svg-string-generator.ts
    function shouldRenderShape(templateLayer, layerData) {
      const fill = layerData?.fillColor ?? templateLayer.fillColor
      const stroke = layerData?.strokeColor ?? templateLayer.strokeColor
@@ -155,7 +155,7 @@ it('should render NEW_PROPERTY in SVG string generator', () => {
    }
 
    // ❌ FORBIDDEN - Different conditions in different files
-   // SvgContent.vue: v-if="layer.fill || layer.stroke"
+   // Svg.vue: v-if="layer.fill || layer.stroke"
    // svg-string-generator.ts: if (!hasFill && !hasStroke) return ''
    ```
 
@@ -173,7 +173,7 @@ it('should render NEW_PROPERTY in SVG string generator', () => {
    ```
 
 3. **When modifying rendering logic:**
-   - ✅ Update `SvgContent.vue` (main preview)
+   - ✅ Update `Svg.vue` (main preview)
    - ✅ Update `svg-string-generator.ts` (downloads/icons)
    - ✅ Run `npm run test:run` to verify property-rendering tests
    - ✅ Manually verify all 4 contexts work
@@ -181,7 +181,6 @@ it('should render NEW_PROPERTY in SVG string generator', () => {
 4. **Common pitfalls:**
    - Using old property names (`fill`/`stroke` instead of `fillColor`/`strokeColor`)
    - Using `||` instead of `??` (breaks "none" values)
-   - Editing `Svg.vue` instead of `SvgContent.vue` (wrong file!)
    - Copy-pasting old code without checking current patterns
 
 **Red flags indicating divergence:**
@@ -191,7 +190,7 @@ it('should render NEW_PROPERTY in SVG string generator', () => {
 - ❌ "Property works in main app but not exported SVG"
 
 **Debugging divergence:**
-1. Compare `SvgContent.vue` and `svg-string-generator.ts` rendering logic
+1. Compare `Svg.vue` and `svg-string-generator.ts` rendering logic
 2. Look for different v-if conditions, property names, operators
 3. Add test to `property-rendering.test.ts` reproducing the bug
 4. Apply same fix to BOTH files
@@ -201,20 +200,20 @@ it('should render NEW_PROPERTY in SVG string generator', () => {
 **If a rendering component exists, REUSE it. Never create duplicates or alternatives.**
 
 **Why this matters:**
-- This exact bug was caused by duplicate components (Svg.vue vs SvgContent.vue)
 - Duplicates diverge over time, causing "works here but not there" bugs
 - Maintenance nightmare - every fix must be applied to multiple files
+- Example: The old duplicate Svg.vue component diverged from SvgContent.vue (now consolidated into Svg.vue)
 
 **Enforcement:**
 ```typescript
 // ❌ FORBIDDEN - Creating duplicate renderer
-// Scenario: SvgContent.vue exists
-// Action: Create new "Svg.vue" as alternative
+// Scenario: Svg.vue exists
+// Action: Create new "SvgAlt.vue" as alternative
 // Result: Divergence, bugs, maintenance hell
 
 // ✅ CORRECT - Reuse existing component
-// Scenario: SvgContent.vue exists
-// Action: Use SvgContent.vue everywhere
+// Scenario: Svg.vue exists
+// Action: Use Svg.vue everywhere
 // If needed: Add props to support new use case
 ```
 
@@ -231,7 +230,7 @@ it('should render NEW_PROPERTY in SVG string generator', () => {
 - Comments like "// TODO: merge with OtherComponent.vue"
 
 **Current singleton components:**
-- **SVG Rendering**: `SvgContent.vue` (main preview, used inside SvgViewport.vue)
+- **SVG Rendering**: `Svg.vue` (main preview, used inside SvgViewport.vue)
 - **SVG String Generation**: `svg-string-generator.ts` (downloads, template icons)
 
 ### Never Disable Tests
