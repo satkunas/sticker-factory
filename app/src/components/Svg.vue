@@ -1,136 +1,196 @@
 <template>
-  <svg
-    :viewBox="`0 0 ${template.width} ${template.height}`"
-    xmlns="http://www.w3.org/2000/svg"
-    class="svg-content"
-  >
-    <!-- PHASE 1: MASK DEFINITIONS -->
-    <defs v-if="maskDefinitions.length > 0">
-      <!-- Simple mask definitions from shape layers -->
-      <mask
-        v-for="mask in maskDefinitions"
-        :id="mask.id"
-        :key="mask.id"
-      >
-        <path :d="mask.path" fill="white" />
-      </mask>
-    </defs>
+  <!-- PHASE 1: MASK DEFINITIONS -->
+  <defs v-if="maskDefinitions.length > 0">
+    <!-- Simple mask definitions from shape layers -->
+    <mask
+      v-for="mask in maskDefinitions"
+      :id="mask.id"
+      :key="mask.id"
+    >
+      <path :d="mask.path" fill="white" />
+    </mask>
+  </defs>
 
-    <!-- PHASE 2: LAYER RENDERING (preserves YAML order) -->
-    <template v-for="{ templateLayer, layerData, transformCase } in renderedLayers" :key="templateLayer.id">
-      <!-- SHAPE LAYERS -->
-      <!-- Shape paths are already positioned and centered during template loading -->
-      <!-- No additional transforms needed - path coordinates are final -->
-      <g v-if="templateLayer.type === 'shape'">
-        <path
-          :d="templateLayer.path"
-          :fill="layerData?.fillColor || templateLayer.fillColor"
-          :stroke="layerData?.strokeColor || templateLayer.strokeColor"
-          :stroke-width="layerData?.strokeWidth ?? templateLayer.strokeWidth"
-          :stroke-linejoin="layerData?.strokeLinejoin || templateLayer.strokeLinejoin"
-        />
-      </g>
+  <!-- TextPath path definitions -->
+  <defs v-if="textPathDefinitions.length > 0">
+    <path
+      v-for="pathDef in textPathDefinitions"
+      :id="pathDef.id"
+      :key="pathDef.id"
+      :d="pathDef.pathData"
+    />
+  </defs>
 
-      <!-- TEXT LAYERS -->
-      <g
-        v-else-if="templateLayer.type === 'text'"
-        :mask="templateLayer.clip ? `url(#${templateLayer.clip})` : undefined"
+  <!-- PHASE 2: LAYER RENDERING (preserves YAML order) -->
+  <template v-for="{ templateLayer, layerData, transformCase } in renderedLayers" :key="templateLayer.id">
+    <!-- SHAPE LAYERS -->
+    <!-- Shape paths are already positioned and centered during template loading -->
+    <!-- No additional transforms needed - path coordinates are final -->
+    <!-- Skip reference-only paths (for textPath) that have no visual styling -->
+    <g
+      v-if="templateLayer.type === 'shape' && shouldRenderShape(templateLayer, layerData)"
+      :data-layer-id="templateLayer.id"
+      :data-layer-type="templateLayer.type"
+      class="layer-clickable"
+    >
+      <path
+        :d="templateLayer.path"
+        :fill="layerData?.fillColor ?? templateLayer.fillColor"
+        :stroke="layerData?.strokeColor ?? templateLayer.strokeColor"
+        :stroke-width="layerData?.strokeWidth ?? templateLayer.strokeWidth"
+        :stroke-linejoin="layerData?.strokeLinejoin ?? templateLayer.strokeLinejoin"
+      />
+    </g>
+
+    <!-- TEXT LAYERS -->
+    <g
+      v-else-if="templateLayer.type === 'text'"
+      :data-layer-id="templateLayer.id"
+      :data-layer-type="templateLayer.type"
+      class="layer-clickable"
+      :mask="templateLayer.clip ? `url(#${templateLayer.clip})` : undefined"
+    >
+      <!-- Text with textPath (curved text along path) -->
+      <text
+        v-if="templateLayer.textPath"
+        text-anchor="middle"
+        :font-family="extractFontFamily(layerData) ?? templateLayer.fontFamily"
+        :font-size="layerData?.fontSize ?? templateLayer.fontSize"
+        :font-weight="layerData?.fontWeight ?? templateLayer.fontWeight"
+        :fill="layerData?.fontColor ?? layerData?.textColor ?? templateLayer.fontColor"
+        :stroke="layerData?.strokeWidth !== undefined && layerData.strokeWidth > 0 ? (layerData?.strokeColor ?? templateLayer.strokeColor) : undefined"
+        :stroke-width="layerData?.strokeWidth !== undefined && layerData.strokeWidth > 0 ? layerData.strokeWidth : undefined"
+        :stroke-opacity="layerData?.strokeOpacity"
+        :stroke-linejoin="layerData?.strokeLinejoin"
+        :dominant-baseline="layerData?.dominantBaseline ?? templateLayer.dominantBaseline"
       >
-        <g
-          :transform="`translate(${
-            resolveLayerPosition(templateLayer.position.x, template.width)
-          }, ${
-            resolveLayerPosition(templateLayer.position.y, template.height)
-          })${templateLayer.rotation !== undefined ? ` rotate(${templateLayer.rotation})` : ''}`"
+        <textPath
+          :href="`#${templateLayer.textPath}`"
+          :startOffset="layerData?.startOffset ?? templateLayer.startOffset"
         >
-          <text
-            text-anchor="middle"
-            dominant-baseline="central"
-            :font-family="extractFontFamily(layerData) ?? templateLayer.fontFamily"
-            :font-size="layerData?.fontSize ?? templateLayer.fontSize"
-            :font-weight="layerData?.fontWeight ?? templateLayer.fontWeight"
-            :fill="layerData?.fontColor ?? layerData?.textColor ?? templateLayer.fontColor"
-            :stroke="layerData?.strokeWidth !== undefined && layerData.strokeWidth > 0 ? (layerData?.strokeColor ?? templateLayer.strokeColor) : undefined"
-            :stroke-width="layerData?.strokeWidth !== undefined && layerData.strokeWidth > 0 ? layerData.strokeWidth : undefined"
-            :stroke-opacity="layerData?.strokeOpacity"
-            :stroke-linejoin="layerData?.strokeLinejoin"
+          <tspan :dy="layerData?.dy ?? templateLayer.dy">{{ layerData?.text ?? templateLayer.text }}</tspan>
+        </textPath>
+      </text>
+
+      <!-- Multi-line text (tspan-based line breaks) -->
+      <g
+        v-else-if="!templateLayer.textPath && templateLayer.multiline"
+        :transform="`translate(${
+          resolveLayerPosition(templateLayer.position.x, template.width)
+        }, ${
+          resolveLayerPosition(templateLayer.position.y, template.height)
+        })${(layerData?.rotation ?? templateLayer.rotation) !== undefined ? ` rotate(${layerData?.rotation ?? templateLayer.rotation})` : ''}`"
+      >
+        <text
+          text-anchor="middle"
+          dominant-baseline="central"
+          :font-family="extractFontFamily(layerData) ?? templateLayer.fontFamily"
+          :font-size="layerData?.fontSize ?? templateLayer.fontSize"
+          :font-weight="layerData?.fontWeight ?? templateLayer.fontWeight"
+          :fill="layerData?.fontColor ?? layerData?.textColor ?? templateLayer.fontColor"
+          :stroke="layerData?.strokeWidth !== undefined && layerData.strokeWidth > 0 ? (layerData?.strokeColor ?? templateLayer.strokeColor) : undefined"
+          :stroke-width="layerData?.strokeWidth !== undefined && layerData.strokeWidth > 0 ? layerData.strokeWidth : undefined"
+          :stroke-opacity="layerData?.strokeOpacity"
+          :stroke-linejoin="layerData?.strokeLinejoin"
+        >
+          <tspan
+            v-for="(line, index) in splitLines(layerData?.text ?? templateLayer.text ?? '')"
+            :key="index"
+            x="0"
+            :dy="calculateLineDy(
+              index,
+              splitLines(layerData?.text ?? templateLayer.text ?? '').length,
+              layerData?.fontSize ?? templateLayer.fontSize ?? 16,
+              layerData?.lineHeight ?? templateLayer.lineHeight ?? 1.2
+            )"
           >
-            {{ layerData?.text ?? templateLayer.text }}
-          </text>
-        </g>
+            {{ line }}
+          </tspan>
+        </text>
       </g>
 
-      <!-- SVG IMAGE LAYERS -->
-      <!-- Uses shared transform case logic from svg-transforms.ts to ensure visual parity -->
+      <!-- Regular text (single-line with transform positioning) -->
       <g
-        v-else-if="templateLayer.type === 'svgImage'"
-        :mask="templateLayer.clip ? `url(#${templateLayer.clip})` : undefined"
+        v-else
+        :transform="`translate(${
+          resolveLayerPosition(templateLayer.position.x, template.width)
+        }, ${
+          resolveLayerPosition(templateLayer.position.y, template.height)
+        })${(layerData?.rotation ?? templateLayer.rotation) !== undefined ? ` rotate(${layerData?.rotation ?? templateLayer.rotation})` : ''}`"
       >
-        <g
-          :transform="`translate(${
-            resolveLayerPosition(templateLayer.position.x, template.width)
-          }, ${
-            resolveLayerPosition(templateLayer.position.y, template.height)
-          }) translate(${
-            -templateLayer.width / 2
-          }, ${
-            -templateLayer.height / 2
-          })`"
+        <text
+          text-anchor="middle"
+          dominant-baseline="central"
+          :font-family="extractFontFamily(layerData) ?? templateLayer.fontFamily"
+          :font-size="layerData?.fontSize ?? templateLayer.fontSize"
+          :font-weight="layerData?.fontWeight ?? templateLayer.fontWeight"
+          :fill="layerData?.fontColor ?? layerData?.textColor ?? templateLayer.fontColor"
+          :stroke="layerData?.strokeWidth !== undefined && layerData.strokeWidth > 0 ? (layerData?.strokeColor ?? templateLayer.strokeColor) : undefined"
+          :stroke-width="layerData?.strokeWidth !== undefined && layerData.strokeWidth > 0 ? layerData.strokeWidth : undefined"
+          :stroke-opacity="layerData?.strokeOpacity"
+          :stroke-linejoin="layerData?.strokeLinejoin"
         >
-          <!-- Scale and rotate around transform origin -->
-          <template v-if="transformCase?.case === 'scale-with-origin'">
-            <g
-              :transform="`translate(${
-                calculateScaledTransformOrigin(
-                  layerData?.svgContent || templateLayer.svgContent,
-                  templateLayer.width,
-                  templateLayer.height,
-                  transformCase.transformOrigin
-                ).x
-              }, ${
-                calculateScaledTransformOrigin(
-                  layerData?.svgContent || templateLayer.svgContent,
-                  templateLayer.width,
-                  templateLayer.height,
-                  transformCase.transformOrigin
-                ).y
-              })`"
-            >
-              <g :transform="`scale(${transformCase.scale})${transformCase.rotation !== undefined ? ` rotate(${transformCase.rotation})` : ''}`">
-                <g
-                  :transform="`translate(${
-                    -calculateScaledTransformOrigin(
-                      layerData?.svgContent || templateLayer.svgContent,
-                      templateLayer.width,
-                      templateLayer.height,
-                      transformCase.transformOrigin
-                    ).x
-                  }, ${
-                    -calculateScaledTransformOrigin(
-                      layerData?.svgContent || templateLayer.svgContent,
-                      templateLayer.width,
-                      templateLayer.height,
-                      transformCase.transformOrigin
-                    ).y
-                  })`"
-                  v-html="applySvgRenderingAttributes(
+          {{ layerData?.text ?? templateLayer.text }}
+        </text>
+      </g>
+    </g>
+
+    <!-- SVG IMAGE LAYERS -->
+    <!-- Uses shared transform case logic from svg-transforms.ts to ensure visual parity -->
+    <g
+      v-else-if="templateLayer.type === 'svgImage'"
+      :data-layer-id="templateLayer.id"
+      :data-layer-type="templateLayer.type"
+      class="layer-clickable"
+      :mask="templateLayer.clip ? `url(#${templateLayer.clip})` : undefined"
+    >
+      <g
+        :transform="`translate(${
+          resolveLayerPosition(templateLayer.position.x, template.width)
+        }, ${
+          resolveLayerPosition(templateLayer.position.y, template.height)
+        }) translate(${
+          -templateLayer.width / 2
+        }, ${
+          -templateLayer.height / 2
+        })`"
+      >
+        <!-- Scale and rotate around transform origin -->
+        <template v-if="transformCase?.case === 'scale-with-origin'">
+          <g
+            :transform="`translate(${
+              calculateScaledTransformOrigin(
+                layerData?.svgContent || templateLayer.svgContent,
+                templateLayer.width,
+                templateLayer.height,
+                transformCase.transformOrigin
+              ).x
+            }, ${
+              calculateScaledTransformOrigin(
+                layerData?.svgContent || templateLayer.svgContent,
+                templateLayer.width,
+                templateLayer.height,
+                transformCase.transformOrigin
+              ).y
+            })`"
+          >
+            <g :transform="`scale(${transformCase.scale})${transformCase.rotation !== undefined ? ` rotate(${transformCase.rotation})` : ''}`">
+              <g
+                :transform="`translate(${
+                  -calculateScaledTransformOrigin(
                     layerData?.svgContent || templateLayer.svgContent,
                     templateLayer.width,
                     templateLayer.height,
-                    undefined,
-                    layerData?.color,
-                    layerData?.strokeColor,
-                    layerData?.strokeWidth
-                  )"
-                />
-              </g>
-            </g>
-          </template>
-
-          <!-- Scale only (without transform origin) -->
-          <template v-else-if="transformCase?.case === 'scale-only'">
-            <g :transform="`scale(${transformCase.scale})`">
-              <g
+                    transformCase.transformOrigin
+                  ).x
+                }, ${
+                  -calculateScaledTransformOrigin(
+                    layerData?.svgContent || templateLayer.svgContent,
+                    templateLayer.width,
+                    templateLayer.height,
+                    transformCase.transformOrigin
+                  ).y
+                })`"
                 v-html="applySvgRenderingAttributes(
                   layerData?.svgContent || templateLayer.svgContent,
                   templateLayer.width,
@@ -138,31 +198,17 @@
                   undefined,
                   layerData?.color,
                   layerData?.strokeColor,
-                  layerData?.strokeWidth
+                  layerData?.strokeWidth,
+                  layerData?.strokeLinejoin
                 )"
               />
             </g>
-          </template>
+          </g>
+        </template>
 
-          <!-- Rotation only (no scale) -->
-          <template v-else-if="transformCase?.case === 'rotation-only'">
-            <g :transform="`rotate(${transformCase.rotation})`">
-              <g
-                v-html="applySvgRenderingAttributes(
-                  layerData?.svgContent || templateLayer.svgContent,
-                  templateLayer.width,
-                  templateLayer.height,
-                  undefined,
-                  layerData?.color,
-                  layerData?.strokeColor,
-                  layerData?.strokeWidth
-                )"
-              />
-            </g>
-          </template>
-
-          <!-- No transforms -->
-          <template v-else>
+        <!-- Scale only (without transform origin) -->
+        <template v-else-if="transformCase?.case === 'scale-only'">
+          <g :transform="`scale(${transformCase.scale})`">
             <g
               v-html="applySvgRenderingAttributes(
                 layerData?.svgContent || templateLayer.svgContent,
@@ -171,14 +217,49 @@
                 undefined,
                 layerData?.color,
                 layerData?.strokeColor,
-                layerData?.strokeWidth
+                layerData?.strokeWidth,
+                layerData?.strokeLinejoin
               )"
             />
-          </template>
-        </g>
+          </g>
+        </template>
+
+        <!-- Rotation only (no scale) -->
+        <template v-else-if="transformCase?.case === 'rotation-only'">
+          <g :transform="`rotate(${transformCase.rotation})`">
+            <g
+              v-html="applySvgRenderingAttributes(
+                layerData?.svgContent || templateLayer.svgContent,
+                templateLayer.width,
+                templateLayer.height,
+                undefined,
+                layerData?.color,
+                layerData?.strokeColor,
+                layerData?.strokeWidth,
+                layerData?.strokeLinejoin
+              )"
+            />
+          </g>
+        </template>
+
+        <!-- No transforms -->
+        <template v-else>
+          <g
+            v-html="applySvgRenderingAttributes(
+              layerData?.svgContent || templateLayer.svgContent,
+              templateLayer.width,
+              templateLayer.height,
+              undefined,
+              layerData?.color,
+              layerData?.strokeColor,
+              layerData?.strokeWidth,
+              layerData?.strokeLinejoin
+            )"
+          />
+        </template>
       </g>
-    </template>
-  </svg>
+    </g>
+  </template>
 </template>
 
 <script setup lang="ts">
@@ -188,6 +269,8 @@ import { resolveLayerPosition } from '../utils/layer-positioning'
 import { generateMaskDefinitions } from '../utils/mask-utils'
 import { getSvgImageTransformCase, calculateScaledTransformOrigin, applySvgRenderingAttributes } from '../utils/svg-transforms'
 import { extractFontFamily } from '../utils/font-utils'
+import { textPathDefinitions } from '../stores/urlDrivenStore'
+import { splitLines, calculateLineDy } from '../utils/text-multiline'
 
 interface Props {
   template: SimpleTemplate
@@ -198,6 +281,22 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   mode: 'viewport'
 })
+
+/**
+ * Determine if a shape layer should render visually
+ * Skip reference-only paths (for textPath) that have no fill/stroke
+ */
+function shouldRenderShape(templateLayer: any, layerData: FlatLayerData | undefined): boolean {
+  const fill = layerData?.fillColor ?? templateLayer.fillColor
+  const stroke = layerData?.strokeColor ?? templateLayer.strokeColor
+
+  // Treat "none" the same as undefined - both mean "don't render this visual property"
+  const hasFill = fill !== undefined && fill !== 'none'
+  const hasStroke = stroke !== undefined && stroke !== 'none'
+
+  // Only render if there's at least one visual property
+  return hasFill || hasStroke
+}
 
 /**
  * Extract mask definitions from shape layers
@@ -235,10 +334,3 @@ const renderedLayers = computed(() => {
   })
 })
 </script>
-
-<style scoped>
-.svg-content {
-  width: 100%;
-  height: 100%;
-}
-</style>

@@ -15,8 +15,8 @@
           xmlns="http://www.w3.org/2000/svg"
           class="w-full h-full opacity-40"
         >
-          <!-- Template content using SvgContent component (inner content only, no nested SVG) -->
-          <SvgContent
+          <!-- Template content using Svg component (inner content only, no nested SVG) -->
+          <Svg
             :template="template"
             :layers="layers"
             mode="preview"
@@ -89,7 +89,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { SimpleTemplate } from '../types/template-types'
-import SvgContent from './SvgContent.vue'
+import Svg from './Svg.vue'
 import { useMiniOverview } from '../composables/useMiniOverview'
 
 interface Props {

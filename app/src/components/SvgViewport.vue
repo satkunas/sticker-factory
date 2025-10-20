@@ -22,7 +22,7 @@
       preserveAspectRatio="xMidYMid meet"
     >
       <!-- Template content without nested SVG wrapper -->
-      <SvgContent
+      <Svg
         :template="template"
         :layers="layers"
         mode="viewport"
@@ -34,7 +34,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { SimpleTemplate } from '../types/template-types'
-import SvgContent from './SvgContent.vue'
+import Svg from './Svg.vue'
 
 interface Props {
   template?: SimpleTemplate | null
