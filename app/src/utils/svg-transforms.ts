@@ -200,15 +200,16 @@ export function generateSvgImageHtml(
   const height = templateLayer.height
 
   // Apply rendering attributes to SVG content
+  // Fallback to template defaults when layer data doesn't provide override
   const processedSvg = applySvgRenderingAttributes(
     svgContent,
     width,
     height,
     undefined,
-    layerData?.color,
-    layerData?.strokeColor,
-    layerData?.strokeWidth,
-    layerData?.strokeLinejoin
+    layerData?.color ?? templateLayer.color,
+    layerData?.strokeColor ?? templateLayer.strokeColor,
+    layerData?.strokeWidth ?? templateLayer.strokeWidth,
+    layerData?.strokeLinejoin ?? templateLayer.strokeLinejoin
   )
 
   // Check if layer has clip mask

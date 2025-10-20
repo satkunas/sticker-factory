@@ -116,7 +116,7 @@ describe('Property Rendering - Shape Layers', () => {
 
     // Verify strokeWidth is applied
     expect(svg).toContain('stroke-width="5"')
-    expect(svg).not.toContain('stroke-width="2"') // Not template default
+    // Note: Cannot check for absence of stroke-width="2" as it may be used by other layers (svgImage has strokeWidth: 2)
   })
 
   it('should render shape strokeLinejoin in SVG string generator', () => {
@@ -381,6 +381,30 @@ describe('Property Rendering - Template Defaults', () => {
     // Verify defaults are NOT used
     expect(svg).not.toContain('fill="#333333"') // Template text fontColor default
     expect(svg).not.toContain('Default Text') // Template text
+  })
+
+  it('should fallback to template defaults for svgImage color when no layer override', () => {
+    // REGRESSION TEST: svgImage template defaults were not being applied
+    // This caused template selector icons and download previews to not render colors
+    const layers: FlatLayerData[] = []
+
+    const svg = generateSvgString(template, layers)
+
+    // Verify svgImage template defaults are used
+    // Template has: color: '#00ff00', strokeColor: '#0000ff', strokeWidth: 2
+    expect(svg).toContain('fill="#00ff00"') // SVG image color (maps to fill)
+    expect(svg).toContain('stroke="#0000ff"') // SVG image strokeColor
+    expect(svg).toContain('stroke-width="2"') // SVG image strokeWidth
+  })
+
+  it('should fallback to template defaults for svgImage strokeLinejoin when no layer override', () => {
+    // Template has strokeLinejoin: 'bevel'
+    const layers: FlatLayerData[] = []
+
+    const svg = generateSvgString(template, layers)
+
+    // Verify svgImage template strokeLinejoin default is used
+    expect(svg).toContain('stroke-linejoin="bevel"')
   })
 })
 
@@ -712,5 +736,117 @@ describe('Property Rendering - Property Name Consistency', () => {
     // Verify normalized names work
     expect(svg).toContain('fill="#00ff00"')
     expect(svg).toContain('stroke="#ff00ff"')
+  })
+})
+
+describe('Property Rendering - Path Layers', () => {
+  it('should render visual path layers with fill styling', () => {
+    // REGRESSION TEST: Visual path layers (like stripes) were being skipped
+    // This caused map-offroad-circle template stripes to not render
+    const template: SimpleTemplate = {
+      id: 'path-test',
+      name: 'Path Test',
+      description: 'Test visual path rendering',
+      width: 400,
+      height: 400,
+      viewBox: { x: 0, y: 0, width: 400, height: 400 },
+      layers: [
+        // Visual path with fill - should render
+        {
+          id: 'stripe-path',
+          type: 'shape',
+          subtype: 'path',
+          path: 'M 100,100 L 200,100 L 200,200 L 100,200 Z',
+          position: { x: 0, y: 0 },
+          fillColor: '#ff0000',
+          strokeColor: 'none'
+        } as any
+      ]
+    }
+
+    const layers: FlatLayerData[] = []
+    const svg = generateSvgString(template, layers)
+
+    // Verify visual path is rendered
+    expect(svg).toContain('d="M 100,100 L 200,100 L 200,200 L 100,200 Z"')
+    expect(svg).toContain('fill="#ff0000"')
+  })
+
+  it('should NOT render reference-only path layers (for textPath)', () => {
+    // Reference paths have no fill/stroke and should not render visually
+    const template: SimpleTemplate = {
+      id: 'path-test',
+      name: 'Path Test',
+      description: 'Test reference path skipping',
+      width: 400,
+      height: 400,
+      viewBox: { x: 0, y: 0, width: 400, height: 400 },
+      layers: [
+        // Reference-only path (no fill/stroke) - should NOT render
+        {
+          id: 'curve-path',
+          type: 'shape',
+          subtype: 'path',
+          path: 'M 100,200 Q 200,100 300,200',
+          position: { x: 0, y: 0 }
+          // No fillColor or strokeColor - this is a textPath reference only
+        } as any,
+        // Text using the reference path
+        {
+          id: 'curved-text',
+          type: 'text',
+          text: 'Curved Text',
+          textPath: 'curve-path',
+          startOffset: '50%',
+          fontFamily: 'Arial',
+          fontColor: '#000000',
+          fontSize: 20,
+          fontWeight: 400,
+          position: { x: 200, y: 200 }
+        } as any
+      ]
+    }
+
+    const layers: FlatLayerData[] = []
+    const svg = generateSvgString(template, layers)
+
+    // Verify reference path is in defs for textPath, but NOT rendered as visible shape
+    expect(svg).toContain('id="curve-path"') // In defs
+    expect(svg).toContain('<textPath') // Used by text
+    // Path should appear only once in defs, not in the main content
+    const pathMatches = svg.match(/d="M 100,200 Q 200,100 300,200"/g)
+    expect(pathMatches?.length).toBe(1) // Only in defs, not rendered
+  })
+
+  it('should render path layers with stroke-only styling', () => {
+    // Paths with stroke but no fill should still render
+    const template: SimpleTemplate = {
+      id: 'path-test',
+      name: 'Path Test',
+      description: 'Test stroke-only path rendering',
+      width: 400,
+      height: 400,
+      viewBox: { x: 0, y: 0, width: 400, height: 400 },
+      layers: [
+        {
+          id: 'outline-path',
+          type: 'shape',
+          subtype: 'path',
+          path: 'M 100,100 L 200,100',
+          position: { x: 0, y: 0 },
+          fillColor: 'none',
+          strokeColor: '#0000ff',
+          strokeWidth: 3
+        } as any
+      ]
+    }
+
+    const layers: FlatLayerData[] = []
+    const svg = generateSvgString(template, layers)
+
+    // Verify stroke-only path is rendered
+    expect(svg).toContain('d="M 100,100 L 200,100"')
+    expect(svg).toContain('stroke="#0000ff"')
+    expect(svg).toContain('stroke-width="3"')
   })
 })

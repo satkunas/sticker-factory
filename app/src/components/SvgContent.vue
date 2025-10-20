@@ -26,20 +26,19 @@
     <!-- SHAPE LAYERS -->
     <!-- Shape paths are already positioned and centered during template loading -->
     <!-- No additional transforms needed - path coordinates are final -->
-    <!-- Render visible shapes (with fill/stroke) even if subtype='path' -->
-    <!-- Only exclude pure textPath reference paths (no fill/stroke) -->
+    <!-- Skip reference-only paths (for textPath) that have no visual styling -->
     <g
-      v-if="templateLayer.type === 'shape' && (templateLayer.subtype !== 'path' || templateLayer.fill || templateLayer.stroke)"
+      v-if="templateLayer.type === 'shape' && shouldRenderShape(templateLayer, layerData)"
       :data-layer-id="templateLayer.id"
       :data-layer-type="templateLayer.type"
       class="layer-clickable"
     >
       <path
         :d="templateLayer.path"
-        :fill="layerData?.fillColor || templateLayer.fillColor"
-        :stroke="layerData?.strokeColor || templateLayer.strokeColor"
+        :fill="layerData?.fillColor ?? templateLayer.fillColor"
+        :stroke="layerData?.strokeColor ?? templateLayer.strokeColor"
         :stroke-width="layerData?.strokeWidth ?? templateLayer.strokeWidth"
-        :stroke-linejoin="layerData?.strokeLinejoin || templateLayer.strokeLinejoin"
+        :stroke-linejoin="layerData?.strokeLinejoin ?? templateLayer.strokeLinejoin"
       />
     </g>
 
@@ -282,6 +281,22 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   mode: 'viewport'
 })
+
+/**
+ * Determine if a shape layer should render visually
+ * Skip reference-only paths (for textPath) that have no fill/stroke
+ */
+function shouldRenderShape(templateLayer: any, layerData: FlatLayerData | undefined): boolean {
+  const fill = layerData?.fillColor ?? templateLayer.fillColor
+  const stroke = layerData?.strokeColor ?? templateLayer.strokeColor
+
+  // Treat "none" the same as undefined - both mean "don't render this visual property"
+  const hasFill = fill !== undefined && fill !== 'none'
+  const hasStroke = stroke !== undefined && stroke !== 'none'
+
+  // Only render if there's at least one visual property
+  return hasFill || hasStroke
+}
 
 /**
  * Extract mask definitions from shape layers

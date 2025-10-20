@@ -128,6 +128,112 @@ it('should render NEW_PROPERTY in SVG string generator', () => {
 - Ensures template selector icons show correct colors/styling
 - Guards against property name normalization regressions
 
+### Rendering Logic Synchronization (CRITICAL)
+**ALL rendering contexts MUST use identical logic. Font embedding is the ONLY allowed difference.**
+
+**The 4 Rendering Contexts:**
+
+| Context | File | Font Handling |
+|---------|------|---------------|
+| **Main Preview** | `SvgContent.vue` | Browser loads fonts (no embedding) |
+| **Template Icons** | `svg-string-generator.ts` | Embeds Google Fonts CSS |
+| **Download Preview** | `svg-string-generator.ts` | Embeds Google Fonts CSS |
+| **Download Files** | `svg-string-generator.ts` | Embeds Google Fonts CSS |
+
+**Enforcement Rules:**
+
+1. **Shape rendering logic MUST be identical**
+   ```typescript
+   // ✅ CORRECT - Same shouldRenderShape() in both files
+   // SvgContent.vue and svg-string-generator.ts
+   function shouldRenderShape(templateLayer, layerData) {
+     const fill = layerData?.fillColor ?? templateLayer.fillColor
+     const stroke = layerData?.strokeColor ?? templateLayer.strokeColor
+     const hasFill = fill !== undefined && fill !== 'none'
+     const hasStroke = stroke !== undefined && stroke !== 'none'
+     return hasFill || hasStroke
+   }
+
+   // ❌ FORBIDDEN - Different conditions in different files
+   // SvgContent.vue: v-if="layer.fill || layer.stroke"
+   // svg-string-generator.ts: if (!hasFill && !hasStroke) return ''
+   ```
+
+2. **Property fallback chains MUST be identical**
+   ```typescript
+   // ✅ CORRECT - Same everywhere
+   :fill="layerData?.fillColor ?? templateLayer.fillColor"
+   :stroke="layerData?.strokeColor ?? templateLayer.strokeColor"
+
+   // ❌ FORBIDDEN - Different operators
+   :fill="layerData?.fillColor || templateLayer.fillColor"  // Wrong: || breaks 'none'
+
+   // ❌ FORBIDDEN - Different property names
+   :fill="layerData?.fill ?? templateLayer.fill"  // Wrong: not normalized
+   ```
+
+3. **When modifying rendering logic:**
+   - ✅ Update `SvgContent.vue` (main preview)
+   - ✅ Update `svg-string-generator.ts` (downloads/icons)
+   - ✅ Run `npm run test:run` to verify property-rendering tests
+   - ✅ Manually verify all 4 contexts work
+
+4. **Common pitfalls:**
+   - Using old property names (`fill`/`stroke` instead of `fillColor`/`strokeColor`)
+   - Using `||` instead of `??` (breaks "none" values)
+   - Editing `Svg.vue` instead of `SvgContent.vue` (wrong file!)
+   - Copy-pasting old code without checking current patterns
+
+**Red flags indicating divergence:**
+- ❌ "Stripes show in download but not in editor"
+- ❌ "Template icons don't match editor colors"
+- ❌ "Downloaded file looks different from preview"
+- ❌ "Property works in main app but not exported SVG"
+
+**Debugging divergence:**
+1. Compare `SvgContent.vue` and `svg-string-generator.ts` rendering logic
+2. Look for different v-if conditions, property names, operators
+3. Add test to `property-rendering.test.ts` reproducing the bug
+4. Apply same fix to BOTH files
+5. Verify all 4 contexts work
+
+### Singleton Component Enforcement
+**If a rendering component exists, REUSE it. Never create duplicates or alternatives.**
+
+**Why this matters:**
+- This exact bug was caused by duplicate components (Svg.vue vs SvgContent.vue)
+- Duplicates diverge over time, causing "works here but not there" bugs
+- Maintenance nightmare - every fix must be applied to multiple files
+
+**Enforcement:**
+```typescript
+// ❌ FORBIDDEN - Creating duplicate renderer
+// Scenario: SvgContent.vue exists
+// Action: Create new "Svg.vue" as alternative
+// Result: Divergence, bugs, maintenance hell
+
+// ✅ CORRECT - Reuse existing component
+// Scenario: SvgContent.vue exists
+// Action: Use SvgContent.vue everywhere
+// If needed: Add props to support new use case
+```
+
+**Before creating a new component:**
+1. Search for existing similar components (Grep/Glob)
+2. Can existing component handle your use case with props?
+3. Ask: "Why can't I reuse the existing one?"
+4. Only create new if absolutely necessary AND document why
+
+**Red flags:**
+- Multiple components doing similar rendering
+- Component names with "Alt", "New", "V2", "Legacy"
+- Copy-pasted component code with "minor tweaks"
+- Comments like "// TODO: merge with OtherComponent.vue"
+
+**Current singleton components:**
+- **SVG Rendering**: `SvgContent.vue` (main preview, used inside SvgViewport.vue)
+- **SVG String Generation**: `svg-string-generator.ts` (downloads, template icons)
+
 ### Never Disable Tests
 **Disabled tests = broken code. If tests fail, FIX THEM.**
 

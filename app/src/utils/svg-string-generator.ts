@@ -106,16 +106,12 @@ function generateLayerElement(
 
 /**
  * Generate shape layer element
- * Excludes path layers (subtype='path') which are only used for textPath references
+ * Renders all shapes including path layers with visual styling
  */
 function generateShapeElement(
   templateLayer: ProcessedTemplateLayer,
   layerData: FlatLayerData | undefined
 ): string {
-  // Skip path layers - these are for textPath references, not visible shapes
-  const subtype = (templateLayer as unknown as { subtype?: string }).subtype
-  if (subtype === 'path') return ''
-
   const path = (templateLayer as unknown as { path?: string }).path
   if (!path) return ''
 
@@ -124,6 +120,12 @@ function generateShapeElement(
   const stroke = layerData?.strokeColor ?? templateLayer.strokeColor
   const strokeWidth = layerData?.strokeWidth ?? templateLayer.strokeWidth
   const strokeLinejoin = layerData?.strokeLinejoin
+
+  // Skip path layers with no visual styling (reference-only paths for textPath)
+  // Treat "none" the same as undefined - both mean "don't render this visual property"
+  const hasFill = fill !== undefined && fill !== 'none'
+  const hasStroke = stroke !== undefined && stroke !== 'none'
+  if (!hasFill && !hasStroke) return ''
 
   const attrs: string[] = [`d="${path}"`]
   if (fill !== undefined) attrs.push(`fill="${fill}"`)
