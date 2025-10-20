@@ -79,8 +79,12 @@ export const FONT_CATEGORY_COLORS: Record<string, string> = {
   'sans-serif': 'bg-green-400',
   'monospace': 'bg-purple-400',
   'display': 'bg-orange-400',
-  'handwriting': 'bg-pink-400'
+  'handwriting': 'bg-pink-400',
+  'dingbats': 'bg-red-400'
 } as const
+
+// Default fallback color for unknown categories
+export const DEFAULT_CATEGORY_COLOR = 'bg-gray-400' as const
 
 // Lazy loading configuration
 export const FONT_LOADING_CONFIG = {
@@ -92,3 +96,14 @@ export const FONT_LOADING_CONFIG = {
 
 // Textarea configuration for multi-line text input
 export const MIN_TEXTAREA_ROWS = 1 as const
+
+// Default line height for multi-line text (1.2 = 120% of font size)
+export const DEFAULT_LINE_HEIGHT = 1.2 as const
+
+// Viewport and centering configuration
+export const VIEWPORT_CONFIG = {
+  MIN_CONTENT_WIDTH: 400,
+  MIN_CONTENT_HEIGHT: 300,
+  GRID_SCALE: 2.0,
+  PADDING_SCALE: 1.5
+} as const

@@ -467,7 +467,7 @@
                 </div>
                 <div class="flex items-center space-x-2">
                   <input
-                    :value="parseFloat(startOffset || '0')"
+                    :value="parseFloat(startOffset ?? '0')"
                     type="range"
                     min="0"
                     max="100"
@@ -476,7 +476,7 @@
                     @input="$emit('update:startOffset', `${$event.target.value}%`)"
                   >
                   <input
-                    :value="parseFloat(startOffset || '0')"
+                    :value="parseFloat(startOffset ?? '0')"
                     type="number"
                     min="0"
                     max="100"
@@ -526,7 +526,7 @@
                     v-for="baseline in DOMINANT_BASELINE_OPTIONS"
                     :key="baseline.value"
                     class="px-2 py-1 text-xs rounded border transition-all text-center"
-                    :class="(dominantBaseline || 'auto') === baseline.value ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white border-secondary-200 text-secondary-600 hover:border-secondary-300'"
+                    :class="(dominantBaseline ?? 'auto') === baseline.value ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white border-secondary-200 text-secondary-600 hover:border-secondary-300'"
                     :title="baseline.description"
                     @click="$emit('update:dominantBaseline', baseline.value)"
                   >

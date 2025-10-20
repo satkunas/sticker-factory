@@ -195,7 +195,7 @@ const isExpanded = computed(() => {
 
 // Computed textarea rows - always shrink to fit content (min 1, no max)
 const textareaRows = computed(() => {
-  const lineCount = (props.modelValue || '').split('\n').length
+  const lineCount = (props.modelValue ?? '').split('\n').length
   return Math.max(MIN_TEXTAREA_ROWS, lineCount)
 })
 

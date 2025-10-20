@@ -13,14 +13,14 @@ export function useTemplateHelpers() {
     if (!template) return 'Text'
     const textInputs = getTemplateTextInputs(template)
     const textInput = textInputs.find(input => input.id === textInputId)
-    return textInput?.label || 'Text'
+    return textInput?.label ?? 'Text'
   }
 
   const getTextInputPlaceholder = (template: SimpleTemplate | null, textInputId: string): string => {
     if (!template) return 'Enter your text...'
     const textInputs = getTemplateTextInputs(template)
     const textInput = textInputs.find(input => input.id === textInputId)
-    return textInput?.placeholder || 'Enter your text...'
+    return textInput?.placeholder ?? 'Enter your text...'
   }
 
   // Shape helpers
@@ -82,7 +82,7 @@ export function useTemplateHelpers() {
     )
 
     if (processedLayer && 'shape' in processedLayer && processedLayer.shape) {
-      return processedLayer.shape.path || ''
+      return processedLayer.shape.path ?? ''
     }
 
     return ''
@@ -180,7 +180,7 @@ export function useTemplateHelpers() {
 
     if (!originalLayer || originalLayer.type !== 'svgImage') return ''
 
-    return originalLayer.svgContent || originalLayer.svgImage?.svgContent || ''
+    return originalLayer.svgContent ?? originalLayer.svgImage?.svgContent ?? ''
   }
 
   const getSvgImageId = (template: SimpleTemplate | null, svgImageStyleId: string): string => {
@@ -192,7 +192,7 @@ export function useTemplateHelpers() {
 
     if (!originalLayer || originalLayer.type !== 'svgImage') return ''
 
-    return originalLayer.svgId || ''
+    return originalLayer.svgId ?? ''
   }
 
   return {

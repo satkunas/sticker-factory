@@ -133,7 +133,7 @@ function generateCenteredShapePath(
 
     case 'polygon': {
       // Use provided points or empty path
-      return points || ''
+      return points ?? ''
     }
 
     default:
@@ -218,8 +218,8 @@ export function processLayerForRendering(
       } else {
         processed.path = ''
       }
-      processed.fill = layer.fill || layer.fillColor
-      processed.stroke = layer.stroke || layer.strokeColor
+      processed.fill = layer.fill ?? layer.fillColor
+      processed.stroke = layer.stroke ?? layer.strokeColor
       processed.strokeWidth = layer.strokeWidth
       processed.strokeLinejoin = layer.strokeLinejoin
       break
@@ -229,10 +229,10 @@ export function processLayerForRendering(
       processed.fontFamily = layer.fontFamily
       processed.fontSize = layer.fontSize
       processed.fontWeight = layer.fontWeight
-      processed.fontColor = layer.fontColor || layer.fill
+      processed.fontColor = layer.fontColor ?? layer.fill
       // Text might need stroke too
       if (layer.strokeWidth && layer.strokeWidth > 0) {
-        processed.stroke = layer.strokeColor || layer.stroke
+        processed.stroke = layer.strokeColor ?? layer.stroke
         processed.strokeWidth = layer.strokeWidth
       }
       break

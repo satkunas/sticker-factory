@@ -722,14 +722,16 @@ export async function loadSvgLibraryStore(): Promise<SvgLibraryItem[]> {
     // Store module loaders for lazy loading
     _svgModuleLoaders.clear()
     svgEntries.forEach(([path, loader]) => {
-      const filename = path.split('/').pop()?.replace('.svg', '') || ''
-      _svgModuleLoaders.set(filename, loader)
+      const filename = path.split('/').pop()?.replace('.svg', '')
+      if (filename) {
+        _svgModuleLoaders.set(filename, loader)
+      }
     })
 
     // Create metadata-only items (no SVG content loaded yet)
     const items: SvgLibraryItem[] = svgEntries.map(([path]) => {
-      const filename = path.split('/').pop()?.replace('.svg', '') || ''
-      return createSvgLibraryItemMetadata(filename)
+      const filename = path.split('/').pop()?.replace('.svg', '')
+      return filename ? createSvgLibraryItemMetadata(filename) : null
     }).filter(item => item !== null) as SvgLibraryItem[]
 
     // Consolidate categories and sort
@@ -809,8 +811,8 @@ function consolidateCategories(items: SvgLibraryItem[]): SvgLibraryItem[] {
   // Count items per category
   const categoryCounts = new Map<string, number>()
   items.forEach(item => {
-    const count = categoryCounts.get(item.category) || 0
-    categoryCounts.set(item.category, count + 1)
+    const count = categoryCounts.get(item.category)
+    categoryCounts.set(item.category, count !== undefined ? count + 1 : 1)
   })
 
   logger.info('SVG Store: Original category distribution:', Object.fromEntries(categoryCounts))
@@ -829,8 +831,8 @@ function consolidateCategories(items: SvgLibraryItem[]): SvgLibraryItem[] {
     }
 
     // Check if category is too small and consolidate to misc
-    const categorySize = categoryCounts.get(originalCategory) || 0
-    if (categorySize < MIN_CATEGORY_SIZE && originalCategory !== 'misc') {
+    const categorySize = categoryCounts.get(originalCategory)
+    if (categorySize !== undefined && categorySize < MIN_CATEGORY_SIZE && originalCategory !== 'misc') {
       return {
         ...item,
         category: 'misc',
@@ -957,8 +959,8 @@ export const useSvgStore = () => {
   const getStats = () => {
     const categoryCounts = new Map<string, number>()
     _state.value.items.forEach(item => {
-      const count = categoryCounts.get(item.category) || 0
-      categoryCounts.set(item.category, count + 1)
+      const count = categoryCounts.get(item.category)
+      categoryCounts.set(item.category, count !== undefined ? count + 1 : 1)
     })
 
     return {

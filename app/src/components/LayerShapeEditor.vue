@@ -595,8 +595,8 @@ const calculatedViewBox = computed(() => {
         }
       }
       // Fallback for complex shapes
-      const width = shape.width || 0
-      const height = shape.height || 0
+      const width = shape.width ?? 0
+      const height = shape.height ?? 0
       if (!width && !height) return '0 0 100 100'
       const size = Math.max(width, height)
       const totalSize = size + strokePadding * 2

@@ -164,8 +164,10 @@ export const resolveTextPosition = (
 
     const coordinate = textInput.position[axis]
     const containerSize = axis === 'x' ? containerBounds.width : containerBounds.height
-    const offset = axis === 'x' ? (containerBounds.x ?? 0) : (containerBounds.y ?? 0)
+    // Only use offset if defined (validation above ensures width/height exist)
+    const offset = axis === 'x' ? containerBounds.x : containerBounds.y
 
+    // resolveCoordinate handles undefined offset gracefully
     return resolveCoordinate(coordinate, containerSize, offset)
   } catch (error) {
     // Return undefined on error - no hardcoded fallbacks

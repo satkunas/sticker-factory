@@ -79,8 +79,7 @@ const PROP_MAP = {
   startOffset: 'q',
   dy: 'd',
   dominantBaseline: 'b',
-  fill: 'F',
-  stroke: 'S',
+  fillColor: 'F',
   strokeColor: 'C',
   strokeWidth: 'W',
   strokeOpacity: 'O',
@@ -185,8 +184,7 @@ export function encodeTemplateStateCompact(state: AppState): string {
       if (layer.dy !== undefined) flatLayer[PROP_MAP.dy] = layer.dy
       if (layer.dominantBaseline !== undefined) flatLayer[PROP_MAP.dominantBaseline] = layer.dominantBaseline
 
-      if (layer.fill !== undefined) flatLayer[PROP_MAP.fill] = compressColor(layer.fill)
-      if (layer.stroke !== undefined) flatLayer[PROP_MAP.stroke] = compressColor(layer.stroke)
+      if (layer.fillColor !== undefined) flatLayer[PROP_MAP.fillColor] = compressColor(layer.fillColor)
       if (layer.strokeColor !== undefined) flatLayer[PROP_MAP.strokeColor] = compressColor(layer.strokeColor)
       if (layer.strokeWidth !== undefined) flatLayer[PROP_MAP.strokeWidth] = layer.strokeWidth
       if (layer.strokeOpacity !== undefined) flatLayer[PROP_MAP.strokeOpacity] = layer.strokeOpacity
@@ -286,11 +284,8 @@ export function decodeTemplateStateCompact(encoded: string): Partial<AppState> |
         mappedLayer.dominantBaseline = compressedLayer[PROP_MAP.dominantBaseline]
       }
 
-      if (compressedLayer[PROP_MAP.fill] !== undefined) {
-        mappedLayer.fill = decompressColor(compressedLayer[PROP_MAP.fill] as number | string)
-      }
-      if (compressedLayer[PROP_MAP.stroke] !== undefined) {
-        mappedLayer.stroke = decompressColor(compressedLayer[PROP_MAP.stroke] as number | string)
+      if (compressedLayer[PROP_MAP.fillColor] !== undefined) {
+        mappedLayer.fillColor = decompressColor(compressedLayer[PROP_MAP.fillColor] as number | string)
       }
       if (compressedLayer[PROP_MAP.strokeColor] !== undefined) {
         mappedLayer.strokeColor = decompressColor(compressedLayer[PROP_MAP.strokeColor] as number | string)

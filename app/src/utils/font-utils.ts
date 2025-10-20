@@ -4,7 +4,7 @@
  */
 
 import type { FontConfig } from '../config/fonts'
-import { ALL_FONT_WEIGHTS, FONT_CATEGORY_COLORS } from './ui-constants'
+import { ALL_FONT_WEIGHTS, FONT_CATEGORY_COLORS, DEFAULT_CATEGORY_COLOR } from './ui-constants'
 
 /**
  * Extract font family string from layer data
@@ -49,7 +49,7 @@ export function getAvailableFontWeights(selectedFont: FontConfig | null | undefi
  * Get category color for font category indicators
  */
 export function getFontCategoryColor(category: string): string {
-  return FONT_CATEGORY_COLORS[category] || 'bg-gray-400'
+  return FONT_CATEGORY_COLORS[category] ?? DEFAULT_CATEGORY_COLOR
 }
 
 /**

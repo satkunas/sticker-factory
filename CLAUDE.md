@@ -24,28 +24,33 @@ const maxPan = Math.max(overflowX, backgroundPanX)  // calculated from actual di
 - No magic numbers in pan/zoom logic
 - Properties undefined by default, conditionally applied only when present
 
-### Store-Level Data Normalization
-**SVG components must be "dumb" - all conditional logic and data merging happens in the store.**
+### Rendering Fallback Pattern
+**Rendering components use simple, consistent fallback chains. Complex logic stays in stores/composables.**
 
 ```typescript
-// ❌ FORBIDDEN - Logic in SVG component
+// ❌ FORBIDDEN - Complex conditional logic in rendering components
 <text :font-family="layerData?.font?.family || template.fontFamily || 'Arial'">
+<rect :fill="layer.overrideFill ? layer.fill : (template.fill ?? '#000000')">
 
-// ✅ CORRECT - Store normalizes data, component just renders
-// Store:
-const svgRenderData = computed(() => {
-  return layers.map(templateLayer => {
-    const formLayer = formData.find(f => f.id === templateLayer.id)
-    return {
-      ...templateLayer,
-      ...(formLayer?.fontFamily && { fontFamily: formLayer.fontFamily })
-    }
-  })
-})
+// ✅ CORRECT - Simple fallback chain using ?? operator
+// MUST be identical in Svg.vue and svg-string-generator.ts
+:fill="layerData?.fillColor ?? templateLayer.fillColor"
+:stroke="layerData?.strokeColor ?? templateLayer.strokeColor"
+:font-family="extractFontFamily(layerData) ?? templateLayer.fontFamily"
 
-// Component:
-<text :font-family="element.fontFamily">
+// ✅ CORRECT - Complex logic extracted to utility functions
+function extractFontFamily(layerData: FlatLayerData | undefined): string | undefined {
+  // Complex extraction logic here
+  return layerData?.font?.family
+}
 ```
+
+**Enforcement:**
+- Rendering components can do **simple fallbacks** (`layerData?.prop ?? templateLayer.prop`)
+- Fallback chains **MUST be identical** in Svg.vue and svg-string-generator.ts
+- Use `??` not `||` (preserves "none" values)
+- Extract complex logic to utils/ functions (calculateX, extractX, shouldX)
+- Store handles data merging, URL sync, and state management
 
 ## ⚡ Development Discipline
 
@@ -254,34 +259,54 @@ it('should calculate transform correctly', () => {
 - NEVER use `.skip()` or `.only()` in commits
 
 ### No Scattered Defaults or Fallbacks
-**All constants and defaults live in centralized locations. No inline fallbacks.**
+**Shared constants live in centralized locations. Single-use values can stay inline.**
 
 ```typescript
-// ❌ FORBIDDEN - Inline defaults littered everywhere
-const color = userColor || '#000000'
-const fontSize = userSize ?? 16
-const padding = data.padding || 10
+// ❌ FORBIDDEN - Same constant duplicated across multiple files
+// File 1: const MAX_ZOOM = 50
+// File 2: const MAX_ZOOM = 50
+// File 3: max="50"
+// Result: Hard to update, easy to drift
 
-// ✅ CORRECT - Define in utils/ui-constants.ts
-export const DEFAULT_TEXT_COLOR = '#1f2937'
-export const DEFAULT_FONT_SIZE = 16
-export const DEFAULT_PADDING = { top: 10, right: 10, bottom: 10, left: 10 }
+// ✅ CORRECT - Define shared constants in utils/ui-constants.ts
+export const ZOOM_CONFIG = {
+  MIN_ZOOM: 0.1,
+  MAX_ZOOM: 50,
+  ZOOM_STEP: 0.1
+} as const
 
-// Then import and use
-import { DEFAULT_TEXT_COLOR } from './utils/ui-constants'
-const color = userColor || DEFAULT_TEXT_COLOR
+export const UI_COLORS = {
+  PRIMARY_BLUE: '#3b82f6',
+  SUCCESS_GREEN: '#059669'
+} as const
+
+// Then import and use everywhere
+import { ZOOM_CONFIG, UI_COLORS } from './utils/ui-constants'
 ```
 
+**What MUST be centralized:**
+- ✅ **Shared/reused values** - Used in 2+ files (zoom limits, common colors)
+- ✅ **Configuration** - App behavior settings (font loading, pagination)
+- ✅ **Dropdown options** - STROKE_LINEJOIN_OPTIONS, FONT_WEIGHTS
+- ✅ **Magic numbers** - Non-obvious values that need explanation
+
+**What CAN stay inline:**
+- ✅ **Single-use CSS** - Colors in `<style scoped>` blocks used once
+- ✅ **Input placeholders** - `placeholder="#000000"` in single input
+- ✅ **Obvious values** - `border-radius: 50%` for circles
+- ✅ **Component-specific** - Layout values unique to one component
+
 **See `utils/ui-constants.ts` for examples:**
-- `PRESET_COLORS` - Color palette
+- `PRESET_COLORS` - Color palette (35 colors)
 - `FONT_LOADING_CONFIG` - Lazy loading settings
 - `STROKE_LINEJOIN_OPTIONS` - SVG stroke options
+- `ZOOM_CONFIG` - Zoom limits and steps (add if using magic numbers)
 
-**When you need a default value:**
-1. Check if it already exists in `ui-constants.ts`
-2. If not, add it there with clear naming
-3. Reuse across codebase - no duplication
-4. Values should be computed from measurements, not guessed
+**Decision criteria:**
+1. **Is it used in 2+ files?** → Centralize it
+2. **Is it non-obvious/magic?** → Centralize with explanation
+3. **Might it change globally?** → Centralize it
+4. **Single-use UI style?** → Can stay inline
 
 ### Vue Reactivity Separation
 **Pure functions in utils/, Vue reactivity in composables/. NEVER mix.**
@@ -379,10 +404,10 @@ URL → Decode → Template+Merge → FormData → Components → User Input
 ```
 
 ### Component Responsibilities
-- **Store**: Data merging, normalization, URL sync
+- **Store**: Data merging, URL sync, state management
 - **Forms**: Display FormData[], emit changes
-- **SVG**: Render from FormData[] only (no template access)
-- **NO hardcoded defaults anywhere**
+- **SVG Renderers**: Simple fallback chains (`layerData?.prop ?? templateLayer.prop`)
+- **Complex Logic**: Extracted to utils/ functions (extractX, calculateX, shouldX)
 
 ## 📂 Project Structure
 
@@ -392,7 +417,7 @@ app/
 │   ├── stores/
 │   │   └── urlDrivenStore.ts       # URL-driven state management
 │   ├── components/
-│   │   ├── Svg.vue                 # Dumb SVG renderer
+│   │   ├── Svg.vue                 # Main SVG renderer (simple fallbacks)
 │   │   ├── TextInputWithFontSelector.vue
 │   │   ├── TemplateObjectStyler.vue
 │   │   └── SvgLibrarySelector.vue

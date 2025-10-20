@@ -15,6 +15,7 @@ import {
 } from './svg-transforms'
 import { extractFontFamily } from './font-utils'
 import { splitLines, calculateLineDy } from './text-multiline'
+import { DEFAULT_LINE_HEIGHT } from './ui-constants'
 
 /**
  * Generate complete SVG string from template and layer data
@@ -210,7 +211,7 @@ function generateTextElement(
   // MULTI-LINE TEXT (tspan-based line breaks)
   if (multiline && !textPath) {
     const lines = splitLines(text)
-    const lineHeight = layerData?.lineHeight ?? flatLayer.lineHeight ?? 1.2
+    const lineHeight = layerData?.lineHeight ?? flatLayer.lineHeight ?? DEFAULT_LINE_HEIGHT
 
     const x = resolveLayerPosition(templateLayer.position?.x, template.width)
     const y = resolveLayerPosition(templateLayer.position?.y, template.height)

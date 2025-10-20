@@ -63,6 +63,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { getFontFamily, FONT_CATEGORIES, loadFont, type FontConfig } from '../config/fonts' // Used in template
+import { getFontCategoryColor } from '../utils/font-utils'
 
 interface Props {
   font: FontConfig
@@ -112,15 +113,7 @@ const getOptimalFontSize = (font: FontConfig, stickerText: string, showPreview?:
 
 // Get category color for the sticker indicator
 const getCategoryColor = (category: string): string => {
-  const colorMap: Record<string, string> = {
-    'serif': 'bg-blue-400',
-    'sans-serif': 'bg-green-400', 
-    'monospace': 'bg-purple-400',
-    'display': 'bg-orange-400',
-    'handwriting': 'bg-pink-400',
-    'dingbats': 'bg-red-400'
-  }
-  return colorMap[category] || 'bg-gray-400'  // Keep this fallback for UI robustness
+  return getFontCategoryColor(category)
 }
 
 // Load font when tile becomes visible

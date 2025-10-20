@@ -913,13 +913,14 @@ export const clipPathShapes = computed(() => {
         // Resolve percentage coordinates for shape position
         const viewBox = _state.value.selectedTemplate?.viewBox
         if (!viewBox) return
+        if (shape.position?.x === undefined || shape.position?.y === undefined) return
 
-        const x = resolveCoordinate(shape.position?.x ?? 0, viewBox.width, viewBox.x)  // Default to origin if undefined
-        const y = resolveCoordinate(shape.position?.y ?? 0, viewBox.height, viewBox.y)  // Default to origin if undefined
+        const x = resolveCoordinate(shape.position.x, viewBox.width, viewBox.x)
+        const y = resolveCoordinate(shape.position.y, viewBox.height, viewBox.y)
         const width = shape.width ?? DEFAULT_SHAPE_WIDTH
         const height = shape.height ?? DEFAULT_SHAPE_HEIGHT
-        const rx = shape.rx ?? 0  // No rounding if undefined
-        const ry = shape.ry ?? 0  // No rounding if undefined
+        const rx = shape.rx !== undefined ? shape.rx : 0
+        const ry = shape.ry !== undefined ? shape.ry : 0
 
         if (rx || ry) {
           // Rounded rectangle
@@ -932,9 +933,10 @@ export const clipPathShapes = computed(() => {
         // Resolve percentage coordinates for circle position
         const viewBox = _state.value.selectedTemplate?.viewBox
         if (!viewBox) return
+        if (shape.position?.x === undefined || shape.position?.y === undefined) return
 
-        const cx = resolveCoordinate(shape.position?.x ?? 0, viewBox.width, viewBox.x)  // Default to origin if undefined
-        const cy = resolveCoordinate(shape.position?.y ?? 0, viewBox.height, viewBox.y)  // Default to origin if undefined
+        const cx = resolveCoordinate(shape.position.x, viewBox.width, viewBox.x)
+        const cy = resolveCoordinate(shape.position.y, viewBox.height, viewBox.y)
         const r = (shape.width ?? DEFAULT_SHAPE_WIDTH) / 2
         path = `M${cx - r},${cy} A${r},${r} 0 1,1 ${cx + r},${cy} A${r},${r} 0 1,1 ${cx - r},${cy} Z`
       } else if (shape.subtype === 'polygon' && shape.points) {

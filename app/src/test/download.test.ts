@@ -332,7 +332,7 @@ describe('Download Output Tests', () => {
   describe('SVG Generation Logic', () => {
     it('should calculate proper element ordering by zIndex', () => {
       const allElements = mockTemplate.layers.slice()
-      allElements.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0))
+      allElements.sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0))
 
       expect(allElements[0].id).toBe('background') // zIndex: 1
       expect(allElements[1].id).toBe('title')      // zIndex: 10

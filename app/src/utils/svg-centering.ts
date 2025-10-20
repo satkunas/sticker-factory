@@ -7,6 +7,7 @@
 
 import { isValidNumber } from './svg'
 import type { Point, ViewBox, Dimensions } from '../types/svg-types'
+import { VIEWPORT_CONFIG } from './ui-constants'
 
 // Type definitions
 
@@ -74,17 +75,17 @@ export function calculateCenteringTransform(
  */
 export function calculateGridBounds(
   contentDimensions: Dimensions,
-  gridScale = 2.0
+  gridScale = VIEWPORT_CONFIG.GRID_SCALE
 ): GridBounds {
   // Validate inputs
   if (!isValidNumber(contentDimensions.width) ||
       !isValidNumber(contentDimensions.height) ||
       !isValidNumber(gridScale) || gridScale <= 0) {
     return {
-      x: -400,
-      y: -300,
-      width: 800,
-      height: 600
+      x: -VIEWPORT_CONFIG.MIN_CONTENT_WIDTH,
+      y: -VIEWPORT_CONFIG.MIN_CONTENT_HEIGHT,
+      width: VIEWPORT_CONFIG.MIN_CONTENT_WIDTH * 2,
+      height: VIEWPORT_CONFIG.MIN_CONTENT_HEIGHT * 2
     }
   }
 
@@ -112,19 +113,19 @@ export function calculateGridBounds(
  */
 export function calculateContentBounds(
   templateViewBox: ViewBox,
-  paddingScale = 1.5
+  paddingScale = VIEWPORT_CONFIG.PADDING_SCALE
 ): Dimensions {
   // Validate inputs
   if (!validateViewBox(templateViewBox) || !isValidNumber(paddingScale) || paddingScale < 1) {
     return {
-      width: 400,
-      height: 300
+      width: VIEWPORT_CONFIG.MIN_CONTENT_WIDTH,
+      height: VIEWPORT_CONFIG.MIN_CONTENT_HEIGHT
     }
   }
 
   // Calculate content size with padding
-  const contentWidth = Math.max(templateViewBox.width * paddingScale, 400)
-  const contentHeight = Math.max(templateViewBox.height * paddingScale, 300)
+  const contentWidth = Math.max(templateViewBox.width * paddingScale, VIEWPORT_CONFIG.MIN_CONTENT_WIDTH)
+  const contentHeight = Math.max(templateViewBox.height * paddingScale, VIEWPORT_CONFIG.MIN_CONTENT_HEIGHT)
 
   return {
     width: contentWidth,

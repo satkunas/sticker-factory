@@ -169,9 +169,10 @@ async function processSvgImageLayer(
   // Preserve original position strings for center-based positioning
   const originalPosition = position as { x: number | string; y: number | string }
 
-  let svgContent = layerSvgContent || ''
+  let svgContent = layerSvgContent ?? ''
   if (svgId && !svgContent && svgContentLoader) {
-    svgContent = await svgContentLoader(svgId) || ''
+    const loadedContent = await svgContentLoader(svgId)
+    svgContent = loadedContent ?? ''
   }
 
   return {
@@ -209,7 +210,7 @@ export function convertShapeLayerToPath(
   if (layer.subtype === 'path') {
     // Access path using runtime structure (differs from TypeScript types)
     const pathData = (layer as unknown as { path?: string }).path
-    return pathData || ''
+    return pathData ?? ''
   }
 
   if (layer.subtype === 'line') {

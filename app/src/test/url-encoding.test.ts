@@ -56,8 +56,8 @@ describe('URL Encoding v2', () => {
           {
             id: 'shape1',
             type: 'shape',
-            fill: '#3b82f6',
-            stroke: '#1e40af',
+            fillColor: '#3b82f6',
+            strokeColor: '#1e40af',
             strokeWidth: 2,
             strokeLinejoin: 'round'
           }
@@ -71,8 +71,8 @@ describe('URL Encoding v2', () => {
       expect(decoded?.layers?.[0]).toMatchObject({
         id: 'shape1',
         type: 'shape',
-        fill: '#3b82f6',
-        stroke: '#1e40af',
+        fillColor: '#3b82f6',
+        strokeColor: '#1e40af',
         strokeWidth: 2,
         strokeLinejoin: 'round'
       })
@@ -122,8 +122,8 @@ describe('URL Encoding v2', () => {
           {
             id: 'shape1',
             type: 'shape',
-            fill: '#3b82f6',
-            stroke: '#1e40af',
+            fillColor: '#3b82f6',
+            strokeColor: '#1e40af',
             strokeWidth: 2
           },
           {
@@ -328,7 +328,7 @@ describe('URL Encoding v2', () => {
           {
             id: 'shape1',
             type: 'shape',
-            fill: '#ffffff'
+            fillColor: '#ffffff'
           }
         ],
         lastModified: Date.now()
@@ -425,8 +425,8 @@ describe('URL Encoding v2', () => {
           {
             id: 'shape1',
             type: 'shape',
-            fill: '#3b82f6',
-            stroke: '#1e40af',
+            fillColor: '#3b82f6',
+            strokeColor: '#1e40af',
             strokeWidth: 3,
             strokeLinejoin: 'bevel'
           }
@@ -437,9 +437,32 @@ describe('URL Encoding v2', () => {
       const encoded = encodeTemplateStateCompact(state)
       const decoded = decodeTemplateStateCompact(encoded)
 
-      expect(decoded?.layers?.[0]?.stroke).toBe('#1e40af')
+      expect(decoded?.layers?.[0]?.fillColor).toBe('#3b82f6')
+      expect(decoded?.layers?.[0]?.strokeColor).toBe('#1e40af')
       expect(decoded?.layers?.[0]?.strokeWidth).toBe(3)
       expect(decoded?.layers?.[0]?.strokeLinejoin).toBe('bevel')
+    })
+
+    it('should preserve fillColor in URL encoding/decoding for shape layers', () => {
+      const state: AppState = {
+        selectedTemplateId: 'test',
+        layers: [
+          {
+            id: 'shape1',
+            type: 'shape',
+            fillColor: '#10b981',
+            strokeColor: '#059669'
+          }
+        ],
+        lastModified: Date.now()
+      }
+
+      const encoded = encodeTemplateStateCompact(state)
+      const decoded = decodeTemplateStateCompact(encoded)
+
+      // Explicit test: fillColor must survive URL round-trip
+      expect(decoded?.layers?.[0]?.fillColor).toBe('#10b981')
+      expect(decoded?.layers?.[0]?.strokeColor).toBe('#059669')
     })
   })
 

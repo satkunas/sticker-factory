@@ -101,7 +101,7 @@
               index,
               splitLines(layerData?.text ?? templateLayer.text ?? '').length,
               layerData?.fontSize ?? templateLayer.fontSize ?? 16,
-              layerData?.lineHeight ?? templateLayer.lineHeight ?? 1.2
+              layerData?.lineHeight ?? templateLayer.lineHeight ?? DEFAULT_LINE_HEIGHT
             )"
           >
             {{ line }}
@@ -271,6 +271,7 @@ import { getSvgImageTransformCase, calculateScaledTransformOrigin, applySvgRende
 import { extractFontFamily } from '../utils/font-utils'
 import { textPathDefinitions } from '../stores/urlDrivenStore'
 import { splitLines, calculateLineDy } from '../utils/text-multiline'
+import { DEFAULT_LINE_HEIGHT } from '../utils/ui-constants'
 
 interface Props {
   template: SimpleTemplate
