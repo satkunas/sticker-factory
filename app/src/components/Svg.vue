@@ -22,7 +22,7 @@
   </defs>
 
   <!-- PHASE 2: LAYER RENDERING (preserves YAML order) -->
-  <template v-for="{ templateLayer, layerData, transformCase } in renderedLayers" :key="templateLayer.id">
+  <template v-for="{ templateLayer, layerData, transformCase, scaledOrigin, processedSvg } in renderedLayers" :key="templateLayer.id">
     <!-- SHAPE LAYERS -->
     <!-- Shape paths are already positioned and centered during template loading -->
     <!-- No additional transforms needed - path coordinates are final -->
@@ -156,52 +156,10 @@
         })`"
       >
         <!-- Scale and rotate around transform origin -->
-        <template v-if="transformCase?.case === 'scale-with-origin'">
-          <g
-            :transform="`translate(${
-              calculateScaledTransformOrigin(
-                layerData?.svgContent || templateLayer.svgContent,
-                templateLayer.width,
-                templateLayer.height,
-                transformCase.transformOrigin
-              ).x
-            }, ${
-              calculateScaledTransformOrigin(
-                layerData?.svgContent || templateLayer.svgContent,
-                templateLayer.width,
-                templateLayer.height,
-                transformCase.transformOrigin
-              ).y
-            })`"
-          >
+        <template v-if="transformCase?.case === 'scale-with-origin' && scaledOrigin">
+          <g :transform="`translate(${scaledOrigin.x}, ${scaledOrigin.y})`">
             <g :transform="`scale(${transformCase.scale})${transformCase.rotation !== undefined ? ` rotate(${transformCase.rotation})` : ''}`">
-              <g
-                :transform="`translate(${
-                  -calculateScaledTransformOrigin(
-                    layerData?.svgContent || templateLayer.svgContent,
-                    templateLayer.width,
-                    templateLayer.height,
-                    transformCase.transformOrigin
-                  ).x
-                }, ${
-                  -calculateScaledTransformOrigin(
-                    layerData?.svgContent || templateLayer.svgContent,
-                    templateLayer.width,
-                    templateLayer.height,
-                    transformCase.transformOrigin
-                  ).y
-                })`"
-                v-html="applySvgRenderingAttributes(
-                  layerData?.svgContent || templateLayer.svgContent,
-                  templateLayer.width,
-                  templateLayer.height,
-                  undefined,
-                  layerData?.color,
-                  layerData?.strokeColor,
-                  layerData?.strokeWidth,
-                  layerData?.strokeLinejoin
-                )"
-              />
+              <g :transform="`translate(${-scaledOrigin.x}, ${-scaledOrigin.y})`" v-html="processedSvg" />
             </g>
           </g>
         </template>
@@ -209,53 +167,20 @@
         <!-- Scale only (without transform origin) -->
         <template v-else-if="transformCase?.case === 'scale-only'">
           <g :transform="`scale(${transformCase.scale})`">
-            <g
-              v-html="applySvgRenderingAttributes(
-                layerData?.svgContent || templateLayer.svgContent,
-                templateLayer.width,
-                templateLayer.height,
-                undefined,
-                layerData?.color,
-                layerData?.strokeColor,
-                layerData?.strokeWidth,
-                layerData?.strokeLinejoin
-              )"
-            />
+            <g v-html="processedSvg" />
           </g>
         </template>
 
         <!-- Rotation only (no scale) -->
         <template v-else-if="transformCase?.case === 'rotation-only'">
           <g :transform="`rotate(${transformCase.rotation})`">
-            <g
-              v-html="applySvgRenderingAttributes(
-                layerData?.svgContent || templateLayer.svgContent,
-                templateLayer.width,
-                templateLayer.height,
-                undefined,
-                layerData?.color,
-                layerData?.strokeColor,
-                layerData?.strokeWidth,
-                layerData?.strokeLinejoin
-              )"
-            />
+            <g v-html="processedSvg" />
           </g>
         </template>
 
         <!-- No transforms -->
         <template v-else>
-          <g
-            v-html="applySvgRenderingAttributes(
-              layerData?.svgContent || templateLayer.svgContent,
-              templateLayer.width,
-              templateLayer.height,
-              undefined,
-              layerData?.color,
-              layerData?.strokeColor,
-              layerData?.strokeWidth,
-              layerData?.strokeLinejoin
-            )"
-          />
+          <g v-html="processedSvg" />
         </template>
       </g>
     </g>
@@ -314,7 +239,7 @@ const maskDefinitions = computed(() => {
 /**
  * Render layers with proper center-based positioning
  * Preserves YAML order (first = back, last = front)
- * Computes transform case once per svgImage layer for efficiency
+ * Computes transform case and scaled origin once per svgImage layer for efficiency
  */
 const renderedLayers = computed(() => {
   if (!props.template?.layers) return []
@@ -327,10 +252,39 @@ const renderedLayers = computed(() => {
       ? getSvgImageTransformCase(layerData)
       : undefined
 
+    // For svgImage layers, pre-compute expensive operations once
+    let scaledOrigin: { x: number; y: number } | undefined
+    let processedSvg: string | undefined
+    if (templateLayer.type === 'svgImage') {
+      // Compute processed SVG once (used in all 4 transform cases)
+      processedSvg = applySvgRenderingAttributes(
+        layerData?.svgContent || templateLayer.svgContent,
+        templateLayer.width,
+        templateLayer.height,
+        undefined,
+        layerData?.color,
+        layerData?.strokeColor,
+        layerData?.strokeWidth,
+        layerData?.strokeLinejoin
+      )
+
+      // Compute scaled transform origin for scale-with-origin case
+      if (transformCase?.case === 'scale-with-origin') {
+        scaledOrigin = calculateScaledTransformOrigin(
+          layerData?.svgContent || templateLayer.svgContent,
+          templateLayer.width,
+          templateLayer.height,
+          transformCase.transformOrigin!
+        )
+      }
+    }
+
     return {
       templateLayer,
       layerData,
-      transformCase
+      transformCase,
+      scaledOrigin,
+      processedSvg
     }
   })
 })
