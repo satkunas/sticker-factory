@@ -18,13 +18,11 @@ export function extractFontFamily(layerData: unknown): string | undefined {
 
   const data = layerData as Record<string, unknown>
 
-  // If layerData has a 'font' property with a FontConfig object
   if (data.font && typeof data.font === 'object') {
     const fontConfig = data.font as FontConfig
     return fontConfig.family
   }
 
-  // If layerData has a direct 'fontFamily' string property
   if (typeof data.fontFamily === 'string') {
     return data.fontFamily
   }
@@ -62,12 +60,10 @@ export function filterFonts(
 ): FontConfig[] {
   let filteredFonts = fonts
 
-  // Filter by category
   if (selectedCategory) {
     filteredFonts = filteredFonts.filter(font => font.category === selectedCategory)
   }
 
-  // Filter by search query
   if (searchQuery.trim()) {
     const query = searchQuery.toLowerCase().trim()
     filteredFonts = filteredFonts.filter(font =>
@@ -76,7 +72,6 @@ export function filterFonts(
     )
   }
 
-  // Deduplicate by font name (keep first occurrence)
   const seen = new Set<string>()
   filteredFonts = filteredFonts.filter(font => {
     if (seen.has(font.name)) {

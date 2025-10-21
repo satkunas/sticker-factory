@@ -116,19 +116,16 @@ function parsePointsAttribute(points: string): { x: number; y: number }[] {
 function calculateBoundsConfidence(contentBounds: SvgBounds, viewBox: { x: number; y: number; width: number; height: number } | null): number {
   let confidence = 1.0
 
-  // Check if bounds are reasonable (not NaN, not infinite, not negative dimensions)
   if (!isFinite(contentBounds.width) || !isFinite(contentBounds.height) ||
       contentBounds.width < 0 || contentBounds.height < 0 ||
       !isFinite(contentBounds.xMin) || !isFinite(contentBounds.yMin)) {
     return 0.0
   }
 
-  // If no viewBox, we can still have some confidence in bounds
   if (!viewBox) {
     return 0.6
   }
 
-  // Check if bounds are suspiciously large compared to viewBox
   const boundsToViewBoxRatio = Math.max(
     contentBounds.width / viewBox.width,
     contentBounds.height / viewBox.height
@@ -143,7 +140,6 @@ function calculateBoundsConfidence(contentBounds: SvgBounds, viewBox: { x: numbe
     confidence *= 0.6
   }
 
-  // Check if bounds are suspiciously small (less than 1% of viewBox)
   const minBoundsRatio = Math.min(
     contentBounds.width / viewBox.width,
     contentBounds.height / viewBox.height
@@ -153,7 +149,6 @@ function calculateBoundsConfidence(contentBounds: SvgBounds, viewBox: { x: numbe
     confidence *= 0.5
   }
 
-  // Check if content center is wildly outside viewBox
   const contentCenterX = contentBounds.centerX
   const contentCenterY = contentBounds.centerY
   const viewBoxCenterX = viewBox.x + viewBox.width / 2

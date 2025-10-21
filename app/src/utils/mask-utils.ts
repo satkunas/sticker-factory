@@ -59,12 +59,10 @@ export function generateTextPathDefinitions(
 ): TextPathDefinition[] {
   const definitions: TextPathDefinition[] = []
 
-  // First, find all textPath references from text layers
   const textPathReferences = new Set<string>()
 
   for (const layer of layers) {
     if (layer.type === 'text') {
-      // Check for textPath property
       const flatLayer = layer as unknown as FlatLayerData
       if (flatLayer.textPath) {
         textPathReferences.add(flatLayer.textPath)
@@ -72,14 +70,12 @@ export function generateTextPathDefinitions(
     }
   }
 
-  // Then, find the corresponding path layers
   for (const layer of layers) {
     if (layer.type === 'shape') {
       // Access path data using runtime structure (differs from TypeScript types)
       const subtype = (layer as unknown as { subtype?: string }).subtype
       const path = (layer as unknown as { path?: string }).path
 
-      // Only include path layers that are referenced by text layers
       if (subtype === 'path' && textPathReferences.has(layer.id) && path) {
         definitions.push({
           id: layer.id,

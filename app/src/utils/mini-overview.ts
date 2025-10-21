@@ -50,7 +50,6 @@ export function calculateMiniOverviewViewBox(
   containerDimensions: Dimensions,
   scale = 2.0
 ): MiniOverviewViewBox {
-  // Validate inputs
   if (!templateViewBox || !containerDimensions ||
       templateViewBox.width <= 0 || templateViewBox.height <= 0 ||
       containerDimensions.width <= 0 || containerDimensions.height <= 0 ||
@@ -58,32 +57,24 @@ export function calculateMiniOverviewViewBox(
     return { x: -200, y: -150, width: 400, height: 300 }
   }
 
-  // Calculate template center
   const templateCenterX = templateViewBox.x + templateViewBox.width / 2
   const templateCenterY = templateViewBox.y + templateViewBox.height / 2
 
-  // Calculate the area we want to show (scale x template size)
   const showAreaWidth = templateViewBox.width * scale
   const showAreaHeight = templateViewBox.height * scale
 
-  // Calculate aspect ratios
   const containerAspectRatio = containerDimensions.width / containerDimensions.height
   const showAreaAspectRatio = showAreaWidth / showAreaHeight
 
-  // Adjust viewBox dimensions to match container aspect ratio
-  // This ensures content is properly centered and scaled
   let viewBoxWidth = showAreaWidth
   let viewBoxHeight = showAreaHeight
 
   if (containerAspectRatio > showAreaAspectRatio) {
-    // Container is wider than show area - expand viewBox width
     viewBoxWidth = showAreaHeight * containerAspectRatio
   } else {
-    // Container is taller than show area - expand viewBox height
     viewBoxHeight = showAreaWidth / containerAspectRatio
   }
 
-  // Center the viewBox on the template
   const viewBoxX = templateCenterX - viewBoxWidth / 2
   const viewBoxY = templateCenterY - viewBoxHeight / 2
 
@@ -111,7 +102,6 @@ export function calculateViewportIndicatorRect(
   mainViewerDimensions: Dimensions,
   zoomLevel: number
 ): ViewportIndicatorRect {
-  // Validate inputs
   if (!mainViewerDimensions ||
       mainViewerDimensions.width <= 0 || mainViewerDimensions.height <= 0 ||
       zoomLevel <= 0 ||
@@ -119,13 +109,9 @@ export function calculateViewportIndicatorRect(
     return { x: 0, y: 0, width: 0, height: 0 }
   }
 
-  // Calculate the dimensions of the main viewer's viewBox
-  // This represents what portion of the SVG coordinate space is visible
   const viewBoxWidth = mainViewerDimensions.width / zoomLevel
   const viewBoxHeight = mainViewerDimensions.height / zoomLevel
 
-  // The viewport indicator uses the same coordinate system as the mini overview
-  // So we can directly use the main viewer's viewBox coordinates
   return {
     x: mainViewBoxX,
     y: mainViewBoxY,
@@ -193,27 +179,22 @@ export function calculateMiniOverviewContainerDimensions(
   minHeight = 24,
   maxHeight = 80
 ): Dimensions {
-  // Validate inputs
   if (!templateViewBox ||
       templateViewBox.width <= 0 || templateViewBox.height <= 0 ||
       baseWidth <= 0) {
     return { width: baseWidth, height: 40 }
   }
 
-  // Calculate template aspect ratio (this determines mini overview shape)
   const templateAspectRatio = templateViewBox.width / templateViewBox.height
 
-  // Calculate ideal dimensions to match template aspect ratio
   let width = baseWidth
   let height = Math.round(baseWidth / templateAspectRatio)
 
-  // If height exceeds maxHeight, scale both dimensions down proportionally
   if (height > maxHeight) {
     const scale = maxHeight / height
     height = maxHeight
     width = Math.round(width * scale)
   }
-  // If height is below minHeight, scale both dimensions up proportionally
   else if (height < minHeight) {
     const scale = minHeight / height
     height = minHeight

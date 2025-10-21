@@ -85,7 +85,6 @@ function extractFontFileUrls(css: string): Array<{ family: string; url: string; 
  * Download font file and convert to base64
  */
 async function fetchAndEncodeFont(fontUrl: string): Promise<string> {
-  // Check cache first
   if (fontCache[fontUrl]) {
     return fontCache[fontUrl]
   }
@@ -102,7 +101,6 @@ async function fetchAndEncodeFont(fontUrl: string): Promise<string> {
     const mimeType = response.headers.get('content-type') || 'font/woff2'
     const dataUri = `data:${mimeType};base64,${base64}`
 
-    // Cache the result
     fontCache[fontUrl] = dataUri
 
     return dataUri
@@ -127,19 +125,15 @@ export async function embedWebFonts(cssContent: string): Promise<string> {
   let embeddedCss = cssContent
 
   try {
-    // Process each web font URL
     for (const webFontUrl of webFontUrls) {
-      // Fetch the web font CSS (contains @font-face rules)
       const webFontCss = await fetchWebFontCss(webFontUrl)
 
       if (!webFontCss) {
         continue
       }
 
-      // Extract font file URLs from the CSS
       const fontFiles = extractFontFileUrls(webFontCss)
 
-      // Download and embed each font file
       const embeddedFontFaces: string[] = []
 
       for (const fontFile of fontFiles) {
