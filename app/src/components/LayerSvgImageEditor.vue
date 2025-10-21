@@ -1,72 +1,39 @@
 <template>
-  <div ref="containerRef" class="w-full" :data-instance-id="instanceId">
-    <!-- SVG Image Label -->
-    <div class="text-sm font-medium text-secondary-700 mb-2">
-      {{ layerId }}
-    </div>
+  <ExpandableCard
+    :label="layerId"
+    :instanceId="instanceId"
+    storageKey="expandedImageSelectors"
+  >
+    <template #preview>
+      <!-- SVG Image Preview -->
+      <div
+        v-if="svgContent"
+        class="w-6 h-6 flex-shrink-0 flex items-center justify-center"
+        :style="{
+          color: props.color
+        }"
+        v-html="styledSvgContent"
+      />
 
-    <!-- Arrow Button -->
-    <div class="relative rounded-lg transition-all duration-300 ease-in-out" :class="{ 'ring-2 ring-primary-500': isExpanded }">
-      <button
-        class="w-full p-3 bg-white border border-secondary-200 rounded-t-lg text-left focus:outline-none hover:border-secondary-300 transition-colors"
-        :class="{ 'border-primary-500': isExpanded, 'rounded-b-lg': !isExpanded }"
-        type="button"
-        @click="_toggleExpanded"
+      <!-- Fallback placeholder for missing SVG -->
+      <div
+        v-else
+        class="w-6 h-6 rounded border flex-shrink-0 flex items-center justify-center text-xs text-secondary-400"
+        :style="{
+          backgroundColor: '#f3f4f6',
+          borderColor: strokeColor,
+          borderWidth: Math.max(1, strokeWidth) + 'px'
+        }"
       >
-        <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-2">
-            <!-- SVG Image Preview -->
-            <div
-              v-if="svgContent"
-              class="w-6 h-6 flex-shrink-0 flex items-center justify-center"
-              :style="{
-                color: props.color
-              }"
-              v-html="styledSvgContent"
-            />
+        SVG
+      </div>
+      <div class="flex flex-col relative z-10">
+        <span class="text-sm text-secondary-900">{{ imageLabel }}</span>
+        <span v-if="svgCategory" class="text-[10px] text-secondary-500">{{ svgCategory }}</span>
+      </div>
+    </template>
 
-            <!-- Fallback placeholder for missing SVG -->
-            <div
-              v-else
-              class="w-6 h-6 rounded border flex-shrink-0 flex items-center justify-center text-xs text-secondary-400"
-              :style="{
-                backgroundColor: '#f3f4f6',
-                borderColor: strokeColor,
-                borderWidth: Math.max(1, strokeWidth) + 'px'
-              }"
-            >
-              SVG
-            </div>
-            <div class="flex flex-col relative z-10">
-              <span class="text-sm text-secondary-900">{{ imageLabel }}</span>
-              <span v-if="svgCategory" class="text-[10px] text-secondary-500">{{ svgCategory }}</span>
-            </div>
-          </div>
-          <svg
-            class="w-5 h-5 text-secondary-400 transition-transform duration-200"
-            :class="{ 'rotate-180': isExpanded }"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-          >
-            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-          </svg>
-        </div>
-      </button>
-
-      <!-- Expandable SVG Image Styling Section -->
-      <Transition
-        name="slide-down"
-        enterActiveClass="transition-all duration-300 ease-out"
-        leaveActiveClass="transition-all duration-300 ease-in"
-        enterFromClass="max-h-0 opacity-0"
-        enterToClass="max-h-[1000px] opacity-100"
-        leaveFromClass="max-h-[1000px] opacity-100"
-        leaveToClass="max-h-0 opacity-0"
-      >
-        <div
-          v-if="isExpanded"
-          class="bg-secondary-25 border-t border-secondary-200 overflow-hidden"
-        >
+    <template #content>
         <!-- Transform Controls Section -->
         <div class="p-4">
           <!-- SVG Centering Warning -->
@@ -187,11 +154,8 @@
         @update:selectedSvgContent="$emit('update:svgContent', $event)"
         @clear="clearSvg"
       />
-        </div>
-      </Transition>
-    </div>
-
-  </div>
+    </template>
+  </ExpandableCard>
 </template>
 
 <script setup lang="ts">
@@ -201,6 +165,7 @@ import SvgCenteringWarning from './SvgCenteringWarning.vue'
 import ColorPickerInput from './ColorPickerInput.vue'
 import StrokeControls from './StrokeControls.vue'
 import SectionHeader from './SectionHeader.vue'
+import ExpandableCard from './ExpandableCard.vue'
 import {
   injectSvgColors,
   applySvgStrokeProperties,
@@ -210,7 +175,6 @@ import {
 import { COLOR_NONE } from '../utils/ui-constants'
 import type { SvgViewBoxFitAnalysis, SvgCentroid } from '../utils/svg-bounds'
 import { useSvgStore } from '../stores/svgStore'
-import { useExpandable } from '../composables/useExpandable'
 
 interface Props {
   imageLabel?: string
@@ -254,12 +218,6 @@ const emit = defineEmits<Emits>()
 
 // SVG Store for category lookup
 const svgStore = useSvgStore()
-
-// Expandable state management
-const { isExpanded, toggle: _toggleExpanded, containerRef } = useExpandable(
-  () => props.instanceId,
-  'expandedImageSelectors'
-)
 
 // Extract layer ID from instanceId (removes "svgImage-" prefix)
 const layerId = computed(() => {
