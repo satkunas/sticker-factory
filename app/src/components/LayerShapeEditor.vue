@@ -183,10 +183,11 @@
 </template>
 
 <script setup lang="ts">
-import { inject, computed, ref, onMounted, onUnmounted } from 'vue'
+import { computed } from 'vue'
 import { COLOR_NONE } from '../utils/ui-constants'
 import ColorPickerInput from './ColorPickerInput.vue'
 import StrokeControls from './StrokeControls.vue'
+import { useExpandable } from '../composables/useExpandable'
 
 interface Props {
   shapeLabel?: string
@@ -216,14 +217,11 @@ const props = defineProps<Props>()
 
 defineEmits<Emits>()
 
-// Unified dropdown management
-const dropdownManager = inject('dropdownManager')
-
-// Legacy fallback for backward compatibility
-const expandedObjectInstances = inject('expandedObjectSelectors', ref(new Set<string>()))
-
-// Component container ref for scrolling
-const containerRef = ref<HTMLElement>()
+// Expandable state management
+const { isExpanded, toggle: _toggleExpanded, containerRef } = useExpandable(
+  () => props.instanceId,
+  'expandedObjectSelectors'
+)
 
 // Check if this is a path layer (used for textPath references, not editable)
 const isPathLayer = computed(() => {
@@ -234,59 +232,6 @@ const isPathLayer = computed(() => {
 const layerId = computed(() => {
   if (!props.instanceId) return 'Shape'
   return props.instanceId.replace(/^shape-/, '')
-})
-
-// Local expansion state
-const isExpanded = computed(() => {
-  const id = props.instanceId
-  if (!id) return false
-
-  if (dropdownManager) {
-    return dropdownManager.isExpanded(id)
-  }
-  // Legacy fallback
-  return expandedObjectInstances.value.has(id)
-})
-
-const _toggleExpanded = () => {
-  const id = props.instanceId
-  if (!id) return
-
-  if (dropdownManager) {
-    dropdownManager.toggle(id)
-  } else {
-    // Legacy fallback
-    if (isExpanded.value) {
-      expandedObjectInstances.value.delete(id)
-    } else {
-      // Close all other instances first
-      expandedObjectInstances.value.clear()
-      // Open this instance
-      expandedObjectInstances.value.add(id)
-    }
-  }
-}
-
-// Escape key handler
-const handleKeydown = (event: KeyboardEvent) => {
-  const id = props.instanceId
-  if (event.key === 'Escape' && isExpanded.value && id) {
-    if (dropdownManager) {
-      dropdownManager.close(id)
-    } else {
-      // Legacy fallback
-      expandedObjectInstances.value.delete(id)
-    }
-  }
-}
-
-// Mount event listeners
-onMounted(() => {
-  document.addEventListener('keydown', handleKeydown)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeydown)
 })
 
 

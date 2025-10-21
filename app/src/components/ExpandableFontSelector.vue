@@ -543,7 +543,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, inject, nextTick } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { FONT_CATEGORIES, loadFont, type FontConfig } from '../config/fonts'
 import FontTile from './FontTile.vue'
 import CategoryDropdown from './CategoryDropdown.vue'
@@ -552,6 +552,7 @@ import { useFontSelector } from '../composables/useFontSelector'
 import { getFontCategoryColor } from '../utils/font-utils'
 import { PRESET_COLORS, COMMON_FONT_SIZES, STROKE_LINEJOIN_OPTIONS, DOMINANT_BASELINE_OPTIONS, COLOR_NONE } from '../utils/ui-constants'
 import { logger } from '../utils/logger'
+import { useExpandable } from '../composables/useExpandable'
 
 interface Props {
   selectedFont?: FontConfig | null
@@ -628,11 +629,11 @@ const handleDyInput = (value: string) => {
 // Color picker reference (for stroke color only, text color now uses ColorPickerInput component)
 const strokeColorInputRef = ref<HTMLInputElement>()
 
-// Unified dropdown management
-const dropdownManager = inject('dropdownManager')
-
-// Legacy fallback for backward compatibility
-const expandedInstances = inject('expandedFontSelectors', ref(new Set<string>()))
+// Expandable state management
+const { isExpanded, containerRef } = useExpandable(
+  () => props.instanceId,
+  'expandedFontSelectors'
+)
 
 // Local state
 const loadedFonts = ref(new Set<string>())
@@ -658,21 +659,6 @@ const fontCategoryOptions = computed(() => {
     label,
     colorClass: getFontCategoryColor(value)
   }))
-})
-
-// Component container ref for scrolling
-const containerRef = ref<HTMLElement>()
-
-// Computed expanded state
-const isExpanded = computed(() => {
-  const id = props.instanceId
-  if (!id) return false
-
-  if (dropdownManager) {
-    return dropdownManager.isExpanded(id)
-  }
-  // Legacy fallback
-  return expandedInstances.value.has(id)
 })
 
 
@@ -786,31 +772,4 @@ watch(() => props.selectedFont, async (newFont) => {
     }
   }
 }, { immediate: true })
-
-// Handle escape key to close
-const handleKeydown = (event: KeyboardEvent) => {
-  const id = props.instanceId
-  if (event.key === 'Escape' && isExpanded.value && id) {
-    if (dropdownManager) {
-      dropdownManager.close(id)
-    } else {
-      // Legacy fallback
-      expandedInstances.value.delete(id)
-    }
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('keydown', handleKeydown)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeydown)
-  if (dropdownManager) {
-    dropdownManager.close(props.instanceId)
-  } else {
-    // Legacy fallback
-    expandedInstances.value.delete(props.instanceId)
-  }
-})
 </script>

@@ -207,7 +207,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, computed, ref, onMounted, onUnmounted } from 'vue'
+import { computed } from 'vue'
 import ExpandableSvgSelector from './ExpandableSvgSelector.vue'
 import SvgCenteringWarning from './SvgCenteringWarning.vue'
 import ColorPickerInput from './ColorPickerInput.vue'
@@ -221,6 +221,7 @@ import {
 import { COLOR_NONE } from '../utils/ui-constants'
 import type { SvgViewBoxFitAnalysis, SvgCentroid } from '../utils/svg-bounds'
 import { useSvgStore } from '../stores/svgStore'
+import { useExpandable } from '../composables/useExpandable'
 
 interface Props {
   imageLabel?: string
@@ -265,14 +266,11 @@ const emit = defineEmits<Emits>()
 // SVG Store for category lookup
 const svgStore = useSvgStore()
 
-// Unified dropdown management
-const dropdownManager = inject('dropdownManager')
-
-// Legacy fallback for backward compatibility
-const expandedImageInstances = inject('expandedImageSelectors', ref(new Set<string>()))
-
-// Component container ref for scrolling
-const containerRef = ref<HTMLElement>()
+// Expandable state management
+const { isExpanded, toggle: _toggleExpanded, containerRef } = useExpandable(
+  () => props.instanceId,
+  'expandedImageSelectors'
+)
 
 // Extract layer ID from instanceId (removes "svgImage-" prefix)
 const layerId = computed(() => {
@@ -289,38 +287,6 @@ const svgCategory = computed(() => {
   return svg.category.charAt(0).toUpperCase() + svg.category.slice(1).replace(/([A-Z])/g, ' $1')
 })
 
-// Local expansion state
-const isExpanded = computed(() => {
-  const id = props.instanceId
-  if (!id) return false
-
-  if (dropdownManager) {
-    return dropdownManager.isExpanded(id)
-  }
-  // Legacy fallback
-  return expandedImageInstances.value.has(id)
-})
-
-const _toggleExpanded = () => {
-  const id = props.instanceId
-  if (!id) return
-
-  if (dropdownManager) {
-    dropdownManager.toggle(id)
-  } else {
-    // Legacy fallback
-    if (isExpanded.value) {
-      expandedImageInstances.value.delete(id)
-    } else {
-      // Close all other instances first
-      expandedImageInstances.value.clear()
-      // Open this instance
-      expandedImageInstances.value.add(id)
-    }
-  }
-}
-
-
 // Clear SVG selection and reset all properties to template defaults
 const clearSvg = () => {
   // Emit all reset events to restore template defaults (including svgContent and svgId)
@@ -333,28 +299,6 @@ const clearSvg = () => {
   emit('reset:rotation')
   emit('reset:scale')
 }
-
-// Escape key handler
-const handleKeydown = (event: KeyboardEvent) => {
-  const id = props.instanceId
-  if (event.key === 'Escape' && isExpanded.value && id) {
-    if (dropdownManager) {
-      dropdownManager.close(id)
-    } else {
-      // Legacy fallback
-      expandedImageInstances.value.delete(id)
-    }
-  }
-}
-
-// Mount event listeners
-onMounted(() => {
-  document.addEventListener('keydown', handleKeydown)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeydown)
-})
 
 // Apply enhanced styling to SVG content for preview using utilities
 const styledSvgContent = computed(() => {

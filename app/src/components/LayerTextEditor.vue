@@ -108,10 +108,11 @@
 </template>
 
 <script setup lang="ts">
-import { inject, computed, ref } from 'vue'
+import { computed } from 'vue'
 import ExpandableFontSelector from './ExpandableFontSelector.vue'
 import { getFontFamily, FONT_CATEGORIES, type FontConfig } from '../config/fonts' // Used in template
 import { MIN_TEXTAREA_ROWS } from '../utils/ui-constants'
+import { useExpandable } from '../composables/useExpandable'
 
 interface Props {
   modelValue: string
@@ -172,26 +173,11 @@ const props = defineProps<Props>()
 
 defineEmits<Emits>()
 
-// Unified dropdown management
-const dropdownManager = inject('dropdownManager')
-
-// Legacy fallback for backward compatibility
-const expandedInstances = inject('expandedFontSelectors', ref(new Set<string>()))
-
-// Component container ref for scrolling
-const containerRef = ref<HTMLElement>()
-
-// Computed expanded state
-const isExpanded = computed(() => {
-  const id = props.instanceId
-  if (!id) return false
-
-  if (dropdownManager) {
-    return dropdownManager.isExpanded(id)
-  }
-  // Legacy fallback
-  return expandedInstances.value.has(id)
-})
+// Expandable state management
+const { isExpanded, toggle: _toggleExpanded, containerRef } = useExpandable(
+  () => props.instanceId,
+  'expandedFontSelectors'
+)
 
 // Computed textarea rows - always shrink to fit content (min 1, no max)
 const textareaRows = computed(() => {
@@ -203,26 +189,6 @@ const textareaRows = computed(() => {
 const handleFocus = () => {
   if (!isExpanded.value) {
     _toggleExpanded()
-  }
-}
-
-// Toggle expansion
-const _toggleExpanded = () => {
-  const id = props.instanceId
-  if (!id) return
-
-  if (dropdownManager) {
-    dropdownManager.toggle(id)
-  } else {
-    // Legacy fallback
-    if (isExpanded.value) {
-      expandedInstances.value.delete(id)
-    } else {
-      // Close all other instances
-      expandedInstances.value.clear()
-      // Open this instance
-      expandedInstances.value.add(id)
-    }
   }
 }
 </script>
