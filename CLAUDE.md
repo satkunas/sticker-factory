@@ -102,6 +102,55 @@ Components: 60%+ coverage (integration tests)
 3. Test error handling and validation
 4. Add tests to same commit as feature code
 
+### NEVER Skip Git Hooks (ABSOLUTE RULE)
+**Pre-commit hooks MUST run on every commit. Bypassing hooks is FORBIDDEN.**
+
+```bash
+# ❌ ABSOLUTELY FORBIDDEN - NEVER bypass hooks
+git commit --no-verify -m "message"
+git commit -n -m "message"  # Same as --no-verify
+git push --no-verify
+
+# ✅ CORRECT - Let hooks run
+git add . && git commit -m "message"
+# Hooks run automatically:
+# 1. ESLint auto-fixes code
+# 2. Tests run to verify nothing broke
+# 3. Commit succeeds only if hooks pass
+```
+
+**Why this matters:**
+- Pre-commit hooks catch bugs BEFORE they enter git history
+- Hooks enforce code quality (linting, testing) automatically
+- Bypassing hooks = shipping broken code = production bugs
+- If hooks fail, it means your code has issues that MUST be fixed
+
+**If hooks fail:**
+1. ✅ **Read the error message** - hooks tell you exactly what's wrong
+2. ✅ **Fix the issue** - update code to pass linting/tests
+3. ✅ **Commit again** - hooks will pass this time
+4. ❌ **NEVER use --no-verify** - this hides problems, doesn't fix them
+
+**Common hook failures and fixes:**
+```bash
+# ESLint errors → Fix linting issues
+npm run lint
+
+# Test failures → Fix broken tests
+npm run test:run
+
+# Build errors → Fix TypeScript/build issues
+npm run build
+```
+
+**Emergency exceptions (RARE):**
+- Only use --no-verify if explicitly requested by the user
+- Document WHY hooks were skipped in commit message
+- Fix issues in immediate follow-up commit
+- This should happen < 1% of the time
+
+**Remember:** Hooks exist to help you, not slow you down. They catch mistakes before they become problems.
+
 ### Property Rendering Tests (CRITICAL)
 **ALL form properties MUST work in ALL 4 rendering contexts:**
 
