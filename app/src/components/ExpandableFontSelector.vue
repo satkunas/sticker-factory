@@ -33,16 +33,7 @@
               <div class="text-sm font-medium text-secondary-700">
                 Size & Weight
               </div>
-              <button
-                type="button"
-                class="p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
-                title="Reset to template default"
-                @click="$emit('reset:fontSize'); $emit('reset:fontWeight')"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              </button>
+              <ResetButton @click="$emit('reset:fontSize'); $emit('reset:fontWeight')" />
             </div>
               <!-- Size Controls -->
               <div class="bg-white rounded-lg p-2 flex items-center space-x-2 mb-2">
@@ -109,16 +100,7 @@
               <h5 class="text-sm font-medium text-secondary-700">
                 Multi-line Spacing
               </h5>
-              <button
-                type="button"
-                class="p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
-                title="Reset to template default"
-                @click="$emit('reset:lineHeight')"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              </button>
+              <ResetButton @click="$emit('reset:lineHeight')" />
             </div>
             <div class="grid grid-cols-1">
               <div class="bg-white rounded-lg p-3 min-w-0">
@@ -159,16 +141,7 @@
               <h5 class="text-sm font-medium text-secondary-700">
                 Text Rotation
               </h5>
-              <button
-                type="button"
-                class="p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
-                title="Reset to template default"
-                @click="$emit('reset:rotation')"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              </button>
+              <ResetButton @click="$emit('reset:rotation')" />
             </div>
             <div class="grid grid-cols-1">
               <div class="bg-white rounded-lg p-3 min-w-0">
@@ -203,159 +176,23 @@
             </div>
           </div>
 
-          <!-- Stroke Controls -->
-          <div class="bg-secondary-500/5 rounded-lg p-3 md:col-span-2">
-            <div class="flex items-center justify-between mb-3">
-              <h5 class="text-sm font-medium text-secondary-700">
-                Text Stroke
-              </h5>
-              <button
-                type="button"
-                class="p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
-                title="Reset to template default"
-                @click="$emit('reset:textStrokeColor'); $emit('reset:textStrokeWidth'); $emit('reset:textStrokeLinejoin')"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              </button>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <!-- Stroke Color -->
-              <div class="bg-white rounded-lg p-3 min-w-0">
-                <div class="text-xs font-medium text-secondary-600 mb-2">
-                  Color
-                </div>
-                <div class="flex items-center space-x-1 mb-2">
-                  <!-- Hidden color input -->
-                  <input
-                    ref="strokeColorInputRef"
-                    :value="textStrokeColor"
-                    type="color"
-                    class="sr-only"
-                    @input="$emit('update:textStrokeColor', $event.target.value)"
-                  >
-                  <!-- Color picker button -->
-                  <button
-                    class="w-7 h-7 rounded border border-secondary-300 cursor-pointer hover:border-secondary-400 transition-colors flex-shrink-0 flex items-center justify-center"
-                    :style="textStrokeColor === COLOR_NONE ? { backgroundColor: 'white' } : { backgroundColor: textStrokeColor }"
-                    :title="`Click to change stroke color (${textStrokeColor})`"
-                    type="button"
-                    @click="$refs.strokeColorInputRef?.click()"
-                  >
-                    <svg v-if="textStrokeColor === COLOR_NONE" class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                    </svg>
-                  </button>
-                  <input
-                    :value="textStrokeColor"
-                    type="text"
-                    class="flex-1 px-2 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
-                    placeholder="#000000"
-                    @input="$emit('update:textStrokeColor', $event.target.value)"
-                  >
-                </div>
-                <div class="grid grid-cols-6 md:grid-cols-12 gap-1">
-                  <!-- None button with red cross icon -->
-                  <button
-                    class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all flex items-center justify-center bg-white"
-                    :class="textStrokeColor === COLOR_NONE ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
-                    :title="'None (no text stroke)'"
-                    @click="$emit('update:textStrokeColor', COLOR_NONE)"
-                  >
-                    <svg class="w-2 h-2 md:w-3 md:h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                    </svg>
-                  </button>
-                  <button
-                    v-for="color in PRESET_COLORS.slice(0, 11)"
-                    :key="color"
-                    class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
-                    :class="textStrokeColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
-                    :style="{ backgroundColor: color }"
-                    :title="color"
-                    @click="$emit('update:textStrokeColor', color)"
-                  />
-                </div>
-                <div class="grid grid-cols-6 md:grid-cols-12 gap-1 mt-1">
-                  <button
-                    v-for="color in PRESET_COLORS.slice(11, 23)"
-                    :key="color"
-                    class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
-                    :class="textStrokeColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
-                    :style="{ backgroundColor: color }"
-                    :title="color"
-                    @click="$emit('update:textStrokeColor', color)"
-                  />
-                </div>
-                <div class="grid grid-cols-6 md:grid-cols-12 gap-1 mt-1">
-                  <button
-                    v-for="color in PRESET_COLORS.slice(23, 35)"
-                    :key="color"
-                    class="w-4 h-4 md:w-5 md:h-5 rounded border transition-all"
-                    :class="textStrokeColor === color ? 'border-secondary-600 scale-110' : 'border-secondary-200 hover:border-secondary-400'"
-                    :style="{ backgroundColor: color }"
-                    :title="color"
-                    @click="$emit('update:textStrokeColor', color)"
-                  />
-                </div>
-              </div>
+          <ColorPickerInput
+            :value="textStrokeColor"
+            label="Stroke Color"
+            placeholder="#000000"
+            noneLabel="None (no text stroke)"
+            @update:value="$emit('update:textStrokeColor', $event)"
+            @reset="$emit('reset:textStrokeColor')"
+          />
 
-              <!-- Stroke Width -->
-              <div class="bg-white rounded-lg p-3 min-w-0" :class="{ 'opacity-50': textStrokeColor === COLOR_NONE }">
-                <div class="text-xs font-medium text-secondary-600 mb-2">
-                  Width
-                </div>
-                <div class="flex items-center space-x-2">
-                  <input
-                    :value="textStrokeWidth"
-                    type="range"
-                    min="0"
-                    max="10"
-                    step="0.5"
-                    :disabled="textStrokeColor === COLOR_NONE"
-                    :class="{ 'cursor-not-allowed': textStrokeColor === COLOR_NONE }"
-                    class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
-                    @input="$emit('update:textStrokeWidth', parseFloat($event.target.value) || undefined)"
-                  >
-                  <input
-                    :value="textStrokeWidth"
-                    type="number"
-                    min="0"
-                    max="20"
-                    step="0.5"
-                    :disabled="textStrokeColor === COLOR_NONE"
-                    :class="{ 'cursor-not-allowed': textStrokeColor === COLOR_NONE }"
-                    class="w-14 px-1 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
-                    @input="$emit('update:textStrokeWidth', parseFloat($event.target.value) || undefined)"
-                  >
-                </div>
-              </div>
-
-              <!-- Stroke Linejoin -->
-              <div class="bg-white rounded-lg p-3 min-w-0" :class="{ 'opacity-50': textStrokeColor === COLOR_NONE }">
-                <div class="text-xs font-medium text-secondary-600 mb-2">
-                  Linejoin
-                </div>
-                <div class="grid grid-cols-2 gap-1">
-                  <button
-                    v-for="linejoin in STROKE_LINEJOIN_OPTIONS"
-                    :key="linejoin.value"
-                    :disabled="textStrokeColor === COLOR_NONE"
-                    class="px-2 py-1 text-xs rounded border transition-all text-center"
-                    :class="[
-                      textStrokeLinejoin === linejoin.value ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white border-secondary-200 text-secondary-600 hover:border-secondary-300',
-                      { 'cursor-not-allowed': textStrokeColor === COLOR_NONE }
-                    ]"
-                    :title="linejoin.description"
-                    @click="$emit('update:textStrokeLinejoin', linejoin.value)"
-                  >
-                    {{ linejoin.label }}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <StrokeControls
+            :stroke-width="textStrokeWidth"
+            :stroke-linejoin="textStrokeLinejoin"
+            :disabled="textStrokeColor === COLOR_NONE"
+            @update:strokeWidth="$emit('update:textStrokeWidth', $event)"
+            @update:strokeLinejoin="$emit('update:textStrokeLinejoin', $event)"
+            @reset="$emit('reset:textStrokeWidth'); $emit('reset:textStrokeLinejoin')"
+          />
 
           <!-- TextPath Controls (Curved Text) - Only shown when textPath exists -->
           <div v-if="textPath" class="bg-secondary-500/5 rounded-lg p-3 md:col-span-2">
@@ -363,16 +200,7 @@
               <h5 class="text-sm font-medium text-secondary-700">
                 Curved Text Position
               </h5>
-              <button
-                type="button"
-                class="p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
-                title="Reset to template default"
-                @click="$emit('reset:startOffset'); $emit('reset:dy'); $emit('reset:dominantBaseline')"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              </button>
+              <ResetButton @click="$emit('reset:startOffset'); $emit('reset:dy'); $emit('reset:dominantBaseline')" />
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <!-- Start Offset -->
@@ -460,16 +288,7 @@
           <h4 class="section-header">
             Font Family
           </h4>
-          <button
-            type="button"
-            class="p-1 text-secondary-400 hover:text-secondary-600 transition-colors"
-            title="Reset to template default"
-            @click="$emit('reset:selectedFont')"
-          >
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          </button>
+          <ResetButton @click="$emit('reset:selectedFont')" />
         </div>
 
         <!-- Search -->
@@ -548,9 +367,11 @@ import { FONT_CATEGORIES, loadFont, type FontConfig } from '../config/fonts'
 import FontTile from './FontTile.vue'
 import CategoryDropdown from './CategoryDropdown.vue'
 import ColorPickerInput from './ColorPickerInput.vue'
+import StrokeControls from './StrokeControls.vue'
+import ResetButton from './ResetButton.vue'
 import { useFontSelector } from '../composables/useFontSelector'
 import { getFontCategoryColor } from '../utils/font-utils'
-import { PRESET_COLORS, COMMON_FONT_SIZES, STROKE_LINEJOIN_OPTIONS, DOMINANT_BASELINE_OPTIONS, COLOR_NONE } from '../utils/ui-constants'
+import { COMMON_FONT_SIZES, DOMINANT_BASELINE_OPTIONS, COLOR_NONE } from '../utils/ui-constants'
 import { logger } from '../utils/logger'
 import { useExpandable } from '../composables/useExpandable'
 
@@ -625,9 +446,6 @@ const handleDyInput = (value: string) => {
     emit('update:dy', parsed)
   }
 }
-
-// Color picker reference (for stroke color only, text color now uses ColorPickerInput component)
-const strokeColorInputRef = ref<HTMLInputElement>()
 
 // Expandable state management
 const { isExpanded, containerRef } = useExpandable(
