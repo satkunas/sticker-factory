@@ -1,11 +1,8 @@
 <template>
   <div class="bg-secondary-500/5 rounded-lg p-3">
-    <div class="flex items-center justify-between mb-3">
-      <div class="text-sm font-medium text-secondary-700">
-        {{ label }}
-      </div>
-      <ResetButton @click="$emit('reset')" />
-    </div>
+    <SectionHeader headingTag="div" @reset="$emit('reset')">
+      {{ label }}
+    </SectionHeader>
 
     <div class="bg-white rounded-lg p-2 flex items-center space-x-1 mb-2">
       <!-- Hidden native color input -->
@@ -100,7 +97,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { PRESET_COLORS, COLOR_NONE } from '../utils/ui-constants'
-import ResetButton from './ResetButton.vue'
+import SectionHeader from './SectionHeader.vue'
 
 interface Props {
   value: string

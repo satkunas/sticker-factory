@@ -1,11 +1,8 @@
 <template>
   <div class="bg-secondary-500/5 rounded-lg p-3 md:col-span-2">
-    <div class="flex items-center justify-between mb-3">
-      <h5 class="text-sm font-medium text-secondary-700">
-        Stroke Options
-      </h5>
-      <ResetButton @click="$emit('reset')" />
-    </div>
+    <SectionHeader @reset="$emit('reset')">
+      Stroke Options
+    </SectionHeader>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
       <!-- Stroke Width -->
@@ -68,7 +65,7 @@
 
 <script setup lang="ts">
 import { STROKE_LINEJOIN_OPTIONS } from '../utils/ui-constants'
-import ResetButton from './ResetButton.vue'
+import SectionHeader from './SectionHeader.vue'
 
 interface Props {
   strokeWidth: number

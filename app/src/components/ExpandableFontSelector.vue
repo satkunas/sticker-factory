@@ -29,12 +29,9 @@
 
           <!-- Font Size & Weight Section -->
           <div class="bg-secondary-500/5 rounded-lg p-3">
-            <div class="flex items-center justify-between mb-3">
-              <div class="text-sm font-medium text-secondary-700">
-                Size & Weight
-              </div>
-              <ResetButton @click="$emit('reset:fontSize'); $emit('reset:fontWeight')" />
-            </div>
+            <SectionHeader headingTag="div" @reset="$emit('reset:fontSize'); $emit('reset:fontWeight')">
+              Size & Weight
+            </SectionHeader>
               <!-- Size Controls -->
               <div class="bg-white rounded-lg p-2 flex items-center space-x-2 mb-2">
                 <input
@@ -96,12 +93,9 @@
 
           <!-- Line Height Control (only shown for multiline text) -->
           <div v-if="multiline" class="bg-secondary-500/5 rounded-lg p-3">
-            <div class="flex items-center justify-between mb-3">
-              <h5 class="text-sm font-medium text-secondary-700">
-                Multi-line Spacing
-              </h5>
-              <ResetButton @click="$emit('reset:lineHeight')" />
-            </div>
+            <SectionHeader @reset="$emit('reset:lineHeight')">
+              Multi-line Spacing
+            </SectionHeader>
             <div class="grid grid-cols-1">
               <div class="bg-white rounded-lg p-3 min-w-0">
                 <div class="text-xs font-medium text-secondary-600 mb-2">
@@ -137,12 +131,9 @@
 
           <!-- Rotation Control (hidden for textPath as rotation is incompatible with curved text) -->
           <div v-if="!textPath" class="bg-secondary-500/5 rounded-lg p-3">
-            <div class="flex items-center justify-between mb-3">
-              <h5 class="text-sm font-medium text-secondary-700">
-                Text Rotation
-              </h5>
-              <ResetButton @click="$emit('reset:rotation')" />
-            </div>
+            <SectionHeader @reset="$emit('reset:rotation')">
+              Text Rotation
+            </SectionHeader>
             <div class="grid grid-cols-1">
               <div class="bg-white rounded-lg p-3 min-w-0">
                 <div class="text-xs font-medium text-secondary-600 mb-2">
@@ -196,12 +187,9 @@
 
           <!-- TextPath Controls (Curved Text) - Only shown when textPath exists -->
           <div v-if="textPath" class="bg-secondary-500/5 rounded-lg p-3 md:col-span-2">
-            <div class="flex items-center justify-between mb-3">
-              <h5 class="text-sm font-medium text-secondary-700">
-                Curved Text Position
-              </h5>
-              <ResetButton @click="$emit('reset:startOffset'); $emit('reset:dy'); $emit('reset:dominantBaseline')" />
-            </div>
+            <SectionHeader @reset="$emit('reset:startOffset'); $emit('reset:dy'); $emit('reset:dominantBaseline')">
+              Curved Text Position
+            </SectionHeader>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <!-- Start Offset -->
               <div class="bg-white rounded-lg p-3 min-w-0">
@@ -284,12 +272,9 @@
 
       <!-- Font Selection Section -->
       <div class="p-4 mx-4 bg-secondary-500/5 rounded-lg">
-        <div class="flex items-center justify-between mb-3">
-          <h4 class="section-header">
-            Font Family
-          </h4>
-          <ResetButton @click="$emit('reset:selectedFont')" />
-        </div>
+        <SectionHeader headingTag="h4" headingClass="section-header" @reset="$emit('reset:selectedFont')">
+          Font Family
+        </SectionHeader>
 
         <!-- Search -->
         <div class="mb-2 bg-white rounded-lg p-2">
@@ -368,7 +353,7 @@ import FontTile from './FontTile.vue'
 import CategoryDropdown from './CategoryDropdown.vue'
 import ColorPickerInput from './ColorPickerInput.vue'
 import StrokeControls from './StrokeControls.vue'
-import ResetButton from './ResetButton.vue'
+import SectionHeader from './SectionHeader.vue'
 import { useFontSelector } from '../composables/useFontSelector'
 import { getFontCategoryColor } from '../utils/font-utils'
 import { COMMON_FONT_SIZES, DOMINANT_BASELINE_OPTIONS, COLOR_NONE } from '../utils/ui-constants'

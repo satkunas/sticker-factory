@@ -3,12 +3,9 @@
   <div ref="containerRef" class="w-full overflow-x-hidden">
       <!-- SVG Selection Section -->
       <div class="p-4 mx-4 bg-secondary-500/5 rounded-lg mb-3 max-w-full">
-        <div class="flex items-center justify-between mb-3">
-          <h4 class="section-header">
-            SVG Library
-          </h4>
-          <ResetButton @click="clearSelection" />
-        </div>
+        <SectionHeader headingTag="h4" headingClass="section-header" @reset="clearSelection">
+          SVG Library
+        </SectionHeader>
 
         <!-- Search and Category -->
         <div class="bg-white rounded-lg p-2">
@@ -143,7 +140,7 @@ import type { SvgLibraryItem } from '../types/template-types'
 import { useSvgStore } from '../stores/svgStore'
 import { logger } from '../utils/logger'
 import CategoryDropdown from './CategoryDropdown.vue'
-import ResetButton from './ResetButton.vue'
+import SectionHeader from './SectionHeader.vue'
 
 interface Props {
   selectedSvgId?: string

@@ -79,12 +79,9 @@
             @dismiss="() => {}"
           />
           <div class="bg-secondary-500/5 rounded-lg p-3">
-          <div class="flex items-center justify-between mb-3">
-            <h5 class="text-sm font-medium text-secondary-700">
-              Transform Controls
-            </h5>
-            <ResetButton @click="$emit('reset:scale'); $emit('reset:rotation')" />
-          </div>
+          <SectionHeader @reset="$emit('reset:scale'); $emit('reset:rotation')">
+            Transform Controls
+          </SectionHeader>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <!-- Scale Control -->
           <div class="bg-white rounded-lg p-3 min-w-0">
@@ -203,7 +200,7 @@ import ExpandableSvgSelector from './ExpandableSvgSelector.vue'
 import SvgCenteringWarning from './SvgCenteringWarning.vue'
 import ColorPickerInput from './ColorPickerInput.vue'
 import StrokeControls from './StrokeControls.vue'
-import ResetButton from './ResetButton.vue'
+import SectionHeader from './SectionHeader.vue'
 import {
   injectSvgColors,
   applySvgStrokeProperties,
