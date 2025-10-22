@@ -368,13 +368,20 @@ export function calculateSvgCentroid(svgContent: string): SvgCentroid {
     }
 
     case 'complex-path': {
-      // Use general-purpose path centroid calculation for all <path> elements
-      // This handles curves, stars, triangles, arrows, and all other path types
-      const pathResult = calculatePathCentroid(svgContent)
-      if (pathResult) {
-        centroidCenter = pathResult.centroid
+      // Try multi-path centroid first (handles multi-element SVGs with variance-based strategy selection)
+      const multiPathResult = calculateMultiPathCentroid(svgContent)
+      if (multiPathResult) {
+        centroidCenter = multiPathResult.centroid
         useCentroid = true
-        confidence = pathResult.confidence
+        confidence = multiPathResult.confidence
+      } else {
+        // Fallback: Original single-path algorithm for backward compatibility
+        const pathResult = calculatePathCentroid(svgContent)
+        if (pathResult) {
+          centroidCenter = pathResult.centroid
+          useCentroid = true
+          confidence = pathResult.confidence
+        }
       }
       break
     }
@@ -492,6 +499,200 @@ function calculatePathCentroid(svgContent: string): { centroid: Point; confidenc
     centroid,
     confidence: 0.8 // High confidence since we now properly parse curves
   }
+}
+
+// =============================================================================
+// MULTI-PATH CENTROID CALCULATION (MBR WITH VARIANCE-BASED STRATEGY SELECTION)
+// =============================================================================
+
+interface PathAnalysis {
+  bbox: { x: number; y: number; width: number; height: number }
+  center: Point
+  area: number
+  pointCount: number
+}
+
+/**
+ * Extract all path data strings from SVG content
+ * Returns array of path d= attribute values
+ */
+function extractAllPathsData(svgContent: string): string[] {
+  const paths: string[] = []
+  const pathRegex = /<path[^>]*d\s*=\s*["']([^"']+)["']/gi  // Global flag for all matches
+  let match
+
+  while ((match = pathRegex.exec(svgContent)) !== null) {
+    paths.push(match[1])
+  }
+
+  return paths
+}
+
+/**
+ * Calculate bounding box for a path by sampling all curves
+ * Reuses existing extractPathPoints() which handles:
+ * - Floating point numbers (.5, .224, -.433)
+ * - Bezier curves (C/c with 10 samples, Q/q with 8 samples)
+ * - Arcs (A/a with 8 samples)
+ * - All SVG commands (M, L, H, V, C, S, Q, T, A, Z and relative variants)
+ */
+function calculatePathBoundingBox(pathData: string): PathAnalysis {
+  const points = extractPathPoints(pathData)  // Reuse existing sophisticated parser
+
+  if (points.length === 0) {
+    return {
+      bbox: { x: 0, y: 0, width: 0, height: 0 },
+      center: { x: 0, y: 0 },
+      area: 0,
+      pointCount: 0
+    }
+  }
+
+  // Calculate min/max from sampled points (curves already converted)
+  let xMin = Infinity
+  let xMax = -Infinity
+  let yMin = Infinity
+  let yMax = -Infinity
+
+  for (const p of points) {
+    xMin = Math.min(xMin, p.x)
+    xMax = Math.max(xMax, p.x)
+    yMin = Math.min(yMin, p.y)
+    yMax = Math.max(yMax, p.y)
+  }
+
+  const width = xMax - xMin
+  const height = yMax - yMin
+
+  return {
+    bbox: { x: xMin, y: yMin, width, height },
+    center: { x: xMin + width / 2, y: yMin + height / 2 },
+    area: width * height,
+    pointCount: points.length
+  }
+}
+
+/**
+ * Calculate centroid using three different weighting strategies
+ */
+function calculateAllStrategies(paths: PathAnalysis[]): {
+  equal: Point
+  area: Point
+  complexity: Point
+} {
+  // Strategy 1: Equal weight - each path gets 1 vote
+  const equal = {
+    x: paths.reduce((sum, p) => sum + p.center.x, 0) / paths.length,
+    y: paths.reduce((sum, p) => sum + p.center.y, 0) / paths.length
+  }
+
+  // Strategy 2: Area-weighted - larger shapes have more influence
+  const totalArea = paths.reduce((sum, p) => sum + p.area, 0)
+  const area = totalArea > 0 ? {
+    x: paths.reduce((sum, p) => sum + p.center.x * p.area, 0) / totalArea,
+    y: paths.reduce((sum, p) => sum + p.center.y * p.area, 0) / totalArea
+  } : equal
+
+  // Strategy 3: Complexity-weighted - more complex shapes have more influence
+  const totalPoints = paths.reduce((sum, p) => sum + p.pointCount, 0)
+  const complexity = totalPoints > 0 ? {
+    x: paths.reduce((sum, p) => sum + p.center.x * p.pointCount, 0) / totalPoints,
+    y: paths.reduce((sum, p) => sum + p.center.y * p.pointCount, 0) / totalPoints
+  } : equal
+
+  return { equal, area, complexity }
+}
+
+/**
+ * Calculate variance between strategy results
+ * Low variance = strategies agree = high confidence
+ * High variance = strategies disagree = uncertain
+ */
+function calculateStrategyVariance(strategies: Point[]): number {
+  const avgX = strategies.reduce((sum, s) => sum + s.x, 0) / strategies.length
+  const avgY = strategies.reduce((sum, s) => sum + s.y, 0) / strategies.length
+
+  const variance = strategies.reduce((sum, s) => {
+    const dx = s.x - avgX
+    const dy = s.y - avgY
+    return sum + (dx * dx + dy * dy)  // Euclidean distance squared
+  }, 0) / strategies.length
+
+  return Math.sqrt(variance)  // Standard deviation in coordinate units
+}
+
+/**
+ * Select best strategy based on how well strategies agree
+ */
+function selectStrategyByVariance(
+  equal: Point,
+  area: Point,
+  complexity: Point
+): { centroid: Point; confidence: number } {
+  const strategies = [equal, area, complexity]
+  const variance = calculateStrategyVariance(strategies)
+
+  // Variance thresholds (in SVG coordinate units)
+  const LOW_VARIANCE = 2.0    // Strategies agree closely
+  const MED_VARIANCE = 8.0    // Moderate disagreement
+
+  if (variance < LOW_VARIANCE) {
+    // All strategies agree - high confidence, use area (most intuitive)
+    return {
+      centroid: area,
+      confidence: 0.9
+    }
+  } else if (variance < MED_VARIANCE) {
+    // Moderate disagreement - use average as compromise
+    const averaged = {
+      x: (equal.x + area.x + complexity.x) / 3,
+      y: (equal.y + area.y + complexity.y) / 3
+    }
+    return {
+      centroid: averaged,
+      confidence: 0.7
+    }
+  } else {
+    // High disagreement - low confidence, use most conservative (equal)
+    return {
+      centroid: equal,
+      confidence: 0.5
+    }
+  }
+}
+
+/**
+ * Calculate centroid for multi-path SVGs using variance-based strategy selection
+ * Falls back gracefully for single-path or empty SVGs
+ */
+function calculateMultiPathCentroid(svgContent: string): {
+  centroid: Point
+  confidence: number
+} | null {
+  // Extract all paths
+  const pathsData = extractAllPathsData(svgContent)
+  if (pathsData.length === 0) return null
+
+  // Calculate bounding box for each path (reuses curve sampling)
+  const pathAnalyses = pathsData
+    .map(pathData => calculatePathBoundingBox(pathData))
+    .filter(p => p.pointCount > 0 && p.area > 0)  // Filter empty/degenerate paths
+
+  if (pathAnalyses.length === 0) return null
+
+  // Single path - all strategies give same result
+  if (pathAnalyses.length === 1) {
+    return {
+      centroid: pathAnalyses[0].center,
+      confidence: 0.8
+    }
+  }
+
+  // Multi-path - calculate all strategies
+  const { equal, area, complexity } = calculateAllStrategies(pathAnalyses)
+
+  // Select best strategy based on variance
+  return selectStrategyByVariance(equal, area, complexity)
 }
 
 // =============================================================================

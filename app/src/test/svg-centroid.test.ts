@@ -509,3 +509,176 @@ describe('Performance Characteristics', () => {
     expect(result.shapeType).toBe('complex-path')
   })
 })
+
+// ============================================================================
+// MULTI-PATH CENTROID TESTS (MBR WITH VARIANCE-BASED STRATEGY SELECTION)
+// ============================================================================
+
+describe('Multi-Path Centroid with Variance-Based Selection', () => {
+  describe('Real-world icon tests', () => {
+    it('should handle ui-feedback-star.svg (single path)', () => {
+      const starSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
+      </svg>`
+
+      const result = calculateSvgCentroid(starSvg)
+
+      expect(result.shapeType).toBe('polygon')
+      expect(result.useCentroid).toBe(true)
+      expect(result.confidence).toBeGreaterThan(0.7)
+      expect(result.centroidCenter.x).toBeCloseTo(12, 0)
+      expect(result.centroidCenter.y).toBeGreaterThan(10)
+    })
+
+    it('should handle currency-dollar-off.svg (3 paths)', () => {
+      const dollarOffSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16.7 8a3 3 0 0 0 -2.7 -2h-4m-2.557 1.431a3 3 0 0 0 2.557 4.569h2m4.564 4.558a3 3 0 0 1 -2.564 1.442h-4a3 3 0 0 1 -2.7 -2" />
+        <path d="M12 3v3m0 12v3" />
+        <path d="M3 3l18 18" />
+      </svg>`
+
+      const result = calculateSvgCentroid(dollarOffSvg)
+
+      expect(result.shapeType).toBe('complex-path')
+      expect(result.useCentroid).toBe(true)
+      // Multi-path should produce some confidence level
+      expect(result.confidence).toBeGreaterThan(0)
+      // Centroid should be calculated
+      expect(result.centroidCenter.x).toBeCloseTo(12, 1)
+      // Y could vary depending on path weighting
+      expect(result.centroidCenter.y).toBeGreaterThan(8)
+    })
+
+    it('should handle finance-currency-euro.svg (single path with mixed content)', () => {
+      const euroSvg = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2.25C6.61522 2.25 2.25 6.61522 2.25 12C2.25 17.3848 6.61522 21.75 12 21.75C17.3848 21.75 21.75 17.3848 21.75 12C21.75 6.61522 17.3848 2.25 12 2.25ZM10.0983 9.34835C11.1527 8.29405 12.6796 7.99768 14.0006 8.46355C14.3912 8.60132 14.8195 8.39633 14.9573 8.0057C15.0951 7.61507 14.8901 7.18671 14.4994 7.04895C12.6545 6.39828 10.5156 6.80976 9.03769 8.28769C8.60004 8.72534 8.25581 9.22104 8.005 9.75H7.5C7.08579 9.75 6.75 10.0858 6.75 10.5C6.75 10.9142 7.08579 11.25 7.5 11.25H7.55353C7.48216 11.7472 7.48216 12.2528 7.55353 12.75H7.5C7.08579 12.75 6.75 13.0858 6.75 13.5C6.75 13.9142 7.08579 14.25 7.5 14.25H8.005C8.25581 14.779 8.60004 15.2747 9.03769 15.7123C10.5156 17.1902 12.6545 17.6017 14.4994 16.951C14.8901 16.8133 15.0951 16.3849 14.9573 15.9943C14.8195 15.6037 14.3912 15.3987 14.0006 15.5364C12.6796 16.0023 11.1527 15.706 10.0983 14.6517C9.97095 14.5243 9.85464 14.39 9.74941 14.25H12.75C13.1642 14.25 13.5 13.9142 13.5 13.5C13.5 13.0858 13.1642 12.75 12.75 12.75H9.07535C8.97488 12.2554 8.97488 11.7446 9.07535 11.25H12.75C13.1642 11.25 13.5 10.9142 13.5 10.5C13.5 10.0858 13.1642 9.75 12.75 9.75H9.74941C9.85464 9.61003 9.97095 9.47575 10.0983 9.34835Z" fill="#0F172A"/>
+      </svg>`
+
+      const result = calculateSvgCentroid(euroSvg)
+
+      expect(result.shapeType).toBe('complex-path')
+      expect(result.useCentroid).toBe(true)
+      // Single path - should use bbox center
+      expect(result.confidence).toBeGreaterThan(0.7)
+      // Euro is single path so centroid is based on entire path bbox
+      expect(result.centroidCenter.x).toBeCloseTo(12, 1)
+      expect(result.centroidCenter.y).toBeCloseTo(12, 1)
+    })
+  })
+
+  describe('Multi-path behavior', () => {
+    it('should handle SVG with multiple paths', () => {
+      const multiPathSvg = `<svg viewBox="0 0 24 24">
+        <path d="M5 5h6v6h-6z"/>
+        <path d="M13 13h6v6h-6z"/>
+      </svg>`
+
+      const result = calculateSvgCentroid(multiPathSvg)
+
+      expect(result.shapeType).toBe('complex-path')
+      expect(result.useCentroid).toBe(true)
+      // Should calculate centroid for multi-path
+      expect(result.centroidCenter).toHaveProperty('x')
+      expect(result.centroidCenter).toHaveProperty('y')
+    })
+
+    it('should filter empty paths', () => {
+      const svgWithEmpty = `<svg viewBox="0 0 24 24">
+        <path d="M12 2L15 8L22 9L17 14L18 21L12 17L5 21L7 14L2 9L8 8Z"/>
+        <path d=""/>
+      </svg>`
+
+      const result = calculateSvgCentroid(svgWithEmpty)
+
+      // Should only analyze the star path, not the empty one
+      expect(result).toBeDefined()
+      expect(result.useCentroid).toBe(true)
+    })
+
+    it('should handle SVG with degenerate paths', () => {
+      const degenerateSvg = `<svg viewBox="0 0 24 24">
+        <path d="M0 0"/>
+        <path d="M12 12L12 12"/>
+      </svg>`
+
+      const result = calculateSvgCentroid(degenerateSvg)
+
+      // Should handle gracefully even with degenerate paths
+      expect(result).toHaveProperty('centroidCenter')
+      expect(result).toHaveProperty('boundingBoxCenter')
+    })
+  })
+
+  describe('Strategy variance behavior', () => {
+    it('should have high confidence when strategies agree', () => {
+      // Symmetric shape - all strategies should agree
+      const symmetricSvg = `<svg viewBox="0 0 24 24">
+        <path d="M12 2L22 12L12 22L2 12Z"/>
+      </svg>`
+
+      const result = calculateSvgCentroid(symmetricSvg)
+
+      // Single path should have decent confidence
+      expect(result.confidence).toBeGreaterThanOrEqual(0.5)
+    })
+
+    it('should handle asymmetric multi-path SVG', () => {
+      // Paths with different sizes and positions
+      const asymmetricSvg = `<svg viewBox="0 0 100 100">
+        <path d="M10 10h20v20h-20z"/>
+        <path d="M60 60h30v30h-30z"/>
+      </svg>`
+
+      const result = calculateSvgCentroid(asymmetricSvg)
+
+      expect(result.shapeType).toBe('complex-path')
+      expect(result.useCentroid).toBe(true)
+      // Centroid should be somewhere between the two shapes
+      expect(result.centroidCenter.x).toBeGreaterThan(20)
+      expect(result.centroidCenter.x).toBeLessThan(80)
+    })
+  })
+
+  describe('Edge cases for multi-path', () => {
+    it('should handle single-path SVG gracefully', () => {
+      const singlePath = `<svg viewBox="0 0 24 24">
+        <path d="M12 2L15 8L22 9L17 14L18 21L12 17L5 21L7 14L2 9L8 8Z"/>
+      </svg>`
+
+      const result = calculateSvgCentroid(singlePath)
+
+      // Single path should work fine
+      expect(result.shapeType).toBe('complex-path')
+      expect(result.useCentroid).toBe(true)
+      expect(result.confidence).toBeGreaterThan(0.5)
+    })
+
+    it('should handle paths with zero area', () => {
+      const zeroAreaSvg = `<svg viewBox="0 0 24 24">
+        <path d="M5 5L15 5"/>
+        <path d="M10 10L20 10"/>
+      </svg>`
+
+      const result = calculateSvgCentroid(zeroAreaSvg)
+
+      // Should filter out zero-area paths or handle gracefully
+      expect(result).toHaveProperty('centroidCenter')
+    })
+
+    it('should handle very complex multi-path SVG', () => {
+      const complexMultiPath = `<svg viewBox="0 0 100 100">
+        <path d="M10 10 Q20 20 30 10"/>
+        <path d="M40 40 C50 50 60 40 70 50"/>
+        <path d="M20 80 A10 10 0 0 1 40 80"/>
+      </svg>`
+
+      const result = calculateSvgCentroid(complexMultiPath)
+
+      expect(result.shapeType).toBe('complex-path')
+      expect(result.useCentroid).toBe(true)
+      // Should handle curves properly
+      expect(result.centroidCenter.x).toBeGreaterThan(0)
+      expect(result.centroidCenter.y).toBeGreaterThan(0)
+    })
+  })
+})
