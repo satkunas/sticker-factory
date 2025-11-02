@@ -164,7 +164,14 @@
           </g>
         </template>
 
-        <!-- Scale only (without transform origin) -->
+        <!-- Scale and rotation (without transform origin) -->
+        <template v-else-if="transformCase?.case === 'scale-and-rotation'">
+          <g :transform="`scale(${transformCase.scale}) rotate(${transformCase.rotation})`">
+            <g v-html="processedSvg" />
+          </g>
+        </template>
+
+        <!-- Scale only (without transform origin or rotation) -->
         <template v-else-if="transformCase?.case === 'scale-only'">
           <g :transform="`scale(${transformCase.scale})`">
             <g v-html="processedSvg" />
@@ -256,7 +263,7 @@ const renderedLayers = computed(() => {
     let scaledOrigin: { x: number; y: number } | undefined
     let processedSvg: string | undefined
     if (templateLayer.type === 'svgImage') {
-      // Compute processed SVG once (used in all 4 transform cases)
+      // Compute processed SVG once (used in all 5 transform cases)
       processedSvg = applySvgRenderingAttributes(
         layerData?.svgContent || templateLayer.svgContent,
         templateLayer.width,

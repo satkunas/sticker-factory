@@ -108,9 +108,10 @@ describe('URL Encoding v2', () => {
         rotation: 45
       })
 
-      // SVG content should be preserved
-      expect(decoded?.layers?.[0]?.svgContent).toContain('<svg')
-      expect(decoded?.layers?.[0]?.svgContent).toContain('viewBox')
+      // Note: svgContent is intentionally NOT preserved when svgImageId is present
+      // This prevents 431 URI-too-large errors. The svgContent can be looked up
+      // from the library using svgImageId.
+      expect(decoded?.layers?.[0]?.svgImageId).toBe('ui-shield')
     })
   })
 

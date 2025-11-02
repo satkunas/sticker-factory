@@ -1,133 +1,206 @@
 <template>
   <!-- Inline SVG Selector (Direct Content) -->
   <div ref="containerRef" class="w-full overflow-x-hidden">
-      <!-- SVG Selection Section -->
-      <div class="p-4 mx-4 bg-secondary-500/5 rounded-lg mb-3 max-w-full">
-        <SectionHeader headingTag="h4" headingClass="section-header" @reset="clearSelection">
-          SVG Library
-        </SectionHeader>
+      <!-- Tab Navigation -->
+      <AssetTabNavigation
+        :tabs="tabs"
+        :activeTabId="activeTab"
+        @switchTab="switchTab"
+      />
 
-        <!-- Search and Category -->
-        <div class="bg-white rounded-lg p-2">
-          <!-- Search -->
-          <div class="mb-2 relative">
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search SVGs by name or tag..."
-              class="w-full px-3 py-2 pr-8 border border-secondary-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            >
-            <button
-              v-if="searchQuery.length > 0"
-              class="absolute right-2 top-1/2 transform -translate-y-1/2 text-secondary-400 hover:text-secondary-600 transition-colors"
-              type="button"
-              title="Clear search"
-              @click="searchQuery = ''"
-            >
-              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-              </svg>
-            </button>
-          </div>
+      <!-- Library Tab -->
+      <div v-if="activeTab === 'library'" class="max-h-96 overflow-y-auto">
+        <!-- SVG Selection Section -->
+        <div class="p-4 mx-4 bg-secondary-500/5 rounded-lg max-w-full">
+          <SectionHeader headingTag="h4" headingClass="section-header" @reset="clearSelection">
+            SVG Library
+          </SectionHeader>
 
-          <!-- Category Filter and Results Count -->
-          <div class="flex flex-wrap items-center gap-2">
-            <CategoryDropdown
-              v-model="selectedCategory"
-              :categories="svgCategoryOptions"
-              allLabel="All Categories"
-            />
-            <div v-if="filteredSvgs.length > 0" class="text-sm text-secondary-600 whitespace-nowrap">
-              {{ filteredSvgs.length }} {{ filteredSvgs.length === 1 ? 'icon' : 'icons' }} found
+          <!-- Search and Category -->
+          <div class="bg-white rounded-lg p-2">
+            <!-- Search -->
+            <div class="mb-2 relative">
+              <input
+                v-model="searchQuery"
+                type="text"
+                placeholder="Search SVGs by name or tag..."
+                class="w-full px-3 py-2 pr-8 border border-secondary-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              >
+              <button
+                v-if="searchQuery.length > 0"
+                class="absolute right-2 top-1/2 transform -translate-y-1/2 text-secondary-400 hover:text-secondary-600 transition-colors"
+                type="button"
+                title="Clear search"
+                @click="searchQuery = ''"
+              >
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+              </button>
             </div>
+
+            <!-- Category Filter and Results Count -->
+            <div class="flex flex-wrap items-center gap-2">
+              <CategoryDropdown
+                v-model="selectedCategory"
+                :categories="svgCategoryOptions"
+                allLabel="All Categories"
+              />
+              <div v-if="filteredSvgs.length > 0" class="text-sm text-secondary-600 whitespace-nowrap">
+                {{ filteredSvgs.length }} {{ filteredSvgs.length === 1 ? 'icon' : 'icons' }} found
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SVG Grid -->
+        <div class="p-4 mx-4 bg-secondary-500/5 rounded-lg max-w-full">
+          <div class="bg-white rounded-lg p-2">
+            <div v-if="svgStore.isLoading.value" class="flex items-center justify-center py-8">
+              <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
+              <span class="ml-3 text-sm text-secondary-600">Loading 5000+ SVGs...</span>
+            </div>
+
+            <div v-else-if="filteredSvgs.length === 0" class="text-center py-8">
+              <svg class="mx-auto h-8 w-8 text-secondary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.513-.73-6.291-1.971" />
+              </svg>
+              <h3 class="mt-2 text-sm font-medium text-secondary-900">No SVGs found</h3>
+              <p class="mt-1 text-xs text-secondary-500">
+                {{ searchQuery || selectedCategory ? 'Try adjusting your search or filter' : 'No SVGs available' }}
+              </p>
+            </div>
+
+            <div v-else ref="svgGridContainer" class="max-h-64 overflow-y-auto overflow-x-hidden" @scroll="handleScroll">
+            <div class="w-full min-w-0 grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2 pt-2">
+              <div
+                v-for="svg in visibleSvgs"
+                :key="svg.id"
+                class="svg-tile group relative aspect-square bg-white border border-secondary-200 rounded-md p-2 cursor-pointer hover:border-primary-300 hover:shadow-sm transition-all duration-200 flex items-center justify-center"
+                :class="{
+                  'ring-2 ring-primary-500 border-primary-500 bg-primary-50 shadow-md shadow-primary-200': props.selectedSvgId === svg.id
+                }"
+                :title="`${svg.name} (${svg.category})`"
+                @click="selectSvg(svg)"
+              >
+                <!-- SVG Preview with Lazy Loading -->
+                <div
+                  :ref="(el) => setTileRef(el, svg.id)"
+                  class="w-full h-full flex items-center justify-center text-secondary-700 transition-colors"
+                  :class="{ 'text-primary-600': props.selectedSvgId === svg.id }"
+                >
+                  <!-- Loaded SVG Content -->
+                  <div v-if="loadedSvgContent[svg.id]" class="w-full h-full flex items-center justify-center" v-html="loadedSvgContent[svg.id]"></div>
+                  <!-- Loading indicator for empty SVG -->
+                  <div v-else class="w-4 h-4 bg-secondary-300 rounded animate-pulse"></div>
+                </div>
+
+                <!-- Selection indicator with larger badge -->
+                <div
+                  v-if="props.selectedSvgId === svg.id"
+                  class="absolute -top-1 -right-1 w-5 h-5 bg-primary-600 rounded-full flex items-center justify-center shadow-lg"
+                >
+                  <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+
+                <!-- "Selected" Label -->
+                <div
+                  v-if="props.selectedSvgId === svg.id"
+                  class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 bg-primary-600 text-white text-xs px-2 py-0.5 rounded-full whitespace-nowrap font-medium shadow-md z-10"
+                >
+                  Selected
+                </div>
+
+                <!-- SVG Name (on hover) -->
+                <div class="absolute inset-x-0 bottom-0 bg-black bg-opacity-75 text-white text-xs px-1 py-0.5 rounded-b-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 truncate">
+                  {{ svg.name }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Enhanced loading indicator with progress for massive collections -->
+            <div v-if="isLoadingMore && visibleSvgs.length < filteredSvgs.length" class="py-3 text-center text-secondary-500">
+              <div class="flex items-center justify-center space-x-2">
+                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-500"></div>
+                <div class="text-xs">
+                  Loading more icons... ({{ visibleSvgs.length }}/{{ filteredSvgs.length }})
+                </div>
+              </div>
+              <!-- Progress bar for large collections -->
+              <div v-if="filteredSvgs.length > 200" class="mt-2 w-full bg-secondary-200 rounded-full h-1">
+                <div
+                  class="bg-primary-500 h-1 rounded-full transition-all duration-300"
+                  :style="{ width: (visibleSvgs.length / filteredSvgs.length * 100) + '%' }"
+                ></div>
+              </div>
+            </div>
+          </div>
           </div>
         </div>
       </div>
 
-      <!-- SVG Grid -->
-      <div class="p-4 mx-4 bg-secondary-500/5 rounded-lg max-w-full">
-        <div class="bg-white rounded-lg p-2">
-          <div v-if="svgStore.isLoading.value" class="flex items-center justify-center py-8">
-            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
-            <span class="ml-3 text-sm text-secondary-600">Loading 5000+ SVGs...</span>
-          </div>
+      <!-- My Images Tab -->
+      <div v-if="activeTab === 'my-images'" class="max-h-96 overflow-y-auto">
+        <div class="p-4 mx-4 bg-secondary-500/5 rounded-lg max-w-full">
+          <h4 class="section-header mb-3">My Images</h4>
 
-          <div v-else-if="filteredSvgs.length === 0" class="text-center py-8">
-            <svg class="mx-auto h-8 w-8 text-secondary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.513-.73-6.291-1.971" />
-            </svg>
-            <h3 class="mt-2 text-sm font-medium text-secondary-900">No SVGs found</h3>
-            <p class="mt-1 text-xs text-secondary-500">
-              {{ searchQuery || selectedCategory ? 'Try adjusting your search or filter' : 'No SVGs available' }}
+          <!-- Upload Section using reusable components -->
+          <FileUploadZone
+            v-if="uploadState === 'idle' || selectedFile"
+            inputId="svg-file-upload-inline"
+            accept=".svg,image/svg+xml"
+            fileTypeLabel="SVG file"
+            :helpText="`SVG files up to ${maxSvgSizeKB}KB`"
+            :selectedFile="selectedFile"
+            :fileSizeKB="fileSizeKB"
+            :customName="customName"
+            :isProcessing="isProcessing"
+            :isDragging="isDragging"
+            @fileSelect="handleFileSelect"
+            @clearFile="clearFile"
+            @upload="upload"
+            @dragover="handleDragOver"
+            @dragleave="handleDragLeave"
+            @drop="handleDrop"
+            @update:customName="customName = $event"
+          />
+
+          <!-- Upload State Display -->
+          <UploadStateDisplay
+            :state="uploadState"
+            processingMessage="Processing SVG..."
+            successMessage="Your SVG is now available below"
+            :errorMessage="error || 'An error occurred during upload'"
+            @uploadAnother="reset"
+            @retry="reset"
+          />
+
+          <!-- Empty State -->
+          <div v-if="userSvgStore.itemCount.value === 0 && !selectedFile && !uploadedItem" class="bg-white rounded-lg p-6 text-center">
+            <p class="text-xs text-secondary-500">
+              No uploaded images yet. Use the upload area above to add your first SVG.
             </p>
           </div>
 
-          <div v-else ref="svgGridContainer" class="max-h-64 overflow-y-auto overflow-x-hidden" @scroll="handleScroll">
-          <div class="w-full min-w-0 grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2 pt-2">
-            <div
-              v-for="svg in visibleSvgs"
-              :key="svg.id"
-              class="svg-tile group relative aspect-square bg-white border border-secondary-200 rounded-md p-2 cursor-pointer hover:border-primary-300 hover:shadow-sm transition-all duration-200 flex items-center justify-center"
-              :class="{
-                'ring-2 ring-primary-500 border-primary-500 bg-primary-50 shadow-md shadow-primary-200': props.selectedSvgId === svg.id
-              }"
-              :title="`${svg.name} (${svg.category})`"
-              @click="selectSvg(svg)"
-            >
-              <!-- SVG Preview with Lazy Loading -->
+          <!-- User SVGs Grid -->
+          <UserAssetGrid
+            v-if="userSvgStore.itemCount.value > 0"
+            :items="userSvgStore.items.value"
+            :selectedId="props.selectedSvgId"
+            assetType="svg"
+            @select="selectUserSvg"
+            @delete="deleteUserSvg"
+          >
+            <template #item-content="{ item, isSelected }">
               <div
-                :ref="(el) => setTileRef(el, svg.id)"
                 class="w-full h-full flex items-center justify-center text-secondary-700 transition-colors"
-                :class="{ 'text-primary-600': props.selectedSvgId === svg.id }"
-              >
-                <!-- Loaded SVG Content -->
-                <div v-if="loadedSvgContent[svg.id]" class="w-full h-full flex items-center justify-center" v-html="loadedSvgContent[svg.id]"></div>
-                <!-- Loading indicator for empty SVG -->
-                <div v-else class="w-4 h-4 bg-secondary-300 rounded animate-pulse"></div>
-              </div>
-
-              <!-- Selection indicator with larger badge -->
-              <div
-                v-if="props.selectedSvgId === svg.id"
-                class="absolute -top-1 -right-1 w-5 h-5 bg-primary-600 rounded-full flex items-center justify-center shadow-lg"
-              >
-                <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
-              </div>
-
-              <!-- "Selected" Label -->
-              <div
-                v-if="props.selectedSvgId === svg.id"
-                class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 bg-primary-600 text-white text-xs px-2 py-0.5 rounded-full whitespace-nowrap font-medium shadow-md z-10"
-              >
-                Selected
-              </div>
-
-              <!-- SVG Name (on hover) -->
-              <div class="absolute inset-x-0 bottom-0 bg-black bg-opacity-75 text-white text-xs px-1 py-0.5 rounded-b-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 truncate">
-                {{ svg.name }}
-              </div>
-            </div>
-          </div>
-
-          <!-- Enhanced loading indicator with progress for massive collections -->
-          <div v-if="isLoadingMore && visibleSvgs.length < filteredSvgs.length" class="py-3 text-center text-secondary-500">
-            <div class="flex items-center justify-center space-x-2">
-              <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-500"></div>
-              <div class="text-xs">
-                Loading more icons... ({{ visibleSvgs.length }}/{{ filteredSvgs.length }})
-              </div>
-            </div>
-            <!-- Progress bar for large collections -->
-            <div v-if="filteredSvgs.length > 200" class="mt-2 w-full bg-secondary-200 rounded-full h-1">
-              <div
-                class="bg-primary-500 h-1 rounded-full transition-all duration-300"
-                :style="{ width: (visibleSvgs.length / filteredSvgs.length * 100) + '%' }"
+                :class="{ 'text-primary-600': isSelected }"
+                v-html="item.svgContent"
               ></div>
-            </div>
-          </div>
-        </div>
+            </template>
+          </UserAssetGrid>
         </div>
       </div>
   </div>
@@ -138,9 +211,23 @@
 import { ref, computed, watch, onMounted, onUnmounted, type ComponentPublicInstance } from 'vue'
 import type { SvgLibraryItem } from '../types/template-types'
 import { useSvgStore } from '../stores/svgStore'
+import { useUserSvgStore, type UserSvgItem } from '../stores/userSvgStore'
+import { USER_ASSET_CONFIG } from '../utils/ui-constants'
+import {
+  validateSvgFileType,
+  validateSvgFileSize,
+  validateSvgStructure,
+  checkDangerousContent
+} from '../utils/svg-validation'
+import { readFileAsText } from '../utils/file-io'
 import { logger } from '../utils/logger'
+import { useFileUpload } from '../composables/useFileUpload'
 import CategoryDropdown from './CategoryDropdown.vue'
 import SectionHeader from './SectionHeader.vue'
+import AssetTabNavigation from './AssetTabNavigation.vue'
+import FileUploadZone from './FileUploadZone.vue'
+import UploadStateDisplay from './UploadStateDisplay.vue'
+import UserAssetGrid from './UserAssetGrid.vue'
 
 interface Props {
   selectedSvgId?: string
@@ -158,12 +245,92 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<Emits>()
 
-// SVG Store
+// Stores
 const svgStore = useSvgStore()
+const userSvgStore = useUserSvgStore()
+
+// Tab state
+const activeTab = ref<'library' | 'my-images'>('library')
+
+// Tab configuration
+const tabs = computed(() => [
+  { id: 'library', label: 'SVG Library', count: 0 },
+  { id: 'my-images', label: 'My Images', count: userSvgStore.itemCount.value }
+])
 
 // Component state
 const searchQuery = ref('')
 const selectedCategory = ref<string | null>(null)
+
+// File upload composable
+const {
+  selectedFile,
+  customName,
+  isProcessing,
+  uploadedItem,
+  error,
+  isDragging,
+  fileSizeKB,
+  uploadState,
+  handleFileSelect,
+  handleDragOver,
+  handleDragLeave,
+  handleDrop,
+  clearFile,
+  upload: uploadFile,
+  reset
+} = useFileUpload<UserSvgItem>({
+  uploadFn: async (file: File, name: string) => {
+    // Validate file type
+    const typeValidation = validateSvgFileType(file)
+    if (!typeValidation.valid) {
+      throw new Error(typeValidation.error)
+    }
+
+    // Validate file size
+    const sizeValidation = validateSvgFileSize(file, USER_ASSET_CONFIG.MAX_SVG_SIZE_BYTES)
+    if (!sizeValidation.valid) {
+      throw new Error(sizeValidation.error)
+    }
+
+    // Read file content
+    const svgContent = await readFileAsText(file)
+
+    // Validate structure
+    const structureValidation = validateSvgStructure(svgContent)
+    if (!structureValidation.valid) {
+      throw new Error(structureValidation.error)
+    }
+
+    // Check for dangerous content
+    if (checkDangerousContent(svgContent)) {
+      throw new Error('SVG contains dangerous content (scripts/event handlers)')
+    }
+
+    // Upload to store
+    const item = await userSvgStore.addUserSvg(
+      svgContent,
+      name.replace('.svg', '')
+    )
+
+    if (!item) {
+      throw new Error(userSvgStore.error.value || 'Failed to upload SVG')
+    }
+
+    return item
+  },
+  onSuccess: (item) => {
+    // Switch to 'My Images' tab and select the newly uploaded SVG
+    activeTab.value = 'my-images'
+    selectUserSvg(item)
+  }
+})
+
+// Expose upload function with correct name
+const upload = uploadFile
+
+// Computed for max size display
+const maxSvgSizeKB = computed(() => USER_ASSET_CONFIG.MAX_SVG_SIZE_BYTES / 1000)
 
 // Enhanced lazy loading state for 5000+ icons
 const svgGridContainer = ref<HTMLElement>()
@@ -179,6 +346,15 @@ const loadedSvgContent = ref<Record<string, string>>({})
 const tileRefs = new Map<string, HTMLElement>()
 // eslint-disable-next-line no-undef
 const intersectionObserver = ref<IntersectionObserver | null>(null)
+
+// Tab switching with reset behavior
+const switchTab = (tab: 'library' | 'my-images') => {
+  activeTab.value = tab
+
+  // Reset search and category when switching tabs
+  searchQuery.value = ''
+  selectedCategory.value = null
+}
 
 // Filtered SVGs based on search and category
 const filteredSvgs = computed(() => {
@@ -334,7 +510,7 @@ const cleanupIntersectionObserver = () => {
   tileRefs.clear()
 }
 
-// Select SVG handler
+// Select SVG handler (library)
 const selectSvg = async (svg: SvgLibraryItem) => {
   emit('update:selectedSvgId', svg.id)
 
@@ -346,10 +522,35 @@ const selectSvg = async (svg: SvgLibraryItem) => {
   emit('update:selectedSvgContent', loadedSvgContent.value[svg.id] || svg.svgContent)
 }
 
+// Select user SVG handler
+const selectUserSvg = (svg: UserSvgItem) => {
+  emit('update:selectedSvgId', svg.id)
+  emit('update:selectedSvgContent', svg.svgContent)
+}
+
+// Delete user SVG
+const deleteUserSvg = (id: string) => {
+  // eslint-disable-next-line no-undef
+  if (confirm('Delete this image? This cannot be undone.')) {
+    const success = userSvgStore.deleteUserSvg(id)
+    if (success && props.selectedSvgId === id) {
+      // Clear selection if deleted item was selected
+      emit('clear')
+    }
+  }
+}
+
 // Clear selection - only emit clear event, parent handles reset logic
 const clearSelection = () => {
   emit('clear')
 }
+
+// Auto-switch to My Images tab if user SVG is selected
+watch(() => props.selectedSvgId, (newSvgId) => {
+  if (newSvgId && newSvgId.startsWith('user-svg-')) {
+    activeTab.value = 'my-images'
+  }
+}, { immediate: true })
 
 // Load SVG library on mount using store
 onMounted(async () => {
@@ -357,6 +558,11 @@ onMounted(async () => {
     // Load SVG library through store if not already loaded
     if (!svgStore.isLoaded.value) {
       await svgStore.loadSvgLibraryStore()
+    }
+
+    // Load user SVGs
+    if (!userSvgStore.isLoaded.value) {
+      await userSvgStore.loadUserSvgs()
     }
 
     // Setup intersection observer for lazy loading

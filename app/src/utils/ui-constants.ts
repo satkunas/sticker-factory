@@ -107,3 +107,18 @@ export const VIEWPORT_CONFIG = {
   GRID_SCALE: 2.0,
   PADDING_SCALE: 1.5
 } as const
+
+// User asset configuration (localStorage-based uploads)
+export const USER_ASSET_CONFIG = {
+  // SVG configuration
+  MAX_SVG_SIZE_BYTES: 200000,  // 200KB per SVG
+  MAX_SVG_COUNT: 50,            // Maximum 50 user SVGs
+  SVG_LOCALSTORAGE_KEY: 'sticker-factory-user-svgs',
+  SVG_CATEGORY: 'user-uploads',
+
+  // Font configuration (Future: not yet implemented)
+  MAX_FONT_SIZE_BYTES: 500000,  // 500KB per font (future)
+  MAX_FONT_COUNT: 20,           // Maximum 20 user fonts (future)
+  FONT_LOCALSTORAGE_KEY: 'sticker-factory-user-fonts', // (future)
+  FONT_CATEGORY: 'user-fonts'   // (future)
+} as const

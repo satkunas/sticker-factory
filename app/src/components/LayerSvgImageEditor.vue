@@ -8,7 +8,8 @@
       <!-- SVG Image Preview -->
       <div
         v-if="svgContent"
-        class="w-6 h-6 flex-shrink-0 flex items-center justify-center"
+        class="w-6 h-6 flex-shrink-0 flex items-center justify-center overflow-hidden"
+        style="max-width: 24px; max-height: 24px; min-width: 24px; min-height: 24px;"
         :style="{
           color: props.color
         }"
@@ -27,9 +28,9 @@
       >
         SVG
       </div>
-      <div class="flex flex-col relative z-10">
-        <span class="text-sm text-secondary-900">{{ imageLabel }}</span>
-        <span v-if="svgCategory" class="text-[10px] text-secondary-500">{{ svgCategory }}</span>
+      <div class="flex flex-col min-w-0 relative z-10 overflow-hidden" style="max-height: 40px;">
+        <span class="text-sm text-secondary-900 truncate leading-none">{{ imageLabel }}</span>
+        <span v-if="svgCategory" class="text-[10px] text-secondary-500 truncate leading-none">{{ svgCategory }}</span>
       </div>
     </template>
 
@@ -341,3 +342,13 @@ const handleRotationTextInput = (value: string) => {
   }
 }
 </script>
+
+<style scoped>
+/* Constrain SVG elements in preview to prevent overflow */
+:deep(svg) {
+  max-width: 24px;
+  max-height: 24px;
+  width: auto;
+  height: auto;
+}
+</style>

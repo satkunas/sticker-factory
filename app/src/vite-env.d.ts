@@ -22,5 +22,39 @@ declare global {
     new(type: string, eventInitDict?: TouchEventInit): TouchEvent;
   };
 
+  var DragEvent: {
+    prototype: DragEvent;
+    new(type: string, eventInitDict?: DragEventInit): DragEvent;
+  };
+
+  var FileReader: {
+    prototype: FileReader;
+    new(): FileReader;
+  };
+
+  var DOMException: {
+    prototype: DOMException;
+    new(message?: string, name?: string): DOMException;
+  };
+
+  var FontFace: {
+    prototype: FontFace;
+    new(family: string, source: string | ArrayBuffer, descriptors?: FontFaceDescriptors): FontFace;
+  };
+
+  var Crypto: {
+    prototype: Crypto;
+  };
+
+  var TextEncoder: {
+    prototype: TextEncoder;
+    new(): TextEncoder;
+  };
+
+  var IntersectionObserver: {
+    prototype: IntersectionObserver;
+    new(callback: IntersectionObserverCallback, options?: IntersectionObserverInit): IntersectionObserver;
+  };
+
   var performance: Performance;
 }

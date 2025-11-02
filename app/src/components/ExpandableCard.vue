@@ -1,7 +1,7 @@
 <template>
   <div ref="containerRef" class="w-full" :data-instance-id="instanceId">
     <!-- Optional Label -->
-    <div v-if="label" class="text-sm font-medium text-secondary-700 mb-2">
+    <div v-if="label" class="text-sm font-medium text-secondary-700 mb-1">
       {{ label }}
     </div>
 
@@ -9,14 +9,15 @@
     <div class="relative rounded-lg transition-all duration-300 ease-in-out" :class="{ 'ring-2 ring-primary-500': isExpanded }">
       <!-- Toggle Button -->
       <button
-        class="w-full p-3 bg-white border border-secondary-200 rounded-t-lg text-left focus:outline-none hover:border-secondary-300 transition-colors"
+        class="w-full py-2 px-3 bg-white border border-secondary-200 rounded-t-lg text-left focus:outline-none hover:border-secondary-300 transition-colors overflow-hidden"
         :class="{ 'border-primary-500': isExpanded, 'rounded-b-lg': !isExpanded }"
         type="button"
+        style="max-height: 60px;"
         @click="toggle"
       >
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between" style="max-height: 40px;">
           <!-- Preview Content Slot -->
-          <div class="flex items-center space-x-2">
+          <div class="flex items-center space-x-2 overflow-hidden" style="max-height: 40px;">
             <slot name="preview" :isExpanded="isExpanded"></slot>
           </div>
 

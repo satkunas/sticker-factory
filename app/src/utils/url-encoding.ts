@@ -191,7 +191,12 @@ export function encodeTemplateStateCompact(state: AppState): string {
       if (layer.strokeLinejoin !== undefined) flatLayer[PROP_MAP.strokeLinejoin] = layer.strokeLinejoin
 
       if (layer.svgImageId !== undefined) flatLayer[PROP_MAP.svgImageId] = layer.svgImageId
-      if (layer.svgContent !== undefined) flatLayer[PROP_MAP.svgContent] = layer.svgContent
+      // CRITICAL: Never encode svgContent for user assets (stored in localStorage)
+      // Only encode svgContent if there's NO svgImageId (rare edge case for inline SVGs)
+      // This prevents 431 errors from URLs with large embedded SVG content
+      if (layer.svgContent !== undefined && !layer.svgImageId) {
+        flatLayer[PROP_MAP.svgContent] = layer.svgContent
+      }
       if (layer.color !== undefined) flatLayer[PROP_MAP.color] = compressColor(layer.color)
       if (layer.rotation !== undefined) flatLayer[PROP_MAP.rotation] = layer.rotation
       if (layer.scale !== undefined) flatLayer[PROP_MAP.scale] = layer.scale

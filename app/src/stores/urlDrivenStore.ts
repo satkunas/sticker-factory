@@ -27,6 +27,15 @@ import { resolveCoordinate } from '../utils/svg'
 import { processLayerForRendering, type ProcessedLayer } from '../utils/unified-positioning'
 import { getStyledSvgContent } from '../utils/svg-template'
 import { useSvgViewBox } from '../composables/useSvgViewBox'
+import { useUserSvgStore } from './userSvgStore'
+import { isUserSvgId } from '../utils/asset-hash'
+
+// CRITICAL: Load user SVG store eagerly before URL decoding
+// This prevents race condition where URL is decoded before store is loaded
+const userSvgStore = useUserSvgStore()
+const _userSvgLoadPromise = userSvgStore.loadUserSvgs().catch(err => {
+  logger.error('Failed to load user SVGs on store init:', err)
+})
 
 export interface UrlDrivenState {
   router: Router | null
@@ -45,6 +54,10 @@ export interface UrlDrivenState {
 
   // Computed render data for components
   renderData: RenderableLayer[]
+
+  // Missing assets tracking (for user uploads)
+  missingSvgIds: string[]
+  missingFontIds: string[]  // Future: font support
 }
 
 /**
@@ -228,7 +241,9 @@ const _state = ref<UrlDrivenState>({
   selectedTemplateId: null,
   selectedTemplate: null,
   formData: [],
-  renderData: []
+  renderData: [],
+  missingSvgIds: [],
+  missingFontIds: []
 })
 
 // URL sync management
@@ -299,6 +314,10 @@ async function handleUrlDecode(urlPath: string): Promise<void> {
   _state.value.isLoadingFromUrl = true
 
   try {
+    // CRITICAL: Wait for user SVG store to load before decoding URL
+    // This prevents race condition where URL is decoded before store is loaded
+    await _userSvgLoadPromise
+
     // Extract encoded state from URL path
     const stickerMatch = urlPath.match(/^\/(.+)\.sticker$/)
     if (!stickerMatch) {
@@ -360,6 +379,10 @@ async function loadDefaultState(): Promise<void> {
 
 function mergeTemplateWithUrlData(template: SimpleTemplate, urlLayers: Array<{ id: string; [key: string]: unknown }>): LayerFormData[] {
   const formData: LayerFormData[] = []
+
+  // Reset missing assets tracking
+  _state.value.missingSvgIds = []
+  _state.value.missingFontIds = []
 
   // Create URL override lookup
   const urlOverrides: Record<string, { id: string; [key: string]: unknown }> = {}
@@ -427,9 +450,30 @@ function mergeTemplateWithUrlData(template: SimpleTemplate, urlLayers: Array<{ i
       formEntry.strokeColor = urlOverride.strokeColor !== undefined ? urlOverride.strokeColor : flatLayer.strokeColor
       formEntry.strokeWidth = urlOverride.strokeWidth !== undefined ? urlOverride.strokeWidth : flatLayer.strokeWidth
       formEntry.strokeLinejoin = urlOverride.strokeLinejoin !== undefined ? urlOverride.strokeLinejoin : flatLayer.strokeLinejoin
-      formEntry.svgContent = urlOverride.svgContent !== undefined ? urlOverride.svgContent : flatLayer.svgContent
       formEntry.scale = urlOverride.scale !== undefined ? urlOverride.scale : flatLayer.scale
       formEntry.rotation = urlOverride.rotation !== undefined ? urlOverride.rotation : flatLayer.rotation
+
+      // CRITICAL: Resolve user SVG content
+      // Check if this layer uses a user-uploaded SVG
+      const svgId = formEntry.svgImageId
+      if (svgId && isUserSvgId(svgId)) {
+        // Try to load user SVG content from store
+        const userSvgContent = userSvgStore.getUserSvgContent(svgId)
+
+        if (userSvgContent) {
+          // User SVG found - use its content
+          formEntry.svgContent = userSvgContent
+          logger.debug('URL Store: Loaded user SVG:', svgId)
+        } else {
+          // User SVG missing - track it and fallback to URL content
+          _state.value.missingSvgIds.push(svgId)
+          formEntry.svgContent = urlOverride.svgContent !== undefined ? urlOverride.svgContent : flatLayer.svgContent
+          logger.warn('URL Store: User SVG not found, marked as missing:', svgId)
+        }
+      } else {
+        // Regular SVG (from library) - use URL or template default
+        formEntry.svgContent = urlOverride.svgContent !== undefined ? urlOverride.svgContent : flatLayer.svgContent
+      }
     }
 
     formData.push(formEntry)
@@ -575,11 +619,17 @@ export const urlDrivenStore = {
   get selectedTemplate(): SimpleTemplate | null { return _state.value.selectedTemplate },
   get formData(): readonly LayerFormData[] { return readonly(_state.value.formData) },
   get renderData(): readonly RenderableLayer[] { return readonly(_state.value.renderData) },
+  get missingSvgIds(): readonly string[] { return readonly(_state.value.missingSvgIds) },
+  get missingFontIds(): readonly string[] { return readonly(_state.value.missingFontIds) },
 
   // Actions
   updateLayer,
   updateTemplate,
   updateLayers,
+  clearMissingAssets: () => {
+    _state.value.missingSvgIds = []
+    _state.value.missingFontIds = []
+  },
 
   // Internal methods (for testing and debugging)
   _internal: {
@@ -595,6 +645,11 @@ export const isLoadingFromUrl = computed(() => _state.value.isLoadingFromUrl)
 export const selectedTemplate = computed(() => _state.value.selectedTemplate)
 export const formData = computed(() => _state.value.formData)
 export const renderData = computed(() => _state.value.renderData)
+export const missingSvgIds = computed(() => _state.value.missingSvgIds)
+export const missingFontIds = computed(() => _state.value.missingFontIds)
+
+// Export clearMissingAssets action
+export const clearMissingAssets = urlDrivenStore.clearMissingAssets
 
 // Enhanced form data with template defaults merged
 export const mergedFormData = computed(() => {

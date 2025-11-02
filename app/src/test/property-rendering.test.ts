@@ -850,3 +850,259 @@ describe('Property Rendering - Path Layers', () => {
     expect(svg).toContain('stroke-width="3"')
   })
 })
+
+describe('Property Rendering - User Uploaded SVGs', () => {
+  it('should render user SVG content when svgImageId is user-uploaded', () => {
+    // CRITICAL: User SVGs must work in downloads/template icons
+    // This test ensures generateSvgImageElement resolves user SVG content
+    const template: SimpleTemplate = {
+      id: 'user-svg-test',
+      name: 'User SVG Test',
+      description: 'Test user-uploaded SVG rendering',
+      width: 400,
+      height: 400,
+      viewBox: { x: 0, y: 0, width: 400, height: 400 },
+      layers: [
+        {
+          id: 'user-svg-layer',
+          type: 'svgImage',
+          position: { x: 200, y: 200 },
+          width: 50,
+          height: 50,
+          svgImageId: 'library-icon', // Library SVG (not user-uploaded)
+          svgContent: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /></svg>',
+          color: '#ff0000',
+          strokeColor: '#000000',
+          strokeWidth: 2,
+          rotation: 0,
+          scale: 1
+        } as any
+      ]
+    }
+
+    // Layer data with user SVG content (simulating user upload)
+    const userSvgContent = '<svg viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" /></svg>'
+    const layers: FlatLayerData[] = [
+      {
+        id: 'user-svg-layer',
+        svgImageId: 'user-svg-abc12345', // User-uploaded SVG ID format
+        svgContent: userSvgContent,
+        color: '#00ff00'
+      }
+    ]
+
+    const svg = generateSvgString(template, layers)
+
+    // Verify user SVG content is rendered
+    expect(svg).toContain('rect x="10" y="10" width="80" height="80"')
+
+    // Verify user color override is applied
+    expect(svg).toContain('fill="#00ff00"')
+    expect(svg).not.toContain('fill="#ff0000"') // Not template default
+  })
+
+  it('should handle user SVG IDs correctly', () => {
+    // Test that user SVG IDs are recognized and processed
+    const template: SimpleTemplate = {
+      id: 'user-svg-id-test',
+      name: 'User SVG ID Test',
+      description: 'Test user SVG ID handling',
+      width: 400,
+      height: 400,
+      viewBox: { x: 0, y: 0, width: 400, height: 400 },
+      layers: [
+        {
+          id: 'svg-layer',
+          type: 'svgImage',
+          position: { x: 200, y: 200 },
+          width: 50,
+          height: 50,
+          svgImageId: 'user-svg-12345678', // User SVG ID format: user-svg-{8charHash}
+          svgContent: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /></svg>',
+          color: '#0000ff',
+          rotation: 0,
+          scale: 1
+        } as any
+      ]
+    }
+
+    const layers: FlatLayerData[] = []
+
+    const svg = generateSvgString(template, layers)
+
+    // Verify template SVG content is used (even though it's a user SVG ID)
+    // Note: In real usage, userSvgStore would provide the content
+    expect(svg).toContain('circle cx="12" cy="12" r="10"')
+    expect(svg).toContain('fill="#0000ff"')
+  })
+
+  it('should override user SVG color property', () => {
+    // User SVGs should respect color overrides
+    const template: SimpleTemplate = {
+      id: 'user-svg-color-test',
+      name: 'User SVG Color Test',
+      description: 'Test user SVG color override',
+      width: 400,
+      height: 400,
+      viewBox: { x: 0, y: 0, width: 400, height: 400 },
+      layers: [
+        {
+          id: 'user-svg',
+          type: 'svgImage',
+          position: { x: 200, y: 200 },
+          width: 50,
+          height: 50,
+          svgImageId: 'user-svg-fedcba98',
+          svgContent: '<svg viewBox="0 0 50 50"><rect width="50" height="50" /></svg>',
+          color: '#ff0000', // Template default
+          strokeColor: '#000000',
+          strokeWidth: 2,
+          rotation: 0,
+          scale: 1
+        } as any
+      ]
+    }
+
+    // Override color
+    const layers: FlatLayerData[] = [
+      { id: 'user-svg', color: '#00ff00' }
+    ]
+
+    const svg = generateSvgString(template, layers)
+
+    // Verify color override is applied
+    expect(svg).toContain('fill="#00ff00"')
+    expect(svg).not.toContain('fill="#ff0000"') // Not template default
+  })
+
+  it('should override user SVG stroke properties', () => {
+    // User SVGs should respect stroke overrides
+    const template: SimpleTemplate = {
+      id: 'user-svg-stroke-test',
+      name: 'User SVG Stroke Test',
+      description: 'Test user SVG stroke override',
+      width: 400,
+      height: 400,
+      viewBox: { x: 0, y: 0, width: 400, height: 400 },
+      layers: [
+        {
+          id: 'user-svg',
+          type: 'svgImage',
+          position: { x: 200, y: 200 },
+          width: 50,
+          height: 50,
+          svgImageId: 'user-svg-11223344',
+          svgContent: '<svg viewBox="0 0 50 50"><circle cx="25" cy="25" r="20" /></svg>',
+          color: '#ff0000',
+          strokeColor: '#000000', // Template default
+          strokeWidth: 2,          // Template default
+          strokeLinejoin: 'miter', // Template default
+          rotation: 0,
+          scale: 1
+        } as any
+      ]
+    }
+
+    // Override stroke properties
+    const layers: FlatLayerData[] = [
+      {
+        id: 'user-svg',
+        strokeColor: '#0000ff',
+        strokeWidth: 5,
+        strokeLinejoin: 'round'
+      }
+    ]
+
+    const svg = generateSvgString(template, layers)
+
+    // Verify stroke overrides are applied
+    expect(svg).toContain('stroke="#0000ff"')
+    expect(svg).toContain('stroke-width="5"')
+    expect(svg).toContain('stroke-linejoin="round"')
+
+    // Verify defaults are NOT used
+    expect(svg).not.toContain('stroke="#000000"')
+    expect(svg).not.toContain('stroke-linejoin="miter"')
+  })
+
+  it('should override user SVG transform properties (rotation, scale)', () => {
+    // User SVGs should respect transform overrides
+    const template: SimpleTemplate = {
+      id: 'user-svg-transform-test',
+      name: 'User SVG Transform Test',
+      description: 'Test user SVG transform override',
+      width: 400,
+      height: 400,
+      viewBox: { x: 0, y: 0, width: 400, height: 400 },
+      layers: [
+        {
+          id: 'user-svg',
+          type: 'svgImage',
+          position: { x: 200, y: 200 },
+          width: 50,
+          height: 50,
+          svgImageId: 'user-svg-aabbccdd',
+          svgContent: '<svg viewBox="0 0 50 50"><polygon points="25,5 45,45 5,45" /></svg>',
+          color: '#ff0000',
+          rotation: 0,  // Template default
+          scale: 1      // Template default
+        } as any
+      ]
+    }
+
+    // Override transform properties
+    const layers: FlatLayerData[] = [
+      {
+        id: 'user-svg',
+        rotation: 45,
+        scale: 2.0
+      }
+    ]
+
+    const svg = generateSvgString(template, layers)
+
+    // Verify transforms are applied
+    expect(svg).toContain('rotate(45')
+    expect(svg).toContain('scale(2')
+  })
+
+  it('should use template defaults for user SVG when no overrides provided', () => {
+    // User SVGs should fallback to template defaults like library SVGs
+    const template: SimpleTemplate = {
+      id: 'user-svg-defaults-test',
+      name: 'User SVG Defaults Test',
+      description: 'Test user SVG template defaults',
+      width: 400,
+      height: 400,
+      viewBox: { x: 0, y: 0, width: 400, height: 400 },
+      layers: [
+        {
+          id: 'user-svg',
+          type: 'svgImage',
+          position: { x: 200, y: 200 },
+          width: 50,
+          height: 50,
+          svgImageId: 'user-svg-99887766',
+          svgContent: '<svg viewBox="0 0 50 50"><path d="M 10,10 L 40,40" /></svg>',
+          color: '#ff00ff',        // Template default
+          strokeColor: '#00ffff',  // Template default
+          strokeWidth: 3,          // Template default
+          strokeLinejoin: 'bevel', // Template default
+          rotation: 0,
+          scale: 1
+        } as any
+      ]
+    }
+
+    // No overrides - should use template defaults
+    const layers: FlatLayerData[] = []
+
+    const svg = generateSvgString(template, layers)
+
+    // Verify template defaults are used
+    expect(svg).toContain('fill="#ff00ff"')
+    expect(svg).toContain('stroke="#00ffff"')
+    expect(svg).toContain('stroke-width="3"')
+    expect(svg).toContain('stroke-linejoin="bevel"')
+  })
+})

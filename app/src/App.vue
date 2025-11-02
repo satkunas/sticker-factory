@@ -110,21 +110,34 @@
       :layers="layers"
       @close="showDownloadModal = false"
     />
+
+    <!-- Missing User Assets Modal -->
+    <MissingUserAssetsModal
+      :isOpen="showMissingAssetsModal"
+      :missingSvgIds="missingSvgIds"
+      :missingFontIds="missingFontIds"
+      @close="closeMissingAssetsModal"
+      @refresh="refreshAfterUpload"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, provide, defineAsyncComponent, nextTick } from 'vue'
+import { ref, computed, onMounted, provide, defineAsyncComponent, nextTick, watch } from 'vue'
 import {
   isLoadingFromUrl,
   selectedTemplate as storeSelectedTemplate,
   flatFormData,
   updateTemplate,
-  updateLayer
+  updateLayer,
+  missingSvgIds,
+  missingFontIds,
+  clearMissingAssets
 } from './stores/urlDrivenStore'
 import { logger } from './utils/logger'
 import { encodeTemplateStateCompact, decodeTemplateStateCompact } from './utils/url-encoding'
 const DownloadModal = defineAsyncComponent(() => import('./components/DownloadModal.vue'))
+const MissingUserAssetsModal = defineAsyncComponent(() => import('./components/MissingUserAssetsModal.vue'))
 import TemplateSelector from './components/TemplateSelector.vue'
 import SvgViewer from './components/SvgViewer.vue'
 import LayerTextEditor from './components/LayerTextEditor.vue'
@@ -239,6 +252,31 @@ const selectedTemplate = storeSelectedTemplate
 
 // Modal states
 const showDownloadModal = ref(false)
+const showMissingAssetsModal = ref(false)
+
+// Modal handlers
+const closeMissingAssetsModal = () => {
+  showMissingAssetsModal.value = false
+  clearMissingAssets()
+}
+
+const refreshAfterUpload = () => {
+  // Close modal
+  showMissingAssetsModal.value = false
+  clearMissingAssets()
+
+  // Force re-render by reloading from URL
+  // This ensures newly uploaded assets are properly resolved
+  window.location.reload()
+}
+
+// Watch for missing assets and show modal automatically
+watch([missingSvgIds, missingFontIds], ([svgIds, fontIds]) => {
+  const hasMissingAssets = svgIds.length > 0 || fontIds.length > 0
+  if (hasMissingAssets && !isLoading.value) {
+    showMissingAssetsModal.value = true
+  }
+})
 
 // Use flat form data for Svg.vue component (FlatLayerData[])
 const layers = computed(() => flatFormData.value)

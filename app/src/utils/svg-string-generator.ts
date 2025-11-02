@@ -269,12 +269,17 @@ function generateTextElement(
 /**
  * Generate svgImage layer element with complex transforms
  * Uses shared logic from svg-transforms.ts to ensure visual parity with Svg.vue
+ *
+ * NOTE: Caller is responsible for enhancing layers with user SVG content
+ * (see layer-enhancement.ts). This function remains pure and store-agnostic.
  */
 function generateSvgImageElement(
   templateLayer: ProcessedTemplateLayer,
   layerData: FlatLayerData | undefined,
   template: SimpleTemplate
 ): string {
+  // Simple fallback: use layerData.svgContent if present, otherwise templateLayer.svgContent
+  // Caller (DownloadModal, Service Worker) pre-populates svgContent for user uploads
   return generateSvgImageHtml(templateLayer, layerData, template)
 }
 

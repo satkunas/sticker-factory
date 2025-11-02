@@ -51,6 +51,28 @@ export function calculateScaledTransformOrigin(
 }
 
 /**
+ * Sanitize SVG content by removing XML declarations and DOCTYPE
+ * User-uploaded SVGs may have these, but they're invalid when embedded
+ *
+ * @param svgContent - Original SVG content string
+ * @returns Sanitized SVG content
+ */
+export function sanitizeSvgContent(svgContent: string): string {
+  if (!svgContent) return ''
+
+  // Remove XML declaration (e.g., <?xml version="1.0" encoding="UTF-8"?>)
+  let sanitized = svgContent.replace(/<\?xml[^?]*\?>\s*/gi, '')
+
+  // Remove DOCTYPE declaration (e.g., <!DOCTYPE svg ...>)
+  sanitized = sanitized.replace(/<!DOCTYPE[^>]*>\s*/gi, '')
+
+  // Remove XML comments at the start (e.g., <!-- Created with Inkscape -->)
+  sanitized = sanitized.replace(/^\s*<!--[\s\S]*?-->\s*/g, '')
+
+  return sanitized.trim()
+}
+
+/**
  * Process SVG content to apply rendering attributes
  * Adds width/height, overflow="visible", and styling attributes
  *
@@ -74,6 +96,9 @@ export function applySvgRenderingAttributes(
   strokeLinejoin?: string
 ): string {
   if (!svgContent) return ''
+
+  // First sanitize the content to remove XML declarations
+  const sanitized = sanitizeSvgContent(svgContent)
 
   // Build style attributes to add/replace
   const attributesToSet: Record<string, string> = {
@@ -104,8 +129,8 @@ export function applySvgRenderingAttributes(
     attributesToSet['stroke-linejoin'] = strokeLinejoin
   }
 
-  // Process the SVG element
-  const processed = svgContent.replace(
+  // Process the SVG element (use sanitized content)
+  const processed = sanitized.replace(
     /<svg([^>]*)>/i,
     (match, attrs) => {
       let updatedAttrs = attrs
@@ -139,7 +164,7 @@ export function applySvgRenderingAttributes(
  * @returns Transform case identifier and relevant data
  */
 export function getSvgImageTransformCase(layerData: FlatLayerData | undefined): {
-  case: 'scale-with-origin' | 'scale-only' | 'rotation-only' | 'none'
+  case: 'scale-with-origin' | 'scale-and-rotation' | 'scale-only' | 'rotation-only' | 'none'
   scale?: number
   rotation?: number
   transformOrigin?: Point
@@ -155,7 +180,16 @@ export function getSvgImageTransformCase(layerData: FlatLayerData | undefined): 
     }
   }
 
-  // Scale only (without transform origin)
+  // Scale AND rotation (without transform origin)
+  if (layerData?.scale !== undefined && layerData?.rotation !== undefined) {
+    return {
+      case: 'scale-and-rotation',
+      scale: layerData.scale,
+      rotation: layerData.rotation
+    }
+  }
+
+  // Scale only (without transform origin or rotation)
   if (layerData?.scale !== undefined) {
     return {
       case: 'scale-only',
@@ -244,6 +278,15 @@ export function generateSvgImageHtml(
     </g>
   </g>`
     }
+
+    case 'scale-and-rotation':
+      return `<g${maskAttr}>
+    <g transform="${baseTransform}">
+      <g transform="scale(${transformCase.scale}) rotate(${transformCase.rotation})">
+        ${processedSvg}
+      </g>
+    </g>
+  </g>`
 
     case 'scale-only':
       return `<g${maskAttr}>

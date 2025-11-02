@@ -270,75 +270,162 @@
         </div>
       </div>
 
-      <!-- Font Selection Section -->
-      <div class="p-4 mx-4 bg-secondary-500/5 rounded-lg">
-        <SectionHeader headingTag="h4" headingClass="section-header" @reset="$emit('reset:selectedFont')">
-          Font Family
-        </SectionHeader>
+      <!-- Font Selection Section with Tabs -->
+      <AssetTabNavigation
+        :tabs="tabsConfig"
+        :activeTabId="activeTab"
+        @switchTab="switchTab"
+      />
 
-        <!-- Search -->
-        <div class="mb-2 bg-white rounded-lg p-2">
-          <div class="relative">
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search fonts..."
-              class="w-full px-3 py-2 pr-8 border border-secondary-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            >
-            <button
-              v-if="searchQuery.length > 0"
-              class="absolute right-2 top-1/2 transform -translate-y-1/2 text-secondary-400 hover:text-secondary-600 transition-colors"
-              type="button"
-              title="Clear search"
-              @click="searchQuery = ''"
-            >
-              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-              </svg>
-            </button>
+      <!-- Font Library Tab -->
+      <div v-if="activeTab === 'library'">
+        <div class="p-4 mx-4 bg-secondary-500/5 rounded-lg">
+          <SectionHeader headingTag="h4" headingClass="section-header" @reset="$emit('reset:selectedFont')">
+            Font Library
+          </SectionHeader>
+
+          <!-- Search -->
+          <div class="mb-2 bg-white rounded-lg p-2">
+            <div class="relative">
+              <input
+                v-model="searchQuery"
+                type="text"
+                placeholder="Search fonts..."
+                class="w-full px-3 py-2 pr-8 border border-secondary-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              >
+              <button
+                v-if="searchQuery.length > 0"
+                class="absolute right-2 top-1/2 transform -translate-y-1/2 text-secondary-400 hover:text-secondary-600 transition-colors"
+                type="button"
+                title="Clear search"
+                @click="searchQuery = ''"
+              >
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Category Filter and Results Count -->
+            <div class="mt-2 flex items-center gap-2">
+              <CategoryDropdown
+                v-model="selectedCategory"
+                :categories="fontCategoryOptions"
+                allLabel="All Fonts"
+              />
+              <div v-if="filteredFonts.length > 0" class="text-sm text-secondary-600 whitespace-nowrap">
+                {{ filteredFonts.length }} {{ filteredFonts.length === 1 ? 'font' : 'fonts' }} found
+              </div>
+            </div>
           </div>
 
-          <!-- Category Filter and Results Count -->
-          <div class="mt-2 flex items-center gap-2">
-            <CategoryDropdown
-              v-model="selectedCategory"
-              :categories="fontCategoryOptions"
-              allLabel="All Fonts"
-            />
-            <div v-if="filteredFonts.length > 0" class="text-sm text-secondary-600 whitespace-nowrap">
-              {{ filteredFonts.length }} {{ filteredFonts.length === 1 ? 'font' : 'fonts' }} found
+          <!-- Font List -->
+          <div class="bg-white rounded-lg p-2">
+            <div ref="fontListContainer" class="max-h-80 overflow-y-auto overflow-x-hidden" @scroll="handleScroll">
+              <div class="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-6 gap-2">
+                <FontTile
+                  v-for="font in visibleFonts"
+                  :key="font.name"
+                  :ref="el => { if (selectedFont?.name === font.name && el) selectedFontTile = el }"
+                  :font="font"
+                  :isSelected="selectedFont?.name === font.name"
+                  :stickerText="stickerText"
+                  @select="selectFont"
+                />
+              </div>
+
+              <!-- Loading indicator -->
+              <div v-if="isLoadingMore && visibleFonts.length < filteredFonts.length" class="py-2 text-center text-secondary-500">
+                <div class="text-xs">
+                  Loading more fonts...
+                </div>
+              </div>
+
+              <div v-if="filteredFonts.length === 0" class="py-4 text-center text-secondary-500">
+                <p class="text-sm">
+                  No fonts found matching "{{ searchQuery }}"
+                </p>
+              </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Font List -->
-        <div class="bg-white rounded-lg p-2">
-          <div ref="fontListContainer" class="max-h-80 overflow-y-auto overflow-x-hidden" @scroll="handleScroll">
-            <div class="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-6 gap-2">
-              <FontTile
-                v-for="font in visibleFonts"
-                :key="font.name"
-                :ref="el => { if (selectedFont?.name === font.name && el) selectedFontTile = el }"
-                :font="font"
-                :isSelected="selectedFont?.name === font.name"
-                :stickerText="stickerText"
-                @select="selectFont"
-              />
-            </div>
+      <!-- My Fonts Tab -->
+      <div v-if="activeTab === 'my-fonts'">
+        <div class="p-4 mx-4 bg-secondary-500/5 rounded-lg">
+          <h4 class="section-header mb-3">My Fonts</h4>
 
-            <!-- Loading indicator -->
-            <div v-if="isLoadingMore && visibleFonts.length < filteredFonts.length" class="py-2 text-center text-secondary-500">
-              <div class="text-xs">
-                Loading more fonts...
+          <!-- Inline Upload Section -->
+          <FileUploadZone
+            v-if="uploadState === 'idle' || selectedFile"
+            inputId="font-file-upload-inline"
+            accept=".woff2,.woff,.ttf,.otf"
+            fileTypeLabel="font file"
+            :helpText="`Font files (.woff2, .woff, .ttf, .otf) up to ${maxFontSizeMB}MB`"
+            :selectedFile="selectedFile"
+            :fileSizeKB="fileSizeKB"
+            :customName="customName"
+            :isProcessing="isProcessing"
+            :isDragging="isDragging"
+            uploadText="Upload"
+            uploadingText="Uploading..."
+            @fileSelect="handleFileSelect"
+            @clearFile="clearFile"
+            @upload="upload"
+            @dragover="handleDragOver"
+            @dragleave="handleDragLeave"
+            @drop="handleDrop"
+            @update:customName="customName = $event"
+          >
+            <template #icon>
+              <svg class="mx-auto h-10 w-10 text-secondary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+            </template>
+            <template #file-extra-info> ({{ fontFormat }})</template>
+            <template v-if="fontPreviewReady && fontPreviewId" #file-extra-content>
+              <div class="mt-3 p-3 bg-secondary-50 border border-secondary-200 rounded-md text-center">
+                <p class="text-xs text-secondary-600 mb-1">Preview:</p>
+                <div class="text-3xl" :style="{ fontFamily: fontPreviewId }">
+                  AaBbCc 123
+                </div>
               </div>
-            </div>
+            </template>
+          </FileUploadZone>
 
-            <div v-if="filteredFonts.length === 0" class="py-4 text-center text-secondary-500">
-              <p class="text-sm">
-                No fonts found matching "{{ searchQuery }}"
-              </p>
-            </div>
+          <UploadStateDisplay
+            :state="uploadState"
+            processingMessage="Processing font file..."
+            successMessage="Your font is now available below"
+            :errorMessage="error || 'An error occurred during upload'"
+            @uploadAnother="reset"
+            @retry="reset"
+          />
+
+          <!-- Empty State (only show if no uploads and no file selected) -->
+          <div v-if="userFontStore.itemCount.value === 0 && !selectedFile && !uploadedItem" class="bg-white rounded-lg p-6 text-center">
+            <p class="text-xs text-secondary-500">
+              No custom fonts yet. Use the upload area above to add your first font.
+            </p>
           </div>
+
+          <!-- Font Grid -->
+          <UserAssetGrid
+            v-if="userFontStore.itemCount.value > 0"
+            :items="userFontStore.items.value"
+            :selectedId="selectedFont?.family"
+            assetType="font"
+            gridClass="grid-cols-2 sm:grid-cols-3 md:grid-cols-4"
+            @select="selectUserFont"
+            @delete="deleteUserFont"
+          >
+            <template #item-content="{ item }">
+              <div class="text-center text-2xl mb-2" :style="{ fontFamily: item.id }">
+                Aa
+              </div>
+            </template>
+          </UserAssetGrid>
         </div>
       </div>
       </div>
@@ -347,14 +434,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { FONT_CATEGORIES, loadFont, type FontConfig } from '../config/fonts'
+import { useUserFontStore, type UserFontItem } from '../stores/userFontStore'
+import { USER_ASSET_CONFIG } from '../utils/ui-constants'
+import { validateFont, detectFontFormat } from '../utils/font-validation'
 import FontTile from './FontTile.vue'
 import CategoryDropdown from './CategoryDropdown.vue'
 import ColorPickerInput from './ColorPickerInput.vue'
 import StrokeControls from './StrokeControls.vue'
 import SectionHeader from './SectionHeader.vue'
+import FileUploadZone from './FileUploadZone.vue'
+import UploadStateDisplay from './UploadStateDisplay.vue'
+import AssetTabNavigation from './AssetTabNavigation.vue'
+import type { TabConfig } from './AssetTabNavigation.vue'
+import UserAssetGrid from './UserAssetGrid.vue'
 import { useFontSelector } from '../composables/useFontSelector'
+import { useFileUpload } from '../composables/useFileUpload'
 import { getFontCategoryColor } from '../utils/font-utils'
 import { COMMON_FONT_SIZES, DOMINANT_BASELINE_OPTIONS, COLOR_NONE } from '../utils/ui-constants'
 import { logger } from '../utils/logger'
@@ -438,9 +534,97 @@ const { isExpanded, containerRef } = useExpandable(
   'expandedFontSelectors'
 )
 
+// Stores
+const userFontStore = useUserFontStore()
+
+// Tab state
+const activeTab = ref<'library' | 'my-fonts'>('library')
+
+// Tab configuration for AssetTabNavigation
+const tabsConfig = computed<TabConfig[]>(() => [
+  { id: 'library', label: 'Font Library' },
+  { id: 'my-fonts', label: 'My Fonts', count: userFontStore.itemCount.value }
+])
+
+// Tab switching
+const switchTab = (tabId: string) => {
+  activeTab.value = tabId as 'library' | 'my-fonts'
+}
+
 // Local state
 const loadedFonts = ref(new Set<string>())
 const selectedFontTile = ref<HTMLElement>()
+
+// Font upload using reusable composable
+const {
+  selectedFile,
+  customName,
+  isProcessing,
+  uploadedItem,
+  error,
+  isDragging,
+  fileSizeKB,
+  uploadState,
+  handleFileSelect,
+  handleDragOver,
+  handleDragLeave,
+  handleDrop,
+  clearFile,
+  upload: uploadFile,
+  reset
+} = useFileUpload<UserFontItem>({
+  uploadFn: async (file: File, name: string) => {
+    // Validate font
+    const validation = validateFont(file)
+    if (!validation.valid) {
+      throw new Error(validation.error || 'Font validation failed')
+    }
+
+    // Upload to store
+    const item = await userFontStore.addUserFont(
+      file,
+      name.replace(/\.(woff2?|[ot]tf)$/i, '')
+    )
+
+    if (!item) {
+      throw new Error('Failed to upload font')
+    }
+
+    // Update preview
+    fontPreviewId.value = item.id
+    fontPreviewReady.value = true
+
+    return item
+  },
+  onSuccess: (item) => {
+    // Switch to 'My Fonts' tab and select the newly uploaded font
+    activeTab.value = 'my-fonts'
+    selectUserFont(item)
+  }
+})
+
+// Font preview state (unique to font uploads)
+const fontPreviewReady = ref(false)
+const fontPreviewId = ref<string | null>(null)
+
+// Watch selectedFile to reset preview when file changes
+watch(selectedFile, () => {
+  fontPreviewReady.value = false
+  fontPreviewId.value = null
+})
+
+// Computed properties for upload
+const maxFontSizeMB = computed(() => (USER_ASSET_CONFIG.MAX_FONT_SIZE_BYTES / 1024 / 1024).toFixed(0))
+const fontFormat = computed(() => {
+  if (!selectedFile.value) return ''
+  const format = detectFontFormat(selectedFile.value)
+  return format ? format.toUpperCase() : 'Unknown'
+})
+
+// Upload wrapper (handles preview loading before actual upload)
+const upload = async () => {
+  await uploadFile()
+}
 
 // Use font selector composable
 const {
@@ -575,4 +759,40 @@ watch(() => props.selectedFont, async (newFont) => {
     }
   }
 }, { immediate: true })
+
+// User font functions
+const selectUserFont = (font: UserFontItem) => {
+  // Convert UserFontItem to FontConfig format
+  const fontConfig: FontConfig = {
+    name: font.name,
+    family: font.id, // Use ID as family name
+    category: 'user-uploads',
+    variants: []
+  }
+  emit('update:selectedFont', fontConfig)
+}
+
+const deleteUserFont = (id: string) => {
+  // eslint-disable-next-line no-undef
+  if (confirm('Delete this font? This cannot be undone.')) {
+    const success = userFontStore.deleteUserFont(id)
+    if (success && props.selectedFont?.family === id) {
+      emit('reset:selectedFont')
+    }
+  }
+}
+
+// Auto-switch to My Fonts tab if user font is selected
+watch(() => props.selectedFont, (newFont) => {
+  if (newFont && newFont.category === 'user-uploads') {
+    activeTab.value = 'my-fonts'
+  }
+}, { immediate: true })
+
+// Load user fonts on mount
+onMounted(async () => {
+  if (!userFontStore.isLoaded.value) {
+    await userFontStore.loadUserFonts()
+  }
+})
 </script>
