@@ -437,8 +437,6 @@
 import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { FONT_CATEGORIES, loadFont, type FontConfig } from '../config/fonts'
 import { useUserFontStore, type UserFontItem } from '../stores/userFontStore'
-import { USER_ASSET_CONFIG } from '../utils/ui-constants'
-import { validateFont, detectFontFormat } from '../utils/font-validation'
 import FontTile from './FontTile.vue'
 import CategoryDropdown from './CategoryDropdown.vue'
 import ColorPickerInput from './ColorPickerInput.vue'
@@ -450,7 +448,7 @@ import AssetTabNavigation from './AssetTabNavigation.vue'
 import type { TabConfig } from './AssetTabNavigation.vue'
 import UserAssetGrid from './UserAssetGrid.vue'
 import { useFontSelector } from '../composables/useFontSelector'
-import { useFileUpload } from '../composables/useFileUpload'
+import { useFontUpload } from '../composables/useFontUpload'
 import { getFontCategoryColor } from '../utils/font-utils'
 import { COMMON_FONT_SIZES, DOMINANT_BASELINE_OPTIONS, COLOR_NONE } from '../utils/ui-constants'
 import { logger } from '../utils/logger'
@@ -555,7 +553,7 @@ const switchTab = (tabId: string) => {
 const loadedFonts = ref(new Set<string>())
 const selectedFontTile = ref<HTMLElement>()
 
-// Font upload using reusable composable
+// Font upload using font-specific composable
 const {
   selectedFile,
   customName,
@@ -570,61 +568,19 @@ const {
   handleDragLeave,
   handleDrop,
   clearFile,
-  upload: uploadFile,
-  reset
-} = useFileUpload<UserFontItem>({
-  uploadFn: async (file: File, name: string) => {
-    // Validate font
-    const validation = validateFont(file)
-    if (!validation.valid) {
-      throw new Error(validation.error || 'Font validation failed')
-    }
-
-    // Upload to store
-    const item = await userFontStore.addUserFont(
-      file,
-      name.replace(/\.(woff2?|[ot]tf)$/i, '')
-    )
-
-    if (!item) {
-      throw new Error('Failed to upload font')
-    }
-
-    // Update preview
-    fontPreviewId.value = item.id
-    fontPreviewReady.value = true
-
-    return item
-  },
+  upload,
+  reset,
+  fontPreviewReady,
+  fontPreviewId,
+  maxFontSizeMB,
+  fontFormat
+} = useFontUpload({
   onSuccess: (item) => {
     // Switch to 'My Fonts' tab and select the newly uploaded font
     activeTab.value = 'my-fonts'
     selectUserFont(item)
   }
 })
-
-// Font preview state (unique to font uploads)
-const fontPreviewReady = ref(false)
-const fontPreviewId = ref<string | null>(null)
-
-// Watch selectedFile to reset preview when file changes
-watch(selectedFile, () => {
-  fontPreviewReady.value = false
-  fontPreviewId.value = null
-})
-
-// Computed properties for upload
-const maxFontSizeMB = computed(() => (USER_ASSET_CONFIG.MAX_FONT_SIZE_BYTES / 1024 / 1024).toFixed(0))
-const fontFormat = computed(() => {
-  if (!selectedFile.value) return ''
-  const format = detectFontFormat(selectedFile.value)
-  return format ? format.toUpperCase() : 'Unknown'
-})
-
-// Upload wrapper (handles preview loading before actual upload)
-const upload = async () => {
-  await uploadFile()
-}
 
 // Use font selector composable
 const {
