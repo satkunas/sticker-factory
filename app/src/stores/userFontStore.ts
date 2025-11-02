@@ -7,18 +7,23 @@
  * Supports font file uploads with validation and browser registration.
  *
  * Architecture:
+ * - Uses useLocalStorageStore for localStorage operations
  * - Fonts stored as base64 data URIs in localStorage
  * - Deterministic hashing (same content = same ID)
  * - Browser font registration using CSS @font-face
  * - Validation: file size, format, structure
+ *
+ * Data Flow:
+ * User Upload → Validate → Generate Hash → Store → localStorage → Register with Browser
  */
 
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { logger } from '../utils/logger'
 import { USER_ASSET_CONFIG } from '../utils/ui-constants'
 import { generateAssetId, isUserFontId } from '../utils/asset-hash'
 import { readFileAsArrayBuffer, arrayBufferToBase64 } from '../utils/file-io'
 import { detectFontFormat } from '../utils/font-validation'
+import { useLocalStorageStore } from '../composables/useLocalStorageStore'
 
 // Supported font formats
 export const SUPPORTED_FONT_FORMATS = [
@@ -38,61 +43,40 @@ export interface UserFontItem {
   uploadDate: number   // Timestamp
 }
 
-// Global state
-const _items = ref<UserFontItem[]>([])
-const _isLoaded = ref(false)
+// Create base localStorage store with validation and sorting
+const baseStore = useLocalStorageStore<UserFontItem>({
+  storageKey: USER_ASSET_CONFIG.FONT_LOCALSTORAGE_KEY,
+  validateItem: (item) => {
+    // Basic validation
+    if (!item.id || !item.name || !item.fontData || !item.format) {
+      logger.warn('User Font Store: Invalid item found, skipping:', item)
+      return false
+    }
+
+    // Ensure ID format is correct
+    if (!isUserFontId(item.id)) {
+      logger.warn('User Font Store: Invalid ID format, skipping:', item.id)
+      return false
+    }
+
+    return true
+  },
+  sortItems: (a, b) => b.uploadDate - a.uploadDate, // Newest first
+  logContext: 'User Font Store'
+})
 
 /**
  * Load user fonts from localStorage
  */
 export async function loadUserFonts(): Promise<UserFontItem[]> {
-  try {
-    const stored = localStorage.getItem(USER_ASSET_CONFIG.FONT_LOCALSTORAGE_KEY)
+  const items = await baseStore.loadItems()
 
-    if (!stored) {
-      _items.value = []
-      _isLoaded.value = true
-      return []
-    }
+  // Register all loaded fonts with the browser
+  items.forEach(font => {
+    registerFontFace(font)
+  })
 
-    const parsed = JSON.parse(stored) as UserFontItem[]
-
-    // Validate and filter items
-    const validItems = parsed.filter(item => {
-      // Basic validation
-      if (!item.id || !item.name || !item.fontData || !item.format) {
-        logger.warn('Invalid font item found, skipping:', item.id)
-        return false
-      }
-
-      // Check ID format
-      if (!isUserFontId(item.id)) {
-        logger.warn('Invalid font ID format:', item.id)
-        return false
-      }
-
-      return true
-    })
-
-    // Sort by upload date (newest first)
-    validItems.sort((a, b) => b.uploadDate - a.uploadDate)
-
-    _items.value = validItems
-    _isLoaded.value = true
-
-    // Register all loaded fonts with the browser
-    validItems.forEach(font => {
-      registerFontFace(font)
-    })
-
-    logger.info(`Loaded ${validItems.length} user fonts from localStorage`)
-    return validItems
-  } catch (error) {
-    logger.error('Failed to load user fonts from localStorage:', error)
-    _items.value = []
-    _isLoaded.value = true
-    return []
-  }
+  return items
 }
 
 /**
@@ -130,6 +114,11 @@ export async function addUserFont(
   fontName?: string
 ): Promise<UserFontItem | null> {
   try {
+    // Ensure store is loaded
+    if (!baseStore.isLoaded.value) {
+      await loadUserFonts()
+    }
+
     // Validate file size
     if (fontFile.size > USER_ASSET_CONFIG.MAX_FONT_SIZE_BYTES) {
       const sizeMB = (fontFile.size / 1024 / 1024).toFixed(1)
@@ -138,7 +127,7 @@ export async function addUserFont(
     }
 
     // Check font count limit
-    if (_items.value.length >= USER_ASSET_CONFIG.MAX_FONT_COUNT) {
+    if (baseStore.items.value.length >= USER_ASSET_CONFIG.MAX_FONT_COUNT) {
       throw new Error(`Maximum ${USER_ASSET_CONFIG.MAX_FONT_COUNT} fonts allowed`)
     }
 
@@ -155,7 +144,7 @@ export async function addUserFont(
     const fontId = await generateAssetId(fontData, 'font')
 
     // Check for duplicates
-    if (_items.value.some(item => item.id === fontId)) {
+    if (baseStore.items.value.some(item => item.id === fontId)) {
       logger.warn('Font already exists:', fontId)
       throw new Error('This font has already been uploaded')
     }
@@ -172,16 +161,16 @@ export async function addUserFont(
       uploadDate: Date.now()
     }
 
-    // Add to collection
-    _items.value.unshift(fontItem)
+    // Add to collection (use _items for direct manipulation)
+    baseStore._items.value.unshift(fontItem)
 
     // Save to localStorage
-    await saveToLocalStorage()
+    baseStore.saveItems()
 
     // Register font with browser
     registerFontFace(fontItem)
 
-    logger.info('Added user font:', fontItem.name, fontItem.id)
+    logger.info('User Font Store: Added user font:', fontItem.name, fontItem.id)
     return fontItem
   } catch (error) {
     logger.error('User Font Store: Error adding user font:', error)
@@ -193,28 +182,30 @@ export async function addUserFont(
  * Delete a user font
  */
 export function deleteUserFont(id: string): boolean {
-  const index = _items.value.findIndex(item => item.id === id)
+  try {
+    const index = baseStore.items.value.findIndex(item => item.id === id)
+    if (index === -1) {
+      logger.warn('User Font Store: Item not found for deletion:', id)
+      return false
+    }
 
-  if (index === -1) {
-    logger.warn('Font not found for deletion:', id)
+    baseStore._items.value.splice(index, 1)
+    baseStore.saveItems()
+
+    logger.info('User Font Store: Deleted user font:', id)
+    return true
+
+  } catch (error) {
+    logger.error('User Font Store: Error deleting user font:', error)
     return false
   }
-
-  // Remove from collection
-  _items.value.splice(index, 1)
-
-  // Save to localStorage
-  saveToLocalStorage()
-
-  logger.info('Deleted user font:', id)
-  return true
 }
 
 /**
  * Get font data by ID
  */
 export function getUserFontData(id: string): string | null {
-  const font = _items.value.find(item => item.id === id)
+  const font = baseStore.items.value.find(item => item.id === id)
   return font ? font.fontData : null
 }
 
@@ -222,39 +213,29 @@ export function getUserFontData(id: string): string | null {
  * Get font item by ID
  */
 export function getUserFont(id: string): UserFontItem | null {
-  return _items.value.find(item => item.id === id) || null
-}
-
-/**
- * Save current state to localStorage
- */
-async function saveToLocalStorage(): Promise<void> {
-  try {
-    localStorage.setItem(
-      USER_ASSET_CONFIG.FONT_LOCALSTORAGE_KEY,
-      JSON.stringify(_items.value)
-    )
-  } catch (error) {
-    logger.error('Failed to save user fonts to localStorage:', error)
-    throw new Error('Failed to save fonts. localStorage might be full.')
-  }
+  return baseStore.items.value.find(item => item.id === id) || null
 }
 
 /**
  * Clear all user fonts
  */
 export function clearUserFonts(): void {
-  _items.value = []
-  localStorage.removeItem(USER_ASSET_CONFIG.FONT_LOCALSTORAGE_KEY)
-  logger.info('Cleared all user fonts')
+  baseStore.clearItems()
+  baseStore.reset() // Reset loaded flag for tests
+  logger.info('User Font Store: Cleared all user fonts')
 }
 
 // Export store interface
 export function useUserFontStore() {
   return {
-    items: computed(() => _items.value),
-    itemCount: computed(() => _items.value.length),
-    isLoaded: computed(() => _isLoaded.value),
+    // State
+    items: baseStore.items,
+    itemCount: computed(() => baseStore.items.value.length),
+    isLoaded: baseStore.isLoaded,
+    isLoading: baseStore.isLoading,
+    error: baseStore.error,
+
+    // Actions
     loadUserFonts,
     addUserFont,
     deleteUserFont,
