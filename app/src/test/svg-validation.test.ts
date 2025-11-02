@@ -14,6 +14,7 @@ import {
   validateSvgContent,
   sanitizeSvgContent,
   validateAndSanitizeSvg,
+  validateSvgFile,
   DANGEROUS_PATTERNS
 } from '../utils/svg-validation'
 
@@ -330,6 +331,123 @@ describe('svg-validation', () => {
       expect(eventPattern.test(' onload=')).toBe(true)
       // Should NOT match without leading whitespace (Inkscape "font" issue)
       expect(eventPattern.test('font-family')).toBe(false)
+    })
+  })
+
+  describe('validateSvgFile', () => {
+    const maxSize = 200000 // 200KB
+
+    it('should validate and return sanitized content for valid SVG file', async () => {
+      const file = new File([validSvg], 'test.svg', { type: 'image/svg+xml' })
+      const result = await validateSvgFile(file, maxSize)
+
+      expect(result.valid).toBe(true)
+      expect(result.sanitized).toBe(validSvg)
+      expect(result.error).toBeUndefined()
+    })
+
+    it('should reject invalid file type', async () => {
+      const file = new File([validSvg], 'test.png', { type: 'image/png' })
+      const result = await validateSvgFile(file, maxSize)
+
+      expect(result.valid).toBe(false)
+      expect(result.error).toContain('Invalid file type')
+      expect(result.sanitized).toBeUndefined()
+    })
+
+    it('should reject file that is too large', async () => {
+      const largeSvg = validSvg.repeat(10000)
+      const file = new File([largeSvg], 'large.svg', { type: 'image/svg+xml' })
+      const result = await validateSvgFile(file, 1000) // 1KB limit
+
+      expect(result.valid).toBe(false)
+      expect(result.error).toContain('too large')
+      expect(result.error).toContain('KB')
+      expect(result.sanitized).toBeUndefined()
+    })
+
+    it('should reject invalid XML structure', async () => {
+      const invalidXml = '<svg><unclosed'
+      const file = new File([invalidXml], 'invalid.svg', { type: 'image/svg+xml' })
+      const result = await validateSvgFile(file, maxSize)
+
+      expect(result.valid).toBe(false)
+      expect(result.error).toContain('parse error')
+      expect(result.sanitized).toBeUndefined()
+    })
+
+    it('should reject content without <svg> element', async () => {
+      const noSvg = '<div>not an svg</div>'
+      const file = new File([noSvg], 'nosvg.svg', { type: 'image/svg+xml' })
+      const result = await validateSvgFile(file, maxSize)
+
+      expect(result.valid).toBe(false)
+      expect(result.error).toContain('No <svg> root element')
+      expect(result.sanitized).toBeUndefined()
+    })
+
+    it('should sanitize dangerous content (scripts)', async () => {
+      const maliciousSvg = '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script><circle cx="50" cy="50" r="40" /></svg>'
+      const file = new File([maliciousSvg], 'malicious.svg', { type: 'image/svg+xml' })
+      const result = await validateSvgFile(file, maxSize)
+
+      expect(result.valid).toBe(true)
+      expect(result.sanitized).not.toContain('<script')
+      expect(result.sanitized).not.toContain('alert')
+      expect(result.sanitized).toContain('<circle')
+    })
+
+    it('should sanitize dangerous content (event handlers)', async () => {
+      const maliciousSvg = '<svg xmlns="http://www.w3.org/2000/svg"><circle onclick="alert(1)" cx="50" cy="50" r="40" /></svg>'
+      const file = new File([maliciousSvg], 'malicious.svg', { type: 'image/svg+xml' })
+      const result = await validateSvgFile(file, maxSize)
+
+      expect(result.valid).toBe(true)
+      expect(result.sanitized).not.toContain('onclick')
+      expect(result.sanitized).toContain('<circle')
+      expect(result.sanitized).toContain('cx="50"')
+    })
+
+    it('should handle file with .svg extension but wrong MIME type', async () => {
+      const file = new File([validSvg], 'test.svg', { type: 'application/octet-stream' })
+      const result = await validateSvgFile(file, maxSize)
+
+      expect(result.valid).toBe(true)
+      expect(result.sanitized).toBe(validSvg)
+    })
+
+    it('should validate file at exactly the size limit', async () => {
+      const file = new File([validSvg], 'test.svg', { type: 'image/svg+xml' })
+      const result = await validateSvgFile(file, file.size)
+
+      expect(result.valid).toBe(true)
+      expect(result.sanitized).toBe(validSvg)
+    })
+
+    it('should handle uppercase file extension', async () => {
+      const file = new File([validSvg], 'test.SVG', { type: 'image/svg+xml' })
+      const result = await validateSvgFile(file, maxSize)
+
+      expect(result.valid).toBe(true)
+      expect(result.sanitized).toBe(validSvg)
+    })
+
+    it('should handle complex SVG with nested elements', async () => {
+      const complexSvg = `
+        <svg xmlns="http://www.w3.org/2000/svg">
+          <g>
+            <circle cx="50" cy="50" r="40" fill="blue" />
+            <text x="50" y="50">Hello</text>
+          </g>
+        </svg>
+      `
+      const file = new File([complexSvg], 'complex.svg', { type: 'image/svg+xml' })
+      const result = await validateSvgFile(file, maxSize)
+
+      expect(result.valid).toBe(true)
+      expect(result.sanitized).toContain('<g>')
+      expect(result.sanitized).toContain('<circle')
+      expect(result.sanitized).toContain('<text')
     })
   })
 })

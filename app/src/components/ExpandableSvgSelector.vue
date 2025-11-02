@@ -213,13 +213,7 @@ import type { SvgLibraryItem } from '../types/template-types'
 import { useSvgStore } from '../stores/svgStore'
 import { useUserSvgStore, type UserSvgItem } from '../stores/userSvgStore'
 import { USER_ASSET_CONFIG } from '../utils/ui-constants'
-import {
-  validateSvgFileType,
-  validateSvgFileSize,
-  validateSvgStructure,
-  checkDangerousContent
-} from '../utils/svg-validation'
-import { readFileAsText } from '../utils/file-io'
+import { validateSvgFile } from '../utils/svg-validation'
 import { logger } from '../utils/logger'
 import { useFileUpload } from '../composables/useFileUpload'
 import CategoryDropdown from './CategoryDropdown.vue'
@@ -281,35 +275,15 @@ const {
   reset
 } = useFileUpload<UserSvgItem>({
   uploadFn: async (file: File, name: string) => {
-    // Validate file type
-    const typeValidation = validateSvgFileType(file)
-    if (!typeValidation.valid) {
-      throw new Error(typeValidation.error)
+    // Validate file using consolidated validation function
+    const validation = await validateSvgFile(file, USER_ASSET_CONFIG.MAX_SVG_SIZE_BYTES)
+    if (!validation.valid) {
+      throw new Error(validation.error || 'SVG validation failed')
     }
 
-    // Validate file size
-    const sizeValidation = validateSvgFileSize(file, USER_ASSET_CONFIG.MAX_SVG_SIZE_BYTES)
-    if (!sizeValidation.valid) {
-      throw new Error(sizeValidation.error)
-    }
-
-    // Read file content
-    const svgContent = await readFileAsText(file)
-
-    // Validate structure
-    const structureValidation = validateSvgStructure(svgContent)
-    if (!structureValidation.valid) {
-      throw new Error(structureValidation.error)
-    }
-
-    // Check for dangerous content
-    if (checkDangerousContent(svgContent)) {
-      throw new Error('SVG contains dangerous content (scripts/event handlers)')
-    }
-
-    // Upload to store
+    // Upload to store with sanitized content
     const item = await userSvgStore.addUserSvg(
-      svgContent,
+      validation.sanitized!,
       name.replace('.svg', '')
     )
 

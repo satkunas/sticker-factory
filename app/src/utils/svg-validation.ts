@@ -2,7 +2,7 @@
  * SVG Validation Utilities
  *
  * Single source of truth for all SVG validation and sanitization.
- * Used by: userSvgStore.ts, UploadAssetModal.vue, MissingUserAssetsModal.vue
+ * Used by: userSvgStore.ts, ExpandableSvgSelector.vue, MissingUserAssetsModal.vue
  *
  * Architecture:
  * - Centralized validation logic (no duplication)
@@ -12,6 +12,7 @@
  */
 
 import { logger } from './logger'
+import { readFileAsText } from './file-io'
 
 /**
  * Validation result interface
@@ -196,6 +197,66 @@ export function validateAndSanitizeSvg(
     }
   }
 
+  return {
+    valid: true,
+    sanitized
+  }
+}
+
+/**
+ * Validate SVG file (type + size + structure + security)
+ * Main validation function for file uploads - matches validateFont() pattern
+ *
+ * This function combines all validation steps and returns sanitized content:
+ * 1. Validates file type (.svg extension + MIME type)
+ * 2. Validates file size (before reading content)
+ * 3. Reads file content
+ * 4. Validates XML structure
+ * 5. Sanitizes dangerous content
+ * 6. Returns sanitized SVG if valid
+ *
+ * @param file - File object from file input
+ * @param maxSizeBytes - Maximum allowed file size in bytes
+ * @returns Validation result with sanitized content if valid
+ */
+export async function validateSvgFile(
+  file: File,
+  maxSizeBytes: number
+): Promise<{ valid: boolean; sanitized?: string; error?: string }> {
+  // 1. Validate file type
+  const typeValidation = validateSvgFileType(file)
+  if (!typeValidation.valid) {
+    return { valid: false, error: typeValidation.error }
+  }
+
+  // 2. Validate file size (before reading content for performance)
+  const sizeValidation = validateSvgFileSize(file, maxSizeBytes)
+  if (!sizeValidation.valid) {
+    return { valid: false, error: sizeValidation.error }
+  }
+
+  // 3. Read file content
+  let svgContent: string
+  try {
+    svgContent = await readFileAsText(file)
+  } catch (error) {
+    logger.error('Failed to read SVG file:', error)
+    return { valid: false, error: 'Failed to read file' }
+  }
+
+  // 4. Validate structure
+  const structureValidation = validateSvgStructure(svgContent)
+  if (!structureValidation.valid) {
+    return { valid: false, error: structureValidation.error }
+  }
+
+  // 5. Check for dangerous content
+  if (checkDangerousContent(svgContent)) {
+    logger.warn('Dangerous content detected in uploaded SVG, sanitizing...')
+  }
+
+  // 6. Sanitize and return
+  const sanitized = sanitizeSvgContent(svgContent)
   return {
     valid: true,
     sanitized

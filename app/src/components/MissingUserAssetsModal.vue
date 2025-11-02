@@ -122,16 +122,10 @@
 </template>
 
 <script setup lang="ts">
-/* global FileReader */
 import { ref, computed } from 'vue'
 import { useUserSvgStore } from '../stores/userSvgStore'
 import { extractHashFromAssetId } from '../utils/asset-hash'
-import {
-  validateSvgFileType,
-  validateSvgFileSize,
-  validateSvgStructure,
-  checkDangerousContent
-} from '../utils/svg-validation'
+import { validateSvgFile } from '../utils/svg-validation'
 import { USER_ASSET_CONFIG } from '../utils/ui-constants'
 import { logger } from '../utils/logger'
 
@@ -176,35 +170,14 @@ const handleFileUpload = async (event: Event, assetId: string) => {
     // Clear previous error for this asset
     uploadErrors.value.delete(assetId)
 
-    // Validate file type using svg-validation.ts
-    const typeValidation = validateSvgFileType(file)
-    if (!typeValidation.valid) {
-      uploadErrors.value.set(assetId, typeValidation.error!)
+    // Validate file using consolidated validation function
+    const validation = await validateSvgFile(file, USER_ASSET_CONFIG.MAX_SVG_SIZE_BYTES)
+    if (!validation.valid) {
+      uploadErrors.value.set(assetId, validation.error || 'SVG validation failed')
       return
     }
 
-    // Validate file size using svg-validation.ts
-    const sizeValidation = validateSvgFileSize(file, USER_ASSET_CONFIG.MAX_SVG_SIZE_BYTES)
-    if (!sizeValidation.valid) {
-      uploadErrors.value.set(assetId, sizeValidation.error!)
-      return
-    }
-
-    // Read file content
-    const svgContent = await readFileAsText(file)
-
-    // Validate structure using svg-validation.ts
-    const structureValidation = validateSvgStructure(svgContent)
-    if (!structureValidation.valid) {
-      uploadErrors.value.set(assetId, structureValidation.error!)
-      return
-    }
-
-    // Check for dangerous content using svg-validation.ts
-    if (checkDangerousContent(svgContent)) {
-      uploadErrors.value.set(assetId, 'SVG contains dangerous content (scripts/event handlers)')
-      return
-    }
+    const svgContent = validation.sanitized!
 
     // Get expected hash
     const expectedHash = extractHashFromAssetId(assetId)
@@ -239,22 +212,6 @@ const handleFileUpload = async (event: Event, assetId: string) => {
     // Reset input
     input.value = ''
   }
-}
-
-// Read file as text
-const readFileAsText = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      if (e.target?.result) {
-        resolve(e.target.result as string)
-      } else {
-        reject(new Error('Failed to read file'))
-      }
-    }
-    reader.onerror = () => reject(new Error('Failed to read file'))
-    reader.readAsText(file)
-  })
 }
 
 // Close modal
