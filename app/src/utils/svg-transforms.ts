@@ -211,7 +211,7 @@ export function getSvgImageTransformCase(layerData: FlatLayerData | undefined): 
 
 /**
  * Generate complete svgImage layer HTML with transforms
- * Used by svg-string-generator.ts for .svg URL generation
+ * Used by svg-string-generator.ts for SVG exports
  * Ensures visual parity with Svg.vue component
  *
  * @param templateLayer - Template layer definition

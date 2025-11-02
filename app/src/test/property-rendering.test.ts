@@ -2,11 +2,10 @@
  * Property Rendering Integration Tests
  * =====================================
  *
- * CRITICAL: These tests ensure ALL form properties work in ALL 4 rendering contexts:
- * 1. Main SVG preview (SvgContent.vue)
+ * CRITICAL: These tests ensure ALL form properties work in ALL 3 rendering contexts:
+ * 1. Main SVG preview (Svg.vue)
  * 2. Template selection icons (TemplateSelector.vue)
- * 3. Download preview (Service Worker .svg URL)
- * 4. Download files (exported SVG/PNG)
+ * 3. Download files (exported SVG/PNG/PDF/WebP)
  *
  * REQUIREMENTS:
  * - When adding a new property, add a test here

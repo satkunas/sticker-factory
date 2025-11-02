@@ -3,7 +3,7 @@
  * ============================
  *
  * Generates SVG strings from template data, reusing existing utilities.
- * Used by both Service Worker (for .svg URLs) and main app (for exports).
+ * Used by main app for downloads, template previews, and exports.
  * Ensures visual parity with Svg.vue component.
  */
 

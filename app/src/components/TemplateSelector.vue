@@ -99,9 +99,8 @@
 /* eslint-disable no-undef */
 import { ref, computed, inject, onMounted, onUnmounted } from 'vue'
 import { loadAllTemplates, getDefaultTemplate } from '../config/template-loader'
-import { encodeTemplateStateCompact } from '../utils/url-encoding'
+import { generateSvgString } from '../utils/svg-string-generator'
 import type { SimpleTemplate } from '../types/template-types'
-import type { AppState } from '../types/app-state'
 
 interface Props {
   selectedTemplate?: SimpleTemplate | null
@@ -137,6 +136,9 @@ const toggleExpanded = () => {
 // Available templates (loaded dynamically)
 const templates = ref<SimpleTemplate[]>([])
 
+// Template preview URLs (blob URLs cached per template)
+const templatePreviewUrls = ref<Map<string, string>>(new Map())
+
 // Template selection handler
 const selectTemplate = (template: SimpleTemplate) => {
   emit('update:selectedTemplate', template)
@@ -146,17 +148,21 @@ const selectTemplate = (template: SimpleTemplate) => {
   }
 }
 
-// Generate .svg URL for template preview with default values
+// Generate blob URL for template preview with default values
 const getTemplateSvgUrl = (template: SimpleTemplate): string => {
-  // Create minimal state with just template defaults (no user overrides)
-  const state: AppState = {
-    selectedTemplateId: template.id,
-    layers: [], // Empty layers = use all template defaults
-    lastModified: Date.now()
+  // Check cache first
+  if (templatePreviewUrls.value.has(template.id)) {
+    return templatePreviewUrls.value.get(template.id)!
   }
 
-  const encoded = encodeTemplateStateCompact(state)
-  return `/${encoded}.svg`
+  // Generate SVG with template defaults (empty layers = use all defaults)
+  const svgContent = generateSvgString(template, [])
+  const blob = new Blob([svgContent], { type: 'image/svg+xml' })
+  const url = URL.createObjectURL(blob)
+
+  // Cache the URL
+  templatePreviewUrls.value.set(template.id, url)
+  return url
 }
 
 // Escape key handler
@@ -183,5 +189,9 @@ onMounted(async () => {
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
+
+  // Clean up blob URLs
+  templatePreviewUrls.value.forEach(url => URL.revokeObjectURL(url))
+  templatePreviewUrls.value.clear()
 })
 </script>

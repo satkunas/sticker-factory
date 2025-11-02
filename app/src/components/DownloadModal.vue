@@ -132,13 +132,12 @@
 import { ref, computed, watch } from 'vue'
 import Modal from './Modal.vue'
 import { jsPDF } from 'jspdf'
-import type { SimpleTemplate, FlatLayerData, AppState } from '../types/template-types'
+import type { SimpleTemplate, FlatLayerData } from '../types/template-types'
 import { AVAILABLE_FONTS } from '../config/fonts'
 import { embedWebFonts } from '../utils/font-embedding'
-import { encodeTemplateStateCompact } from '../utils/url-encoding'
 import { generateSvgString } from '../utils/svg-string-generator'
 import { useUserSvgStore } from '../stores/userSvgStore'
-import { hasUserSvgLayers, enhanceLayersWithUserSvgs } from '../utils/layer-enhancement'
+import { enhanceLayersWithUserSvgs } from '../utils/layer-enhancement'
 import { logger } from '../utils/logger'
 
 interface Props {
@@ -158,23 +157,14 @@ const copyButtonText = ref('Copy')
 const previewSvgUrl = ref('')
 
 /**
- * Check if any layers use user-uploaded SVGs
- */
-const hasUserSvgs = computed(() => {
-  if (!props.layers) return false
-  return hasUserSvgLayers(props.layers)
-})
-
-/**
  * Generate preview URL when modal opens
- * - For library SVGs: use Service Worker .svg URL
- * - For user SVGs: generate blob URL with localStorage content
+ * Always generates blob URL with direct SVG generation
  */
 watch(
-  () => ({ show: props.show, template: props.template, layers: props.layers, hasUser: hasUserSvgs.value }),
-  async ({ show, template, layers, hasUser }) => {
+  () => ({ show: props.show, template: props.template, layers: props.layers }),
+  async ({ show, template, layers }) => {
     // Clean up old blob URL
-    if (previewSvgUrl.value.startsWith('blob:')) {
+    if (previewSvgUrl.value) {
       URL.revokeObjectURL(previewSvgUrl.value)
     }
     previewSvgUrl.value = ''
@@ -183,39 +173,27 @@ watch(
       return
     }
 
-    // Path 1: User SVGs - generate blob URL with localStorage content
-    if (hasUser) {
-      try {
-        const userSvgStore = useUserSvgStore()
-        if (!userSvgStore.isLoaded.value) {
-          await userSvgStore.loadUserSvgs()
-        }
-
-        // Enhance layers with user SVG content
-        const enhancedLayers = enhanceLayersWithUserSvgs(
-          layers,
-          (id) => userSvgStore.getUserSvgContent(id)
-        )
-
-        // Generate SVG directly
-        const svgContent = generateSvgString(template, enhancedLayers)
-
-        // Create blob URL for preview
-        const blob = new Blob([svgContent], { type: 'image/svg+xml' })
-        previewSvgUrl.value = URL.createObjectURL(blob)
-      } catch (error) {
-        logger.error('Error generating preview with user SVGs:', error)
+    try {
+      // Load user SVG store if needed
+      const userSvgStore = useUserSvgStore()
+      if (!userSvgStore.isLoaded.value) {
+        await userSvgStore.loadUserSvgs()
       }
-    }
-    // Path 2: Library SVGs - use Service Worker .svg URL
-    else {
-      const state: AppState = {
-        selectedTemplateId: template.id,
-        layers: layers,
-        lastModified: Date.now()
-      }
-      const encoded = encodeTemplateStateCompact(state)
-      previewSvgUrl.value = `/${encoded}.svg`
+
+      // Enhance layers with user SVG content (if any)
+      const enhancedLayers = enhanceLayersWithUserSvgs(
+        layers,
+        (id) => userSvgStore.getUserSvgContent(id)
+      )
+
+      // Generate SVG directly
+      const svgContent = generateSvgString(template, enhancedLayers)
+
+      // Create blob URL for preview
+      const blob = new Blob([svgContent], { type: 'image/svg+xml' })
+      previewSvgUrl.value = URL.createObjectURL(blob)
+    } catch (error) {
+      logger.error('Error generating preview:', error)
     }
   },
   { immediate: true }
@@ -247,105 +225,27 @@ const getFileName = () => {
 }
 
 const getSvgContent = async (embedFonts = false) => {
-  // If user SVGs are present, generate directly in main app context (Service Worker can't access localStorage)
-  if (hasUserSvgs.value && props.template && props.layers) {
-    try {
-      // Ensure user SVGs are loaded
-      const userSvgStore = useUserSvgStore()
-      if (!userSvgStore.isLoaded.value) {
-        await userSvgStore.loadUserSvgs()
-      }
-
-      // Enhance layers with user SVG content
-      const enhancedLayers = enhanceLayersWithUserSvgs(
-        props.layers,
-        (id) => userSvgStore.getUserSvgContent(id)
-      )
-
-      // Generate SVG directly
-      const svgText = generateSvgString(props.template, enhancedLayers)
-
-      // Apply same font processing as below
-      const parser = new DOMParser()
-      const svgDoc = parser.parseFromString(svgText, 'image/svg+xml')
-      const svgClone = svgDoc.documentElement as unknown as SVGElement
-
-      // Continue with font processing...
-      const usedFonts = new Set<string>()
-      const textElements = svgClone.querySelectorAll('text')
-      textElements.forEach(textEl => {
-        const fontFamily = textEl.getAttribute('font-family')
-        if (fontFamily) {
-          const cleanFontName = fontFamily.split(',')[0].replace(/['"]/g, '').trim()
-          usedFonts.add(cleanFontName)
-        }
-      })
-
-      let fontCSS = ''
-      usedFonts.forEach(fontName => {
-        const fontConfig = AVAILABLE_FONTS.find(font =>
-          font.family === fontName || font.name === fontName
-        )
-
-        if (fontConfig) {
-          const fontUrl = fontConfig.fontUrl
-          if (fontUrl && (fontConfig.source === 'google' || fontConfig.source === 'web')) {
-            fontCSS += `@import url('${fontUrl}');\n`
-          }
-
-          textElements.forEach(textEl => {
-            const currentFont = textEl.getAttribute('font-family')
-            if (currentFont && currentFont.includes(fontName)) {
-              if (fontConfig.fallback) {
-                const fontWithFallback = `${fontName}, ${fontConfig.fallback}`
-                textEl.setAttribute('font-family', fontWithFallback)
-              }
-            }
-          })
-        }
-      })
-
-      if (fontCSS) {
-        const existingStyles = svgClone.querySelectorAll('style')
-        existingStyles.forEach(style => style.remove())
-
-        let finalCSS = fontCSS
-        if (embedFonts) {
-          try {
-            finalCSS = await embedWebFonts(fontCSS)
-          } catch (error) {
-            // Keep original CSS as fallback
-          }
-        }
-
-        const styleElement = document.createElementNS('http://www.w3.org/2000/svg', 'style')
-        styleElement.textContent = finalCSS
-        svgClone.insertBefore(styleElement, svgClone.firstChild)
-      }
-
-      const svgString = new XMLSerializer().serializeToString(svgClone)
-      return `<?xml version="1.0" encoding="UTF-8"?>\n${svgString}`
-    } catch (error) {
-      logger.error('Error generating SVG with user content:', error)
-      return ''
-    }
-  }
-
-  // Standard path: Fetch SVG content from .svg URL (uses Service Worker)
-  if (!previewSvgUrl.value) {
+  if (!props.template || !props.layers) {
     return ''
   }
 
   try {
-    // Fetch the SVG content from the Service Worker / middleware
-    const response = await fetch(previewSvgUrl.value)
-    if (!response.ok) {
-      return ''
+    // Load user SVG store if needed
+    const userSvgStore = useUserSvgStore()
+    if (!userSvgStore.isLoaded.value) {
+      await userSvgStore.loadUserSvgs()
     }
 
-    const svgText = await response.text()
+    // Enhance layers with user SVG content (if any)
+    const enhancedLayers = enhanceLayersWithUserSvgs(
+      props.layers,
+      (id) => userSvgStore.getUserSvgContent(id)
+    )
 
-    // Parse the SVG to process it
+    // Generate SVG directly
+    const svgText = generateSvgString(props.template, enhancedLayers)
+
+    // Parse and process SVG
     const parser = new DOMParser()
     const svgDoc = parser.parseFromString(svgText, 'image/svg+xml')
     const svgClone = svgDoc.documentElement as unknown as SVGElement
@@ -356,7 +256,6 @@ const getSvgContent = async (embedFonts = false) => {
     textElements.forEach(textEl => {
       const fontFamily = textEl.getAttribute('font-family')
       if (fontFamily) {
-        // Clean up font family name (remove quotes and fallbacks)
         const cleanFontName = fontFamily.split(',')[0].replace(/['"]/g, '').trim()
         usedFonts.add(cleanFontName)
       }
@@ -365,42 +264,23 @@ const getSvgContent = async (embedFonts = false) => {
     // Generate CSS for the fonts
     let fontCSS = ''
     usedFonts.forEach(fontName => {
-      // Find the font config from available fonts
       const fontConfig = AVAILABLE_FONTS.find(font =>
         font.family === fontName || font.name === fontName
       )
 
       if (fontConfig) {
-        // For web fonts (Google Fonts, etc.), include the font definition
         const fontUrl = fontConfig.fontUrl
         if (fontUrl && (fontConfig.source === 'google' || fontConfig.source === 'web')) {
           fontCSS += `@import url('${fontUrl}');\n`
         }
 
-        // Keep the original font name and add fallbacks
         textElements.forEach(textEl => {
           const currentFont = textEl.getAttribute('font-family')
           if (currentFont && currentFont.includes(fontName)) {
-            // Preserve the original font but ensure fallback is included
             if (fontConfig.fallback) {
               const fontWithFallback = `${fontName}, ${fontConfig.fallback}`
               textEl.setAttribute('font-family', fontWithFallback)
             }
-          }
-        })
-      } else {
-        // For unknown fonts, provide basic fallbacks
-        const fallback = fontName === 'Arial' ? 'Arial, sans-serif' :
-                        fontName === 'Times' ? 'Times, serif' :
-                        fontName === 'Courier' ? 'Courier, monospace' :
-                        fontName.includes('serif') ? `${fontName}, serif` :
-                        fontName.includes('mono') ? `${fontName}, monospace` :
-                        `${fontName}, sans-serif`
-
-        textElements.forEach(textEl => {
-          const currentFont = textEl.getAttribute('font-family')
-          if (currentFont && currentFont.includes(fontName)) {
-            textEl.setAttribute('font-family', fallback)
           }
         })
       }
@@ -408,11 +288,9 @@ const getSvgContent = async (embedFonts = false) => {
 
     // Add CSS styles to SVG if we have font imports
     if (fontCSS) {
-      // Remove existing style elements (from Service Worker) to avoid duplicate @import statements
       const existingStyles = svgClone.querySelectorAll('style')
       existingStyles.forEach(style => style.remove())
 
-      // If font embedding is requested, convert @import to embedded @font-face
       let finalCSS = fontCSS
       if (embedFonts) {
         try {
@@ -431,6 +309,7 @@ const getSvgContent = async (embedFonts = false) => {
     const svgString = new XMLSerializer().serializeToString(svgClone)
     return `<?xml version="1.0" encoding="UTF-8"?>\n${svgString}`
   } catch (error) {
+    logger.error('Error generating SVG:', error)
     return ''
   }
 }
