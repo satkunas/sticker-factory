@@ -100,6 +100,9 @@ export const MIN_TEXTAREA_ROWS = 1 as const
 // Default line height for multi-line text (1.2 = 120% of font size)
 export const DEFAULT_LINE_HEIGHT = 1.2 as const
 
+// Default font size for text layers (16px is a standard readable size)
+export const DEFAULT_FONT_SIZE = 16 as const
+
 // Viewport and centering configuration
 export const VIEWPORT_CONFIG = {
   MIN_CONTENT_WIDTH: 400,

@@ -15,7 +15,7 @@ import {
 } from './svg-transforms'
 import { extractFontFamily } from './font-utils'
 import { splitLines, calculateLineDy } from './text-multiline'
-import { DEFAULT_LINE_HEIGHT } from './ui-constants'
+import { DEFAULT_LINE_HEIGHT, DEFAULT_FONT_SIZE } from './ui-constants'
 
 /**
  * Generate complete SVG string from template and layer data
@@ -223,7 +223,7 @@ function generateTextElement(
     }
 
     const tspans = lines.map((line, i) => {
-      const dy = calculateLineDy(i, lines.length, fontSize ?? 16, lineHeight)
+      const dy = calculateLineDy(i, lines.length, fontSize ?? DEFAULT_FONT_SIZE, lineHeight)
       return `<tspan x="0" dy="${dy}">${escapeXml(line)}</tspan>`
     }).join('\n        ')
 

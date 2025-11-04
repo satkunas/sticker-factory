@@ -100,7 +100,7 @@
             :dy="calculateLineDy(
               index,
               splitLines(layerData?.text ?? templateLayer.text ?? '').length,
-              layerData?.fontSize ?? templateLayer.fontSize ?? 16,
+              layerData?.fontSize ?? templateLayer.fontSize ?? DEFAULT_FONT_SIZE,
               layerData?.lineHeight ?? templateLayer.lineHeight ?? DEFAULT_LINE_HEIGHT
             )"
           >
@@ -203,7 +203,7 @@ import { getSvgImageTransformCase, calculateScaledTransformOrigin, applySvgRende
 import { extractFontFamily } from '../utils/font-utils'
 import { textPathDefinitions } from '../stores/urlDrivenStore'
 import { splitLines, calculateLineDy } from '../utils/text-multiline'
-import { DEFAULT_LINE_HEIGHT } from '../utils/ui-constants'
+import { DEFAULT_LINE_HEIGHT, DEFAULT_FONT_SIZE } from '../utils/ui-constants'
 
 interface Props {
   template: SimpleTemplate
