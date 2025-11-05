@@ -206,15 +206,30 @@ const formats = [
   { type: 'webp', name: 'WebP', description: 'Modern raster' }
 ]
 
+/**
+ * Get viewBox dimensions from template
+ * Returns dimensions without fallbacks - missing viewBox is a data error
+ */
+const getViewBoxDimensions = () => {
+  return {
+    width: props.template?.viewBox?.width,
+    height: props.template?.viewBox?.height
+  }
+}
+
 const pngResolutions = computed(() => {
-  const baseWidth = props.template?.viewBox?.width || 200
-  const baseHeight = props.template?.viewBox?.height || 60
+  const { width, height } = getViewBoxDimensions()
+
+  // If viewBox missing, return empty array (resolution options require valid dimensions)
+  if (!width || !height) {
+    return []
+  }
 
   return [
-    { value: 1, label: '1x', size: `${baseWidth}×${baseHeight}` },
-    { value: 2, label: '2x', size: `${baseWidth * 2}×${baseHeight * 2}` },
-    { value: 4, label: '4x', size: `${baseWidth * 4}×${baseHeight * 4}` },
-    { value: 8, label: '8x', size: `${baseWidth * 8}×${baseHeight * 8}` }
+    { value: 1, label: '1x', size: `${width}×${height}` },
+    { value: 2, label: '2x', size: `${width * 2}×${height * 2}` },
+    { value: 4, label: '4x', size: `${width * 4}×${height * 4}` },
+    { value: 8, label: '8x', size: `${width * 8}×${height * 8}` }
   ]
 })
 
@@ -392,10 +407,15 @@ const downloadPNG = async () => {
     return
   }
 
+  const { width: baseWidth, height: baseHeight } = getViewBoxDimensions()
+
+  // Require valid dimensions for PNG export
+  if (!baseWidth || !baseHeight) {
+    logger.error('Cannot export PNG: template missing viewBox dimensions')
+    return
+  }
+
   const scale = selectedResolution.value
-  // Use actual template dimensions instead of hardcoded values
-  const baseWidth = props.template?.viewBox?.width || 200
-  const baseHeight = props.template?.viewBox?.height || 60
   const width = baseWidth * scale
   const height = baseHeight * scale
 
@@ -418,10 +438,15 @@ const downloadWebP = async () => {
     return
   }
 
+  const { width: baseWidth, height: baseHeight } = getViewBoxDimensions()
+
+  // Require valid dimensions for WebP export
+  if (!baseWidth || !baseHeight) {
+    logger.error('Cannot export WebP: template missing viewBox dimensions')
+    return
+  }
+
   const scale = selectedResolution.value
-  // Use actual template dimensions instead of hardcoded values
-  const baseWidth = props.template?.viewBox?.width || 200
-  const baseHeight = props.template?.viewBox?.height || 60
   const width = baseWidth * scale
   const height = baseHeight * scale
 
