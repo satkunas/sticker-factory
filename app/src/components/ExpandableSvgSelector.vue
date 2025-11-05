@@ -212,10 +212,8 @@ import { ref, computed, watch, onMounted, onUnmounted, type ComponentPublicInsta
 import type { SvgLibraryItem } from '../types/template-types'
 import { useSvgStore } from '../stores/svgStore'
 import { useUserSvgStore, type UserSvgItem } from '../stores/userSvgStore'
-import { USER_ASSET_CONFIG } from '../utils/ui-constants'
-import { validateSvgFile } from '../utils/svg-validation'
 import { logger } from '../utils/logger'
-import { useFileUpload } from '../composables/useFileUpload'
+import { useSvgUpload } from '../composables/useSvgUpload'
 import CategoryDropdown from './CategoryDropdown.vue'
 import SectionHeader from './SectionHeader.vue'
 import AssetTabNavigation from './AssetTabNavigation.vue'
@@ -256,7 +254,7 @@ const tabs = computed(() => [
 const searchQuery = ref('')
 const selectedCategory = ref<string | null>(null)
 
-// File upload composable
+// SVG upload composable (wraps useFileUpload with SVG-specific logic)
 const {
   selectedFile,
   customName,
@@ -271,40 +269,17 @@ const {
   handleDragLeave,
   handleDrop,
   clearFile,
-  upload: uploadFile,
-  reset
-} = useFileUpload<UserSvgItem>({
-  uploadFn: async (file: File, name: string) => {
-    // Validate file using consolidated validation function
-    const validation = await validateSvgFile(file, USER_ASSET_CONFIG.MAX_SVG_SIZE_BYTES)
-    if (!validation.valid) {
-      throw new Error(validation.error || 'SVG validation failed')
-    }
-
-    // Upload to store with sanitized content
-    const item = await userSvgStore.addUserSvg(
-      validation.sanitized!,
-      name.replace('.svg', '')
-    )
-
-    if (!item) {
-      throw new Error(userSvgStore.error.value || 'Failed to upload SVG')
-    }
-
-    return item
-  },
+  upload,
+  reset,
+  maxSvgSizeKB
+  // Note: svgPreviewReady and svgPreviewId available but not used in this component
+} = useSvgUpload({
   onSuccess: (item) => {
     // Switch to 'My Images' tab and select the newly uploaded SVG
     activeTab.value = 'my-images'
     selectUserSvg(item)
   }
 })
-
-// Expose upload function with correct name
-const upload = uploadFile
-
-// Computed for max size display
-const maxSvgSizeKB = computed(() => USER_ASSET_CONFIG.MAX_SVG_SIZE_BYTES / 1000)
 
 // Enhanced lazy loading state for 5000+ icons
 const svgGridContainer = ref<HTMLElement>()

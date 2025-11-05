@@ -13,7 +13,7 @@ vi.mock('../stores/userFontStore', () => ({
   useUserFontStore: vi.fn(() => ({
     addUserFont: vi.fn(async (file: File, name: string) => ({
       id: 'user-font-test-id',
-      name: name,
+      name,
       format: 'woff2',
       size: file.size,
       uploadDate: Date.now(),
