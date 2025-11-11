@@ -213,8 +213,8 @@ function generateTextElement(
     const lines = splitLines(text)
     const lineHeight = layerData?.lineHeight ?? flatLayer.lineHeight ?? DEFAULT_LINE_HEIGHT
 
-    const x = resolveLayerPosition(templateLayer.position?.x, template.width)
-    const y = resolveLayerPosition(templateLayer.position?.y, template.height)
+    const x = resolveLayerPosition(layerData?.position?.x ?? templateLayer.position?.x, template.width)
+    const y = resolveLayerPosition(layerData?.position?.y ?? templateLayer.position?.y, template.height)
     const rotation = layerData?.rotation ?? templateLayer.rotation
 
     let transform = `translate(${x}, ${y})`
@@ -243,8 +243,8 @@ function generateTextElement(
   }
 
   // REGULAR TEXT (single-line with transform positioning)
-  const x = resolveLayerPosition(templateLayer.position?.x, template.width)
-  const y = resolveLayerPosition(templateLayer.position?.y, template.height)
+  const x = resolveLayerPosition(layerData?.position?.x ?? templateLayer.position?.x, template.width)
+  const y = resolveLayerPosition(layerData?.position?.y ?? templateLayer.position?.y, template.height)
   const rotation = layerData?.rotation ?? templateLayer.rotation
 
   // Build transform

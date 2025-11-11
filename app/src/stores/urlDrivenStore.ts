@@ -95,6 +95,9 @@ export interface LayerFormData {
   scale?: number
   rotation?: number
 
+  // Position override (all layer types)
+  position?: { x: number | string; y: number | string }
+
   // Computed properties (added by store during merging)
   transformString?: string
   transformOrigin?: Point
@@ -428,6 +431,9 @@ function mergeTemplateWithUrlData(template: SimpleTemplate, urlLayers: Array<{ i
       // Rotation property (applies to all text types)
       formEntry.rotation = urlOverride.rotation !== undefined ? urlOverride.rotation : flatLayer.rotation
 
+      // Position override (applies to all layer types)
+      formEntry.position = urlOverride.position !== undefined ? urlOverride.position : flatLayer.position
+
       // Handle fontFamily - convert string to font object
       // Priority: URL override > template default
       const fontFamilyToUse = urlOverride.fontFamily !== undefined ? urlOverride.fontFamily : flatLayer.fontFamily
@@ -443,6 +449,9 @@ function mergeTemplateWithUrlData(template: SimpleTemplate, urlLayers: Array<{ i
       formEntry.strokeColor = urlOverride.strokeColor !== undefined ? urlOverride.strokeColor : flatLayer.strokeColor
       formEntry.strokeWidth = urlOverride.strokeWidth !== undefined ? urlOverride.strokeWidth : flatLayer.strokeWidth
       formEntry.strokeLinejoin = urlOverride.strokeLinejoin !== undefined ? urlOverride.strokeLinejoin : flatLayer.strokeLinejoin
+
+      // Position override (applies to all layer types)
+      formEntry.position = urlOverride.position !== undefined ? urlOverride.position : flatLayer.position
     } else if (templateLayer.type === 'svgImage') {
       // Template loader now flattens structure - properties use normalized names
       formEntry.svgImageId = urlOverride.svgImageId !== undefined ? urlOverride.svgImageId : flatLayer.svgImageId
@@ -452,6 +461,9 @@ function mergeTemplateWithUrlData(template: SimpleTemplate, urlLayers: Array<{ i
       formEntry.strokeLinejoin = urlOverride.strokeLinejoin !== undefined ? urlOverride.strokeLinejoin : flatLayer.strokeLinejoin
       formEntry.scale = urlOverride.scale !== undefined ? urlOverride.scale : flatLayer.scale
       formEntry.rotation = urlOverride.rotation !== undefined ? urlOverride.rotation : flatLayer.rotation
+
+      // Position override (applies to all layer types)
+      formEntry.position = urlOverride.position !== undefined ? urlOverride.position : flatLayer.position
 
       // CRITICAL: Resolve user SVG content
       // Check if this layer uses a user-uploaded SVG

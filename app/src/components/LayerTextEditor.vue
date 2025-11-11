@@ -78,6 +78,7 @@
       :multiline="multiline"
       :lineHeight="lineHeight"
       :rotation="rotation"
+      :positionY="positionY"
       @update:selectedFont="$emit('update:selectedFont', $event)"
       @update:textColor="$emit('update:textColor', $event)"
       @update:fontSize="$emit('update:fontSize', $event)"
@@ -90,6 +91,7 @@
       @update:dominantBaseline="$emit('update:dominantBaseline', $event)"
       @update:lineHeight="$emit('update:lineHeight', $event)"
       @update:rotation="$emit('update:rotation', $event)"
+      @update:positionY="$emit('update:positionY', $event)"
       @reset:selectedFont="$emit('reset:selectedFont')"
       @reset:textColor="$emit('reset:textColor')"
       @reset:fontSize="$emit('reset:fontSize')"
@@ -102,6 +104,7 @@
       @reset:dominantBaseline="$emit('reset:dominantBaseline')"
       @reset:lineHeight="$emit('reset:lineHeight')"
       @reset:rotation="$emit('reset:rotation')"
+      @reset:positionY="$emit('reset:positionY')"
     />
     </div>
   </div>
@@ -135,6 +138,8 @@ interface Props {
   lineHeight?: number
   // Rotation support
   rotation?: number
+  // Position support
+  positionY?: number | string
 }
 
 interface Emits {
@@ -154,6 +159,8 @@ interface Emits {
   'update:lineHeight': [value: number]
   // Rotation emit event
   'update:rotation': [value: number]
+  // Position emit events
+  'update:positionY': [value: string]
   // Reset emit events
   'reset:selectedFont': []
   'reset:textColor': []
@@ -167,6 +174,7 @@ interface Emits {
   'reset:dominantBaseline': []
   'reset:lineHeight': []
   'reset:rotation': []
+  'reset:positionY': []
 }
 
 const props = defineProps<Props>()

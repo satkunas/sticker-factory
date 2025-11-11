@@ -140,7 +140,22 @@ export function useLayerEventMapping(
       ])
     ) : {}
 
-    return { ...updateEvents, ...resetEvents }
+    // Custom position Y handler (text layers only)
+    // Updates only the Y coordinate while preserving X
+    const positionEvents = layer.type === 'text' ? {
+      'update:positionY': (value: number | string) => {
+        const currentPosition = layer.flatLayer.position
+        updateLayer(layer.id, {
+          position: {
+            x: currentPosition?.x ?? '50%',
+            y: value
+          }
+        })
+      },
+      'reset:positionY': () => updateLayer(layer.id, { position: undefined })
+    } : {}
+
+    return { ...updateEvents, ...resetEvents, ...positionEvents }
   }
 
   /**
@@ -173,6 +188,8 @@ export function useLayerEventMapping(
           lineHeight: flatLayer.lineHeight,
           // Rotation property
           rotation: flatLayer.rotation,
+          // Position property (pass Y coordinate for UI control)
+          positionY: flatLayer.position?.y,
           instanceId: layer.id
         }
       case 'shape':

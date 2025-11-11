@@ -224,8 +224,8 @@ export function generateSvgImageHtml(
   layerData: FlatLayerData | undefined,
   template: SimpleTemplate
 ): string {
-  const x = resolveLayerPosition(templateLayer.position?.x, template.width)
-  const y = resolveLayerPosition(templateLayer.position?.y, template.height)
+  const x = resolveLayerPosition(layerData?.position?.x ?? templateLayer.position?.x, template.width)
+  const y = resolveLayerPosition(layerData?.position?.y ?? templateLayer.position?.y, template.height)
 
   const svgContent = layerData?.svgContent || templateLayer.svgContent
   if (!svgContent) return ''

@@ -167,6 +167,44 @@
             </div>
           </div>
 
+          <!-- Position Y Control (vertical positioning) -->
+          <div class="bg-secondary-500/5 rounded-lg p-3">
+            <SectionHeader @reset="$emit('reset:positionY')">
+              Vertical Position
+            </SectionHeader>
+            <div class="grid grid-cols-1">
+              <div class="bg-white rounded-lg p-3 min-w-0">
+                <div class="text-xs font-medium text-secondary-600 mb-2">
+                  Y Position (%)
+                </div>
+                <div class="flex items-center space-x-2">
+                  <input
+                    :value="parseFloat(String(positionY ?? '50%').replace('%', ''))"
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
+                    @input="handlePositionYInput($event.target.value)"
+                  >
+                  <input
+                    :value="parseFloat(String(positionY ?? '50%').replace('%', ''))"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="1"
+                    class="w-14 px-1 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    @input="handlePositionYInput($event.target.value)"
+                  >
+                  <span class="text-xs text-secondary-500">%</span>
+                </div>
+                <div class="text-xs text-secondary-500 mt-1">
+                  Vertical position (0% = top, 100% = bottom)
+                </div>
+              </div>
+            </div>
+          </div>
+
           <ColorPickerInput
             :value="textStrokeColor"
             label="Stroke Color"
@@ -474,6 +512,8 @@ interface Props {
   lineHeight?: number
   // Rotation property (for all text types)
   rotation?: number
+  // Position property (Y coordinate)
+  positionY?: number | string
 }
 
 interface Emits {
@@ -492,6 +532,8 @@ interface Emits {
   'update:lineHeight': [value: number]
   // Rotation emit event
   'update:rotation': [value: number]
+  // Position emit events
+  'update:positionY': [value: string]
   // Reset emit events
   'reset:selectedFont': []
   'reset:textColor': []
@@ -505,6 +547,7 @@ interface Emits {
   'reset:dominantBaseline': []
   'reset:lineHeight': []
   'reset:rotation': []
+  'reset:positionY': []
 }
 
 const props = defineProps<Props>()
@@ -523,6 +566,13 @@ const handleDyInput = (value: string) => {
   const parsed = parseInt(value)
   if (!isNaN(parsed)) {
     emit('update:dy', parsed)
+  }
+}
+
+const handlePositionYInput = (value: string) => {
+  const parsed = parseFloat(value)
+  if (!isNaN(parsed)) {
+    emit('update:positionY', `${parsed}%`)
   }
 }
 

@@ -276,14 +276,23 @@ const getSvgContent = async (embedFonts = false) => {
       }
     })
 
+    logger.info('🔍 Font Detection:', {
+      usedFonts: Array.from(usedFonts),
+      textElementsCount: textElements.length
+    })
+
     // Generate CSS for the fonts
     let fontCSS = ''
+    const fontMatches: string[] = []
+    const fontMisses: string[] = []
+
     usedFonts.forEach(fontName => {
       const fontConfig = AVAILABLE_FONTS.find(font =>
         font.family === fontName || font.name === fontName
       )
 
       if (fontConfig) {
+        fontMatches.push(fontName)
         const fontUrl = fontConfig.fontUrl
         if (fontUrl && (fontConfig.source === 'google' || fontConfig.source === 'web')) {
           fontCSS += `@import url('${fontUrl}');\n`
@@ -298,7 +307,15 @@ const getSvgContent = async (embedFonts = false) => {
             }
           }
         })
+      } else {
+        fontMisses.push(fontName)
       }
+    })
+
+    logger.info('🎯 Font Matching:', {
+      matched: fontMatches,
+      missed: fontMisses,
+      fontCssLength: fontCSS.length
     })
 
     // Add CSS styles to SVG if we have font imports
@@ -306,11 +323,19 @@ const getSvgContent = async (embedFonts = false) => {
       const existingStyles = svgClone.querySelectorAll('style')
       existingStyles.forEach(style => style.remove())
 
+      logger.info('📝 Font CSS before embedding:', fontCSS.substring(0, 200))
+
       let finalCSS = fontCSS
       if (embedFonts) {
         try {
           finalCSS = await embedWebFonts(fontCSS)
+          logger.info('✅ Font CSS after embedding:', {
+            beforeLength: fontCSS.length,
+            afterLength: finalCSS.length,
+            preview: finalCSS.substring(0, 200)
+          })
         } catch (error) {
+          logger.error('❌ Font embedding failed:', error)
           // Keep original CSS as fallback
         }
       }

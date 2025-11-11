@@ -76,9 +76,9 @@
       <g
         v-else-if="!templateLayer.textPath && templateLayer.multiline"
         :transform="`translate(${
-          resolveLayerPosition(templateLayer.position.x, template.width)
+          resolveLayerPosition(layerData?.position?.x ?? templateLayer.position.x, template.width)
         }, ${
-          resolveLayerPosition(templateLayer.position.y, template.height)
+          resolveLayerPosition(layerData?.position?.y ?? templateLayer.position.y, template.height)
         })${(layerData?.rotation ?? templateLayer.rotation) !== undefined ? ` rotate(${layerData?.rotation ?? templateLayer.rotation})` : ''}`"
       >
         <text
@@ -113,9 +113,9 @@
       <g
         v-else
         :transform="`translate(${
-          resolveLayerPosition(templateLayer.position.x, template.width)
+          resolveLayerPosition(layerData?.position?.x ?? templateLayer.position.x, template.width)
         }, ${
-          resolveLayerPosition(templateLayer.position.y, template.height)
+          resolveLayerPosition(layerData?.position?.y ?? templateLayer.position.y, template.height)
         })${(layerData?.rotation ?? templateLayer.rotation) !== undefined ? ` rotate(${layerData?.rotation ?? templateLayer.rotation})` : ''}`"
       >
         <text
@@ -146,9 +146,9 @@
     >
       <g
         :transform="`translate(${
-          resolveLayerPosition(templateLayer.position.x, template.width)
+          resolveLayerPosition(layerData?.position?.x ?? templateLayer.position.x, template.width)
         }, ${
-          resolveLayerPosition(templateLayer.position.y, template.height)
+          resolveLayerPosition(layerData?.position?.y ?? templateLayer.position.y, template.height)
         }) translate(${
           -templateLayer.width / 2
         }, ${
