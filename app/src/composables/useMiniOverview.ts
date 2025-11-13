@@ -8,6 +8,7 @@
 import { computed, type Ref } from 'vue'
 import type { SimpleTemplate } from '../types/template-types'
 import { SVG_VIEWER_CONSTANTS } from '../config/svg-viewer-constants'
+import { VIEWPORT_CONFIG } from '../utils/ui-constants'
 import {
   calculateMiniOverviewContainerDimensions,
   calculateMiniOverviewViewBox,
@@ -92,7 +93,10 @@ export function useMiniOverview(
   // Calculate mini overview viewBox using utility function
   const miniViewBox = computed(() => {
     if (!template.value) {
-      return { x: -200, y: -150, width: 400, height: 300 }
+      // Default viewBox for mini overview when no template loaded
+      const width = VIEWPORT_CONFIG.MIN_CONTENT_WIDTH
+      const height = VIEWPORT_CONFIG.MIN_CONTENT_HEIGHT
+      return { x: -width / 2, y: -height / 2, width, height }
     }
 
     return calculateMiniOverviewViewBox(

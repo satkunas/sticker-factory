@@ -257,10 +257,14 @@ const calculatedViewBox = computed(() => {
           return `${bounds.minX - strokePadding} ${bounds.minY - strokePadding} ${width} ${height}`
         }
       }
-      // Fallback for complex shapes
-      const width = shape.width ?? 0
-      const height = shape.height ?? 0
-      if (!width && !height) return '0 0 100 100'
+      // Fallback for complex shapes without calculable bounds
+      // Use shape dimensions if available, otherwise use default viewBox
+      if (!shape.width && !shape.height) {
+        return '0 0 100 100' // Default viewBox for shapes without dimensions
+      }
+      // At least one dimension is defined - use the larger one
+      const width = shape.width !== undefined ? shape.width : shape.height!
+      const height = shape.height !== undefined ? shape.height : shape.width!
       const size = Math.max(width, height)
       const totalSize = size + strokePadding * 2
       return `${-totalSize/2} ${-totalSize/2} ${totalSize} ${totalSize}`

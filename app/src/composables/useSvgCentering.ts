@@ -19,6 +19,7 @@ import {
   type CenteringTransform,
   type GridBounds
 } from '../utils/svg-centering'
+import { VIEWPORT_CONFIG } from '../utils/ui-constants'
 
 // Composable return type
 export interface SvgCenteringState {
@@ -67,7 +68,10 @@ export function useSvgCentering(
       return calculateContentBounds(template.value.viewBox, 1.5)
     }
 
-    return { width: 400, height: 300 }
+    return {
+      width: VIEWPORT_CONFIG.MIN_CONTENT_WIDTH,
+      height: VIEWPORT_CONFIG.MIN_CONTENT_HEIGHT
+    }
   })
 
   const contentWidth = computed(() => contentDimensions.value.width)

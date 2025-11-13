@@ -103,7 +103,7 @@
                 </div>
                 <div class="flex items-center space-x-2">
                   <input
-                    :value="lineHeight ?? 1.2"
+                    :value="lineHeight ?? DEFAULT_LINE_HEIGHT"
                     type="range"
                     min="0.8"
                     max="2.5"
@@ -112,7 +112,7 @@
                     @input="$emit('update:lineHeight', parseFloat($event.target.value))"
                   >
                   <input
-                    :value="lineHeight ?? 1.2"
+                    :value="lineHeight ?? DEFAULT_LINE_HEIGHT"
                     type="number"
                     min="0.8"
                     max="2.5"
@@ -488,7 +488,7 @@ import UserAssetGrid from './UserAssetGrid.vue'
 import { useFontSelector } from '../composables/useFontSelector'
 import { useFontUpload } from '../composables/useFontUpload'
 import { getFontCategoryColor } from '../utils/font-utils'
-import { COMMON_FONT_SIZES, DOMINANT_BASELINE_OPTIONS, COLOR_NONE } from '../utils/ui-constants'
+import { COMMON_FONT_SIZES, DOMINANT_BASELINE_OPTIONS, COLOR_NONE, DEFAULT_LINE_HEIGHT } from '../utils/ui-constants'
 import { logger } from '../utils/logger'
 import { useExpandable } from '../composables/useExpandable'
 
