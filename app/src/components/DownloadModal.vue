@@ -131,7 +131,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import Modal from './Modal.vue'
-import { jsPDF } from 'jspdf'
 import type { SimpleTemplate, FlatLayerData } from '../types/template-types'
 import { AVAILABLE_FONTS } from '../config/fonts'
 import { embedWebFonts } from '../utils/font-embedding'
@@ -139,6 +138,7 @@ import { generateSvgString } from '../utils/svg-string-generator'
 import { useUserSvgStore } from '../stores/userSvgStore'
 import { enhanceLayersWithUserSvgs } from '../utils/layer-enhancement'
 import { logger } from '../utils/logger'
+import { exportAsSvg, exportAsPng, exportAsWebP, exportAsPdf, generateFilename } from '../utils/file-export'
 
 interface Props {
   show: boolean
@@ -233,11 +233,6 @@ const pngResolutions = computed(() => {
   ]
 })
 
-const getFileName = () => {
-  const timestamp = Date.now()
-  const templateName = props.template?.name?.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'sticker'
-  return `${templateName}-${timestamp}`
-}
 
 const getSvgContent = async (embedFonts = false) => {
   if (!props.template || !props.layers) {
@@ -382,48 +377,13 @@ const copyToClipboard = async () => {
   }
 }
 
-const createCanvas = (width, height) => {
-  const canvas = document.createElement('canvas')
-  canvas.width = width
-  canvas.height = height
-  return canvas
-}
-
-const svgToCanvas = (svgContent, width, height) => {
-  return new Promise((resolve) => {
-    const canvas = createCanvas(width, height)
-    const ctx = canvas.getContext('2d')
-    
-    const img = new Image()
-    const svgBlob = new Blob([svgContent], { type: 'image/svg+xml' })
-    const url = URL.createObjectURL(svgBlob)
-    
-    img.onload = () => {
-      ctx.drawImage(img, 0, 0, width, height)
-      URL.revokeObjectURL(url)
-      resolve(canvas)
-    }
-    
-    img.src = url
-  })
-}
-
 const downloadSVG = async () => {
   const svgContent = await getSvgContent(true) // Enable font embedding for offline/printer use
   if (!svgContent) {
     return
   }
 
-  const blob = new Blob([svgContent], { type: 'image/svg+xml' })
-  const url = URL.createObjectURL(blob)
-
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `${getFileName()}.svg`
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
+  await exportAsSvg(svgContent, generateFilename(props.template?.name))
 }
 
 const downloadPNG = async () => {
@@ -444,17 +404,7 @@ const downloadPNG = async () => {
   const width = baseWidth * scale
   const height = baseHeight * scale
 
-  const canvas = await svgToCanvas(svgContent, width, height)
-  canvas.toBlob((blob) => {
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `${getFileName()}.png`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-  }, 'image/png')
+  await exportAsPng(svgContent, generateFilename(props.template?.name), width, height)
 }
 
 const downloadWebP = async () => {
@@ -475,17 +425,7 @@ const downloadWebP = async () => {
   const width = baseWidth * scale
   const height = baseHeight * scale
 
-  const canvas = await svgToCanvas(svgContent, width, height)
-  canvas.toBlob((blob) => {
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `${getFileName()}.webp`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-  }, 'image/webp')
+  await exportAsWebP(svgContent, generateFilename(props.template?.name), width, height)
 }
 
 const downloadPDF = async () => {
@@ -498,37 +438,11 @@ const downloadPDF = async () => {
   const baseHeight = props.template?.viewBox?.height
 
   if (!baseWidth || !baseHeight) {
+    logger.error('Cannot export PDF: template missing viewBox dimensions')
     return
   }
 
-  // Create PDF with actual badge dimensions (convert px to mm at 96 DPI)
-  const widthMm = (baseWidth * 25.4) / 96
-  const heightMm = (baseHeight * 25.4) / 96
-
-  const pdf = new jsPDF({
-    unit: 'mm',
-    format: [widthMm, heightMm]
-  })
-
-  // Add SVG as image to PDF
-  const canvas = document.createElement('canvas')
-  canvas.width = baseWidth
-  canvas.height = baseHeight
-  const ctx = canvas.getContext('2d')
-  
-  const img = new Image()
-  const svgBlob = new Blob([svgContent], { type: 'image/svg+xml' })
-  const url = URL.createObjectURL(svgBlob)
-  
-  img.onload = () => {
-    ctx.drawImage(img, 0, 0)
-    const imgData = canvas.toDataURL('image/png')
-    pdf.addImage(imgData, 'PNG', 0, 0, widthMm, heightMm)
-    pdf.save(`${getFileName()}.pdf`)
-    URL.revokeObjectURL(url)
-  }
-  
-  img.src = url
+  await exportAsPdf(svgContent, generateFilename(props.template?.name), baseWidth, baseHeight)
 }
 
 const downloadFile = () => {
