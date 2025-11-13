@@ -51,44 +51,21 @@
                   @input="$emit('update:fontSize', parseInt($event.target.value) || undefined)"
                 >
               </div>
-              <div class="bg-white rounded-lg p-2 mb-2">
-              <div class="grid grid-cols-3 md:grid-cols-6 gap-1">
-                <button
-                  v-for="size in COMMON_FONT_SIZES"
-                  :key="size"
-                  class="px-1 py-1 text-xs rounded border transition-all"
-                  :class="fontSize === size ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white border-secondary-200 text-secondary-600 hover:border-secondary-300'"
-                  @click="$emit('update:fontSize', size)"
-                >
-                  {{ size }}
-                </button>
-              </div>
+              <div class="mb-2">
+                <ButtonGrid
+                  :options="fontSizeOptions"
+                  :value="fontSize"
+                  :columns="6"
+                  @update:value="$emit('update:fontSize', $event)"
+                />
               </div>
               <!-- Weight Controls -->
-              <div class="bg-white rounded-lg p-2">
-              <div class="grid grid-cols-2 gap-1 mb-2">
-                <button
-                  v-for="weight in fontWeights.slice(0, 4)"
-                  :key="weight.value"
-                  class="px-2 py-1 text-xs rounded border transition-all"
-                  :class="fontWeight === weight.value ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white border-secondary-200 text-secondary-600 hover:border-secondary-300'"
-                  @click="$emit('update:fontWeight', weight.value)"
-                >
-                  {{ weight.label }}
-                </button>
-              </div>
-              <div v-if="fontWeights.length > 4" class="grid grid-cols-2 gap-1">
-                <button
-                  v-for="weight in fontWeights.slice(4)"
-                  :key="weight.value"
-                  class="px-2 py-1 text-xs rounded border transition-all"
-                  :class="fontWeight === weight.value ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white border-secondary-200 text-secondary-600 hover:border-secondary-300'"
-                  @click="$emit('update:fontWeight', weight.value)"
-                >
-                  {{ weight.label }}
-                </button>
-              </div>
-              </div>
+              <ButtonGrid
+                :options="fontWeights"
+                :value="fontWeight"
+                :columns="2"
+                @update:value="$emit('update:fontWeight', $event)"
+              />
           </div>
 
           <!-- Line Height Control (only shown for multiline text) -->
@@ -221,50 +198,28 @@
               </div>
 
               <!-- Vertical Offset (dy) -->
-              <div class="bg-white rounded-lg p-3 min-w-0">
-                <div class="text-xs font-medium text-secondary-600 mb-2">
-                  Vertical Offset (px)
-                </div>
-                <div class="flex items-center space-x-2">
-                  <input
-                    :value="dy ?? 0"
-                    type="range"
-                    min="-100"
-                    max="100"
-                    step="1"
-                    class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
-                    @input="handleDyInput($event.target.value)"
-                  >
-                  <input
-                    :value="dy ?? 0"
-                    type="number"
-                    min="-100"
-                    max="100"
-                    step="1"
-                    class="w-14 px-1 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
-                    @input="handleDyInput($event.target.value)"
-                  >
-                  <span class="text-xs text-secondary-500">px</span>
-                </div>
-              </div>
+              <RangeNumberInput
+                :value="dy ?? 0"
+                :min="-100"
+                :max="100"
+                :step="1"
+                unit="px"
+                label="Vertical Offset (px)"
+                valueType="int"
+                @update:value="$emit('update:dy', $event)"
+              />
 
               <!-- Dominant Baseline (text alignment on path) -->
               <div class="bg-white rounded-lg p-3 min-w-0">
                 <div class="text-xs font-medium text-secondary-600 mb-2">
                   Baseline Alignment
                 </div>
-                <div class="grid grid-cols-3 gap-1">
-                  <button
-                    v-for="baseline in DOMINANT_BASELINE_OPTIONS"
-                    :key="baseline.value"
-                    class="px-2 py-1 text-xs rounded border transition-all text-center"
-                    :class="(dominantBaseline ?? 'auto') === baseline.value ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white border-secondary-200 text-secondary-600 hover:border-secondary-300'"
-                    :title="baseline.description"
-                    @click="$emit('update:dominantBaseline', baseline.value)"
-                  >
-                    {{ baseline.label }}
-                  </button>
-                </div>
+                <ButtonGrid
+                  :options="DOMINANT_BASELINE_OPTIONS"
+                  :value="dominantBaseline ?? 'auto'"
+                  :columns="3"
+                  @update:value="$emit('update:dominantBaseline', $event)"
+                />
               </div>
             </div>
           </div>
@@ -444,6 +399,7 @@ import ColorPickerInput from './ColorPickerInput.vue'
 import StrokeControls from './StrokeControls.vue'
 import SectionHeader from './SectionHeader.vue'
 import RangeNumberInput from './RangeNumberInput.vue'
+import ButtonGrid from './ButtonGrid.vue'
 import FileUploadZone from './FileUploadZone.vue'
 import UploadStateDisplay from './UploadStateDisplay.vue'
 import AssetTabNavigation from './AssetTabNavigation.vue'
@@ -520,12 +476,6 @@ const emit = defineEmits<Emits>()
 
 // Input handlers - validate before emitting
 
-const handleDyInput = (value: string) => {
-  const parsed = parseInt(value)
-  if (!isNaN(parsed)) {
-    emit('update:dy', parsed)
-  }
-}
 
 const handlePositionYInput = (value: string) => {
   const parsed = parseFloat(value)
@@ -609,6 +559,14 @@ const fontCategoryOptions = computed(() => {
     value,
     label,
     colorClass: getFontCategoryColor(value)
+  }))
+})
+
+// Map font sizes to button options
+const fontSizeOptions = computed(() => {
+  return COMMON_FONT_SIZES.map(size => ({
+    label: String(size),
+    value: size
   }))
 })
 

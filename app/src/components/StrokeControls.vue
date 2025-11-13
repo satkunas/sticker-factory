@@ -20,26 +20,18 @@
       </div>
 
       <!-- Stroke Linejoin -->
-      <div class="bg-white rounded-lg p-3 min-w-0" :class="{ 'opacity-50': disabled }">
-        <div class="text-xs font-medium text-secondary-600 mb-2">
-          Linejoin
-        </div>
-        <div class="grid grid-cols-2 gap-1">
-          <button
-            v-for="linejoin in STROKE_LINEJOIN_OPTIONS"
-            :key="linejoin.value"
+      <div :class="{ 'opacity-50': disabled }">
+        <div class="bg-white rounded-lg p-3 min-w-0">
+          <div class="text-xs font-medium text-secondary-600 mb-2">
+            Linejoin
+          </div>
+          <ButtonGrid
+            :options="STROKE_LINEJOIN_OPTIONS"
+            :value="strokeLinejoin"
+            :columns="2"
             :disabled="disabled"
-            class="px-2 py-1 text-xs rounded border transition-all text-center"
-            :class="[
-              strokeLinejoin === linejoin.value ? 'bg-primary-100 border-primary-300 text-primary-700' : 'bg-white border-secondary-200 text-secondary-600 hover:border-secondary-300',
-              { 'cursor-not-allowed': disabled }
-            ]"
-            :title="linejoin.description"
-            type="button"
-            @click="$emit('update:strokeLinejoin', linejoin.value)"
-          >
-            {{ linejoin.label }}
-          </button>
+            @update:value="$emit('update:strokeLinejoin', $event)"
+          />
         </div>
       </div>
     </div>
@@ -50,6 +42,7 @@
 import { STROKE_LINEJOIN_OPTIONS } from '../utils/ui-constants'
 import SectionHeader from './SectionHeader.vue'
 import RangeNumberInput from './RangeNumberInput.vue'
+import ButtonGrid from './ButtonGrid.vue'
 
 interface Props {
   strokeWidth: number
