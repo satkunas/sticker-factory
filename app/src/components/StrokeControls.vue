@@ -6,34 +6,17 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
       <!-- Stroke Width -->
-      <div class="bg-white rounded-lg p-3 min-w-0" :class="{ 'opacity-50': disabled }">
-        <div class="text-xs font-medium text-secondary-600 mb-2">
-          Width
-        </div>
-        <div class="flex items-center space-x-2">
-          <input
-            :value="strokeWidth"
-            type="range"
-            min="0"
-            max="12"
-            step="0.5"
-            :disabled="disabled"
-            :class="{ 'cursor-not-allowed': disabled }"
-            class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
-            @input="handleStrokeWidthInput(($event.target as HTMLInputElement).value)"
-          >
-          <input
-            :value="strokeWidth"
-            type="number"
-            min="0"
-            max="12"
-            step="0.5"
-            :disabled="disabled"
-            :class="{ 'cursor-not-allowed': disabled }"
-            class="w-12 px-1 py-1 text-xs border border-secondary-200 rounded text-center focus:outline-none focus:ring-1 focus:ring-primary-500"
-            @input="handleStrokeWidthInput(($event.target as HTMLInputElement).value)"
-          >
-        </div>
+      <div :class="{ 'opacity-50': disabled }">
+        <RangeNumberInput
+          :value="strokeWidth"
+          :min="0"
+          :max="12"
+          :step="0.5"
+          :disabled="disabled"
+          label="Width"
+          numberInputWidth="w-12"
+          @update:value="$emit('update:strokeWidth', $event)"
+        />
       </div>
 
       <!-- Stroke Linejoin -->
@@ -66,6 +49,7 @@
 <script setup lang="ts">
 import { STROKE_LINEJOIN_OPTIONS } from '../utils/ui-constants'
 import SectionHeader from './SectionHeader.vue'
+import RangeNumberInput from './RangeNumberInput.vue'
 
 interface Props {
   strokeWidth: number
@@ -77,16 +61,9 @@ withDefaults(defineProps<Props>(), {
   disabled: false
 })
 
-const emit = defineEmits<{
+defineEmits<{
   'update:strokeWidth': [value: number]
   'update:strokeLinejoin': [value: string]
   reset: []
 }>()
-
-function handleStrokeWidthInput(value: string) {
-  const parsed = parseFloat(value)
-  if (!isNaN(parsed)) {
-    emit('update:strokeWidth', parsed)
-  }
-}
 </script>

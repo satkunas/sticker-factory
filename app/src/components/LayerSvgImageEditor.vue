@@ -82,34 +82,16 @@
           </div>
 
           <!-- Rotation Control -->
-          <div class="bg-white rounded-lg p-3 min-w-0">
-            <div class="text-xs font-medium text-secondary-600 mb-2">
-              Rotation
-            </div>
-            <div class="flex items-center space-x-2">
-              <input
-                :value="rotation"
-                type="range"
-                min="0"
-                max="360"
-                step="1"
-                class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
-                @input="handleRotationSliderInput($event.target.value)"
-              >
-              <div class="relative">
-                <input
-                  :value="rotation"
-                  type="number"
-                  min="0"
-                  max="360"
-                  step="1"
-                  class="w-14 px-1 py-1 pr-4 text-xs border border-secondary-200 rounded text-center focus:outline-none focus:ring-1 focus:ring-primary-500"
-                  @input="handleRotationTextInput($event.target.value)"
-                >
-                <span class="absolute right-1 top-1/2 transform -translate-y-1/2 text-xs text-secondary-400 pointer-events-none">°</span>
-              </div>
-            </div>
-          </div>
+          <RangeNumberInput
+            :value="rotation"
+            :min="0"
+            :max="360"
+            :step="1"
+            unit="°"
+            unitPosition="absolute"
+            label="Rotation"
+            @update:value="$emit('update:rotation', $event)"
+          />
           </div>
         </div>
       </div>
@@ -167,6 +149,7 @@ import ColorPickerInput from './ColorPickerInput.vue'
 import StrokeControls from './StrokeControls.vue'
 import SectionHeader from './SectionHeader.vue'
 import ExpandableCard from './ExpandableCard.vue'
+import RangeNumberInput from './RangeNumberInput.vue'
 import {
   injectSvgColors,
   applySvgStrokeProperties,
@@ -326,21 +309,6 @@ const handleScaleTextInput = (percentageValue: string) => {
   }
 }
 
-// Rotation event handlers
-const handleRotationSliderInput = (value: string) => {
-  const parsed = parseFloat(value)
-  if (!isNaN(parsed)) {
-    emit('update:rotation', parsed)
-  }
-}
-
-const handleRotationTextInput = (value: string) => {
-  const parsed = parseFloat(value)
-  if (!isNaN(parsed)) {
-    const clamped = Math.max(0, Math.min(360, parsed))
-    emit('update:rotation', clamped)
-  }
-}
 </script>
 
 <style scoped>

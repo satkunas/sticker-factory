@@ -97,35 +97,16 @@
               Multi-line Spacing
             </SectionHeader>
             <div class="grid grid-cols-1">
-              <div class="bg-white rounded-lg p-3 min-w-0">
-                <div class="text-xs font-medium text-secondary-600 mb-2">
-                  Line Height
-                </div>
-                <div class="flex items-center space-x-2">
-                  <input
-                    :value="lineHeight ?? DEFAULT_LINE_HEIGHT"
-                    type="range"
-                    min="0.8"
-                    max="2.5"
-                    step="0.1"
-                    class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
-                    @input="$emit('update:lineHeight', parseFloat($event.target.value))"
-                  >
-                  <input
-                    :value="lineHeight ?? DEFAULT_LINE_HEIGHT"
-                    type="number"
-                    min="0.8"
-                    max="2.5"
-                    step="0.1"
-                    class="w-14 px-1 py-1 text-xs border border-secondary-200 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
-                    @input="$emit('update:lineHeight', parseFloat($event.target.value))"
-                  >
-                  <span class="text-xs text-secondary-500">×</span>
-                </div>
-                <div class="text-xs text-secondary-500 mt-1">
-                  Controls spacing between lines (1.0 = tight, 2.0 = loose)
-                </div>
-              </div>
+              <RangeNumberInput
+                :value="lineHeight ?? DEFAULT_LINE_HEIGHT"
+                :min="0.8"
+                :max="2.5"
+                :step="0.1"
+                unit="×"
+                label="Line Height"
+                helpText="Controls spacing between lines (1.0 = tight, 2.0 = loose)"
+                @update:value="$emit('update:lineHeight', $event)"
+              />
             </div>
           </div>
 
@@ -135,35 +116,17 @@
               Text Rotation
             </SectionHeader>
             <div class="grid grid-cols-1">
-              <div class="bg-white rounded-lg p-3 min-w-0">
-                <div class="text-xs font-medium text-secondary-600 mb-2">
-                  Rotation
-                </div>
-                <div class="flex items-center space-x-2">
-                  <input
-                    :value="rotation ?? 0"
-                    type="range"
-                    min="-180"
-                    max="180"
-                    step="1"
-                    class="flex-1 h-2 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider"
-                    @input="handleRotationInput($event.target.value)"
-                  >
-                  <div class="relative">
-                    <input
-                      :value="rotation ?? 0"
-                      type="number"
-                      step="1"
-                      class="w-14 px-1 py-1 pr-4 text-xs border border-secondary-200 rounded text-center focus:outline-none focus:ring-1 focus:ring-primary-500"
-                      @input="handleRotationInput($event.target.value)"
-                    >
-                    <span class="absolute right-1 top-1/2 transform -translate-y-1/2 text-xs text-secondary-400 pointer-events-none">°</span>
-                  </div>
-                </div>
-                <div class="text-xs text-secondary-500 mt-1">
-                  Rotate text (-180 to 180 degrees, positive = clockwise)
-                </div>
-              </div>
+              <RangeNumberInput
+                :value="rotation ?? 0"
+                :min="-180"
+                :max="180"
+                :step="1"
+                unit="°"
+                unitPosition="absolute"
+                label="Rotation"
+                helpText="Rotate text (-180 to 180 degrees, positive = clockwise)"
+                @update:value="$emit('update:rotation', $event)"
+              />
             </div>
           </div>
 
@@ -480,6 +443,7 @@ import CategoryDropdown from './CategoryDropdown.vue'
 import ColorPickerInput from './ColorPickerInput.vue'
 import StrokeControls from './StrokeControls.vue'
 import SectionHeader from './SectionHeader.vue'
+import RangeNumberInput from './RangeNumberInput.vue'
 import FileUploadZone from './FileUploadZone.vue'
 import UploadStateDisplay from './UploadStateDisplay.vue'
 import AssetTabNavigation from './AssetTabNavigation.vue'
@@ -555,12 +519,6 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 // Input handlers - validate before emitting
-const handleRotationInput = (value: string) => {
-  const parsed = parseFloat(value)
-  if (!isNaN(parsed)) {
-    emit('update:rotation', parsed)
-  }
-}
 
 const handleDyInput = (value: string) => {
   const parsed = parseInt(value)
