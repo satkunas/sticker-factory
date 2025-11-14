@@ -54,6 +54,7 @@
       <text
         v-if="templateLayer.textPath"
         text-anchor="middle"
+        style="white-space: pre"
         :font-family="extractFontFamily(layerData) ?? templateLayer.fontFamily"
         :font-size="layerData?.fontSize ?? templateLayer.fontSize"
         :font-weight="layerData?.fontWeight ?? templateLayer.fontWeight"
@@ -84,6 +85,7 @@
         <text
           text-anchor="middle"
           dominant-baseline="central"
+          style="white-space: pre"
           :font-family="extractFontFamily(layerData) ?? templateLayer.fontFamily"
           :font-size="layerData?.fontSize ?? templateLayer.fontSize"
           :font-weight="layerData?.fontWeight ?? templateLayer.fontWeight"
@@ -121,6 +123,7 @@
         <text
           text-anchor="middle"
           dominant-baseline="central"
+          style="white-space: pre"
           :font-family="extractFontFamily(layerData) ?? templateLayer.fontFamily"
           :font-size="layerData?.fontSize ?? templateLayer.fontSize"
           :font-weight="layerData?.fontWeight ?? templateLayer.fontWeight"

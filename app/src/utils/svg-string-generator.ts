@@ -193,6 +193,7 @@ function generateTextElement(
 
     const textPathTextAttrs = [
       'text-anchor="middle"',
+      'xml:space="preserve"',
       ...textAttrs
     ]
     if (dominantBaseline !== undefined) {
@@ -230,6 +231,7 @@ function generateTextElement(
     const multilineTextAttrs = [
       'text-anchor="middle"',
       'dominant-baseline="central"',
+      'xml:space="preserve"',
       ...textAttrs
     ]
 
@@ -256,6 +258,7 @@ function generateTextElement(
   const regularTextAttrs = [
     'text-anchor="middle"',
     'dominant-baseline="central"',
+    'xml:space="preserve"',
     ...textAttrs
   ]
 
