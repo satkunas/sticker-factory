@@ -34,12 +34,12 @@ layers:
     stroke: "#2d3748"
     strokeWidth: 10
 
-  # Text clip path (10px inside border hexagon)
+  # Text clip path (25px inside border hexagon for larger white gap)
   - id: "text-clip"
     type: "shape"
     subtype: "polygon"
     position: { x: "50%", y: "50%" }
-    points: "200,60 347,145 347,315 200,400 53,315 53,145"
+    points: "200,75 342,155 342,305 200,385 58,305 58,155"
     fill: "none"
     stroke: "none"
 
