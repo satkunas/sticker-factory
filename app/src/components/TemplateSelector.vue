@@ -8,8 +8,12 @@
     <!-- Expandable Container -->
     <div class="relative rounded-lg transition-all duration-300 ease-in-out" :class="{ 'ring-2 ring-primary-500': isExpanded }">
       <button
-        class="w-full px-4 py-3 bg-white border border-secondary-200 rounded-t-lg text-left focus:outline-none hover:border-secondary-300 transition-colors"
-        :class="{ 'border-primary-500': isExpanded, 'rounded-b-lg': !isExpanded }"
+        class="w-full px-4 py-3 bg-white border border-secondary-200 text-left focus:outline-none hover:border-secondary-300 transition-colors"
+        :class="{
+          'border-primary-500': isExpanded,
+          'rounded-t-lg': true,
+          'rounded-b-lg': !isExpanded
+        }"
         @click="toggleExpanded"
       >
         <div class="flex items-center justify-between">
@@ -48,6 +52,7 @@
         </div>
       </button>
 
+
       <!-- Inline Dropdown Content with Tiled Layout -->
       <div
         v-if="isExpanded"
@@ -70,7 +75,7 @@
         </div>
 
         <!-- Tiled Grid Layout -->
-        <div class="max-h-96 overflow-y-auto p-3">
+        <div ref="gridContainer" class="max-h-96 overflow-y-auto p-3">
           <div v-if="filteredTemplates.length === 0" class="text-center py-8 text-secondary-500">
             No templates found matching "{{ searchQuery }}"
           </div>
@@ -78,6 +83,7 @@
             <button
               v-for="template in filteredTemplates"
               :key="template.id"
+              :ref="el => { if (selectedTemplate?.id === template.id) selectedTemplateRef = el }"
               :title="template.description"
               class="group relative bg-white border-2 rounded-lg p-3 hover:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all"
               :class="{
@@ -162,6 +168,10 @@ const templates = ref<SimpleTemplate[]>([])
 const searchQuery = ref('')
 const searchInput = ref<HTMLInputElement | null>(null)
 
+// Grid container and selected template refs for scrolling
+const gridContainer = ref<HTMLElement | null>(null)
+const selectedTemplateRef = ref<HTMLElement | null>(null)
+
 // Filtered templates based on search query
 const filteredTemplates = computed(() => {
   if (!searchQuery.value.trim()) {
@@ -182,22 +192,36 @@ const templatePreviewUrls = ref<Map<string, string>>(new Map())
 // Template selection handler
 const selectTemplate = (template: SimpleTemplate) => {
   emit('update:selectedTemplate', template)
-  // Clear search on selection
-  searchQuery.value = ''
   // Close dropdown using unified manager
   if (dropdownManager) {
     dropdownManager.close(INSTANCE_ID)
   }
 }
 
-// Focus search input when expanded
+// Scroll to selected template when expanded
+const scrollToSelected = async () => {
+  await nextTick()
+  if (gridContainer.value && selectedTemplateRef.value) {
+    selectedTemplateRef.value.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    })
+  }
+}
+
+// Handle expansion: focus search (if no query) or scroll to selection
 watch(isExpanded, async (expanded) => {
   if (expanded) {
     await nextTick()
-    searchInput.value?.focus()
-  } else {
-    // Clear search when closing
-    searchQuery.value = ''
+    // If there's a search query, scroll to selection
+    // Otherwise, focus search input
+    if (searchQuery.value.trim()) {
+      await scrollToSelected()
+    } else {
+      searchInput.value?.focus()
+      // Also scroll to selection after a brief delay
+      setTimeout(scrollToSelected, 100)
+    }
   }
 })
 
