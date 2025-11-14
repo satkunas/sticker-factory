@@ -5,12 +5,22 @@ category: "hexagon"
 width: 460
 height: 400
 layers:
-  # Background hexagon
+  # White background with margin
+  - id: "white-background"
+    type: "shape"
+    subtype: "rect"
+    position: { x: "50%", y: "50%" }
+    width: 460
+    height: 400
+    fill: "#ffffff"
+    stroke: "none"
+
+  # Background hexagon (regular hexagon: all sides equal length)
   - id: "background"
     type: "shape"
     subtype: "polygon"
     position: { x: "50%", y: "50%" }
-    points: "30,200 115,85 345,85 430,200 345,315 115,315"
+    points: "50,200 140,44 320,44 410,200 320,356 140,356"
     fill: "#f0f4f8"
     stroke: "none"
 
@@ -19,55 +29,80 @@ layers:
     type: "shape"
     subtype: "polygon"
     position: { x: "50%", y: "50%" }
-    points: "30,200 115,85 345,85 430,200 345,315 115,315"
+    points: "50,200 140,44 320,44 410,200 320,356 140,356"
     fill: "none"
     stroke: "#2d3748"
-    strokeWidth: 6
+    strokeWidth: 10
 
-  # Inner border hexagon
-  - id: "inner-border"
+  # Text clip path (10px inside border hexagon)
+  - id: "text-clip"
     type: "shape"
     subtype: "polygon"
     position: { x: "50%", y: "50%" }
-    points: "50,200 125,105 335,105 410,200 335,295 125,295"
+    points: "60,200 145,53 315,53 400,200 315,347 145,347"
     fill: "none"
-    stroke: "#4a5568"
-    strokeWidth: 2
+    stroke: "none"
 
-  # Left section - SVG icon
-  - id: "left-icon"
+  # Top section - "TORQ 2025" text
+  - id: "top-text"
+    type: "text"
+    multiline: true
+    lineHeight: 1.2
+    label: "Top Text"
+    default: "TORQ 2025"
+    position: { x: "50%", y: "22%" }
+    maxLength: 30
+    fontFamily: "Oswald"
+    fontSize: 50
+    fontWeight: 700
+    fontColor: "#2d3748"
+    clip: "text-clip"
+
+  # Middle section - SVG icon (centered)
+  - id: "middle-icon"
     type: "svgImage"
     label: "Icon"
     svgId: "mountain"
-    position: { x: "20%", y: "50%" }
+    position: { x: "50%", y: "50%" }
     width: 64
     height: 64
     fill: "#2b6cb0"
     clip: "background"
 
-  # Middle section - "TORQ 2025" text
-  - id: "middle-text"
+  # Bottom section - "Exploration Estivale" text
+  - id: "bottom-text"
     type: "text"
-    label: "Year Text"
-    default: "TORQ 2025"
-    position: { x: "50%", y: "50%" }
-    maxLength: 15
-    fontFamily: "Oswald"
-    fontSize: 68
-    fontWeight: 700
-    fontColor: "#2d3748"
-    clip: "background"
-
-  # Right section - "Exploration Estivale" text
-  - id: "right-text"
-    type: "text"
-    label: "Subtitle"
+    multiline: true
+    lineHeight: 1.2
+    label: "Bottom Text"
     default: "Exploration Estivale"
-    position: { x: "78%", y: "50%" }
-    maxLength: 25
+    position: { x: "50%", y: "78%" }
+    maxLength: 50
     fontFamily: "Oswald"
     fontSize: 38
     fontWeight: 700
     fontColor: "#4a5568"
-    clip: "background"
-    rotation: 90
+    clip: "text-clip"
+
+  # Path for curved text around hexagon perimeter (starting from top center)
+  - id: "hexagon-text-path"
+    type: "shape"
+    subtype: "path"
+    path: "M 230,44 L 320,44 L 410,200 L 320,356 L 140,356 L 50,200 L 140,44"
+    position: { x: 0, y: 0 }
+
+  # Curved text wrapping around hexagon (centered at bottom, reading upward)
+  - id: "border-text"
+    type: "text"
+    label: "Border Text"
+    default: "EXPLORATION • ADVENTURE • DISCOVERY"
+    textPath: "hexagon-text-path"
+    startOffset: "60%"
+    dy: -15
+    dominantBaseline: "central"
+    position: { x: "50%", y: "50%" }
+    maxLength: 50
+    fontFamily: "Oswald"
+    fontSize: 20
+    fontWeight: 600
+    fontColor: "#2d3748"
