@@ -84,11 +84,11 @@ layers:
     fontColor: "#4a5568"
     clip: "text-clip"
 
-  # Path for curved text around hexagon perimeter (starting from top center)
+  # Path for curved text around text-clip perimeter (starting from top center)
   - id: "hexagon-text-path"
     type: "shape"
     subtype: "path"
-    path: "M 230,44 L 320,44 L 410,200 L 320,356 L 140,356 L 50,200 L 140,44"
+    path: "M 230,58 L 305,58 L 385,200 L 305,342 L 155,342 L 75,200 L 155,58"
     position: { x: 0, y: 0 }
 
   # Curved text wrapping around hexagon (centered at bottom, reading upward)
